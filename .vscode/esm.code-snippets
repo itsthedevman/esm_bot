@@ -15,7 +15,13 @@
 	// 	],
 	// 	"description": "Log output to console"
 	// }
-	 "ESM Log (Debug)": {
+	"Binding.pry": {
+		"scope": "ruby",
+		"prefix": ["bd"],
+		"body": "binding.pry",
+		"description": "Inserts a pry breakpoint"
+	},
+	"ESM Log (Debug)": {
 		"scope": "ruby",
 		"prefix": ["debug", "ESM.logger.debug"],
 		"body": [
