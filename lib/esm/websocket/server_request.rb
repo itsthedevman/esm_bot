@@ -36,17 +36,7 @@ module ESM
         check_for_command_error!
 
         # Execute the command
-        begin
-          @request.command.execute(@message.parameters)
-        rescue ESM::Exception::CheckFailure => e
-          embed =
-            ESM::Embed.build do |em|
-              em.description = e.message
-              em.color = :red
-            end
-
-          @request.command.reply(embed)
-        end
+        @request.command.execute(@message.parameters)
 
         # Remove the request now that we've processed it
         @connection.remove_request(@message.commandID)
