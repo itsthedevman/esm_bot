@@ -36,12 +36,25 @@ module ESM
         check_for_command_error!
 
         # Execute the command
-        @request.command.execute(@message.parameters)
+        begin
+          @request.command.execute(@message.parameters)
+        rescue ESM::Exception::CheckFailure => e
+          # This catches any errors from the command.
+          embed =
+            ESM::Embed.build do |em|
+              em.description = e.message
+              em.color = :red
+            end
 
-        # Remove the request now that we've processed it
-        @connection.remove_request(@message.commandID)
+          @request.command.reply(embed)
+        end
+
+      # This catches the check_for_command_error
       rescue ESM::Exception::CheckFailure => e
         on_command_error(e.data)
+      ensure
+        # Make sure to remove the request no matter what
+        @connection.remove_request(@message.commandID)
       end
 
       # @private
@@ -65,9 +78,6 @@ module ESM
         # Send the error message
         embed = ESM::Embed.build(:error, description: error)
         @request.command.reply(embed)
-
-        # Remove the request now that we've processed it
-        @connection.remove_request(@message.commandID)
       end
 
       # Error responses from a command
