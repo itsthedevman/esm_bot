@@ -466,9 +466,6 @@ module ESM
       def handle_error(error)
         message = nil
 
-        # For tests
-        raise error if ESM.env.test?
-
         case error
         when ESM::Exception::CheckFailure, ESM::Exception::FailedArgumentParse
           message = error.data
