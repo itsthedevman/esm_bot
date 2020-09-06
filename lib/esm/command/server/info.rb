@@ -14,10 +14,6 @@ module ESM
         define :allowed_in_text_channels, modifiable: true, default: true
         define :cooldown_time, modifiable: true, default: 2.seconds
 
-        # DEBUG
-        skip_check :connected_server
-        # DEBUG
-
         argument :server_id
         argument :target, default: nil
         argument :territory_id, default: nil
@@ -39,7 +35,7 @@ module ESM
           # I'm not quite sure if this is needed, but just in case...
           check_for_response!
 
-          # The fact that it has an ID indicates it was a territory... 
+          # The fact that it has an ID indicates it was a territory...
           if @response.id
             territory = ESM::Arma::Territory.new(server: target_server, territory: @response)
             reply(territory.to_embed)
