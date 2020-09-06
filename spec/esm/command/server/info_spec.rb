@@ -29,11 +29,31 @@ describe ESM::Command::Server::Info, category: "command" do
     let(:connection) { ESM::Websocket.connections[server.server_id] }
     let(:response) { command.response }
 
+    def build_fields(values)
+      output = []
+      temp = ""
+      values.each do |value|
+        value += "\n"
+
+        if temp.size + value.size >= ESM::Embed::Limit::FIELD_VALUE_LENGTH_MAX
+          output << temp
+          temp = ""
+        end
+
+        temp += value
+      end
+      output << temp
+    end
+
     before :each do
       # Allow user to use this command
       community.command_configurations.where(command_name: "info").update(whitelist_enabled: false)
 
       wait_for { wsc.connected? }.to be(true)
+
+      # IMPORTANT!
+      # If we don't reload the server model after WSC connection, the server settings will be wrong!
+      server.reload
     end
 
     after :each do
@@ -108,6 +128,7 @@ describe ESM::Command::Server::Info, category: "command" do
 
       expect(embed.title).to eql("Territory \"#{territory.name}\"")
       expect(embed.thumbnail.url).to eql(territory.flag_path)
+      expect(embed.color).to eql(territory.status_color)
       expect(embed.description).to eql(territory.payment_reminder_message)
 
       field_info = [
