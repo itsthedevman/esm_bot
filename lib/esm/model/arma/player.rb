@@ -6,6 +6,9 @@ module ESM
       def initialize(server:, player:)
         @server = server
         @player = player
+
+        # If the player is dead, not all information is returned.
+        normalize
       end
 
       def name
@@ -39,12 +42,12 @@ module ESM
 
       # Apparently some databases had nil values...
       def kills
-        @player.kills ||= 0
+        @player.kills
       end
 
       # Apparently some databases had nil values...
       def deaths
-        @player.deaths ||= 0
+        @player.deaths
       end
 
       def kd_ratio
@@ -70,6 +73,19 @@ module ESM
       end
 
       private
+
+      # Alive players return all of these fields.
+      # Dead players return: locker, score, name, kills, deaths, territories
+      def normalize
+        # If damage is nil, the player is dead (1)
+        @player.damage ||= 1
+        @player.hunger ||= 0
+        @player.thirst ||= 0
+        @player.kills ||= 0
+        @player.deaths ||= 0
+        @player.money ||= 0
+        @player.territories ||= {}
+      end
 
       def add_general_field(embed)
         embed.add_field(
