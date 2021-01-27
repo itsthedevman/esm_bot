@@ -37,6 +37,9 @@ module ESM
     # Generic exception for any checks
     class CheckFailure < DataError; end
 
+    # If a request/response from the server is invalid
+    class InvalidServerCommand; end
+
     # Check failure, but no message is sent
     class CheckFailureNoMessage < Error
       def initialize(_message)

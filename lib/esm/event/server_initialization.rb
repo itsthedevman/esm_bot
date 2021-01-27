@@ -52,26 +52,38 @@ module ESM
       def update_server_settings!
         @server.server_setting.update(
           territory_price_per_object: @params.price_per_object,
-          territory_lifetime: @params.territory_lifetime,
-          server_restart_hour: @params.server_restart.first,
-          server_restart_min: @params.server_restart.second
+          territory_lifetime: @params.territory_lifetime
         )
       end
 
       def store_territory_info!
         @server.territories.delete_all
 
-        # All territory info is prefixed with `territory_level_`
-        territory_info = @params.to_h.select { |key, _| key.to_s.starts_with?("territory_level_") }
+        # A nil version means v1 extension
         territories =
-          territory_info.map do |_, info|
-            {
-              server_id: @server.id,
-              territory_level: info[:level],
-              territory_purchase_price: info[:purchase_price],
-              territory_radius: info[:radius],
-              territory_object_count: info[:object_count]
-            }
+          if @connection.version.nil?
+            # All territory info is prefixed with `territory_level_`
+            territory_info = @params.to_h.select { |key, _| key.to_s.starts_with?("territory_level_") }
+
+            territory_info.map do |_, info|
+              {
+                server_id: @server.id,
+                territory_level: info[:level],
+                territory_purchase_price: info[:purchase_price],
+                territory_radius: info[:radius],
+                territory_object_count: info[:object_count]
+              }
+            end
+          else
+            @params.territory_data.map do |level, data|
+              {
+                server_id: @server.id,
+                territory_level: level.to_i,
+                territory_purchase_price: data.purchase_price,
+                territory_radius: data.radius,
+                territory_object_count: data.object_count
+              }
+            end
           end
 
         ESM::Territory.import(territories)
@@ -133,15 +145,30 @@ module ESM
 
       def send_response
         # Build the request
-        request = ESM::Websocket::Request.new(command_name: "post_initialization", parameters: @packet.to_h, remove_on_ignore: true)
+        request =
+          if @connection.version.nil?
+            # V1
+            ESM::Websocket::Request.new(command_name: "post_initialization", parameters: @packet.to_h, remove_on_ignore: true)
+          else
+            # V2
+            ESM::Websocket::Request.new(executing_command: "post_initialization", parameters: @packet.to_h, remove_on_acknowledge: true)
+          end
 
         # After the server has replied to this request, notify the community and allow commands.
-        request.on_reply = lambda do |connection|
+        callback = lambda do |connection|
           # Trigger a connect notification
           ESM::Notifications.trigger("server_on_connect", server: connection.server)
 
           # Set the connection to be available for commands
           connection.ready = true
+        end
+
+        if @connection.version.nil?
+          # V1
+          request.on_reply = callback
+        else
+          # V2
+          request.on_acknowledgement = callback
         end
 
         # Send it to the dll, don't use `Websocket#deliver` for this since it will raise on the connection not being ready.

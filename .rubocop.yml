@@ -117,3 +117,9 @@ Style/HashTransformKeys:
 
 Style/HashTransformValues:
   Enabled: true
+
+Naming/VariableNumber:
+  Enabled: false
+
+Style/WordArray:
+  Enabled: false

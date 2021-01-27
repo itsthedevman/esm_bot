@@ -79,7 +79,8 @@ module ESM
     end
 
     def self.command_from_server(name, _start, _finish, _id, payload)
-      command = payload[:command]
+      received_command = payload[:received_command]
+      command = received_command.request.command
 
       # This is triggered by system commands as well
       return if command.nil?
@@ -93,7 +94,7 @@ module ESM
           message: command.event.message.content,
           arguments: command.arguments.to_h,
           cooldown: command.current_cooldown&.attributes,
-          response: payload[:response]
+          response: received_command.to_h
         )
       end
     end

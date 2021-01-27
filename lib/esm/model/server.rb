@@ -43,6 +43,8 @@ module ESM
     end
 
     def uptime
+      return "Offline" if self.server_start_time.nil?
+
       ESM::Time.distance_of_time_in_words(self.server_start_time)
     end
 

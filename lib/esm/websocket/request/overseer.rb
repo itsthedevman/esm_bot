@@ -46,7 +46,7 @@ module ESM
           @connection.remove_request(id)
 
           # Don't warn on our internal messages
-          return if request.user.nil?
+          return if request.current_user.nil?
 
           embed =
             ESM::Embed.build do |e|
@@ -54,7 +54,7 @@ module ESM
                 "request_timed_out",
                 command_message: request.command.event.message.content,
                 server_id: @connection.server.server_id,
-                user: request.user.mention
+                user: request.current_user.mention
               )
 
               e.color = :red
