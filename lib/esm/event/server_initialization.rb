@@ -92,11 +92,11 @@ module ESM
       def build_settings_packet
         settings = @server.server_setting
         rewards = @server.server_reward
+        territory_admins = build_territory_admins
 
         @packet = OpenStruct.new(
-          function_name: "postServerInitialization",
           server_id: @server.server_id,
-          territory_admins: build_territory_admins.to_json,
+          territory_admins: territory_admins,
           extdb_path: settings.extdb_path || "",
           gambling_modifier: settings.gambling_modifier,
           gambling_payout: settings.gambling_payout,
@@ -117,16 +117,24 @@ module ESM
           logging_upgrade_territory: settings.logging_upgrade_territory,
           logging_path: settings.logging_path || "",
           max_payment_count: settings.max_payment_count,
-          request_thread_tick: settings.request_thread_tick,
-          request_thread_type: settings.request_thread_type == "exile",
           taxes_territory_payment: settings.territory_payment_tax / 100,
           taxes_territory_upgrade: settings.territory_upgrade_tax / 100,
           reward_player_poptabs: rewards.player_poptabs,
           reward_locker_poptabs: rewards.locker_poptabs,
           reward_respect: rewards.respect,
-          reward_items: rewards.reward_items.to_a.to_json,
-          is_premium: true # Needed for legacy v1.0 support
+          reward_items: rewards.reward_items.to_a
         )
+
+        # V2 exits
+        return if @connection.version.present?
+
+        # V1
+        @packet.function_name = "postServerInitialization"
+        @packet.is_premium = true
+        @packet.request_thread_tick = settings.request_thread_tick
+        @packet.request_thread_type = settings.request_thread_type == "exile"
+        @packet.territory_admins = territory_admins.to_json
+        @packet.reward_items = @packet.reward_items.to_json
       end
 
       def build_territory_admins
@@ -148,27 +156,31 @@ module ESM
         request =
           if @connection.version.nil?
             # V1
-            ESM::Websocket::Request.new(command_name: "post_initialization", parameters: @packet.to_h, remove_on_ignore: true)
+            ESM::Websocket::RequestV1.new(command_name: "post_initialization", parameters: @packet.to_h, remove_on_ignore: true)
           else
             # V2
-            ESM::Websocket::Request.new(executing_command: "post_initialization", parameters: @packet.to_h, remove_on_acknowledge: true)
+            ESM::Websocket::Request.new(executing_command: "post_initialization", parameters: @packet.to_h)
           end
 
         # After the server has replied to this request, notify the community and allow commands.
-        callback = lambda do |connection|
-          # Trigger a connect notification
-          ESM::Notifications.trigger("server_on_connect", server: connection.server)
-
-          # Set the connection to be available for commands
-          connection.ready = true
-        end
-
         if @connection.version.nil?
           # V1
-          request.on_reply = callback
+          request.on_reply = lambda do |connection|
+            # Trigger a connect notification
+            ESM::Notifications.trigger("server_on_connect", server: connection.server)
+
+            # Set the connection to be available for commands
+            connection.ready = true
+          end
         else
           # V2
-          request.on_acknowledgement = callback
+          request.add_callback(:after_execute) do |connection, _parameters|
+            # Trigger a connect notification
+            ESM::Notifications.trigger("server_on_connect", server: connection.server)
+
+            # Set the connection to be available for commands
+            connection.ready = true
+          end
         end
 
         # Send it to the dll, don't use `Websocket#deliver` for this since it will raise on the connection not being ready.

@@ -81,8 +81,8 @@ module ESM
     end
 
     def execute!
-      # V2 only. The server was acknowledging the request. Just update the request.
-      return request.acknowledge if request && parameters.acknowledge == true
+      # V2 only. The server has sent over an event request, attempt to run any callbacks
+      return request.handle_event(parameters._event, parameters._event_parameters) if request && parameters._event.present?
 
       # V1 only. Checks if the request should be processed
       if disregard?

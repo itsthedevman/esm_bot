@@ -3,18 +3,23 @@
 module ESM
   class Websocket
     class Request
-      attr_reader :id, :command_name, :parameters, :timeout, :metadata, :remove_on_acknowledge
+      include ESM::Callbacks
+
+      attr_reader :id, :command_name, :parameters, :timeout, :metadata
       attr_accessor :response, :connection
 
       delegate :current_user, to: :@command, allow_nil: true
 
-      def initialize(executing_command: nil, parameters: {}, timeout: 30, metadata: {}, remove_on_acknowledge: false)
+      # These callbacks correspond to events sent from the server.
+      register_callbacks :before_execute, :after_execute
+      add_callback :before_execute, :_before_execute
+
+      def initialize(executing_command: nil, parameters: {}, timeout: 30, metadata: {})
         @id = SecureRandom.uuid
         @created_at = ::Time.now
         @metadata = metadata.deep_symbolize_keys
         @parameters = parameters
         @timeout = timeout || 30
-        @remove_on_acknowledge = remove_on_acknowledge
         @acknowledged = false
         @command = nil
 
@@ -53,26 +58,20 @@ module ESM
         (::Time.now - @created_at) >= @timeout
       end
 
-      def on_acknowledgement=(callback)
-        @on_acknowledgement_callback = callback
-      end
+      def handle_event(event_name, event_parameters)
+        return if __callbacks.exclude?(event_name.to_sym)
 
-      def on_acknowledgement
-        @on_acknowledgement.call(@connection) if defined?(@on_acknowledgement)
-      end
-
-      def acknowledge
-        @acknowledged = true
-
-        # Trigger the callback
-        on_acknowledgement
-
-        # Remove the request if requested
-        @connection.remove_request(@id) if @remove_on_acknowledge
+        run_callback(event_name, @connection, event_parameters)
       end
 
       def acknowledged?
         @acknowledged
+      end
+
+      private
+
+      def _before_execute(_connection, _parameters)
+        @acknowledged = true
       end
     end
   end

@@ -23,14 +23,16 @@ module ESM
     attribute :logging_transfer, :boolean, default: true
     attribute :logging_upgrade_territory, :boolean, default: true
     attribute :max_payment_count, :integer, default: 0
-    attribute :request_thread_type, :string, default: "exile"
-    attribute :request_thread_tick, :float, default: 0.1
     attribute :territory_payment_tax, :integer, default: 0
     attribute :territory_upgrade_tax, :integer, default: 0
     attribute :territory_price_per_object, :integer, default: 10
     attribute :territory_lifetime, :integer, default: 7
     attribute :server_restart_hour, :integer, default: 3
     attribute :server_restart_min, :integer, default: 0
+
+    # V1
+    attribute :request_thread_type, :string, default: "exile"
+    attribute :request_thread_tick, :float, default: 0.1
 
     belongs_to :server
   end
