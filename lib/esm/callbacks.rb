@@ -12,24 +12,34 @@ module ESM
       def register_callbacks(*names)
         names.each { |name| __callbacks[name.to_sym] ||= [] }
       end
+
+      def add_callback(name, method = nil, &block)
+        __add_to_callback(__callbacks, name, method, &block)
+        nil
+      end
+
+      def __add_to_callback(callbacks, name, method, &block)
+        name = name.to_sym
+
+        # Check to make sure the callback is registered
+        if callbacks.keys.exclude?(name) # rubocop:disable Style/IfUnlessModifier
+          return ESM.logger.warn("#{self.class}##{__method__}") { "Attempted to register invalid callback: #{name}" }
+        end
+
+        callbacks[name.to_sym] +=
+          if block_given?
+            [block]
+          elsif method.is_a?(Proc)
+            [method]
+          else
+            [method.to_sym]
+          end
+      end
     end
 
     def add_callback(name, method = nil, &block)
       disconnect_callbacks!
-      name = name.to_sym
-
-      # Check to make sure the callback is registered
-      if __callbacks.keys.exclude?(name) # rubocop:disable Style/IfUnlessModifier
-        return ESM.logger.warn("#{self.class}##{__method__}") { "Attempted to register invalid callback: #{name}" }
-      end
-
-      __callbacks[name.to_sym] +=
-        if block_given?
-          [block]
-        else
-          [method.to_sym]
-        end
-
+      self.class.__add_to_callback(self.__callbacks, name, method, &block)
       nil
     end
 
