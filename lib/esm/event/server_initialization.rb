@@ -115,7 +115,6 @@ module ESM
           logging_reward: settings.logging_reward,
           logging_transfer: settings.logging_transfer,
           logging_upgrade_territory: settings.logging_upgrade_territory,
-          logging_path: settings.logging_path || "",
           max_payment_count: settings.max_payment_count,
           taxes_territory_payment: settings.territory_payment_tax / 100,
           taxes_territory_upgrade: settings.territory_upgrade_tax / 100,
@@ -135,6 +134,7 @@ module ESM
         @packet.request_thread_type = settings.request_thread_type == "exile"
         @packet.territory_admins = territory_admins.to_json
         @packet.reward_items = @packet.reward_items.to_json
+        @packet.logging_path = settings.logging_path || ""
       end
 
       def build_territory_admins
