@@ -159,7 +159,7 @@ module ESM
             ESM::Websocket::RequestV1.new(command_name: "post_initialization", parameters: @packet.to_h, remove_on_ignore: true)
           else
             # V2
-            ESM::Websocket::Request.new(executing_command: "post_initialization", parameters: @packet.to_h)
+            ESM::Websocket::Request.new(executing_command: "server_post_initialization", parameters: @packet.to_h)
           end
 
         # After the server has replied to this request, notify the community and allow commands.

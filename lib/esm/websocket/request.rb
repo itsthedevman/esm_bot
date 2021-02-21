@@ -5,7 +5,7 @@ module ESM
     class Request
       include ESM::Callbacks
 
-      attr_reader :id, :command_name, :parameters, :timeout, :metadata
+      attr_reader :id, :command_name, :parameters, :timeout, :metadata, :command
       attr_accessor :response, :connection
 
       delegate :current_user, to: :@command, allow_nil: true
@@ -30,7 +30,7 @@ module ESM
           # If this request was triggered by a user, set their data so its accessible on the server
           if executing_command.current_user.present?
             user = executing_command.current_user
-            @metadata[:user_id] ||= user.id
+            @metadata[:user_id] ||= user.id.to_s
             @metadata[:user_name] ||= user.username
             @metadata[:user_mention] ||= user.mention
             @metadata[:user_steam_uid] ||= user.steam_uid
@@ -45,7 +45,7 @@ module ESM
         {
           id: @id,
           command_name: @command_name,
-          parameters: @parameters,
+          parameters: { type: @command_name.camelize, content: @parameters },
           metadata: @metadata
         }
       end
