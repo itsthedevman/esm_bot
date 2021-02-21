@@ -20,6 +20,7 @@ module ESM
 
       def self.inherited(child_class)
         child_class.reset_variables!
+        super
       end
 
       def self.reset_variables!
@@ -144,7 +145,7 @@ module ESM
         @usage ||= "#{distinct} #{@arguments.map(&:to_s).join(" ")}"
       end
 
-      # Dont't memoize this, prefix can change based on when its called
+      # Don't memoize this, prefix can change based on when its called
       def distinct
         "#{prefix}#{@name}"
       end
@@ -308,23 +309,31 @@ module ESM
 
       # Send a request to the DLL
       #
-      # @param command_name [String, nil] The name of the command to send to the DLL. Default: self.name
-      def deliver!(command_name: nil, timeout: 30, **parameters)
+      # @param command_name [String, nil] V1: The name of the command to send to the DLL. Default: self.name.
+      def deliver!(command_name: self.name, timeout: 30, metadata: {}, **parameters)
         raise ESM::Exception::CheckFailure, "Command does not have an associated server" if target_server.nil?
 
         # Build the request
-        request = ESM::Websocket::Request.new(
-          command: self,
-          command_name: command_name,
-          user: current_user,
-          channel: current_channel,
-          parameters: parameters,
-          timeout: timeout
-        )
+        request =
+          if target_server.version.nil?
+            # V1
+            ESM::Websocket::RequestV1.new(
+              command: self,
+              command_name: command_name,
+              user: current_user,
+              channel: current_channel,
+              parameters: parameters,
+              timeout: timeout
+            )
+          else
+            # V2
+            ESM::Websocket::Request.new(executing_command: self, parameters: parameters, timeout: timeout, metadata: metadata)
+          end
 
         # Send it to the dll
         ESM::Websocket.deliver!(target_server.server_id, request)
       end
+      alias_method :send_to_a3, :deliver!
 
       # Convenience method for replying back to the event's channel
       def reply(message)
