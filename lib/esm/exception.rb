@@ -37,8 +37,26 @@ module ESM
     # Generic exception for any checks
     class CheckFailure < DataError; end
 
-    # If a request/response from the server is invalid
-    class InvalidServerCommand; end
+    # Handles an error code response from the extension
+    class ExtensionError < Error
+      def initialize(error_code)
+        @error_code = error_code
+
+        super("")
+      end
+
+      # Translates the underlying error code.
+      # In normal workflow, this method will be passed the following arguments:
+      # @param user [String] The mention for the user that ran the command
+      # @param server_id [String] The ID of the server the command was ran on
+      def translate(**args)
+        I18n.t(
+          "exceptions.extension.#{@error_code}",
+          default: I18n.t("exceptions.extension.default", error_code: @error_code),
+          **args
+        )
+      end
+    end
 
     # Check failure, but no message is sent
     class CheckFailureNoMessage < Error

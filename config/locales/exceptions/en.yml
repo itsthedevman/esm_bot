@@ -14,6 +14,9 @@ en:
       ```%{channel_name}```
       **Message:**
       ```%{message}```
+    extension:
+      default: "Error code `%{error_code}` is not registered as a valid locale. If you are trying to send a custom error message, please use `ESM_fnc_respondWithError`"
+      account_does_not_exist: "Hey %{user}, you need to join `%{server_id}` first before you can run **any** commands on it."
   command_errors:
     # base
     text_only: "Hey %{user}, this command can only be used in a Discord server's **text channel**.\n\n__I will not be able to process your request in this channel__"

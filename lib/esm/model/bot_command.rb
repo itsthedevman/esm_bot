@@ -9,6 +9,8 @@ module ESM
       discord_message_channel
     ].freeze
 
+    delegate :error_code, to: :parameters, allow_nil: true
+
     def initialize(connection:, received_data:)
       @connection = connection
       @data = received_data
@@ -50,8 +52,14 @@ module ESM
       @data.ignore || @data.returned || false
     end
 
-    def error?
-      @error_message.presence || false
+    # V1
+    def error_message?
+      self.error_message.present? || false
+    end
+
+    # V2
+    def error_code?
+      self.error_code.present?
     end
 
     # Checks if the request should be removed on the first ignore
@@ -67,7 +75,7 @@ module ESM
         # V1 errors from the SQF
         return self.parameters.first.error if self.parameters.is_a?(Array) && self.parameters&.first&.error&.present?
 
-        # This is how 2.0.0 handles errors
+        # V2 This is a custom error message that can't be localized
         self.parameters.error_message
       end.call
     end
@@ -129,13 +137,28 @@ module ESM
       ESM::Notifications.trigger("command_from_server", received_command: self)
 
       # We have an error from the DLL
-      raise ESM::Exception::CheckFailure, self.error_message if self.error?
+      raise ESM::Exception::CheckFailure, self.error_message if self.error_message?
+
+      # V2: A error code that corresponds with a locale entry
+      raise ESM::Exception::ExtensionError, self.error_code if self.error_code?
 
       # Execute the command
       request.command.execute(self.parameters)
     rescue ESM::Exception::CheckFailure => e
       # This catches if the server reported that the command failed
-      on_command_error
+      on_command_error(e)
+    rescue ESM::Exception::ExtensionError => e
+      command = request.command
+
+      command.reply(
+        ESM::Embed.build(
+          :error,
+          description: e.translate(
+            user: command.current_user.mention,
+            server_id: @connection.server.server_id
+          )
+        )
+      )
     ensure
       # Make sure to remove the request no matter what
       remove_request
@@ -149,6 +172,21 @@ module ESM
         server: @connection.server,
         parameters: self.parameters.is_a?(Array) ? self.parameters.first : self.parameters
       ).run!
+    end
+
+    # Reports the error back to the user so they know the command failed
+    def on_command_error(error)
+      return if request.current_user.nil?
+
+      # Reset the current cooldown
+      request.command.current_cooldown.reset!
+
+      # V1: Some errors from the dll already have a mention in them...
+      error = "#{request.current_user.mention}, #{error}" if !error.start_with?("<")
+
+      # Send the error message
+      embed = ESM::Embed.build(:error, description: error)
+      request.command.reply(embed)
     end
 
     # Goes over every item in the parameters and checks to see if an item needs converted to a hash
@@ -221,21 +259,6 @@ module ESM
 
       # There were duplicates found but the input will still be marked valid since it can be converted
       true
-    end
-
-    # Reports the error back to the user so they know the command failed
-    def on_command_error(error)
-      return if request.current_user.nil?
-
-      # Reset the current cooldown
-      request.command.current_cooldown.reset!
-
-      # V1: Some errors from the dll already have a mention in them...
-      error = "#{request.current_user.mention}, #{error}" if !error.start_with?("<")
-
-      # Send the error message
-      embed = ESM::Embed.build(:error, description: error)
-      request.command.reply(embed)
     end
   end
 end
