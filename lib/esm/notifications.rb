@@ -3,6 +3,9 @@
 module ESM
   class Notifications
     EVENTS = %w[
+      info
+      warn
+      error
       ready
       argument_parse
       server_on_connect
@@ -30,6 +33,54 @@ module ESM
     def self.subscribe
       EVENTS.each do |event|
         ActiveSupport::Notifications.subscribe("#{event}.esm", &method(event))
+      end
+    end
+
+    def self.info(name, _start, _finish, _id, payload)
+      if payload.key?(:class) && payload.key?(:method)
+        name = "#{payload[:class]}##{payload[:method]}"
+
+        payload.delete(:class)
+        payload.delete(:method)
+      end
+
+      ESM.logger.info(name) do
+        JSON.pretty_generate(payload)
+      end
+    end
+
+    def self.warn(name, _start, _finish, _id, payload)
+      if payload.key?(:class) && payload.key?(:method)
+        name = "#{payload[:class]}##{payload[:method]}"
+
+        payload.delete(:class)
+        payload.delete(:method)
+      end
+
+      ESM.logger.warn(name) do
+        JSON.pretty_generate(payload)
+      end
+    end
+
+    def self.error(name, _start, _finish, _id, payload)
+      if payload[:error].is_a?(StandardError)
+        e = payload[:error].dup
+
+        payload[:error] = {
+          message: e.message,
+          backtrace: e.backtrace[0..10]
+        }
+      end
+
+      if payload.key?(:class) && payload.key?(:method)
+        name = "#{payload[:class]}##{payload[:method]}"
+
+        payload.delete(:class)
+        payload.delete(:method)
+      end
+
+      ESM.logger.error(name) do
+        JSON.pretty_generate(payload)
       end
     end
 
