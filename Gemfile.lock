@@ -16,7 +16,6 @@ PATH
       otr-activerecord
       pg
       pry
-      pry-nav
       puma
       rake
       sinatra
@@ -197,8 +196,6 @@ GEM
     pry (0.12.2)
       coderay (~> 1.1.0)
       method_source (~> 0.9.0)
-    pry-nav (0.3.0)
-      pry (>= 0.9.10, < 0.13.0)
     puma (5.1.1)
       nio4r (~> 2.0)
     racc (1.5.2)
