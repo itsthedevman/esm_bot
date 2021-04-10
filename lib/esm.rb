@@ -45,11 +45,12 @@ Dotenv.load(".env.prod") if ENV["ESM_ENV"] == "production"
 
 module ESM
   class << self
-    attr_reader :bot, :config, :logger, :env
+    attr_reader :bot, :config, :logger, :env, :arma_class_lookup
   end
 
   def self.run!
     load_i18n
+    load_a3_class_names
     initialize_steam
     initialize_logger
 
@@ -75,6 +76,10 @@ module ESM
   def self.load_i18n
     I18n.load_path += Dir[File.expand_path("config/locales/**") + "/*.yml"]
     I18n.reload!
+  end
+
+  def self.load_a3_class_names
+    @arma_class_lookup = ESM::Service::ArmaClassLookup.new
   end
 
   def self.initialize_steam

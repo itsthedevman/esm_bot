@@ -4,8 +4,7 @@ module ESM
   class Server < ApplicationRecord
     before_create :generate_key
     after_create :create_server_setting
-    after_create :create_server_reward
-    after_initialize :load_server_connection
+    after_create :create_default_reward
 
     attribute :server_id, :string
     attribute :community_id, :integer
@@ -25,13 +24,13 @@ module ESM
     has_many :cooldowns, dependent: :destroy
     has_many :logs, dependent: :destroy
     has_many :server_mods, dependent: :destroy
-    has_one :server_reward, dependent: :destroy
+    has_many :server_rewards, dependent: :destroy
     has_one :server_setting, dependent: :destroy
     has_many :territories, dependent: :destroy
     has_many :user_gamble_stats, dependent: :destroy
     has_many :user_notification_preferences, dependent: :destroy
 
-    delegate :version, to: :@connection
+    delegate :version, to: :server_connection
 
     def self.find_by_server_id(id)
       self.order(:server_id).where(server_id: id).first
@@ -98,14 +97,16 @@ module ESM
       self.server_setting = ESM::ServerSetting.create!(server_id: self.id)
     end
 
-    def create_server_reward
-      return if self.server_reward.present?
-
-      self.server_reward = ESM::ServerReward.create!(server_id: self.id)
+    def create_default_reward
+      self.server_rewards.create!(server_id: self.id)
     end
 
-    def load_server_connection
-      @connection = ESM::Websocket.connections[self.server_id]
+    def server_connection
+      @server_connection ||= lambda do
+        return if ESM::Websocket.connections.blank?
+
+        ESM::Websocket.connections[self.server_id]
+      end.call
     end
   end
 end

@@ -29,6 +29,11 @@ loader.eager_load
 # Start the bot
 ESM.run!
 
+# Start the arma server, this will execute the build script
+ArmaServer.start!
+
+return
+
 # Enable discordrb logging
 Discordrb::LOGGER.debug = false
 

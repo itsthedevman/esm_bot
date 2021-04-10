@@ -79,14 +79,45 @@ ESM::ServerMod.create!(
   mod_required: false
 )
 
-ESM::ServerReward.create!(
+server.server_rewards.where(reward_id: nil).first.update!(
   server_id: server.id,
+  reward_id: nil,
   reward_items: {
-    "Exile_Item_EMRE": 1
+    Exile_Item_WoodDoorKit: 1,
+    Exile_Item_WoodWallKit: 3,
+    Exile_Item_WoodFloorKit: 2
   },
-  player_poptabs: 500,
-  locker_poptabs: 1000,
-  respect: 250
+  reward_vehicles: [
+    {
+      class_name: "Exile_Car_Hatchback_Beige",
+      # pincode: "1234",
+      spawn_location: "nearby"
+    },
+    {
+      class_name: "Exile_Chopper_Huron_Black",
+      # pincode: "4321",
+      spawn_location: "virtual_garage"
+    }
+  ],
+  player_poptabs: 12_345,
+  locker_poptabs: 98_765,
+  respect: 1
+)
+
+server.server_rewards.create!(
+  server_id: server.id,
+  reward_id: "hunter",
+  reward_items: {},
+  reward_vehicles: [
+    {
+      class_name: "Exile_Car_Hunter",
+      pincode: "1234",
+      spawn_location: "virtual_garage"
+    }
+  ],
+  player_poptabs: 0,
+  locker_poptabs: 0,
+  respect: 0
 )
 
 ESM::UserNotificationPreference.create!(user_id: user.id, server_id: server.id)

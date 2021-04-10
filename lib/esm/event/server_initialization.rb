@@ -91,7 +91,6 @@ module ESM
 
       def build_settings_packet
         settings = @server.server_setting
-        rewards = @server.server_reward
         territory_admins = build_territory_admins
 
         @packet = OpenStruct.new(
@@ -117,17 +116,15 @@ module ESM
           logging_upgrade_territory: settings.logging_upgrade_territory,
           max_payment_count: settings.max_payment_count,
           taxes_territory_payment: settings.territory_payment_tax / 100,
-          taxes_territory_upgrade: settings.territory_upgrade_tax / 100,
-          reward_player_poptabs: rewards.player_poptabs,
-          reward_locker_poptabs: rewards.locker_poptabs,
-          reward_respect: rewards.respect,
-          reward_items: rewards.reward_items.to_a
+          taxes_territory_upgrade: settings.territory_upgrade_tax / 100
         )
 
         # V2 exits
         return if @connection.version.present?
 
         # V1
+        rewards = @server.server_rewards.default
+
         @packet.function_name = "postServerInitialization"
         @packet.is_premium = true
         @packet.request_thread_tick = settings.request_thread_tick
@@ -135,6 +132,10 @@ module ESM
         @packet.territory_admins = territory_admins.to_json
         @packet.reward_items = @packet.reward_items.to_json
         @packet.logging_path = settings.logging_path || ""
+        @packet.reward_player_poptabs = rewards.player_poptabs
+        @packet.reward_locker_poptabs = rewards.locker_poptabs
+        @packet.reward_respect = rewards.respect
+        @packet.reward_items = rewards.reward_items.to_a
       end
 
       def build_territory_admins

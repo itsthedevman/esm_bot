@@ -17,6 +17,7 @@ en:
     extension:
       default: "Error code `%{error_code}` is not registered as a valid locale. If you are trying to send a custom error message, please use `ESM_fnc_respondWithError`"
       account_does_not_exist: "Hey %{user}, you need to join `%{server_id}` first before you can run **any** commands on it."
+      null_player: "Hey %{user}, you need to be spawned and alive on `%{server_id}` before you can use this command."
   command_errors:
     # base
     text_only: "Hey %{user}, this command can only be used in a Discord server's **text channel**.\n\n__I will not be able to process your request in this channel__"
@@ -95,6 +96,7 @@ en:
 
     # reward
     no_reward_items: "Hey %{user}, it looks like this server does not have any rewards for you to redeem."
+    incorrect_reward_id: "I'm sorry %{user}, I was unable to find a reward with the ID of `%{reward_id}`"
 
     # info
     no_target: "Hey %{user}, you must provide either a territory ID, Discord ID, steam uid, or @user discord mention."

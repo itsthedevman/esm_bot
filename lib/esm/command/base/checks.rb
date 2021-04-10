@@ -113,6 +113,7 @@ module ESM
 
         def cooldown!
           return if ESM.env.test? && ESM::Test.skip_cooldown
+          return if @skipped_checks.include?(:cooldown)
           return if !@command.on_cooldown?
 
           cooldown = @command.current_cooldown

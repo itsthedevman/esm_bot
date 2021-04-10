@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_09_19_022121) do
+ActiveRecord::Schema.define(version: 2021_02_22_002045) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -182,7 +182,12 @@ ActiveRecord::Schema.define(version: 2019_09_19_022121) do
     t.bigint "locker_poptabs", default: 0
     t.bigint "respect", default: 0
     t.datetime "deleted_at"
+    t.string "reward_id"
+    t.json "reward_vehicles"
+    t.integer "cooldown_quantity"
+    t.string "cooldown_type"
     t.index ["deleted_at"], name: "index_server_rewards_on_deleted_at"
+    t.index ["server_id", "reward_id"], name: "index_server_rewards_on_server_id_and_reward_id", unique: true
     t.index ["server_id"], name: "index_server_rewards_on_server_id"
   end
 
