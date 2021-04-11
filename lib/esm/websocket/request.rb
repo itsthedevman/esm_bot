@@ -3,50 +3,47 @@
 module ESM
   class Websocket
     class Request
-      include ESM::Callbacks
+      attr_reader :id, :user, :command, :channel, :remove_on_ignore
+      attr_reader :command_name, :user_info if ESM.env.test?
+      attr_accessor :response
 
-      attr_reader :id, :command_name, :parameters, :timeout, :metadata, :command
-      attr_accessor :response, :connection
+      # command: nil, user: nil, channel: nil, parameters: nil, timeout: 30, command_name: nil
+      def initialize(**args)
+        @command = args[:command]
+        @user = args[:user]
 
-      delegate :current_user, to: :@command, allow_nil: true
-
-      # These callbacks correspond to events sent from the server.
-      register_callbacks :before_execute, :after_execute
-      add_callback :before_execute, :_before_execute
-
-      def initialize(executing_command: nil, parameters: {}, timeout: 30, metadata: {})
-        @id = SecureRandom.uuid
-        @created_at = ::Time.now
-        @metadata = metadata.deep_symbolize_keys
-        @parameters = parameters
-        @timeout = timeout || 30
-        @acknowledged = false
-        @command = nil
-
-        if executing_command.present? && executing_command.is_a?(ESM::Command::Base)
-          @command = executing_command
-          @command_name = executing_command.name
-
-          # If this request was triggered by a user, set their data so its accessible on the server
-          if executing_command.current_user.present?
-            user = executing_command.current_user
-            @metadata[:user_id] ||= user.id.to_s
-            @metadata[:user_name] ||= user.username
-            @metadata[:user_mention] ||= user.mention
-            @metadata[:user_steam_uid] ||= user.steam_uid
+        # String for direct calls, Otherwise its a command
+        @command_name =
+          if args[:command_name].present?
+            args[:command_name]
+          else
+            @command.name
           end
-        else
-          # executing_command is now a string
-          @command_name = executing_command
-        end
+
+        @user_info =
+          if @user.nil?
+            ["", ""]
+          else
+            [@user.mention, @user.id]
+          end
+
+        @channel = args[:channel]
+        @parameters = args[:parameters]
+        @id = SecureRandom.uuid
+        @timeout = args[:timeout] || 30
+        @created_at = ::Time.now
+
+        # This controls if the request should be removed on the first reply back from Arma.
+        @remove_on_ignore = args[:remove_on_ignore] || false
       end
 
+      # The DLL requires it to be this format
       def to_h
         {
-          id: @id,
-          command_name: @command_name,
-          parameters: { type: @command_name.camelize, content: @parameters },
-          metadata: @metadata
+          "command" => @command_name,
+          "commandID" => @id,
+          "authorInfo" => @user_info,
+          "parameters" => @parameters
         }
       end
 
@@ -58,20 +55,12 @@ module ESM
         (::Time.now - @created_at) >= @timeout
       end
 
-      def handle_event(event_name, event_parameters)
-        return if __callbacks.exclude?(event_name.to_sym)
-
-        run_callback(event_name, @connection, event_parameters)
+      def on_reply=(callback)
+        @on_reply_callback = callback
       end
 
-      def acknowledged?
-        @acknowledged
-      end
-
-      private
-
-      def _before_execute(_connection, _parameters)
-        @acknowledged = true
+      def on_reply(connection)
+        @on_reply_callback.call(connection) if defined?(@on_reply_callback)
       end
     end
   end
