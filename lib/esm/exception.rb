@@ -37,6 +37,9 @@ module ESM
     # Generic exception for any checks
     class CheckFailure < DataError; end
 
+    # Raised when the address is already in use. The message is the IP and port
+    class AddressInUse < Error; end
+
     # Handles an error code response from the extension
     class ExtensionError < Error
       def initialize(error_code)
