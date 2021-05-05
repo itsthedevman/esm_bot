@@ -10,6 +10,8 @@ class String
 
   def to_ostruct
     JSON.parse(self, object_class: OpenStruct)
+  rescue JSON::ParserError
+    nil
   end
 
   def to_h
