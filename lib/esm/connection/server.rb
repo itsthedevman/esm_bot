@@ -3,18 +3,12 @@
 module ESM
   class Connection
     class Server
-      include ESM::Callbacks
-
-      # These callbacks correspond to events sent from the TCPServer
-      register_callbacks :on_open, :on_close, :on_ping, :on_pong, :on_message
-
       ################################
       # Class methods
       ################################
 
       def self.run!
         @instance = self.new
-        ESM::Connection::Manager.init
       end
 
       def self.stop!
@@ -30,10 +24,10 @@ module ESM
       attr_reader :server
 
       def initialize
-        @workers = []
+        @connections = ESM::Connection::Manager.new
         Rutie.new(:tcp_server, lib_path: "crates/tcp_server/target/release").init('esm_tcp_server', ESM.root)
 
-        # These are calls to the tcp_server extension.
+        # These are calls to crates/tcp_server
         @server = ::ESM::TCPServer.new(self)
         @server.listen(ENV["CONNECTION_SERVER_PORT"])
         @server.process_requests
@@ -48,13 +42,20 @@ module ESM
       def stop_server
         return if @server.nil?
 
-        @workers.each { |worker| Thread.kill(worker) }
         @server.stop
       end
 
-      def on_open(resource_id)
-        ESM.logger.debug("#{self.class}##{__method__}") { "on open #{resource_id}" }
-        @server.send_message(resource_id, "Hey yo!")
+      def close(resource_id)
+        connection = @connections.find_by_resource_id(resource_id)
+        connection.close
+      end
+
+      def on_connected(resource_id)
+        # Track this connection. Drop it if it never authenticates.
+        connection = ESM::Connection.new(self, resource_id)
+        @connections.add_unauthenticated(connection)
+
+        ESM::Notifications.trigger("info", class: self.class, method: __method__, resource_id: resource_id)
       end
     end
   end

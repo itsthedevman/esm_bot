@@ -10,7 +10,7 @@ use message_io::{
     network::{Endpoint, ResourceId},
     node::{self, NodeHandler, NodeListener, NodeTask},
 };
-use rutie::{AnyObject, Integer, Module, NilClass, Object, RString, Thread, VM};
+use rutie::{AnyException, AnyObject, Integer, Module, NilClass, Object, RString, Thread, VM};
 use std::{sync::{RwLock, RwLockReadGuard, RwLockWriteGuard}, thread};
 use std::{
     collections::HashMap,
@@ -34,12 +34,12 @@ lazy_static!(
 enum Event {
     OnMessage(Endpoint, Vec<u8>),
     OnConnected(Endpoint, ResourceId),
-    OnDisconnected(Endpoint),
+    OnDisconnect(Endpoint),
 }
 
 pub struct Server {
     // An instance of ESM::Connection::Server
-    instance: Mutex<AnyObject>,
+    instance: RwLock<AnyObject>,
     handler: RwLock<NodeHandler<()>>,
     endpoints: RwLock<HashMap<usize, Endpoint>>,
     task: Mutex<Option<NodeTask>>,
@@ -49,7 +49,7 @@ impl Server {
     fn new(instance: AnyObject) -> Self {
         let (handler, _) = node::split::<()>();
         Server {
-            instance: Mutex::new(instance),
+            instance: RwLock::new(instance),
             endpoints: RwLock::new(HashMap::new()),
             handler: RwLock::new(handler),
             task: Mutex::new(None)
@@ -64,7 +64,7 @@ impl Server {
         // Start listening
         match handler.network().listen(Transport::FramedTcp, &address) {
             Ok((_resource_id, _real_addr)) => {
-                debug!("[Server#listen] Listening on port {}", port);
+                debug!("[server#listen] Listening on port {}", port);
             },
             Err(_) => {
                 return VM::raise(
@@ -86,7 +86,7 @@ impl Server {
                     match SENDER.read().unwrap().send(Event::OnConnected(endpoint, resource_id)) {
                         Ok(_) => {},
                         Err(error) => {
-                            error!("[Server#listen] {} Failed to send OnConnected event. Error: {:?}", resource_id, error);
+                            error!("[server#listen] {} Failed to send OnConnected event. Error: {:?}", resource_id, error);
                         }
                     }
                 }
@@ -94,15 +94,15 @@ impl Server {
                     match SENDER.read().unwrap().send(Event::OnMessage(endpoint, data.to_vec())) {
                         Ok(_) => {},
                         Err(error) => {
-                            error!("[Server#listen] {} Failed to send OnConnected event. Error: {:?}", endpoint.resource_id(), error);
+                            error!("[server#listen] {} Failed to send OnConnected event. Error: {:?}", endpoint.resource_id(), error);
                         }
                     }
                 }
                 NetEvent::Disconnected(endpoint) => {
-                    match SENDER.read().unwrap().send(Event::OnDisconnected(endpoint)) {
+                    match SENDER.read().unwrap().send(Event::OnDisconnect(endpoint)) {
                         Ok(_) => {},
                         Err(error) => {
-                            error!("[Server#listen] {} Failed to send OnDisconnected event. Error: {:?}", endpoint.resource_id(), error);
+                            error!("[server#listen] {} Failed to send OnDisconnected event. Error: {:?}", endpoint.resource_id(), error);
                         }
                     }
                 }
@@ -117,16 +117,17 @@ impl Server {
             let event = match RECEIVER.read().unwrap().recv() {
                 Ok(event) => event,
                 Err(error) => {
-                    error!("[Server#process_requests] Failed to receive message. Error: {:?}", error);
+                    error!("[server#process_requests] Failed to receive message. Error: {:?}", error);
                     continue;
                 }
             };
 
-            debug!("[Server#process_requests] Incoming event: {:?}", event);
+            trace!("[server#process_requests] Incoming event: {:?}", event);
 
             match event {
                 Event::OnConnected(endpoint, resource_id) => self.on_connected(endpoint, resource_id),
-                _ => {}
+                Event::OnMessage(endpoint, data) => self.on_message(endpoint, data),
+                Event::OnDisconnect(endpoint) => self.on_disconnect(endpoint),
             }
         };
     }
@@ -143,7 +144,7 @@ impl Server {
                         continue;
                     }
 
-                    error!("[Server#endpoint] Failed to gain read lock. Reason: {:?}", e);
+                    error!("[server#endpoint] Failed to gain read lock. Reason: {:?}", e);
                     return None;
                 }
             }
@@ -164,7 +165,7 @@ impl Server {
                         continue;
                     }
 
-                    error!("[Server#endpoint_mut] Failed to gain write lock. Reason: {:?}", e);
+                    error!("[server#endpoint_mut] Failed to gain write lock. Reason: {:?}", e);
                     return None;
                 }
             }
@@ -185,7 +186,7 @@ impl Server {
                         continue;
                     }
 
-                    error!("[Server#handler] Failed to gain read lock. Reason: {:?}", e);
+                    error!("[server#handler] Failed to gain read lock. Reason: {:?}", e);
                     return None;
                 }
             }
@@ -194,7 +195,6 @@ impl Server {
         Some(handler)
     }
 
-    // Called from TCPServer in method!. Rust thinks it isn't being used.
     fn send_message(&self, resource_id: i64, message: String) {
         // Retrieve the connection
         let endpoints = match self.endpoints() {
@@ -221,15 +221,10 @@ impl Server {
             None => return,
         };
 
-        debug!("[Server#send_message] Sending message: {}", message);
+        debug!("[server#send_message] Sending message: {}", message);
 
         handler.network().send(*endpoint, message.as_bytes());
     }
-
-    // fn stop(&self) {
-    //     self.handler.unwrap().stop()
-    // }
-
 
     fn remove(&self, resource_id: ResourceId) -> bool {
         let handler = match self.handler() {
@@ -248,7 +243,7 @@ impl Server {
         match endpoints.remove(&adapter_id) {
             Some(_) => (),
             None => {
-                warn!("[Server#remove] R:{} Endpoint already remove", resource_id);
+                warn!("[server#remove] R:{} Endpoint already remove", resource_id);
                 return true;
             },
         };
@@ -258,7 +253,7 @@ impl Server {
 
     fn on_connected(&self, endpoint: Endpoint, resource_id: ResourceId) {
         debug!(
-            "[Server#on_connected] {} Incoming connection with address {}",
+            "[server#on_connected] {} Incoming connection with address {}",
             resource_id,
             endpoint.addr()
         );
@@ -274,7 +269,7 @@ impl Server {
                 // Release the lock this scope owns so the remove can lock it.
                 drop(endpoints);
 
-                debug!("[Server#on_connected] {} Endpoint already connected", adapter_id);
+                debug!("[server#on_connected] {} Endpoint already connected", adapter_id);
                 println!("Suc: {}", self.remove(resource_id));
                 return;
             }
@@ -283,26 +278,47 @@ impl Server {
 
         // Store the connection so it can be retrieved later
         endpoints.insert(adapter_id, endpoint);
-        debug!("[Server#on_connected] {} Connection added", resource_id);
+        trace!("[server#on_connected] {} Connection added", resource_id);
 
-        // We're done with it, release it.
+        // We no longer need write access, release it so other threads can gain read access
         drop(endpoints);
 
-        // Inform Ruby of a new connection
-        let result = self.instance.lock().unwrap().protect_send(
-            "on_open",
-            &[Integer::new(resource_id.adapter_id() as i64).to_any_object()],
-        );
-
-        match result {
-            Ok(_) => (),
+        // Inform the bot of a new connection
+        let result = match self.instance.read() {
+            Ok(instance) => {
+                instance.protect_send(
+                    "on_connected",
+                    &[Integer::new(resource_id.adapter_id() as i64).to_any_object()],
+                )
+            },
             Err(error) => {
                 error!(
-                    "[Server#on_connected] {} Failed to call `on_open`. Error: {:?}",
+                    "[server#on_connected] {} Failed to gain read lock on instance. Error: {:?}",
+                    resource_id, error
+                );
+                return;
+            }
+        };
+
+        match result {
+            Ok(_) => {
+                debug!("[server#on_connected] {} has connected", resource_id);
+            },
+            Err(error) => {
+                error!(
+                    "[server#on_connected] {} Failed to call `on_open`. Error: {:?}",
                     resource_id, error
                 );
             }
         }
+    }
+
+    fn on_message(&self, endpoint: Endpoint, data: Vec<u8>) {
+        debug!("{}", String::from_utf8_lossy(&data));
+    }
+
+    fn on_disconnect(&self, endpoint: Endpoint) {
+
     }
 }
 
