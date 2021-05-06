@@ -3,7 +3,7 @@
 module ESM
   class Connection
     class Manager
-      ManagedConnection = Struct.new(:server_id, :connection, :last_checked_at) do
+      ManagedConnection = Struct.new(:connection, :last_checked_at) do
         delegate :close, :alive?, :authenticated?, to: :connection, allow_nil: true
 
         def needs_checked?
@@ -19,58 +19,74 @@ module ESM
       end
 
       def initialize
-        # An array of any connection that hasn't provided a handshake
-        # Connections in this array will not stay for very long. They should either authenticate or they'll be dropped
+        # Lookup tables of connections
+        @resource_ids = {}
+        @server_ids = {}
+
+        # Contains ResourceIDs (integers)
         @unauthenticated = []
+        @authenticated = []
 
-        # A hash with the key of a server ID and the value of the connection. Connections in this hash have been authenticated and associated with a server
-        @authenticated = {}
-
-        # @check_thread =
-        #   Thread.new do
-        #     loop do
-        #       check_connections
-        #       sleep(ESM.config.loops.connection_manager.check_every)
-        #     end
-        #   end
+        @check_thread =
+          Thread.new do
+            loop do
+              check_connections
+              sleep(ESM.config.loops.connection_manager.check_every)
+            end
+          end
       end
 
-      def add_unauthenticated(connection)
-        @unauthenticated << ManagedConnection.new(nil, connection, ::Time.current)
+      def add_unauthenticated(resource_id, connection)
+        connection = ManagedConnection.new(connection, ::Time.current)
+        @resource_ids[resource_id] = connection
+        @unauthenticated << resource_id
       end
 
-      def associate(server_id, connection)
-        # Remove the managed_connection from the unauthenticated and move it to the authenticated
-        managed_connection = @unauthenticated.reject! { |managed_conn| managed_conn.connection.equal?(connection) }.first
+      def associate(resource_id, server_id)
+        if !@unauthenticated.include?(resource_id)
+          ESM::Notifications.trigger(
+            "error",
+            class: self.class,
+            method: __method__,
+            resource_id: resource_id,
+            server_id: server_id,
+            message: "[BUG] Already associated. Why is this being called again?"
+          )
+
+          return
+        end
+
+        managed_connection = @resource_ids[resource_id]
         return if managed_connection.blank?
 
-        managed_connection.server_id = server_id
+        # Associate the server_id with the managed connection
+        @server_ids[server_id] = managed_connection
 
-        # Associate the server_id and the resource_id
-        @resource_ids[connection.resource_id] = server_id
-
-        # Associate the server_id to the managed connection
-        @authenticated[server_id] = managed_connection
+        # Mark that this resource has been authenticated
+        @unauthenticated.delete(resource_id)
+        @authenticated << resource_id
       end
 
       def find_by_server_id(server_id)
-        return if !@authenticated.key?(server_id)
+        managed_connection = @server_ids[server_id]
+        return if managed_connection.nil?
 
-        @authenticated[server_id].connection
+        managed_connection.connection
       end
 
       def find_by_resource_id(resource_id)
-        server_id = @resource_ids[resource_id]
-        return if server_id.nil?
+        managed_connection = @resource_ids[resource_id]
+        return if managed_connection.nil?
 
-        self.find_by_server_id(server_id)
+        managed_connection.connection
       end
 
       private
 
       def check_connections
         # Check to see if the unauthenticated have authenticated yet. Drop them if they haven't
-        @unauthenticated.each do |managed_connection|
+        @unauthenticated.each do |resource_id|
+          managed_connection = self.find_by_resource_id(resource_id)
           next if !managed_connection.needs_checked?
           next if managed_connection.authenticated?
 
@@ -80,7 +96,8 @@ module ESM
         end
 
         # Check to see if the authenticated are still connected. Drop the connection if it's dead.
-        @authenticated.each do |server_id, managed_connection|
+        @authenticated.each do |resource_id|
+          managed_connection = self.find_by_resource_id(resource_id)
           next if !managed_connection.needs_checked?
           next if managed_connection.alive?
 

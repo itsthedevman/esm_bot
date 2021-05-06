@@ -17,11 +17,17 @@ module ESM
         @instance.stop_server
       end
 
+      def self.connections
+        return if @instance.nil?
+
+        @instance.connections
+      end
+
       ################################
       # Instance methods
       ################################
 
-      attr_reader :server
+      attr_reader :server, :connections
 
       def initialize
         @connections = ESM::Connection::Manager.new
@@ -30,7 +36,7 @@ module ESM
         # These are calls to crates/tcp_server
         @server = ::ESM::TCPServer.new(self)
         @server.listen(ENV["CONNECTION_SERVER_PORT"])
-        @server.process_requests
+        @thread = Thread.new { @server.process_requests }
       end
 
       def send_message(server_id, message)
@@ -52,7 +58,7 @@ module ESM
 
       # Authenticates the message.
       # @raises ESM::Exception::FailedAuthentication
-      def authenticate!(connection, resource_id, key)
+      def authenticate!(connection, key)
         raise ESM::Exception::FailedAuthentication, "Missing authorization key" if key.blank?
 
         server = ESM::Server.where(server_key: key).first
@@ -62,18 +68,18 @@ module ESM
         discord_server = server.community.discord_server
         raise ESM::Exception::FailedAuthentication, "Unable to find Discord Server" if discord_server.nil?
 
-        connection.status = :authenticated
         connection.server = server
-
-        ESM::Notifications.trigger("info", class: self.class, method: __method__, resource_id: resource_id, server: server)
+        connection.run_callback("on_open") if !connection.authenticated?
       end
 
       def on_connected(resource_id)
         # Track this connection. Drop it if it never authenticates.
         connection = ESM::Connection.new(self, resource_id)
-        @connections.add_unauthenticated(connection)
+        @connections.add_unauthenticated(resource_id, connection)
 
         ESM::Notifications.trigger("info", class: self.class, method: __method__, resource_id: resource_id)
+      rescue StandardError => e
+        ESM::Notifications.trigger("error", class: self.class, method: __method__, resource_id: resource_id, error: e)
       end
 
       def on_message(resource_id, client_message)
@@ -81,14 +87,14 @@ module ESM
         connection = @connections.find_by_resource_id(resource_id)
 
         # Authenticate the message. Every message has to have the key
-        authenticate!(connection, resource_id, client_message.key)
+        authenticate!(connection, client_message.key)
 
         # Run the callbacks
         connection.run_callback("on_message", client_message)
-
-        ESM::Notifications.trigger("info", class: self.class, method: __method__, resource_id: resource_id, message: client_message)
       rescue ESM::Exception::FailedAuthentication => _e
         self.close(resource_id)
+      rescue StandardError => e
+        ESM::Notifications.trigger("error", class: self.class, method: __method__, resource_id: resource_id, error: e)
       end
     end
   end

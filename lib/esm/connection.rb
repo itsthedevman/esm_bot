@@ -57,79 +57,40 @@ module ESM
 
     private
 
-    def on_open(_message)
+    def on_open
       # If the server is already connected, don't allow it to connect again
-      raise ESM::Exception::FailedAuthentication, "This server is already connected" if @server.connected?
+      raise ESM::Exception::FailedAuthentication, "This server is already connected" if self.server.connected?
 
-      ESM::Connection::Manager.associate_connection(@server.server_id, self)
-      ESM::Notifications.trigger("info", event: "on_open", address: self.address, server_id: @server.server_id)
+      @connection_server.connections.associate(@resource_id, self.server.server_id)
+      ESM::Notifications.trigger("info", class: self.class, method: __method__, resource_id: @resource_id, server_id: self.server.server_id)
 
-      @status = :opened
-
-      send_message(code: 1, message: "ee3686ece9e84c9ba4ce86182dff487f87c0a2a5004145bfb3e256a3d96ab6f01d7c6ca0a48240c29f365e10eca3ee55edb333159c604dff815ec74cba72658a553461649c554e47ab20693a1079d1c6bf8718220d704366ab315b6b3a4cbbac6b82ac2c2f3c469f9a25e134baa0df9d", another: "ee3686ece9e84c9ba4ce86182dff487f87c0a2a5004145bfb3e256a3d96ab6f01d7c6ca0a48240c29f365e10eca3ee55edb333159c604dff815ec74cba72658a553461649c554e47ab20693a1079d1c6bf8718220d704366ab315b6b3a4cbbac6b82ac2c2f3c469f9a25e134baa0df9d", lots_of_data: "ee3686ece9e84c9ba4ce86182dff487f87c0a2a5004145bfb3e256a3d96ab6f01d7c6ca0a48240c29f365e10eca3ee55edb333159c604dff815ec74cba72658a553461649c554e47ab20693a1079d1c6bf8718220d704366ab315b6b3a4cbbac6b82ac2c2f3c469f9a25e134baa0df9d")
-    end
-
-    def on_close
-      ESM::Notifications.trigger("info", event: "on_close")
-      @status = :close
-    end
-
-    def on_ping(_message)
-      ESM::Notifications.trigger("info", event: "on_ping", message: message)
-      send_message(code: Codes::PONG)
-    end
-
-    def on_pong(_message)
-      ESM::Notifications.trigger("info", event: "on_pong", message: message)
-
-      @last_pong_at = ::Time.current
+      @status = :authenticated
     end
 
     def on_message(message)
-      ESM::Notifications.trigger("info", event: "Inbound Message", address: self.address, server_id: @server&.server_id, message: message)
-
-      # Every message must have the key provided
-      authenticate!(message)
-
-      case message.code
-      when Code::CONNECT
-        run_callback(:on_open, message)
-      when Code::PONG
-        run_callback(:on_pong, message)
-      when Code::MESSAGE
-        run_callback(:on_message, message)
-      else
-        # ESM::Notifications.trigger("connection_invalid_code", connection: @connection, message: message)
-        send_message(code: Code::CLOSE, message: "Invalid code")
-      end
-    rescue Errno::EPIPE # Connection drop
-      nil
-    rescue ESM::Exception::FailedAuthentication, StandardError => e
-      message =
-        if e.is_a?(StandardError)
-          "Server error occurred"
-        else
-          e.message
-        end
-
-      ESM::Notifications.trigger(
-        "error",
-        class: self.class,
-        method: __method__,
-        error: e,
-        # address: @connection.peeraddr[2..3],
-        server_id: @server&.server_id,
-        status: @status
-      )
-
-      send_message(code: Code::CLOSE, message: message)
-      # return
+      ESM::Notifications.trigger("info", class: self.class, method: __method__, resource_id: @resource_id, message: message.to_h)
     end
 
-    def ping_server
-      send_message(code: Codes::PING)
+    # def on_close
+    #   ESM::Notifications.trigger("info", event: "on_close")
+    #   @status = :close
+    # end
 
-      @last_ping_at = ::Time.current
-    end
+    # def on_ping(_message)
+    #   ESM::Notifications.trigger("info", event: "on_ping", message: message)
+    #   send_message(code: Codes::PONG)
+    # end
+
+    # def on_pong(_message)
+    #   ESM::Notifications.trigger("info", event: "on_pong", message: message)
+
+    #   @last_pong_at = ::Time.current
+    # end
+
+    # def ping_server
+    #   send_message(code: Codes::PING)
+
+    #   @last_ping_at = ::Time.current
+    # end
   end
 end
