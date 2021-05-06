@@ -12,6 +12,9 @@ module ESM
     add_callback :on_pong, :on_pong
     add_callback :on_message, :on_message
 
+    # A instance of ESM::Server
+    attr_accessor :server
+
     module Code
       CLOSE = 0
       CONNECT = 1
@@ -22,13 +25,13 @@ module ESM
     end
 
     def initialize(server, resource_id)
-      @server = server
+      @connection_server = server
       @resource_id = resource_id
       @status = :unauthenticated
     end
 
     def close
-      @server.close(@resource_id)
+      @connection_server.close(@resource_id)
     end
 
     def send_message(**data)
@@ -50,9 +53,6 @@ module ESM
 
     def authenticated?
       @status == :authenticated
-    end
-
-    def address
     end
 
     private
@@ -124,20 +124,6 @@ module ESM
 
       send_message(code: Code::CLOSE, message: message)
       # return
-    end
-
-    def authenticate!(message)
-      raise ESM::Exception::FailedAuthentication, "Missing authorization key" if message.blank?
-
-      @server = ESM::Server.where(server_key: message.key.strip).first
-      raise ESM::Exception::FailedAuthentication, "Invalid Key" if @server.nil?
-
-      # If the bot is no longer a member of the server, don't allow it to connect
-      discord_server = @server.community.discord_server
-      raise ESM::Exception::FailedAuthentication, "Unable to find Discord Server" if discord_server.nil?
-
-      ESM.logger.debug("#{self.class}##{__method__}") { "#{@server.server_id} has authenticated" }
-      @status = :authenticated
     end
 
     def ping_server

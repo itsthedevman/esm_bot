@@ -3,6 +3,8 @@ extern crate rutie;
 #[macro_use]
 extern crate lazy_static;
 
+mod client_message;
+
 use crossbeam::channel::{self, Receiver, Sender, bounded, unbounded};
 use log::*;
 use message_io::network::{NetEvent, Transport};
@@ -17,6 +19,9 @@ use std::{
     sync::{Arc, Mutex},
     time::Duration,
 };
+use client_message::ClientMessage;
+
+use crate::client_message::ToHash;
 
 lazy_static!(
     static ref RECEIVER: RwLock<Receiver<Event>> = {
@@ -314,7 +319,46 @@ impl Server {
     }
 
     fn on_message(&self, endpoint: Endpoint, data: Vec<u8>) {
-        debug!("{}", String::from_utf8_lossy(&data));
+        let resource_id = endpoint.resource_id();
+
+        let client_message: ClientMessage = match bincode::deserialize(&data) {
+            Ok(message) => message,
+            Err(_error) => {
+                error!("[server#on_message] {} Malformed message: {}", resource_id, String::from_utf8_lossy(&data));
+                return;
+            }
+        };
+
+        debug!("[server#on_message] {} Message: {:?}", endpoint.resource_id(), client_message);
+
+        // Trigger the on_message on the ruby side
+        let result = match self.instance.read() {
+            Ok(instance) => {
+                instance.protect_send(
+                    "on_message",
+                    &[Integer::new(resource_id.adapter_id() as i64).to_any_object(), client_message.to_hash().to_any_object()],
+                )
+            },
+            Err(error) => {
+                error!(
+                    "[server#on_connected] {} Failed to gain read lock on instance. Error: {:?}",
+                    resource_id, error
+                );
+                return;
+            }
+        };
+
+        match result {
+            Ok(_) => {
+                debug!("[server#on_connected] {} has connected", resource_id);
+            },
+            Err(error) => {
+                error!(
+                    "[server#on_connected] {} Failed to call `on_open`. Error: {:?}",
+                    resource_id, error
+                );
+            }
+        }
     }
 
     fn on_disconnect(&self, endpoint: Endpoint) {

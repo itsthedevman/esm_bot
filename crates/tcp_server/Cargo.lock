@@ -368,6 +368,8 @@ dependencies = [
  "log",
  "message-io",
  "rutie",
+ "serde",
+ "serde_derive",
  "uuid",
 ]
 
