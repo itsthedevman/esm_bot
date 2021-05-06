@@ -6,37 +6,38 @@
 # Just fyi, this file is laid out in a particular order so
 #   I can access ESM.env and ESM.config when all other files load
 
-# This contains a check for the existence of the Rails class.
-# One of the action/active gems defines Rails, so this needs to be loaded first
-require "sucker_punch"
+[
+  # This contains a check for the existence of the Rails class.
+  # One of the action/active gems defines Rails, so this needs to be loaded first
+  "sucker_punch",
 
-require "action_view"
-require "action_view/helpers"
-require "active_record"
-require "activerecord-import"
-require "active_support"
-require "active_support/all"
-require "base64"
-require "discordrb"
-require "dotenv"
-require "dotiw"
-require "eventmachine"
-require "faye/websocket"
-require "httparty"
-require "i18n"
-require "puma"
-require "puma/events"
-require "securerandom"
-require "sinatra/base"
-require "steam_web_api"
-require "steam-condenser"
-require "terminal-table"
-require "yaml"
-require "zeitwerk"
+  "action_view",
+  "action_view/helpers",
+  "active_record",
+  "activerecord-import",
+  "active_support",
+  "active_support/all",
+  "base64",
+  "discordrb",
+  "dotenv",
+  "dotiw",
+  "eventmachine",
+  "faye/websocket",
+  "httparty",
+  "i18n",
+  "puma",
+  "puma/events",
+  "rutie",
+  "securerandom",
+  "sinatra/base",
+  "steam_web_api",
+  "steam-condenser",
+  "terminal-table",
+  "yaml",
+  "zeitwerk"
+].each { |gem| require gem }
 
-if ENV["ESM_ENV"] != "production"
-  require "otr-activerecord"
-end
+require "otr-activerecord" if ENV["ESM_ENV"] != "production"
 
 # Load Dotenv variables
 Dotenv.load
@@ -67,13 +68,17 @@ module ESM
     end
   end
 
+  def self.root
+    @root ||= Pathname.new(File.expand_path("."))
+  end
+
   # Allow IRB to be not-blocked by ESM's main thread
   def self.console!
     @console = true
   end
 
   def self.load_i18n
-    I18n.load_path += Dir[File.expand_path("config/locales/**") + "/*.yml"]
+    I18n.load_path += Dir[File.expand_path("config/locales/**/*.yml")]
     I18n.reload!
   end
 
