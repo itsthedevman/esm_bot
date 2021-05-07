@@ -31,7 +31,7 @@ module ESM
     end
 
     def close
-      @connection_server.close(@resource_id)
+      @connection_server.disconnect(@resource_id)
     end
 
     def send_message(**data)
@@ -65,16 +65,17 @@ module ESM
       ESM::Notifications.trigger("info", class: self.class, method: __method__, resource_id: @resource_id, server_id: self.server.server_id)
 
       @status = :authenticated
+      self.close
     end
 
     def on_message(message)
       ESM::Notifications.trigger("info", class: self.class, method: __method__, resource_id: @resource_id, message: message.to_h)
     end
 
-    # def on_close
-    #   ESM::Notifications.trigger("info", event: "on_close")
-    #   @status = :close
-    # end
+    def on_close
+      ESM::Notifications.trigger("info", event: "on_close")
+      @status = :close
+    end
 
     # def on_ping(_message)
     #   ESM::Notifications.trigger("info", event: "on_ping", message: message)

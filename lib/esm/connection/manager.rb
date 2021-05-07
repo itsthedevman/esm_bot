@@ -3,7 +3,7 @@
 module ESM
   class Connection
     class Manager
-      ManagedConnection = Struct.new(:connection, :last_checked_at) do
+      ManagedConnection = Struct.new(:connection, :last_checked_at, :server_id) do
         delegate :close, :alive?, :authenticated?, to: :connection, allow_nil: true
 
         def needs_checked?
@@ -37,7 +37,7 @@ module ESM
       end
 
       def add_unauthenticated(resource_id, connection)
-        connection = ManagedConnection.new(connection, ::Time.current)
+        connection = ManagedConnection.new(connection, ::Time.current, nil)
         @resource_ids[resource_id] = connection
         @unauthenticated << resource_id
       end
@@ -61,6 +61,7 @@ module ESM
 
         # Associate the server_id with the managed connection
         @server_ids[server_id] = managed_connection
+        managed_connection.server_id = server_id
 
         # Mark that this resource has been authenticated
         @unauthenticated.delete(resource_id)
@@ -81,12 +82,25 @@ module ESM
         managed_connection.connection
       end
 
+      def remove(resource_id)
+        managed_connection = @resource_ids.delete(resource_id)
+        return if managed_connection.nil?
+
+        # Remove from everywhere else
+        @authenticated.delete(resource_id)
+        @unauthenticated.delete(resource_id)
+        @server_ids.delete(managed_connection.server_id)
+
+        # Return the connection
+        managed_connection.connection
+      end
+
       private
 
       def check_connections
         # Check to see if the unauthenticated have authenticated yet. Drop them if they haven't
         @unauthenticated.each do |resource_id|
-          managed_connection = self.find_by_resource_id(resource_id)
+          managed_connection = @resource_ids[resource_id]
           next if !managed_connection.needs_checked?
           next if managed_connection.authenticated?
 
@@ -97,7 +111,7 @@ module ESM
 
         # Check to see if the authenticated are still connected. Drop the connection if it's dead.
         @authenticated.each do |resource_id|
-          managed_connection = self.find_by_resource_id(resource_id)
+          managed_connection = @resource_ids[resource_id]
           next if !managed_connection.needs_checked?
           next if managed_connection.alive?
 
