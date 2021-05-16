@@ -72,19 +72,6 @@ module ESM
 
       # TODO: Documentation
       #
-      def process_inbound_messages
-        Thread.new do
-          loop do
-            messages = @inbound_messages.shift(10)
-            messages.each { |message| process_message(message) } if messages.size.positive?
-
-            sleep(1)
-          end
-        end
-      end
-
-      # TODO: Documentation
-      #
       def disconnect(resource_id)
         result = ESM::TCPServer.disconnect(resource_id)
         ESM.logger.debug("#{self.class}##{__method__}") { "Disconnect result: #{result}" }
@@ -114,6 +101,19 @@ module ESM
       end
 
       private
+
+      # TODO: Documentation
+      #
+      def process_inbound_messages
+        Thread.new do
+          loop do
+            messages = @inbound_messages.shift(10)
+            messages.each { |message| process_message(message) } if messages.size.positive?
+
+            sleep(1)
+          end
+        end
+      end
 
       # TODO: Documentation
       #
