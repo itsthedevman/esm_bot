@@ -5,7 +5,6 @@ module ESM
     before_create :generate_key
     after_create :create_server_setting
     after_create :create_server_reward
-    after_initialize :load_server_connection
 
     attribute :server_id, :string
     attribute :community_id, :integer
@@ -30,8 +29,6 @@ module ESM
     has_many :territories, dependent: :destroy
     has_many :user_gamble_stats, dependent: :destroy
     has_many :user_notification_preferences, dependent: :destroy
-
-    delegate :version, to: :@connection
 
     def self.find_by_server_id(id)
       self.order(:server_id).where(server_id: id).first
@@ -102,10 +99,6 @@ module ESM
       return if self.server_reward.present?
 
       self.server_reward = ESM::ServerReward.create!(server_id: self.id)
-    end
-
-    def load_server_connection
-      @connection = ESM::Websocket.connections[self.server_id]
     end
   end
 end
