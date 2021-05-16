@@ -10,10 +10,10 @@ module ESM
     PERMISSION_BITS = 52_288
 
     STATUS_TYPES = {
-      "PLAYING": 0,
-      "STREAMING": 1,
-      "LISTENING": 2,
-      "WATCHING": 3
+      PLAYING: 0,
+      STREAMING: 1,
+      LISTENING: 2,
+      WATCHING: 3
     }.freeze
 
     attr_reader :config, :prefix
@@ -27,8 +27,7 @@ module ESM
       # Connect to the database
       ESM::Database.connect!
 
-      # load_community_prefixes
-
+      load_community_prefixes
       @resend_queue = ESM::Bot::ResendQueue.new(self)
 
       super(token: ESM.config.token, prefix: method(:determine_activation_prefix), help_command: false)
@@ -50,6 +49,7 @@ module ESM
 
       @esm_status = :stopping
       ESM::Websocket::Server.stop
+      ESM::Connection::Server.stop!
       ESM::Request::Overseer.die
       @resend_queue.die
 
@@ -97,8 +97,9 @@ module ESM
 
       # Wait until the bot has connected before starting the websocket.
       # This is to avoid servers connecting before the bot is ready
-      ESM::API.run!
+      # ESM::API.run!
       ESM::Websocket.start!
+      ESM::Connection::Server.run!
       ESM::Request::Overseer.watch
 
       @esm_status = :ready
@@ -120,7 +121,7 @@ module ESM
 
     # Fires when a member joins a Discord server
     def esm_member_join(event)
-      return if ESM.env.development? && ESM.config.dev_user_whitelist.include?(event.user.id.to_s)
+      return if ESM.env.development? && ESM.config.dev_user_whitelist.exclude?(event.user.id.to_s)
 
       ESM::Event::MemberJoin.new(event).run!
     end
