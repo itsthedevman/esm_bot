@@ -52,38 +52,26 @@ module ESM
       def update_server_settings!
         @server.server_setting.update(
           territory_price_per_object: @params.price_per_object,
-          territory_lifetime: @params.territory_lifetime
+          territory_lifetime: @params.territory_lifetime,
+          server_restart_hour: @params.server_restart.first,
+          server_restart_min: @params.server_restart.second
         )
       end
 
       def store_territory_info!
         @server.territories.delete_all
 
-        # A nil version means v1 extension
+        # All territory info is prefixed with `territory_level_`
+        territory_info = @params.to_h.select { |key, _| key.to_s.starts_with?("territory_level_") }
         territories =
-          if @connection.version.nil?
-            # All territory info is prefixed with `territory_level_`
-            territory_info = @params.to_h.select { |key, _| key.to_s.starts_with?("territory_level_") }
-
-            territory_info.map do |_, info|
-              {
-                server_id: @server.id,
-                territory_level: info[:level],
-                territory_purchase_price: info[:purchase_price],
-                territory_radius: info[:radius],
-                territory_object_count: info[:object_count]
-              }
-            end
-          else
-            @params.territory_data.map do |level, data|
-              {
-                server_id: @server.id,
-                territory_level: level.to_i,
-                territory_purchase_price: data.purchase_price,
-                territory_radius: data.radius,
-                territory_object_count: data.object_count
-              }
-            end
+          territory_info.map do |_, info|
+            {
+              server_id: @server.id,
+              territory_level: info[:level],
+              territory_purchase_price: info[:purchase_price],
+              territory_radius: info[:radius],
+              territory_object_count: info[:object_count]
+            }
           end
 
         ESM::Territory.import(territories)
@@ -92,11 +80,11 @@ module ESM
       def build_settings_packet
         settings = @server.server_setting
         rewards = @server.server_reward
-        territory_admins = build_territory_admins
 
         @packet = OpenStruct.new(
+          function_name: "postServerInitialization",
           server_id: @server.server_id,
-          territory_admins: territory_admins,
+          territory_admins: build_territory_admins.to_json,
           extdb_path: settings.extdb_path || "",
           gambling_modifier: settings.gambling_modifier,
           gambling_payout: settings.gambling_payout,
@@ -115,26 +103,18 @@ module ESM
           logging_reward: settings.logging_reward,
           logging_transfer: settings.logging_transfer,
           logging_upgrade_territory: settings.logging_upgrade_territory,
+          logging_path: settings.logging_path || "",
           max_payment_count: settings.max_payment_count,
+          request_thread_tick: settings.request_thread_tick,
+          request_thread_type: settings.request_thread_type == "exile",
           taxes_territory_payment: settings.territory_payment_tax / 100,
           taxes_territory_upgrade: settings.territory_upgrade_tax / 100,
           reward_player_poptabs: rewards.player_poptabs,
           reward_locker_poptabs: rewards.locker_poptabs,
           reward_respect: rewards.respect,
-          reward_items: rewards.reward_items.to_a
+          reward_items: rewards.reward_items.to_a.to_json,
+          is_premium: true # Needed for legacy v1.0 support
         )
-
-        # V2 exits
-        return if @connection.version.present?
-
-        # V1
-        @packet.function_name = "postServerInitialization"
-        @packet.is_premium = true
-        @packet.request_thread_tick = settings.request_thread_tick
-        @packet.request_thread_type = settings.request_thread_type == "exile"
-        @packet.territory_admins = territory_admins.to_json
-        @packet.reward_items = @packet.reward_items.to_json
-        @packet.logging_path = settings.logging_path || ""
       end
 
       def build_territory_admins
@@ -153,34 +133,15 @@ module ESM
 
       def send_response
         # Build the request
-        request =
-          if @connection.version.nil?
-            # V1
-            ESM::Websocket::RequestV1.new(command_name: "post_initialization", parameters: @packet.to_h, remove_on_ignore: true)
-          else
-            # V2
-            ESM::Websocket::Request.new(executing_command: "server_post_initialization", parameters: @packet.to_h)
-          end
+        request = ESM::Websocket::Request.new(command_name: "post_initialization", parameters: @packet.to_h, remove_on_ignore: true)
 
         # After the server has replied to this request, notify the community and allow commands.
-        if @connection.version.nil?
-          # V1
-          request.on_reply = lambda do |connection|
-            # Trigger a connect notification
-            ESM::Notifications.trigger("server_on_connect", server: connection.server)
+        request.on_reply = lambda do |connection|
+          # Trigger a connect notification
+          ESM::Notifications.trigger("server_on_connect", server: connection.server)
 
-            # Set the connection to be available for commands
-            connection.ready = true
-          end
-        else
-          # V2
-          request.add_callback(:after_execute) do |connection, _parameters|
-            # Trigger a connect notification
-            ESM::Notifications.trigger("server_on_connect", server: connection.server)
-
-            # Set the connection to be available for commands
-            connection.ready = true
-          end
+          # Set the connection to be available for commands
+          connection.ready = true
         end
 
         # Send it to the dll, don't use `Websocket#deliver` for this since it will raise on the connection not being ready.
