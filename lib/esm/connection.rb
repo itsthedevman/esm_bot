@@ -5,12 +5,12 @@ module ESM
     include ESM::Callbacks
 
     # These callbacks correspond to events sent from the server.
-    register_callbacks :on_open, :on_close, :on_ping, :on_pong, :on_message
+    register_callbacks :on_open, :on_close, :on_message # :on_ping, :on_pong
     add_callback :on_open, :on_open
     add_callback :on_close, :on_close
-    add_callback :on_ping, :on_ping
-    add_callback :on_pong, :on_pong
     add_callback :on_message, :on_message
+    # add_callback :on_ping, :on_ping
+    # add_callback :on_pong, :on_pong
 
     # A instance of ESM::Server
     attr_accessor :server
@@ -25,26 +25,22 @@ module ESM
     end
 
     def initialize(server, resource_id)
-      @connection_server = server
+      @tcp_server = server
       @resource_id = resource_id
       @status = :unauthenticated
     end
 
     def close
-      @connection_server.disconnect(@resource_id)
+      @tcp_server.disconnect(@resource_id)
     end
 
     def send_message(**data)
       ESM::Notifications.trigger("info", class: self.class, method: __method__, message: data)
+      @tcp_server.send_message(@resource_id, type: "test", data: data)
     end
 
     def alive?
-      ping_server if stale?
-
       true
-    rescue StandardError => e
-      ESM.logger.debug("#{self.class}##{__method__}") { e }
-      false
     end
 
     def stale?
@@ -61,11 +57,10 @@ module ESM
       # If the server is already connected, don't allow it to connect again
       raise ESM::Exception::FailedAuthentication, "This server is already connected" if self.server.connected?
 
-      @connection_server.connections.associate(@resource_id, self.server.server_id)
+      @tcp_server.connections.associate(@resource_id, self.server.server_id)
       ESM::Notifications.trigger("info", class: self.class, method: __method__, resource_id: @resource_id, server_id: self.server.server_id)
 
       @status = :authenticated
-      self.close
     end
 
     def on_message(message)

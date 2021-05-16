@@ -115,9 +115,9 @@ module ESM
           next if !managed_connection.needs_checked?
           next if managed_connection.alive?
 
-          ESM.logger.debug("#{self.class}##{__method__}") { "Closing #{server_id}'s connection: #{managed_connection}" }
+          ESM.logger.debug("#{self.class}##{__method__}") { "Closing #{resource_id}'s connection: #{managed_connection}" }
           managed_connection.close
-          @authenticated.delete(server_id)
+          @authenticated.delete(resource_id)
         end
       end
     end

@@ -10,6 +10,7 @@ pub struct ClientMessage {
     // pub op_code: i64,
     pub key: String,
     pub data: Data,
+    pub metadata: Metadata,
 }
 
 impl ToHash for ClientMessage {
@@ -35,5 +36,19 @@ impl ToHash for Data {
         }
     }
 }
+
+#[derive(Deserialize, Debug)]
+pub enum Metadata {
+    Empty,
+}
+
+impl ToHash for Metadata {
+    fn to_hash(&self) -> Hash {
+        match self {
+            Metadata::Empty => Hash::new(),
+        }
+    }
+}
+
 
 pub enum Empty {}

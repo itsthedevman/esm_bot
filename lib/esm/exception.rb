@@ -40,8 +40,8 @@ module ESM
     # Raised when the address is already in use. The message is the IP and port
     class AddressInUse < Error; end
 
-    # Raised when attempting to send a message to a server that is not connected
-    class ServerNotConnected < Error; end
+    # Raised when attempting to send a message to a ESM::Server when it is not connected
+    class ClientNotConnected < Error; end
 
     # Handles an error code response from the extension
     class ExtensionError < Error
