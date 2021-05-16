@@ -135,14 +135,14 @@ module ESM
       #
       # @raises ESM::Exception::FailedAuthentication
       def authenticate!(connection, key)
-        raise ESM::Exception::FailedAuthentication, "Missing authorization key" if key.blank?
+        raise ESM::Exception::FailedAuthentication, "Missing server key" if key.blank?
 
         server = ESM::Server.where(id: @server_keys[key]).first
-        raise ESM::Exception::FailedAuthentication, "Invalid Key" if server.nil?
+        raise ESM::Exception::FailedAuthentication, "Invalid server key" if server.nil?
 
         # If the bot is no longer a member of the server, don't allow it to connect
         discord_server = server.community.discord_server
-        raise ESM::Exception::FailedAuthentication, "Unable to find Discord Server" if discord_server.nil?
+        raise ESM::Exception::FailedAuthentication, "Failed to load associated discord server. Ensure ESM is a member of your Discord Server" if discord_server.nil?
 
         connection.server = server
         connection.run_callback(:on_open) if !connection.authenticated?
