@@ -48,7 +48,7 @@ impl Server {
         // Start listening
         match handler.network().listen(Transport::FramedTcp, &address) {
             Ok((_resource_id, _real_addr)) => {
-                debug!("[#listen] Listening on port {}", port);
+                debug!("#listen - Listening on port {}", port);
             }
             Err(_) => {
                 return VM::raise(
@@ -74,7 +74,7 @@ impl Server {
                     Ok(_) => {}
                     Err(error) => {
                         error!(
-                            "[#listen] {} Failed to send OnConnected event. Error: {:?}",
+                            "#listen - {} Failed to send OnConnected event. Error: {:?}",
                             resource_id, error
                         );
                     }
@@ -89,7 +89,7 @@ impl Server {
                     Ok(_) => {}
                     Err(error) => {
                         error!(
-                            "[#listen] {} Failed to send OnConnected event. Error: {:?}",
+                            "#listen - {} Failed to send OnConnected event. Error: {:?}",
                             endpoint.resource_id(),
                             error
                         );
@@ -101,7 +101,7 @@ impl Server {
                     Ok(_) => {}
                     Err(error) => {
                         error!(
-                            "[#listen] {} Failed to send OnDisconnected event. Error: {:?}",
+                            "#listen - {} Failed to send OnDisconnected event. Error: {:?}",
                             endpoint.resource_id(),
                             error
                         );
@@ -123,14 +123,14 @@ impl Server {
                     Ok(event) => event,
                     Err(error) => {
                         error!(
-                            "[#process_requests] Failed to receive message. Error: {:?}",
+                            "#process_requests - Failed to receive message. Error: {:?}",
                             error
                         );
                         continue;
                     }
                 };
 
-                trace!("[#process_requests] Incoming event: {:?}", event);
+                trace!("#process_requests - Incoming event: {:?}", event);
 
                 match event {
                     Event::OnConnected(endpoint, resource_id) => server.on_connect(endpoint, resource_id),
@@ -154,7 +154,7 @@ impl Server {
                         continue;
                     }
 
-                    error!("[#rb_sender_mut] Failed to gain lock.");
+                    error!("#rb_sender_mut - Failed to gain lock.");
                     return None;
                 }
             }
@@ -203,16 +203,15 @@ impl Server {
         Some(endpoints)
     }
 
-    pub fn remove_endpoint(&self, resource_id: ResourceId) -> Option<Endpoint> {
+    pub fn remove_endpoint(&self, adapter_id: usize) -> Option<Endpoint> {
         let mut endpoints = match self.endpoints_mut() {
             Some(endpoints) => endpoints,
             None => {
-                error!("[#remove_endpoint] Failed to gain write lock");
+                error!("#remove_endpoint - Failed to gain write lock");
                 return None;
             }
         };
 
-        let adapter_id = resource_id.adapter_id() as usize;
         endpoints.remove(&adapter_id)
     }
 
@@ -228,7 +227,7 @@ impl Server {
                         continue;
                     }
 
-                    error!("[#handler] Failed to gain lock");
+                    error!("#handler - Failed to gain lock");
                     return None;
                 }
             }
@@ -237,54 +236,53 @@ impl Server {
         Some(handler)
     }
 
-    pub fn send_message(&self, resource_id: i64, message: crate::ServerMessage) {
-        let endpoints = match self.endpoints() {
-            Some(endpoints) => endpoints,
-            None => {
-                error!("[#endpoint] Failed to gain read lock.");
-                return;
-            },
-        };
+    // pub fn send_message(&self, resource_id: i64, message: crate::ServerMessage) {
+    //     let endpoints = match self.endpoints() {
+    //         Some(endpoints) => endpoints,
+    //         None => {
+    //             error!("#endpoint - Failed to gain read lock.");
+    //             return;
+    //         },
+    //     };
 
-        let endpoint = match endpoints.get(&(resource_id as usize)) {
-            Some(endpoint) => endpoint,
-            None => {
-                // Raise an exception in ruby
-                return VM::raise(
-                    Module::from_existing("ESM")
-                        .get_nested_module("Exception")
-                        .get_nested_class("ClientNotConnected"),
-                    &format!("{}", resource_id),
-                );
-            }
-        };
+    //     let endpoint = match endpoints.get(&(resource_id as usize)) {
+    //         Some(endpoint) => endpoint,
+    //         None => {
+    //             // Raise an exception in ruby
+    //             return VM::raise(
+    //                 Module::from_existing("ESM")
+    //                     .get_nested_module("Exception")
+    //                     .get_nested_class("ClientNotConnected"),
+    //                 &format!("{}", resource_id),
+    //             );
+    //         }
+    //     };
 
-        // Using the endpoint, send the message via the handler
-        let handler = match self.handler() {
-            Some(handler) => handler,
-            None => return,
-        };
+    //     // Using the endpoint, send the message via the handler
+    //     let handler = match self.handler() {
+    //         Some(handler) => handler,
+    //         None => return,
+    //     };
 
-        debug!("[#send_message] Sending message: {:?}", message);
+    //     debug!("#send_message - Sending message: {:?}", message);
 
-        handler.network().send(*endpoint, message.as_bytes());
-    }
+    //     handler.network().send(*endpoint, message.as_bytes());
+    // }
 
-    pub fn disconnect(&self, resource_id: ResourceId) -> bool {
+    pub fn disconnect(&self, adapter_id: usize) -> bool {
         let handler = match self.handler() {
             Some(handler) => handler,
             None => return false,
         };
 
-        match self.remove_endpoint(resource_id) {
-            Some(_) => {
-                debug!("Removing");
-                handler.network().remove(resource_id)
+        match self.remove_endpoint(adapter_id) {
+            Some(endpoint) => {
+                handler.network().remove(endpoint.resource_id())
             },
             None => {
                 warn!(
-                    "[#disconnect] {} Endpoint already removed",
-                    resource_id
+                    "#disconnect - {} Endpoint already removed",
+                    adapter_id
                 );
 
                 false
@@ -294,45 +292,40 @@ impl Server {
 
     fn on_connect(&self, endpoint: Endpoint, resource_id: ResourceId) {
         debug!(
-            "[#on_connect] {} Incoming connection with address {}",
+            "#on_connect - {} Incoming connection with address {}",
             resource_id,
             endpoint.addr()
         );
 
-        let mut endpoints = match self.endpoints_mut() {
-            Some(endpoints) => endpoints,
-            None => {
-                error!("[#on_connect] Failed to gain write lock");
-                return
-            },
+        let check_connection = || -> Result<(), &'static str> {
+            let mut endpoints = match self.endpoints_mut() {
+                Some(endpoints) => endpoints,
+                None => return Err("Failed to gain write lock"),
+            };
+
+            let adapter_id = resource_id.adapter_id() as usize;
+
+            // Check if the client has already connected
+            match endpoints.get(&adapter_id) {
+                Some(_) => {
+                    self.disconnect(adapter_id);
+                    Err("Endpoint already connected")
+                }
+                None => {
+                    // Store the connection so it can be retrieved later
+                    endpoints.insert(adapter_id, endpoint);
+                    Ok(())
+                },
+            }
         };
 
-        let adapter_id = resource_id.adapter_id() as usize;
-
-        // Check if the client has already connected
-        match endpoints.get(&adapter_id) {
-            Some(_) => {
-                // Release the lock this scope owns so the remove can lock it.
-                drop(endpoints);
-
-                debug!(
-                    "[#on_connect] {} Endpoint already connected",
-                    adapter_id
-                );
-
-                self.disconnect(resource_id);
-                return;
-            }
-            None => (),
+        // Log and return if something went wrong
+        if let Err(message) = check_connection() {
+            error!("#connect - {} {}", resource_id, message);
+            return;
         }
 
-        // Store the connection so it can be retrieved later
-        endpoints.insert(adapter_id, endpoint);
-
-        // We no longer need write access, release it so other threads can gain read access
-        drop(endpoints);
-
-        trace!("[#on_connect] {} Connection added", resource_id);
+        trace!("#on_connect - {} Connection added", resource_id);
 
         // Inform the bot of a new connection
         match self.rb_sender_mut() {
@@ -359,7 +352,7 @@ impl Server {
             Ok(message) => message,
             Err(_error) => {
                 error!(
-                    "[#on_message] {} Malformed message: {}",
+                    "#on_message - {} Malformed message: {}",
                     resource_id,
                     String::from_utf8_lossy(&data)
                 );
@@ -368,7 +361,7 @@ impl Server {
         };
 
         debug!(
-            "[#on_message] {} Message: {:?}",
+            "#on_message - {} Message: {:?}",
             resource_id, client_message
         );
 
@@ -395,13 +388,13 @@ impl Server {
 
     fn on_disconnect(&self, endpoint: Endpoint) {
         let resource_id = endpoint.resource_id();
-        debug!("[#on_disconnect] {} has disconnected", resource_id);
+        debug!("#on_disconnect - {} has disconnected", resource_id);
 
-        match self.remove_endpoint(resource_id) {
+        match self.remove_endpoint(resource_id.adapter_id() as usize) {
             Some(_) => (),
             None => {
                 warn!(
-                    "[#on_disconnect] {} Endpoint already removed",
+                    "#on_disconnect - {} Endpoint already removed",
                     resource_id
                 );
             }
