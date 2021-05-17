@@ -4,17 +4,17 @@ extern crate rutie;
 extern crate lazy_static;
 
 mod client_message;
-mod server_message;
 mod server;
 
 use log::*;
 use std::sync::RwLock;
-use server_message::ServerMessage;
 use server::{Server, Event};
 use crossbeam::channel::{bounded, unbounded, Receiver, Sender};
 
 
 use rutie::{AnyObject, Boolean, Class, Hash, Integer, Module, NilClass, Object, RString, VM, Array};
+
+struct ServerMessage {}
 
 
 lazy_static! {
@@ -112,35 +112,34 @@ methods!(
 
         NilClass::new()
     },
-    fn rb_send_message(resource_id: Integer, message: Hash) -> NilClass {
-        let resource_id = match resource_id {
-            Ok(id) => id.to_i64(),
-            Err(error) => {
-                VM::raise(error.class(), "Argument `resource_id` is invalid");
-                return NilClass::new();
-            }
-        };
+    // fn rb_send_message(resource_id: Integer, message: Hash) -> NilClass {
+    //     let resource_id = match resource_id {
+    //         Ok(id) => id.to_i64(),
+    //         Err(error) => {
+    //             VM::raise(error.class(), "Argument `resource_id` is invalid");
+    //             return NilClass::new();
+    //         }
+    //     };
 
-        let message = match message {
-            Ok(message) => ServerMessage::new(message),
-            Err(error) => {
-                VM::raise(error.class(), "Argument `message` is invalid");
-                return NilClass::new();
-            }
-        };
+    //     let message = match message {
+    //         Ok(message) => ServerMessage::new(message),
+    //         Err(error) => {
+    //             VM::raise(error.class(), "Argument `message` is invalid");
+    //             return NilClass::new();
+    //         }
+    //     };
 
-        match SERVER.read() {
-            Ok(server) => server.send_message(resource_id, message),
-            Err(_error) => {
-                VM::raise(Class::from_existing("StandardError"), "Failed to gain read access to server container");
-                return NilClass::new();
-            }
-        };
+    //     match SERVER.read() {
+    //         Ok(server) => server.send_message(resource_id, message),
+    //         Err(_error) => {
+    //             VM::raise(Class::from_existing("StandardError"), "Failed to gain read access to server container");
+    //             return NilClass::new();
+    //         }
+    //     };
 
-        NilClass::new()
-    },
+    //     NilClass::new()
+    // },
     fn rb_disconnect(resource_id: Integer) -> Boolean {
-        debug!("disconnect 1");
         let resource_id = match resource_id {
             Ok(id) => id.to_i64(),
             Err(error) => {
@@ -149,7 +148,6 @@ methods!(
             }
         };
 
-        debug!("disconnect 2");
         let server = match SERVER.read() {
             Ok(server) => server,
             Err(_error) => {
@@ -158,20 +156,8 @@ methods!(
             }
         };
 
-        debug!("Disconnect 3");
-
-        let endpoints = match server.endpoints() {
-            Some(endpoints) => endpoints,
-            None => return Boolean::new(false),
-        };
-
-        match endpoints.get(&(resource_id as usize)) {
-            Some(endpoint) => {
-                let result = server.disconnect(endpoint.resource_id());
-                Boolean::new(result)
-            }
-            None => Boolean::new(false),
-        }
+        let result = server.disconnect(resource_id as usize);
+        Boolean::new(result)
     },
 );
 
@@ -196,7 +182,7 @@ pub extern "C" fn esm_tcp_server() {
                 klass.def_self("stop", rb_stop);
                 klass.def_self("listen", rb_listen);
                 klass.def_self("process_requests", rb_process_requests);
-                klass.def_self("send_message", rb_send_message);
+                // klass.def_self("send_message", rb_send_message);
                 klass.def_self("disconnect", rb_disconnect);
             });
     });
