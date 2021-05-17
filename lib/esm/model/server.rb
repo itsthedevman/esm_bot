@@ -38,6 +38,14 @@ module ESM
       ESM::Territory.order(:server_id).where(server_id: self.id).order(:territory_level)
     end
 
+    def connection
+      ESM::Connection::Server.find_by_server_id(self.server_id)
+    end
+
+    def connected?
+      !self.connection.nil?
+    end
+
     def online?
       ESM::Websocket.connected?(self.server_id)
     end
