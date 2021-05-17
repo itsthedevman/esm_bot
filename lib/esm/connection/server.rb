@@ -23,6 +23,14 @@ module ESM
         @instance.connections
       end
 
+      def self.find_by_resource_id(resource_id)
+        @instance.find_by_resource_id(resource_id)
+      end
+
+      def self.find_by_server_id(server_id)
+        @instance.find_by_server_id(server_id)
+      end
+
       ################################
       # Instance methods
       ################################
@@ -30,23 +38,15 @@ module ESM
       attr_reader :server, :connections
 
       def initialize
-        # Cache the server_keys in memory. Querying by ID is way faster
-        self.refresh_keys
-
         # The manager handles keeping connections alive and burying them if they're dead.
         @connections = ESM::Connection::Manager.new
 
-        # An array that holds messages (represented as Hashes) that ESM::TCPServer sends.
-        # It looks like this:
-        # {
-        #   type: Symbol,
-        #   resource_id: Symbol,
-        #   data: Hash,
-        # }
+        # A channel that facilitates communication with ESM::TCPServer.
+        # ESM::TCPServer will add hashes to this array for this class to process. See #process_inbound_messages for more details
         @inbound_messages = []
 
-        # TODO: Documentation
-        #
+        # A channel that facilitates communication with ESM::TCPServer.
+        # Hashes added to this array will be processed by ESM::TCPServer. See #send_message for more details
         @outbound_messages = []
 
         # Everything below is all setup and communication with the rust extension
@@ -55,12 +55,14 @@ module ESM
         # Rust: rb_listen(port: RString, inbound_messages: Array, outbound_messages: Array)
         # The outbound and inbound message variables are swapped because what is considered outbound for this class is considered
         # inbound for ESM::TCPServer
-        # ESM::TCPServer will hold a reference to these arrays and read/write data to them accordingly.
         ESM::TCPServer.listen(ENV["CONNECTION_SERVER_PORT"], @outbound_messages, @inbound_messages)
         ESM::TCPServer.process_requests
 
-        @thread = self.process_inbound_messages
+        self.refresh_keys
+        self.process_inbound_messages
       end
+
+      delegate :find_by_resource_id, :find_by_server_id, to: :@connections
 
       # TODO: Documentation
       #
@@ -68,13 +70,14 @@ module ESM
         return if ESM::TCPServer.nil?
 
         ESM::TCPServer.stop
+        Thread.kill(@thread) if !@thread.nil?
       end
 
       # TODO: Documentation
       #
       def disconnect(resource_id)
-        result = ESM::TCPServer.disconnect(resource_id)
-        ESM.logger.debug("#{self.class}##{__method__}") { "Disconnect result: #{result}" }
+        disconnected = ESM::TCPServer.disconnect(resource_id)
+        return if !disconnected
 
         connection = @connections.remove(resource_id)
         return if connection.nil?
@@ -94,7 +97,8 @@ module ESM
         ESM::TCPServer.send_message(adapter_id, id: id, type: type, data: data, metadata: metadata)
       end
 
-      # TODO: Documentation
+      # Cache the server_keys with the key being the server_key and the value being its ID.
+      # Cuts query time in half when authenticating
       #
       def refresh_keys
         @server_keys = ESM::Server.all.pluck(:server_key, :id).to_h
@@ -105,22 +109,21 @@ module ESM
       # TODO: Documentation
       #
       def process_inbound_messages
-        Thread.new do
-          loop do
-            messages = @inbound_messages.shift(10)
-            messages.each { |message| process_message(message) } if messages.size.positive?
+        @thread =
+          Thread.new do
+            loop do
+              messages = @inbound_messages.shift(10)
+              messages.each { |message| process_inbound_message(message) } if messages.size.positive?
 
-            sleep(1)
+              sleep(0.5)
+            end
           end
-        end
       end
 
       # TODO: Documentation
       #
-      def process_message(message)
+      def process_inbound_message(message)
         Thread.new do
-          ESM::Notifications.trigger("info", class: self.class, method: __method__, message: message)
-
           case message[:type]
           when :connection_event
             event = message.dig(:data, :event)
