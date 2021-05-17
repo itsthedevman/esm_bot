@@ -30,6 +30,8 @@ module ESM
       @status = :unauthenticated
     end
 
+    delegate :server_id, to: :@server, allow_nil: true
+
     def close
       @tcp_server.disconnect(@resource_id)
     end
@@ -57,8 +59,8 @@ module ESM
       # If the server is already connected, don't allow it to connect again
       raise ESM::Exception::FailedAuthentication, "This server is already connected" if self.server.connected?
 
-      @tcp_server.connections.associate(@resource_id, self.server.server_id)
-      ESM::Notifications.trigger("info", class: self.class, method: __method__, resource_id: @resource_id, server_id: self.server.server_id)
+      @tcp_server.connections.authenticate(@resource_id, self.server_id)
+      ESM::Notifications.trigger("info", class: self.class, method: __method__, resource_id: @resource_id, server_id: self.server_id)
 
       @status = :authenticated
     end
@@ -68,7 +70,7 @@ module ESM
     end
 
     def on_close
-      ESM::Notifications.trigger("info", event: "on_close")
+      ESM::Notifications.trigger("info", class: self.class, method: __method__, resource_id: @resource_id, server_id: self.server_id, event: "on_close")
       @status = :close
     end
 

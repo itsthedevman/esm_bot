@@ -42,7 +42,7 @@ module ESM
         @unauthenticated << resource_id
       end
 
-      def associate(resource_id, server_id)
+      def authenticate(resource_id, server_id)
         if !@unauthenticated.include?(resource_id)
           ESM::Notifications.trigger(
             "error",
@@ -66,6 +66,10 @@ module ESM
         # Mark that this resource has been authenticated
         @unauthenticated.delete(resource_id)
         @authenticated << resource_id
+      end
+
+      def authenticated?(resource_id)
+        @authenticated.include?(resource_id)
       end
 
       def find_by_server_id(server_id)
