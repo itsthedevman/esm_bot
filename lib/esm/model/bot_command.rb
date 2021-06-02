@@ -18,7 +18,7 @@ module ESM
       normalize_parameters
 
       ESM.logger.debug("#{self.class}##{__method__}") do
-        JSON.pretty_generate(
+        ESM::JSON.pretty_generate(
           server_id: connection.server.server_id,
           data: self.to_h
         )
@@ -109,7 +109,7 @@ module ESM
       else
         # Invalid command call. Log it!
         ESM.logger.warn("#{self.class}##{__method__}") do
-          JSON.pretty_generate(server_id: @connection.server.id, command: self.to_h, request: request.to_h)
+          ESM::JSON.pretty_generate(server_id: @connection.server.id, command: self.to_h, request: request.to_h)
         end
       end
     end
@@ -254,7 +254,7 @@ module ESM
 
       # Log that duplicates were found
       ESM.logger.warn("#{self.class}##{__method__}") do
-        JSON.pretty_generate(command: self.to_h, duplicated_keys: duplicates)
+        ESM::JSON.pretty_generate(command: self.to_h, duplicated_keys: duplicates)
       end
 
       # There were duplicates found but the input will still be marked valid since it can be converted

@@ -9,15 +9,11 @@ class String
   end
 
   def to_ostruct
-    JSON.parse(self, object_class: OpenStruct)
-  rescue JSON::ParserError
-    nil
+    ESM::JSON.parse(self, as_ostruct: true)
   end
 
   def to_h
-    JSON.parse(self, symbolize_names: true)
-  rescue JSON::ParserError
-    nil
+    ESM::JSON.parse(self)
   end
 
   def to_poptab

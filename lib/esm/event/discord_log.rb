@@ -30,7 +30,7 @@ module ESM
 
       def build_embed
         # Unpack the array
-        title, description, fields = JSON.parse(@params.embed)
+        title, description, fields = ESM::JSON.parse(@params.embed)
 
         # Build an embed from the values
         ESM::Embed.build do |e|
@@ -58,7 +58,7 @@ module ESM
         end
       rescue StandardError => e
         ESM.logger.error("#{self.class}##{__method__}") do
-          JSON.pretty_generate(
+          ESM::JSON.pretty_generate(
             exception: e.message,
             backtrace: e.backtrace[0..2]
           )

@@ -37,7 +37,7 @@ module ESM
             when :float
               value.to_f
             when :json
-              JSON.parse(value)
+              ESM::JSON.parse(value)
             when :symbol
               value.to_sym
             else
