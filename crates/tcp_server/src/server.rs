@@ -1,240 +1,284 @@
-use parking_lot::{RwLock, RwLockReadGuard, RwLockWriteGuard};
-use std::{sync::{Arc}, thread};
-use std::{collections::HashMap, time::Duration};
+use crate::message::Message;
 use log::*;
-use message_io::network::{NetEvent, Transport};
 use message_io::{
     network::{Endpoint, ResourceId},
     node::{self, NodeHandler, NodeTask},
-  };
-use rutie::{Array, Hash, Integer, Module, NilClass, Object, RString, Symbol, Thread, VM};
-use crate::client_message::{ClientMessage, ToHash};
-
-#[derive(Debug)]
-pub enum Event {
-    OnMessage(Endpoint, Vec<u8>),
-    OnConnected(Endpoint, ResourceId),
-    OnDisconnect(Endpoint),
-    Stop
-}
+};
+use message_io::{
+    network::{NetEvent, Transport},
+    node::NodeListener,
+};
+use parking_lot::{RwLock, RwLockReadGuard, RwLockWriteGuard};
+use redis::{aio::MultiplexedConnection, RedisResult};
+use std::{collections::HashMap, env, time::Duration};
+use std::{sync::Arc, thread};
 
 #[derive(Clone)]
 pub struct Server {
-    rb_receiver: Arc<RwLock<Array>>,
-    rb_sender: Arc<RwLock<Array>>,
-    handler: Arc<RwLock<NodeHandler<()>>>,
-    endpoints: Arc<RwLock<HashMap<usize, Endpoint>>>,
-    task: Arc<RwLock<Option<NodeTask>>>,
+    handler: Arc<NodeHandler<()>>,
+    endpoints: Arc<HashMap<usize, Endpoint>>,
+    redis_connection: Arc<Option<MultiplexedConnection>>,
+    address: String,
 }
 
-
 impl Server {
-    pub fn new(rb_receiver: Array, rb_sender: Array) -> Self {
-        let (handler, _) = node::split::<()>();
+    pub fn new(handler: NodeHandler<()>) -> Self {
+        let address = match env::var("TCP_SERVER_PORT") {
+            Ok(port) => {
+                format!("0.0.0.0:{}", port)
+            }
+            Err(_e) => {
+                panic!("TCP_SERVER_PORT is not set!");
+            }
+        };
+
         Server {
-            rb_receiver: Arc::new(RwLock::new(rb_receiver)),
-            rb_sender: Arc::new(RwLock::new(rb_sender)),
-            endpoints: Arc::new(RwLock::new(HashMap::new())),
-            handler: Arc::new(RwLock::new(handler)),
-            task: Arc::new(RwLock::new(None)),
+            endpoints: Arc::new(HashMap::new()),
+            handler: Arc::new(handler),
+            redis_connection: Arc::new(None),
+            address,
         }
     }
 
-    // This is called from a ruby thread and it is blocking.
-    pub fn listen(&mut self, port: String) {
-        let (handler, listener) = node::split::<()>();
-        let address = format!("0.0.0.0:{}", port);
+    pub async fn connect_to_redis(&mut self) -> RedisResult<isize> {
+        let client = redis::Client::open("redis://127.0.0.1/")?;
+        let connection = client.get_multiplexed_tokio_connection().await?;
+        self.redis_connection = Arc::new(Some(connection));
 
+        Ok(0)
+    }
+
+    // pub fn server_key<'a>(&self, server_id: &'a str) -> Result<Vec<u8>, &'static str> {
+    //     let server_id = Symbol::new(server_id);
+
+    //     let server_keys: RwLockReadGuard<Hash> = self.rb_server_keys.read();
+
+    //     let server_key = server_keys.at(&server_id);
+    //     let server_key = match server_key.try_convert_to::<RString>() {
+    //         Ok(server_key) => server_key.to_string().as_bytes().to_vec(),
+    //         Err(_e) => return Err("#server_key - Failed to convert to RString"),
+    //     };
+
+    //     Ok(server_key)
+    // }
+
+    pub async fn listen(&self, listener: NodeListener<()>) {
         // Start listening
-        match handler.network().listen(Transport::FramedTcp, &address) {
-            Ok((_resource_id, _real_addr)) => {
-                debug!("#listen - Listening on port {}", port);
+        match self
+            .handler
+            .network()
+            .listen(Transport::FramedTcp, &self.address)
+        {
+            Ok((_resource_id, real_addr)) => {
+                info!("#listen - Listening on port {}", real_addr);
             }
-            Err(_) => {
-                return VM::raise(
-                    Module::from_existing("ESM")
-                        .get_nested_module("Exception")
-                        .get_nested_class("AddressInUse"),
-                    &address,
-                )
+            Err(e) => {
+                error!("#listen - Failed to start listening. Error: #{}", e);
+                return;
             }
         }
-
-        // Store the handler so it can be referenced later
-        self.handler = Arc::new(RwLock::new(handler));
 
         // Process the events
-        let task = listener.for_each_async(move |event| match event.network() {
-            NetEvent::Connected(endpoint, resource_id) => {
-                match crate::SENDER
-                    .read()
-                    .unwrap()
-                    .send(Event::OnConnected(endpoint, resource_id))
-                {
-                    Ok(_) => {}
-                    Err(error) => {
-                        error!(
-                            "#listen - {} Failed to send OnConnected event. Error: {:?}",
-                            resource_id, error
-                        );
-                    }
-                }
-            }
+        listener.for_each(move |event| match event.network() {
+            NetEvent::Connected(_, _) => {}
             NetEvent::Message(endpoint, data) => {
-                match crate::SENDER
-                    .read()
-                    .unwrap()
-                    .send(Event::OnMessage(endpoint, data.to_vec()))
-                {
-                    Ok(_) => {}
-                    Err(error) => {
-                        error!(
-                            "#listen - {} Failed to send OnConnected event. Error: {:?}",
-                            endpoint.resource_id(),
-                            error
-                        );
-                    }
-                }
+                // match crate::SENDER
+                //     .read()
+                //     .send(Event::OnMessage(endpoint, data.to_vec()))
+                // {
+                //     Ok(_) => {}
+                //     Err(error) => {
+                //         error!(
+                //             "#listen - {} Failed to send OnConnected event. Error: {:?}",
+                //             endpoint.resource_id(),
+                //             error
+                //         );
+                //     }
+                // }
             }
             NetEvent::Disconnected(endpoint) => {
-                match crate::SENDER.read().unwrap().send(Event::OnDisconnect(endpoint)) {
-                    Ok(_) => {}
-                    Err(error) => {
-                        error!(
-                            "#listen - {} Failed to send OnDisconnected event. Error: {:?}",
-                            endpoint.resource_id(),
-                            error
-                        );
-                    }
-                }
+                // match crate::SENDER.read().send(Event::OnDisconnect(endpoint)) {
+                //     Ok(_) => {}
+                //     Err(error) => {
+                //         error!(
+                //             "#listen - {} Failed to send OnDisconnected event. Error: {:?}",
+                //             endpoint.resource_id(),
+                //             error
+                //         );
+                //     }
+                // }
             }
-        });
-
-        self.task = Arc::new(RwLock::new(Some(task)));
-    }
-
-    // This is called from a ruby thread and it is blocking.
-    pub fn process_requests(&self) {
-        let server = self.clone();
-
-        thread::spawn(move || {
-            loop {
-                let event = match crate::RECEIVER.read().unwrap().recv() {
-                    Ok(event) => event,
-                    Err(error) => {
-                        error!(
-                            "#process_requests - Failed to receive message. Error: {:?}",
-                            error
-                        );
-                        continue;
-                    }
-                };
-
-                trace!("#process_requests - Incoming event: {:?}", event);
-
-                match event {
-                    Event::OnConnected(endpoint, resource_id) => server.on_connect(endpoint, resource_id),
-                    Event::OnMessage(endpoint, data) => server.on_message(endpoint, data),
-                    Event::OnDisconnect(endpoint) => server.on_disconnect(endpoint),
-                    Event::Stop => break
-                }
-            }
+            NetEvent::Accepted(endpoint, resource_id) => {}
         });
     }
 
-    pub fn rb_sender_mut(&self) -> Option<RwLockWriteGuard<Array>> {
-        let mut attempt_counter = 0;
-        let sender = loop {
-            match self.rb_sender.try_write() {
-                Some(sender) => break sender,
-                None => {
-                    if attempt_counter <= 15 {
-                        attempt_counter += 1;
-                        thread::sleep(Duration::from_secs(1));
-                        continue;
-                    }
+    pub async fn handle_process_queue(&self) -> redis::RedisResult<isize> {
+        let mut connection = match *self.redis_connection {
+            Some(ref con) => con.clone(),
+            None => panic!("#handle_process_queue - Failed to retrieve a redis connection"),
+        };
 
-                    error!("#rb_sender_mut - Failed to gain lock.");
-                    return None;
+        loop {
+            debug!("#handle_process_queue - Waiting for message");
+
+            let _: () = match redis::cmd("BLMOVE")
+                .arg("connection_server_outbound")
+                .arg("tcp_server_inbound")
+                .arg("LEFT")
+                .arg("RIGHT")
+                .arg(0)
+                .query_async(&mut connection)
+                .await
+            {
+                Ok(r) => r,
+                Err(e) => error!("#handle_process_queue - {}", e)
+            };
+
+            thread::sleep(Duration::from_millis(500));
+        }
+    }
+
+    pub async fn process_requests(&self) -> redis::RedisResult<isize> {
+        // THIS NEEDS TO BE A SEPARATE CONNECTION, JUST LIKE THE BOT
+        let mut connection = match *self.redis_connection {
+            Some(ref con) => con.clone(),
+            None => panic!("#process_requests - Failed to retrieve a redis connection"),
+        };
+
+        loop {
+            thread::sleep(Duration::from_millis(500));
+
+            debug!("#process_requests - Waiting for message");
+
+            let json: Option<String> = match redis::cmd("BLPOP")
+                .arg("tcp_server_inbound")
+                .arg(0)
+                .query_async(&mut connection)
+                .await
+            {
+                Ok(json) => json,
+                Err(e) => {
+                    error!("#process_requests - {:?}", e);
+                    continue;
                 }
-            }
-        };
+            };
 
-        Some(sender)
-    }
+            let json: String = match json {
+                Some(json) => json,
+                None => continue
+            };
 
-    pub fn endpoints(&self) -> Option<RwLockReadGuard<HashMap<usize, Endpoint>>> {
-        let mut attempt_counter = 0;
-        let endpoints = loop {
-            match self.endpoints.try_read() {
-                Some(endpoints) => break endpoints,
-                None => {
-                    if attempt_counter <= 15 {
-                        attempt_counter += 1;
-                        thread::sleep(Duration::from_secs(1));
-                        continue;
-                    }
+            debug!("#process_requests - Received message. Deserializing...");
 
-                    return None;
+            let message: Message = match serde_json::from_str(&json) {
+                Ok(message) => message,
+                Err(e) => {
+                    error!("#process_requests - {}", e);
+                    continue;
                 }
-            }
-        };
+            };
 
-        Some(endpoints)
+            info!("#process_requests - Incoming message: {:?}", message);
+
+            match message.message_type {
+                _ => {}
+            }
+        }
     }
 
-    pub fn endpoints_mut(&self) -> Option<RwLockWriteGuard<HashMap<usize, Endpoint>>> {
-        let mut attempt_counter = 0;
-        let endpoints = loop {
-            match self.endpoints.try_write() {
-                Some(endpoints) => break endpoints,
-                None => {
-                    if attempt_counter <= 15 {
-                        attempt_counter += 1;
-                        thread::sleep(Duration::from_secs(1));
-                        continue;
-                    }
+    // pub fn rb_sender_mut(&self) -> Option<RwLockWriteGuard<Array>> {
+    //     let mut attempt_counter = 0;
+    //     let sender = loop {
+    //         match self.rb_sender.try_write() {
+    //             Some(sender) => break sender,
+    //             None => {
+    //                 if attempt_counter <= 15 {
+    //                     attempt_counter += 1;
+    //                     thread::sleep(Duration::from_secs(1));
+    //                     continue;
+    //                 }
 
-                    return None;
-                }
-            }
-        };
+    //                 error!("#rb_sender_mut - Failed to gain lock.");
+    //                 return None;
+    //             }
+    //         }
+    //     };
 
-        Some(endpoints)
-    }
+    //     Some(sender)
+    // }
 
-    pub fn remove_endpoint(&self, adapter_id: usize) -> Option<Endpoint> {
-        let mut endpoints = match self.endpoints_mut() {
-            Some(endpoints) => endpoints,
-            None => {
-                error!("#remove_endpoint - Failed to gain write lock");
-                return None;
-            }
-        };
+    // pub fn endpoints(&self) -> Option<RwLockReadGuard<HashMap<usize, Endpoint>>> {
+    //     let mut attempt_counter = 0;
+    //     let endpoints = loop {
+    //         match self.endpoints.try_read() {
+    //             Some(endpoints) => break endpoints,
+    //             None => {
+    //                 if attempt_counter <= 15 {
+    //                     attempt_counter += 1;
+    //                     thread::sleep(Duration::from_secs(1));
+    //                     continue;
+    //                 }
 
-        endpoints.remove(&adapter_id)
-    }
+    //                 return None;
+    //             }
+    //         }
+    //     };
 
-    fn handler(&self) -> Option<RwLockReadGuard<NodeHandler<()>>> {
-        let mut attempt_counter = 0;
-        let handler = loop {
-            match self.handler.try_read() {
-                Some(handler) => break handler,
-                None => {
-                    if attempt_counter <= 15 {
-                        attempt_counter += 1;
-                        thread::sleep(Duration::from_secs(1));
-                        continue;
-                    }
+    //     Some(endpoints)
+    // }
 
-                    error!("#handler - Failed to gain lock");
-                    return None;
-                }
-            }
-        };
+    // pub fn endpoints_mut(&self) -> Option<RwLockWriteGuard<HashMap<usize, Endpoint>>> {
+    //     let mut attempt_counter = 0;
+    //     let endpoints = loop {
+    //         match self.endpoints.try_write() {
+    //             Some(endpoints) => break endpoints,
+    //             None => {
+    //                 if attempt_counter <= 15 {
+    //                     attempt_counter += 1;
+    //                     thread::sleep(Duration::from_secs(1));
+    //                     continue;
+    //                 }
 
-        Some(handler)
-    }
+    //                 return None;
+    //             }
+    //         }
+    //     };
+
+    //     Some(endpoints)
+    // }
+
+    // pub fn remove_endpoint(&self, adapter_id: usize) -> Option<Endpoint> {
+    //     let mut endpoints = match self.endpoints_mut() {
+    //         Some(endpoints) => endpoints,
+    //         None => {
+    //             error!("#remove_endpoint - Failed to gain write lock");
+    //             return None;
+    //         }
+    //     };
+
+    //     endpoints.remove(&adapter_id)
+    // }
+
+    // fn handler(&self) -> Option<RwLockReadGuard<NodeHandler<()>>> {
+    //     let mut attempt_counter = 0;
+    //     let handler = loop {
+    //         match self.handler.try_read() {
+    //             Some(handler) => break handler,
+    //             None => {
+    //                 if attempt_counter <= 15 {
+    //                     attempt_counter += 1;
+    //                     thread::sleep(Duration::from_secs(1));
+    //                     continue;
+    //                 }
+
+    //                 error!("#handler - Failed to gain lock");
+    //                 return None;
+    //             }
+    //         }
+    //     };
+
+    //     Some(handler)
+    // }
 
     // pub fn send_message(&self, resource_id: i64, message: crate::ServerMessage) {
     //     let endpoints = match self.endpoints() {
@@ -269,152 +313,140 @@ impl Server {
     //     handler.network().send(*endpoint, message.as_bytes());
     // }
 
-    pub fn disconnect(&self, adapter_id: usize) -> bool {
-        let handler = match self.handler() {
-            Some(handler) => handler,
-            None => return false,
-        };
+    // pub fn disconnect(&self, adapter_id: usize) -> bool {
+    //     let handler = match self.handler() {
+    //         Some(handler) => handler,
+    //         None => return false,
+    //     };
 
-        match self.remove_endpoint(adapter_id) {
-            Some(endpoint) => {
-                handler.network().remove(endpoint.resource_id())
-            },
-            None => {
-                warn!(
-                    "#disconnect - {} Endpoint already removed",
-                    adapter_id
-                );
+    //     match self.remove_endpoint(adapter_id) {
+    //         Some(endpoint) => handler.network().remove(endpoint.resource_id()),
+    //         None => {
+    //             warn!("#disconnect - {} Endpoint already removed", adapter_id);
 
-                false
-            }
-        }
-    }
+    //             false
+    //         }
+    //     }
+    // }
 
-    fn on_connect(&self, endpoint: Endpoint, resource_id: ResourceId) {
-        debug!(
-            "#on_connect - {} Incoming connection with address {}",
-            resource_id,
-            endpoint.addr()
-        );
+    // fn on_connect(&self, endpoint: Endpoint, resource_id: ResourceId) {
+    //     debug!(
+    //         "#on_connect - {} Incoming connection with address {}",
+    //         resource_id,
+    //         endpoint.addr()
+    //     );
 
-        let check_connection = || -> Result<(), &'static str> {
-            let mut endpoints = match self.endpoints_mut() {
-                Some(endpoints) => endpoints,
-                None => return Err("Failed to gain write lock"),
-            };
+    //     let check_connection = || -> Result<(), &'static str> {
+    //         let mut endpoints = match self.endpoints_mut() {
+    //             Some(endpoints) => endpoints,
+    //             None => return Err("Failed to gain write lock"),
+    //         };
 
-            let adapter_id = resource_id.adapter_id() as usize;
+    //         let adapter_id = resource_id.adapter_id() as usize;
 
-            // Check if the client has already connected
-            match endpoints.get(&adapter_id) {
-                Some(_) => {
-                    self.disconnect(adapter_id);
-                    Err("Endpoint already connected")
-                }
-                None => {
-                    // Store the connection so it can be retrieved later
-                    endpoints.insert(adapter_id, endpoint);
-                    Ok(())
-                },
-            }
-        };
+    //         // Check if the client has already connected
+    //         match endpoints.get(&adapter_id) {
+    //             Some(_) => {
+    //                 self.disconnect(adapter_id);
+    //                 Err("Endpoint already connected")
+    //             }
+    //             None => {
+    //                 // Store the connection so it can be retrieved later
+    //                 endpoints.insert(adapter_id, endpoint);
+    //                 Ok(())
+    //             }
+    //         }
+    //     };
 
-        // Log and return if something went wrong
-        if let Err(message) = check_connection() {
-            error!("#connect - {} {}", resource_id, message);
-            return;
-        }
+    //     // Log and return if something went wrong
+    //     if let Err(message) = check_connection() {
+    //         error!("#connect - {} {}", resource_id, message);
+    //         return;
+    //     }
 
-        trace!("#on_connect - {} Connection added", resource_id);
+    //     trace!("#on_connect - {} Connection added", resource_id);
 
-        // Inform the bot of a new connection
-        match self.rb_sender_mut() {
-            Some(mut sender) => {
-                let mut message = Hash::new();
-                message.store(Symbol::new("type"), Symbol::new("connection_event"));
-                message.store(Symbol::new("resource_id"), Integer::new(resource_id.adapter_id() as i64));
+    //     let mut message = Message::new("connection_event", Some(resource_id.adapter_id() as i64));
+    //     message.add_data("event", Symbol::new("on_connect").to_any_object());
 
-                let mut data = Hash::new();
-                data.store(Symbol::new("event"), Symbol::new("on_connect"));
+    //     debug!("Message");
 
-                message.store(Symbol::new("data"), data);
+    //     let mut writer = self.flag.write();
+    //     *writer = Boolean::new(true);
+    //     drop(writer);
 
-                sender.push(message);
-            },
-            None => return
-        };
-    }
+    //     debug!("Writer");
 
-    fn on_message(&self, endpoint: Endpoint, data: Vec<u8>) {
-        let resource_id = endpoint.resource_id();
+    //     // Inform the bot of a new connection
+    //     match self.rb_sender_mut() {
+    //         Some(mut sender) => {
+    //             sender.push(message.to_hash());
+    //         }
+    //         None => return,
+    //     };
 
-        let client_message: ClientMessage = match bincode::deserialize(&data) {
-            Ok(message) => message,
-            Err(_error) => {
-                error!(
-                    "#on_message - {} Malformed message: {}",
-                    resource_id,
-                    String::from_utf8_lossy(&data)
-                );
-                return;
-            }
-        };
+    //     debug!("Done");
+    // }
 
-        debug!(
-            "#on_message - {} Message: {:?}",
-            resource_id, client_message
-        );
+    // fn on_message(&self, endpoint: Endpoint, data: Vec<u8>) {
+    //     let resource_id = endpoint.resource_id();
+    //     let message = Message::from_bytes(
+    //         data,
+    //         "connection_event",
+    //         Some(resource_id.adapter_id() as i64),
+    //     );
 
-        // Trigger the on_message on the ruby side
-        match self.rb_sender_mut() {
-            Some(mut sender) => {
-                let mut message = Hash::new();
-                message.store(Symbol::new("type"), Symbol::new("connection_event"));
-                message.store(Symbol::new("resource_id"), Integer::new(resource_id.adapter_id() as i64));
+    //     let mut message = match message {
+    //         Ok(message) => message,
+    //         Err(e) => {
+    //             error!("#on_message - {}", e);
+    //             self.disconnect(resource_id.adapter_id() as usize);
+    //             return;
+    //         }
+    //     };
 
-                let mut data = Hash::new();
-                data.store(Symbol::new("event"), Symbol::new("on_message"));
-                data.store(Symbol::new("key"), RString::new_utf8(client_message.key.as_str()));
-                data.store(Symbol::new("data"), client_message.data.to_hash());
-                data.store(Symbol::new("metadata"), client_message.metadata.to_hash());
+    //     message.add_data("event", RString::new_utf8("on_message").into());
 
-                message.store(Symbol::new("data"), data);
+    //     debug!("#on_message - {} Message: {:?}", resource_id, message);
 
-                sender.push(message);
-            },
-            None => return
-        };
-    }
+    //     // Trigger the on_message on the ruby side
+    //     match self.rb_sender_mut() {
+    //         Some(mut sender) => {
+    //             sender.push(message.to_hash());
+    //         }
+    //         None => return,
+    //     };
+    // }
 
-    fn on_disconnect(&self, endpoint: Endpoint) {
-        let resource_id = endpoint.resource_id();
-        debug!("#on_disconnect - {} has disconnected", resource_id);
+    // fn on_disconnect(&self, endpoint: Endpoint) {
+    //     let resource_id = endpoint.resource_id();
+    //     debug!("#on_disconnect - {} has disconnected", resource_id);
 
-        match self.remove_endpoint(resource_id.adapter_id() as usize) {
-            Some(_) => (),
-            None => {
-                warn!(
-                    "#on_disconnect - {} Endpoint already removed",
-                    resource_id
-                );
-            }
-        };
+    //     match self.remove_endpoint(resource_id.adapter_id() as usize) {
+    //         Some(_) => (),
+    //         None => {
+    //             warn!("#on_disconnect - {} Endpoint already removed", resource_id);
+    //         }
+    //     };
 
-        // Trigger the on_message on the ruby side
-        match self.rb_sender_mut() {
-            Some(mut sender) => {
-                let mut message = Hash::new();
-                message.store(Symbol::new("type"), Symbol::new("connection_event"));
-                message.store(Symbol::new("resource_id"), Integer::new(resource_id.adapter_id() as i64));
+    //     // Trigger the on_message on the ruby side
+    //     match self.rb_sender_mut() {
+    //         Some(mut sender) => {
+    //             let mut message = Hash::new();
+    //             message.store(Symbol::new("type"), Symbol::new("connection_event"));
+    //             message.store(
+    //                 Symbol::new("resource_id"),
+    //                 Integer::new(resource_id.adapter_id() as i64),
+    //             );
 
-                let mut data = Hash::new();
-                data.store(Symbol::new("event"), Symbol::new("on_disconnect"));
+    //             let mut data = Hash::new();
+    //             data.store(Symbol::new("event"), Symbol::new("on_disconnect"));
 
-                message.store(Symbol::new("data"), data);
+    //             message.store(Symbol::new("data"), data);
 
-                sender.push(message);
-            },
-            None => return
-        };
-    }
+    //             sender.push(message);
+    //         }
+    //         None => return,
+    //     };
+    // }
 }

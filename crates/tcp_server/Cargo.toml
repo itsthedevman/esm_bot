@@ -4,20 +4,17 @@ version = "0.1.0"
 authors = ["Bryan <WolfkillArcadia@gmail.com>"]
 edition = "2018"
 
-[lib]
-crate-type = ["cdylib"]
-
 [dependencies]
 lazy_static = "1.4.0"
-rutie = { version = "0.8", features=["no-link"] }
-message-io = { version = "0.13", default-features = false, features = ["tcp"] }
+message-io = { version = "0.14", default-features = false, features = ["tcp"] }
 uuid = "0.8"
 log = "0.4.14"
 env_logger = "0.8.3"
-crossbeam = "0.8.0"
 bincode = "1.3.3"
 serde = "1.0"
 serde_derive = "1.0"
+serde_json = "1.0"
 parking_lot = "0.10"
-
-# rutie-serde = "0.2"
+aes-gcm = "0.9.1"
+tokio = { version = "1.5.0", features = ["full", "parking_lot"] }
+redis = { version = "0.20.1", features = ["r2d2", "tokio-comp", "connection-manager"] }
