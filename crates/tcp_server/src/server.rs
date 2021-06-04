@@ -146,10 +146,7 @@ impl Server {
         };
 
         loop {
-            thread::sleep(Duration::from_millis(500));
-
             debug!("#process_requests - Waiting for message");
-
             let json: Option<String> = match redis::cmd("BLPOP")
                 .arg("tcp_server_inbound")
                 .arg(0)
