@@ -52,11 +52,6 @@ module ESM
         self.refresh_keys
         self.delegate_inbound_messages
         self.process_inbound_messages
-
-        # 100.times.each do |i|
-        #   sleep(0.5)
-        #   send_message(data: { foo: "bar", count: i })
-        # end
       end
 
       delegate :find_by_resource_id, :find_by_server_id, to: :@connections
@@ -101,7 +96,6 @@ module ESM
 
         ESM.logger.debug("#{self.class}##{__method__}") { "Sending: #{message}" }
         @redis_general.rpush("connection_server_outbound", message)
-        puts "sent"
       end
 
       # Store all of the server_ids and their keys in redis.

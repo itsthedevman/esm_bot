@@ -122,7 +122,7 @@ fn extract_data(bytes: Vec<u8>) -> Result<Packet, &'static str> {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-struct Packet {
+pub struct Packet {
     id: String,
     data_type: String,
     data: Data,
@@ -149,7 +149,7 @@ enum Data {
 impl Data {
     pub fn to_hash_map(&self) -> HashMap<String, Value> {
         match self {
-            Data::Empty => HashMap::new()
+            Data::Empty => HashMap::new(),
         }
     }
 }

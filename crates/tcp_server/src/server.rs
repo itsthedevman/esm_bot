@@ -1,24 +1,26 @@
 use crate::message::Message;
 use log::*;
 use message_io::{
-    network::{Endpoint, ResourceId},
-    node::{self, NodeHandler, NodeTask},
+    network::{Endpoint},
+    node::{self, NodeHandler},
 };
 use message_io::{
     network::{NetEvent, Transport},
     node::NodeListener,
 };
-use parking_lot::{RwLock, RwLockReadGuard, RwLockWriteGuard};
-use redis::{aio::MultiplexedConnection, RedisResult};
-use std::{collections::HashMap, env, time::Duration};
-use std::{sync::Arc, thread};
+use tokio::sync::RwLock;
+use redis::{Client, RedisError, aio::MultiplexedConnection};
+use std::{collections::HashMap, env};
+use std::{sync::Arc};
+use tokio::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
 
 #[derive(Clone)]
 pub struct Server {
     handler: Arc<NodeHandler<()>>,
     endpoints: Arc<HashMap<usize, Endpoint>>,
-    redis_delegator: Arc<Option<MultiplexedConnection>>,
-    redis_processor: Arc<Option<MultiplexedConnection>>,
+    redis_client: Arc<Client>,
+    outbound_sender: UnboundedSender<Message>,
+    outbound_receiver: Arc<RwLock<UnboundedReceiver<Message>>>,
     address: String,
 }
 
@@ -28,29 +30,37 @@ impl Server {
             Ok(port) => {
                 format!("0.0.0.0:{}", port)
             }
-            Err(_e) => {
-                panic!("TCP_SERVER_PORT is not set!");
-            }
+            Err(_e) => panic!("TCP_SERVER_PORT is not set!")
         };
+
+        let redis_client = match redis::Client::open("redis://127.0.0.1/") {
+            Ok(client) => client,
+            Err(e) => panic!(format!("Failed to connect to redis. Reason: {}", e))
+        };
+
+        let (sender, receiver) = mpsc::unbounded_channel();
 
         Server {
             endpoints: Arc::new(HashMap::new()),
             handler: Arc::new(handler),
-            redis_delegator: Arc::new(None),
-            redis_processor: Arc::new(None),
+            outbound_sender: sender,
+            outbound_receiver: Arc::new(RwLock::new(receiver)),
+            redis_client: Arc::new(redis_client),
             address,
         }
     }
 
-    pub async fn connect_to_redis(&mut self) -> RedisResult<isize> {
-        let client = redis::Client::open("redis://127.0.0.1/")?;
-        let connection = client.get_multiplexed_tokio_connection().await?;
-        self.redis_delegator = Arc::new(Some(connection));
+    async fn get_redis_connection(&self) -> Result<MultiplexedConnection, RedisError> {
+        self.redis_client.get_multiplexed_tokio_connection().await
+    }
 
-        let connection = client.get_multiplexed_tokio_connection().await?;
-        self.redis_processor = Arc::new(Some(connection));
-
-        Ok(0)
+    fn send_to_bot(&self, message: Message) {
+        match self.outbound_sender.send(message) {
+            Ok(()) => {},
+            Err(e) => {
+                error!("#send_message - {}", e);
+            }
+        }
     }
 
     // pub fn server_key<'a>(&self, server_id: &'a str) -> Result<Vec<u8>, &'static str> {
@@ -117,15 +127,48 @@ impl Server {
         });
     }
 
-    pub async fn delegate_inbound_messages(&self) -> redis::RedisResult<isize> {
-        let mut connection = match *self.redis_delegator {
-            Some(ref con) => con.clone(),
-            None => panic!("#delegate_inbound_messages - Failed to retrieve a redis connection"),
+    pub async fn start_workers(&self) {
+        // Delegate inbound messages
+        let server = self.clone();
+        let _ = tokio::spawn(async move {
+            server.delegate_inbound_messages().await
+        });
+
+        let server = self.clone();
+        let _ = tokio::spawn(async move {
+            server.delegate_inbound_messages().await
+        });
+
+        // Process inbound messages
+        let server = self.clone();
+        let _ = tokio::spawn(async move {
+            server.process_inbound_messages().await
+        });
+
+        let server = self.clone();
+        let _ = tokio::spawn(async move {
+            server.process_inbound_messages().await
+        });
+
+        // Delegate outbound messages
+        let server = self.clone();
+        let _ = tokio::spawn(async move {
+            server.delegate_outbound_messages().await
+        });
+
+        let server = self.clone();
+        let _ = tokio::spawn(async move {
+            server.delegate_outbound_messages().await
+        });
+    }
+
+    async fn delegate_inbound_messages(&self) -> redis::RedisResult<isize> {
+        let mut connection = match self.get_redis_connection().await {
+            Ok(connection) => connection,
+            Err(e) => panic!("#process_inbound_messages - {}", e)
         };
 
         loop {
-            debug!("#delegate_inbound_messages - Waiting for message");
-
             let _: () = match redis::cmd("BLMOVE")
                 .arg("connection_server_outbound")
                 .arg("tcp_server_inbound")
@@ -141,16 +184,48 @@ impl Server {
         }
     }
 
-    pub async fn process_inbound_messages(&self) -> redis::RedisResult<isize> {
-        // THIS NEEDS TO BE A SEPARATE CONNECTION, JUST LIKE THE BOT
-        let mut connection = match *self.redis_processor {
-            Some(ref con) => con.clone(),
-            None => panic!("#process_inbound_messages - Failed to retrieve a redis connection"),
+    async fn delegate_outbound_messages(&self) {
+        let mut connection = match self.get_redis_connection().await {
+            Ok(connection) => connection,
+            Err(e) => panic!("#process_inbound_messages - {}", e)
         };
 
         loop {
-            debug!("#process_inbound_messages - Waiting for message");
-            let json: Option<String> = match redis::cmd("BLPOP")
+            let mut receiver = self.outbound_receiver.write().await;
+
+            let message = match receiver.recv().await {
+                Some(message) => message,
+                None => continue
+            };
+
+            let json: String = match serde_json::to_string(&message) {
+                Ok(json) => json,
+                Err(e) => {
+                    error!("#delegate_outbound_messages - {}", e);
+                    continue;
+                }
+            };
+
+            let _: () = match redis::cmd("RPUSH")
+                .arg("tcp_server_outbound")
+                .arg(json)
+                .query_async(&mut connection)
+                .await
+            {
+                Ok(r) => r,
+                Err(e) => error!("#delegate_inbound_messages - {}", e)
+            };
+        }
+    }
+
+    async fn process_inbound_messages(&self) -> redis::RedisResult<isize> {
+        let mut connection = match self.get_redis_connection().await {
+            Ok(connection) => connection,
+            Err(e) => panic!("#process_inbound_messages - {}", e)
+        };
+
+        loop {
+            let (_, json): (String, String) = match redis::cmd("BLPOP")
                 .arg("tcp_server_inbound")
                 .arg(0)
                 .query_async(&mut connection)
@@ -162,13 +237,6 @@ impl Server {
                     continue;
                 }
             };
-
-            let json: String = match json {
-                Some(json) => json,
-                None => continue
-            };
-
-            debug!("#process_inbound_messages - Received message. Deserializing...");
 
             let message: Message = match serde_json::from_str(&json) {
                 Ok(message) => message,
