@@ -22,13 +22,13 @@ async fn main() {
     // Clone the server so it can be moved into the spawn
     let server_clone = server.clone();
     let _ = tokio::spawn(async move {
-        server_clone.handle_process_queue().await
+        server_clone.delegate_inbound_messages().await
     });
 
     // Clone the server so it can be moved into the spawn
     let server_clone = server.clone();
     let _ = tokio::spawn(async move {
-        server_clone.process_requests().await
+        server_clone.process_inbound_messages().await
     });
 
     server.listen(listener).await;

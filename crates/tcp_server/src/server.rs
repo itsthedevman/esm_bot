@@ -17,7 +17,8 @@ use std::{sync::Arc, thread};
 pub struct Server {
     handler: Arc<NodeHandler<()>>,
     endpoints: Arc<HashMap<usize, Endpoint>>,
-    redis_connection: Arc<Option<MultiplexedConnection>>,
+    redis_delegator: Arc<Option<MultiplexedConnection>>,
+    redis_processor: Arc<Option<MultiplexedConnection>>,
     address: String,
 }
 
@@ -35,7 +36,8 @@ impl Server {
         Server {
             endpoints: Arc::new(HashMap::new()),
             handler: Arc::new(handler),
-            redis_connection: Arc::new(None),
+            redis_delegator: Arc::new(None),
+            redis_processor: Arc::new(None),
             address,
         }
     }
@@ -43,7 +45,10 @@ impl Server {
     pub async fn connect_to_redis(&mut self) -> RedisResult<isize> {
         let client = redis::Client::open("redis://127.0.0.1/")?;
         let connection = client.get_multiplexed_tokio_connection().await?;
-        self.redis_connection = Arc::new(Some(connection));
+        self.redis_delegator = Arc::new(Some(connection));
+
+        let connection = client.get_multiplexed_tokio_connection().await?;
+        self.redis_processor = Arc::new(Some(connection));
 
         Ok(0)
     }
@@ -112,14 +117,14 @@ impl Server {
         });
     }
 
-    pub async fn handle_process_queue(&self) -> redis::RedisResult<isize> {
-        let mut connection = match *self.redis_connection {
+    pub async fn delegate_inbound_messages(&self) -> redis::RedisResult<isize> {
+        let mut connection = match *self.redis_delegator {
             Some(ref con) => con.clone(),
-            None => panic!("#handle_process_queue - Failed to retrieve a redis connection"),
+            None => panic!("#delegate_inbound_messages - Failed to retrieve a redis connection"),
         };
 
         loop {
-            debug!("#handle_process_queue - Waiting for message");
+            debug!("#delegate_inbound_messages - Waiting for message");
 
             let _: () = match redis::cmd("BLMOVE")
                 .arg("connection_server_outbound")
@@ -131,22 +136,20 @@ impl Server {
                 .await
             {
                 Ok(r) => r,
-                Err(e) => error!("#handle_process_queue - {}", e)
+                Err(e) => error!("#delegate_inbound_messages - {}", e)
             };
-
-            thread::sleep(Duration::from_millis(500));
         }
     }
 
-    pub async fn process_requests(&self) -> redis::RedisResult<isize> {
+    pub async fn process_inbound_messages(&self) -> redis::RedisResult<isize> {
         // THIS NEEDS TO BE A SEPARATE CONNECTION, JUST LIKE THE BOT
-        let mut connection = match *self.redis_connection {
+        let mut connection = match *self.redis_processor {
             Some(ref con) => con.clone(),
-            None => panic!("#process_requests - Failed to retrieve a redis connection"),
+            None => panic!("#process_inbound_messages - Failed to retrieve a redis connection"),
         };
 
         loop {
-            debug!("#process_requests - Waiting for message");
+            debug!("#process_inbound_messages - Waiting for message");
             let json: Option<String> = match redis::cmd("BLPOP")
                 .arg("tcp_server_inbound")
                 .arg(0)
@@ -155,7 +158,7 @@ impl Server {
             {
                 Ok(json) => json,
                 Err(e) => {
-                    error!("#process_requests - {:?}", e);
+                    error!("#process_inbound_messages - {:?}", e);
                     continue;
                 }
             };
@@ -165,17 +168,17 @@ impl Server {
                 None => continue
             };
 
-            debug!("#process_requests - Received message. Deserializing...");
+            debug!("#process_inbound_messages - Received message. Deserializing...");
 
             let message: Message = match serde_json::from_str(&json) {
                 Ok(message) => message,
                 Err(e) => {
-                    error!("#process_requests - {}", e);
+                    error!("#process_inbound_messages - {}", e);
                     continue;
                 }
             };
 
-            info!("#process_requests - Incoming message: {:?}", message);
+            info!("#process_inbound_messages - Incoming message: {:?}", message);
 
             match message.message_type {
                 _ => {}
