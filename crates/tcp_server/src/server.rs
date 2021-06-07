@@ -1,26 +1,24 @@
-use crate::message::Message;
+use crate::{connection::ConnectionManager, message::Message, message::Type};
 use log::*;
-use message_io::{
-    network::{Endpoint},
-    node::{self, NodeHandler},
-};
+use message_io::{network::{Endpoint, ResourceId}, node::{self, NodeHandler}};
 use message_io::{
     network::{NetEvent, Transport},
     node::NodeListener,
 };
+use serde_json::json;
 use tokio::sync::RwLock;
 use redis::{Client, RedisError, aio::MultiplexedConnection};
-use std::{collections::HashMap, env};
+use std::env;
 use std::{sync::Arc};
 use tokio::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
 
 #[derive(Clone)]
 pub struct Server {
-    handler: Arc<NodeHandler<()>>,
-    endpoints: Arc<HashMap<usize, Endpoint>>,
-    redis_client: Arc<Client>,
+    handler: NodeHandler<()>,
+    connection_manager: Arc<parking_lot::RwLock<ConnectionManager>>,
+    redis_client: Client,
     outbound_sender: UnboundedSender<Message>,
-    outbound_receiver: Arc<RwLock<UnboundedReceiver<Message>>>,
+    outbound_receiver:  Arc<RwLock<UnboundedReceiver<Message>>>,
     address: String,
 }
 
@@ -41,11 +39,11 @@ impl Server {
         let (sender, receiver) = mpsc::unbounded_channel();
 
         Server {
-            endpoints: Arc::new(HashMap::new()),
-            handler: Arc::new(handler),
+            handler,
+            connection_manager: Arc::new(parking_lot::RwLock::new(ConnectionManager::new())),
             outbound_sender: sender,
             outbound_receiver: Arc::new(RwLock::new(receiver)),
-            redis_client: Arc::new(redis_client),
+            redis_client: redis_client,
             address,
         }
     }
@@ -54,6 +52,7 @@ impl Server {
         self.redis_client.get_multiplexed_tokio_connection().await
     }
 
+    /// Send a Message to the bot.
     fn send_to_bot(&self, message: Message) {
         match self.outbound_sender.send(message) {
             Ok(()) => {},
@@ -77,7 +76,7 @@ impl Server {
     //     Ok(server_key)
     // }
 
-    pub async fn listen(&self, listener: NodeListener<()>) {
+    pub async fn listen(&mut self, listener: NodeListener<()>) {
         // Start listening
         match self
             .handler
@@ -123,10 +122,13 @@ impl Server {
                 //     }
                 // }
             }
-            NetEvent::Accepted(endpoint, resource_id) => {}
+            NetEvent::Accepted(endpoint, resource_id) => {
+                self.on_connect(endpoint, resource_id)
+            }
         });
     }
 
+    /// Spawn's workers to handle delegating and processing messages to/from the bot
     pub async fn start_workers(&self) {
         // Delegate inbound messages
         let server = self.clone();
@@ -162,6 +164,8 @@ impl Server {
         });
     }
 
+    /// Moves messages from the connection server outbound queue to the tcp server inbound queue.
+    /// Processing of these messages occurs in #process_inbound_messages
     async fn delegate_inbound_messages(&self) -> redis::RedisResult<isize> {
         let mut connection = match self.get_redis_connection().await {
             Ok(connection) => connection,
@@ -184,10 +188,11 @@ impl Server {
         }
     }
 
+    /// Moves messages from the internal outbound queue into the redis outbound queue so the bot may pick them up
     async fn delegate_outbound_messages(&self) {
         let mut connection = match self.get_redis_connection().await {
             Ok(connection) => connection,
-            Err(e) => panic!("#process_inbound_messages - {}", e)
+            Err(e) => panic!("#delegate_outbound_messages - {}", e)
         };
 
         loop {
@@ -218,6 +223,8 @@ impl Server {
         }
     }
 
+    /// Processes messages from the redis inbound queue based on their message_type.
+    /// These messages are moved into this queue by #delegate_inbound_messages
     async fn process_inbound_messages(&self) -> redis::RedisResult<isize> {
         let mut connection = match self.get_redis_connection().await {
             Ok(connection) => connection,
@@ -253,79 +260,6 @@ impl Server {
             }
         }
     }
-
-    // pub fn rb_sender_mut(&self) -> Option<RwLockWriteGuard<Array>> {
-    //     let mut attempt_counter = 0;
-    //     let sender = loop {
-    //         match self.rb_sender.try_write() {
-    //             Some(sender) => break sender,
-    //             None => {
-    //                 if attempt_counter <= 15 {
-    //                     attempt_counter += 1;
-    //                     thread::sleep(Duration::from_secs(1));
-    //                     continue;
-    //                 }
-
-    //                 error!("#rb_sender_mut - Failed to gain lock.");
-    //                 return None;
-    //             }
-    //         }
-    //     };
-
-    //     Some(sender)
-    // }
-
-    // pub fn endpoints(&self) -> Option<RwLockReadGuard<HashMap<usize, Endpoint>>> {
-    //     let mut attempt_counter = 0;
-    //     let endpoints = loop {
-    //         match self.endpoints.try_read() {
-    //             Some(endpoints) => break endpoints,
-    //             None => {
-    //                 if attempt_counter <= 15 {
-    //                     attempt_counter += 1;
-    //                     thread::sleep(Duration::from_secs(1));
-    //                     continue;
-    //                 }
-
-    //                 return None;
-    //             }
-    //         }
-    //     };
-
-    //     Some(endpoints)
-    // }
-
-    // pub fn endpoints_mut(&self) -> Option<RwLockWriteGuard<HashMap<usize, Endpoint>>> {
-    //     let mut attempt_counter = 0;
-    //     let endpoints = loop {
-    //         match self.endpoints.try_write() {
-    //             Some(endpoints) => break endpoints,
-    //             None => {
-    //                 if attempt_counter <= 15 {
-    //                     attempt_counter += 1;
-    //                     thread::sleep(Duration::from_secs(1));
-    //                     continue;
-    //                 }
-
-    //                 return None;
-    //             }
-    //         }
-    //     };
-
-    //     Some(endpoints)
-    // }
-
-    // pub fn remove_endpoint(&self, adapter_id: usize) -> Option<Endpoint> {
-    //     let mut endpoints = match self.endpoints_mut() {
-    //         Some(endpoints) => endpoints,
-    //         None => {
-    //             error!("#remove_endpoint - Failed to gain write lock");
-    //             return None;
-    //         }
-    //     };
-
-    //     endpoints.remove(&adapter_id)
-    // }
 
     // fn handler(&self) -> Option<RwLockReadGuard<NodeHandler<()>>> {
     //     let mut attempt_counter = 0;
@@ -381,80 +315,29 @@ impl Server {
     //     handler.network().send(*endpoint, message.as_bytes());
     // }
 
-    // pub fn disconnect(&self, adapter_id: usize) -> bool {
-    //     let handler = match self.handler() {
-    //         Some(handler) => handler,
-    //         None => return false,
-    //     };
+    pub fn disconnect(&self, resource_id: ResourceId) {
+        self.connection_manager.write().remove_by_resource_id(resource_id);
+        self.handler.network().remove(resource_id);
+    }
 
-    //     match self.remove_endpoint(adapter_id) {
-    //         Some(endpoint) => handler.network().remove(endpoint.resource_id()),
-    //         None => {
-    //             warn!("#disconnect - {} Endpoint already removed", adapter_id);
+    fn on_connect(&mut self, endpoint: Endpoint, resource_id: ResourceId) {
+        debug!(
+            "#on_connect - {} Incoming connection with address {}",
+            resource_id,
+            endpoint.addr()
+        );
 
-    //             false
-    //         }
-    //     }
-    // }
+        match self.connection_manager.write().add_to_lobby(resource_id, endpoint) {
+            Some(_) => {
+                self.disconnect(resource_id);
+                error!("#connect - {} Endpoint already connected", resource_id);
+                return;
+            },
+            None => {}
+        }
 
-    // fn on_connect(&self, endpoint: Endpoint, resource_id: ResourceId) {
-    //     debug!(
-    //         "#on_connect - {} Incoming connection with address {}",
-    //         resource_id,
-    //         endpoint.addr()
-    //     );
-
-    //     let check_connection = || -> Result<(), &'static str> {
-    //         let mut endpoints = match self.endpoints_mut() {
-    //             Some(endpoints) => endpoints,
-    //             None => return Err("Failed to gain write lock"),
-    //         };
-
-    //         let adapter_id = resource_id.adapter_id() as usize;
-
-    //         // Check if the client has already connected
-    //         match endpoints.get(&adapter_id) {
-    //             Some(_) => {
-    //                 self.disconnect(adapter_id);
-    //                 Err("Endpoint already connected")
-    //             }
-    //             None => {
-    //                 // Store the connection so it can be retrieved later
-    //                 endpoints.insert(adapter_id, endpoint);
-    //                 Ok(())
-    //             }
-    //         }
-    //     };
-
-    //     // Log and return if something went wrong
-    //     if let Err(message) = check_connection() {
-    //         error!("#connect - {} {}", resource_id, message);
-    //         return;
-    //     }
-
-    //     trace!("#on_connect - {} Connection added", resource_id);
-
-    //     let mut message = Message::new("connection_event", Some(resource_id.adapter_id() as i64));
-    //     message.add_data("event", Symbol::new("on_connect").to_any_object());
-
-    //     debug!("Message");
-
-    //     let mut writer = self.flag.write();
-    //     *writer = Boolean::new(true);
-    //     drop(writer);
-
-    //     debug!("Writer");
-
-    //     // Inform the bot of a new connection
-    //     match self.rb_sender_mut() {
-    //         Some(mut sender) => {
-    //             sender.push(message.to_hash());
-    //         }
-    //         None => return,
-    //     };
-
-    //     debug!("Done");
-    // }
+        trace!("#on_connect - {} Connection added", resource_id);
+    }
 
     // fn on_message(&self, endpoint: Endpoint, data: Vec<u8>) {
     //     let resource_id = endpoint.resource_id();

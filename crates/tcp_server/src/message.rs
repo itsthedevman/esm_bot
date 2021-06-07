@@ -8,17 +8,23 @@ use serde_json::{Value, json};
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Message {
     #[serde(rename = "type")]
-    pub message_type: String,
-    resource_id: Option<i64>,
+    pub message_type: Type,
+    server_id: Option<String>,
     data: HashMap<String, Value>,
     metadata: HashMap<String, Value>,
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "snake_case")]
+pub enum Type {
+    OnConnect
+}
+
 impl Message {
-    pub fn new(message_type: &'static str, resource_id: Option<i64>) -> Self {
+    pub fn new(message_type: Type, server_id: Option<String>) -> Self {
         Message {
-            message_type: message_type.to_string(),
-            resource_id: resource_id,
+            message_type,
+            server_id,
             data: HashMap::new(),
             metadata: HashMap::new(),
         }
@@ -26,14 +32,14 @@ impl Message {
 
     pub fn from_bytes(
         data: Vec<u8>,
-        message_type: &'static str,
-        resource_id: Option<i64>,
+        message_type: Type,
+        server_id: Option<String>,
     ) -> Result<Message, &'static str> {
         let packet = extract_data(data)?;
 
         Ok(Message {
-            message_type: message_type.to_string(),
-            resource_id: resource_id,
+            message_type: message_type,
+            server_id,
             data: packet.data.to_hash_map(),
             metadata: packet.metadata.to_hash_map(),
         })
