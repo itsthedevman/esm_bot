@@ -28,14 +28,6 @@ module ESM
         @instance.connections
       end
 
-      def self.find_by_resource_id(resource_id)
-        @instance.find_by_resource_id(resource_id)
-      end
-
-      def self.find_by_server_id(server_id)
-        @instance.find_by_server_id(server_id)
-      end
-
       ################################
       # Instance methods
       ################################
@@ -43,18 +35,15 @@ module ESM
       attr_reader :server, :connections
 
       def initialize
-        # The manager handles keeping connections alive and burying them if they're dead.
-        @connections = ESM::Connection::Manager.new
+        @connections = {}
 
         # Redis connection for sending messages and reloading keys
-        @redis_general = Redis.new(REDIS_OPTS)
+        @redis = Redis.new(REDIS_OPTS)
 
         self.refresh_keys
         self.delegate_inbound_messages
         self.process_inbound_messages
       end
-
-      delegate :find_by_resource_id, :find_by_server_id, to: :@connections
 
       # TODO: Documentation
       #
@@ -77,36 +66,27 @@ module ESM
         connection.run_callback("on_close")
       end
 
-      # TODO: Documentation
-      #
-      # @raises ESM::Exception::ClientNotConnected
-      # @raises ESM::Exception::ConnectionNotFound
-      def send_message(data:, metadata: {}, type: "server_message", resource_id: nil)
-        if !resource_id.nil?
-          connection = @connections.find_by_resource_id(resource_id)
-          raise ESM::Exception::ConnectionNotFound, resource_id if connection.nil?
-        end
+      def send_message(**args)
+        message = ESM::Connection::Message.new(**args)
 
-        message = {
-          resource_id: resource_id,
-          type: type,
-          data: data,
-          metadata: metadata
-        }.to_json
+        ESM::Notifications.trigger("info", class: self.class, method: __method__, message: message.to_h)
 
-        ESM.logger.debug("#{self.class}##{__method__}") { "Sending: #{message}" }
-        @redis_general.rpush("connection_server_outbound", message)
+        @redis.rpush("connection_server_outbound", message.to_s)
       end
+
+      private
 
       # Store all of the server_ids and their keys in redis.
       # This will allow the TCPServer to quickly pull a key by a server_id to decrypt messages
       def refresh_keys
         server_keys = ESM::Server.all.pluck(:server_id, :server_key)
 
-        # @redis_general.hmset("server_keys", *server_keys)
-      end
+        # Store the data in Redis
+        @redis.hmset("server_keys", *server_keys)
 
-      private
+        # Tell the TCP server to refresh its keys
+        self.send_message(type: "update_keys")
+      end
 
       # TODO: Documentation
       #
@@ -141,71 +121,39 @@ module ESM
       # TODO: Documentation
       #
       def process_inbound_message(message)
-        case message.type
-        when :connection_event
-          event = message.data.event
-          return if event.nil?
+        ESM::Notifications.trigger("info", class: self.class, method: __method__, message: message)
 
-          self.send(event, message)
+        case message.type
+        when "on_connect"
+          self.on_connect(message)
         end
       end
 
       # TODO: Documentation
       #
-      # @raises ESM::Exception::FailedAuthentication
-      def authenticate!(connection, key)
-        raise ESM::Exception::FailedAuthentication, "Missing server key" if key.blank?
-
-        server = ESM::Server.where(id: @server_keys[key]).first
-        raise ESM::Exception::FailedAuthentication, "Invalid server key" if server.nil?
-
-        # If the bot is no longer a member of the server, don't allow it to connect
-        discord_server = server.community.discord_server
-        raise ESM::Exception::FailedAuthentication, "Failed to load associated discord server. Ensure ESM is a member of your Discord Server" if discord_server.nil?
-
-        connection.server = server
-        connection.run_callback(:on_open) if !connection.authenticated?
-      end
-
-      # TODO: Documentation
-      #
       def on_connect(message)
-        resource_id = message.resource_id
+        server_id = message.server_id
 
-        # Track this connection. Drop it if it never authenticates.
-        connection = ESM::Connection.new(self, resource_id)
-        @connections.add_unauthenticated(resource_id, connection)
-      rescue StandardError => e
-        ESM::Notifications.trigger("error", class: self.class, method: __method__, resource_id: resource_id, error: e)
+        connection = ESM::Connection.new(self, server_id)
+        connection.run_callback(:on_open)
+
+        @connections[server_id] = connection
       end
 
       # TODO: Documentation
       #
       def on_message(message)
-        resource_id = message.resource_id
-        connection = @connections.find_by_resource_id(resource_id)
-
-        # Every message must contain the server key
-        authenticate!(connection, message.data.key)
-
-        connection.run_callback(:on_message, message.data)
-      rescue ESM::Exception::FailedAuthentication => e
-        ESM::Notifications.trigger("error", class: self.class, method: __method__, resource_id: resource_id, error: e)
-        self.disconnect(resource_id)
-      rescue StandardError => e
-        ESM::Notifications.trigger("error", class: self.class, method: __method__, resource_id: resource_id, error: e)
+        connection = @connections[message.server_id]
+        connection.run_callback(:on_message, message)
       end
 
       # TODO: Documentation
       #
       def on_disconnect(message)
-        resource_id = message.resource_id
-        connection = @connections.remove(resource_id)
+        connection = @connections.delete(message.server_id)
         return if connection.nil?
 
         connection.run_callback(:on_close)
-      rescue StandardError => e
-        ESM::Notifications.trigger("error", class: self.class, method: __method__, resource_id: resource_id, error: e)
       end
     end
   end

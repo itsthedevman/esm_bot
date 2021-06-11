@@ -15,63 +15,36 @@ module ESM
     # A instance of ESM::Server
     attr_accessor :server
 
-    module Code
-      CLOSE = 0
-      CONNECT = 1
-      PING = 2
-      PONG = 3
-      MESSAGE = 4
-      ERROR = 5
-    end
-
-    def initialize(server, resource_id)
-      @tcp_server = server
-      @resource_id = resource_id
-      @status = :unauthenticated
+    def initialize(tcp_server, server_id)
+      @tcp_server = tcp_server
+      @server_id = server_id
     end
 
     delegate :server_id, to: :@server, allow_nil: true
 
     def close
-      @tcp_server.disconnect(@resource_id)
+      @tcp_server.disconnect(@server_id)
     end
 
-    def send_message(**data)
-      ESM::Notifications.trigger("info", class: self.class, method: __method__, message: data)
-      @tcp_server.send_message(@resource_id, type: "test", data: data)
-    end
+    def send_message(type:, data: {}, metadata: {})
+      message = ESM::Connection::Message.new(server_id: self.server_id, type: type, data: data, metadata: metadata)
+      @tcp_server.send_message(message)
 
-    def alive?
-      true
-    end
-
-    def stale?
-      @last_pong_at < 10.seconds.ago
-    end
-
-    def authenticated?
-      @status == :authenticated
+      ESM::Notifications.trigger("info", class: self.class, method: __method__, message: message)
     end
 
     private
 
     def on_open
-      # If the server is already connected, don't allow it to connect again
-      raise ESM::Exception::FailedAuthentication, "This server is already connected" if self.server.connected?
-
-      @tcp_server.connections.authenticate(@resource_id, self.server_id)
-      ESM::Notifications.trigger("info", class: self.class, method: __method__, resource_id: @resource_id, server_id: self.server_id)
-
-      @status = :authenticated
+      ESM::Notifications.trigger("info", class: self.class, method: __method__, server_id: self.server_id)
     end
 
     def on_message(message)
-      ESM::Notifications.trigger("info", class: self.class, method: __method__, resource_id: @resource_id, message: message.to_h)
+      ESM::Notifications.trigger("info", class: self.class, method: __method__, server_id: self.server_id, message: message.to_h)
     end
 
     def on_close
-      ESM::Notifications.trigger("info", class: self.class, method: __method__, resource_id: @resource_id, server_id: self.server_id, event: "on_close")
-      @status = :close
+      ESM::Notifications.trigger("info", class: self.class, method: __method__, server_id: self.server_id)
     end
 
     # def on_ping(_message)

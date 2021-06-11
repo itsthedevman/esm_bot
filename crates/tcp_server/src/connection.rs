@@ -15,13 +15,9 @@ impl ConnectionManager {
         }
     }
 
-    pub fn add_to_lobby(&mut self, resource_id: ResourceId, endpoint: Endpoint) -> Option<()> {
-        if self.lobby.contains_key(&resource_id) { return Some(()) };
-
+    pub fn add_to_lobby(&mut self, resource_id: ResourceId, endpoint: Endpoint) {
         let connection = Connection::new(resource_id, endpoint);
         self.lobby.insert(resource_id, connection);
-
-        None
     }
 
     pub fn remove_by_resource_id(&mut self, resource_id: ResourceId) {

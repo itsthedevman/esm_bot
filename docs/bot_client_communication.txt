@@ -1,0 +1,27 @@
+Bot communication:
+    To communicate with a client, ESM::Server#send_message is preferred.
+    This method takes in the following:
+        - command: ESM::Command, default: nil
+        - data: Hash<String, Any>
+        - metadata: Hash<String, Any>
+
+    To communicate with the server, ESM::Connection::Server.send_message is used.
+    This method takes in the following:
+        - type: String
+        - data: Hash<String, Any>
+        - metadata: Hash<String, Any>
+
+    Internally, ESM::Connection::Server handles both types of requests using the #__messenger method. This internal method only accepts an instance of ESM::Connection::Request. This method's job is to facilitate tracking, building, and sending the message to the Server.
+
+ESM::Connection::Request needs to generate a message with the following attributes:
+    - id: String - The ID for tracking this request
+    - type: String - Describes what is in "data" and "metadata". This is used by Serde for deserializating those fields. https://stackoverflow.com/questions/61190379/is-there-a-way-to-define-a-tag-field-with-serde
+    - server_id: String - The ID of the server this message should go to.
+    - data: Hash<String, Any> - The data to send with the message.
+    - metadata: Hash<String, Any> - The metadata to send with the message
+    - errors: Array<String> - Any errors that occurred. This field is only used when replying back to message from the client
+
+ESM::Connection::Request#initialize will take in the following data:
+    - server_id: String
+    - data: Hash<String, Any>
+    - metadata: Hash<String, Any>

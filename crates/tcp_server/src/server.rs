@@ -7,16 +7,19 @@ use message_io::{
 };
 use serde_json::json;
 use tokio::sync::RwLock;
-use redis::{Client, RedisError, aio::MultiplexedConnection};
-use std::env;
+use redis::{AsyncCommands, Client, Commands, Connection, RedisError, aio::MultiplexedConnection};
+use std::{collections::HashMap, env};
 use std::{sync::Arc};
 use tokio::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
+use parking_lot::{RwLock as SyncRwLock};
 
 #[derive(Clone)]
 pub struct Server {
     handler: NodeHandler<()>,
-    connection_manager: Arc<parking_lot::RwLock<ConnectionManager>>,
+    connection_manager: Arc<SyncRwLock<ConnectionManager>>,
     redis_client: Client,
+    redis: Arc<SyncRwLock<Connection>>,
+    server_keys: Arc<SyncRwLock<HashMap<String, Vec<u8>>>>,
     outbound_sender: UnboundedSender<Message>,
     outbound_receiver:  Arc<RwLock<UnboundedReceiver<Message>>>,
     address: String,
@@ -36,14 +39,21 @@ impl Server {
             Err(e) => panic!(format!("Failed to connect to redis. Reason: {}", e))
         };
 
+        let redis = match redis_client.get_connection() {
+            Ok(con) => con,
+            Err(e) => panic!(format!("Failed to get sync connection. Reason: {}", e))
+        };
+
         let (sender, receiver) = mpsc::unbounded_channel();
 
         Server {
             handler,
-            connection_manager: Arc::new(parking_lot::RwLock::new(ConnectionManager::new())),
+            connection_manager: Arc::new(SyncRwLock::new(ConnectionManager::new())),
             outbound_sender: sender,
             outbound_receiver: Arc::new(RwLock::new(receiver)),
             redis_client: redis_client,
+            redis: Arc::new(SyncRwLock::new(redis)),
+            server_keys: Arc::new(SyncRwLock::new(HashMap::new())),
             address,
         }
     }
@@ -62,19 +72,32 @@ impl Server {
         }
     }
 
-    // pub fn server_key<'a>(&self, server_id: &'a str) -> Result<Vec<u8>, &'static str> {
-    //     let server_id = Symbol::new(server_id);
+    pub fn server_key<'a>(&self, server_id: &String) -> Option<Vec<u8>> {
+        match self.redis.write().hget("server_keys", server_id) {
+            Ok(key) => key,
+            Err(e) => {
+                error!("#server_key - {}", e);
+                None
+            },
+        }
+    }
 
-    //     let server_keys: RwLockReadGuard<Hash> = self.rb_server_keys.read();
+    async fn update_server_keys(&mut self, connection: &mut MultiplexedConnection) {
+        let keys: HashMap<String, String> = match connection.hgetall("server_keys").await {
+            Ok(keys) => keys,
+            Err(e) => {
+                error!("#update_server_keys - {}", e);
+                return;
+            }
+        };
 
-    //     let server_key = server_keys.at(&server_id);
-    //     let server_key = match server_key.try_convert_to::<RString>() {
-    //         Ok(server_key) => server_key.to_string().as_bytes().to_vec(),
-    //         Err(_e) => return Err("#server_key - Failed to convert to RString"),
-    //     };
+        for (id, key) in keys {
+            let mut writer = self.server_keys.write();
+            writer.insert(id, key.as_bytes().to_vec());
+        }
 
-    //     Ok(server_key)
-    // }
+        debug!("#update_server_keys")
+    }
 
     pub async fn listen(&mut self, listener: NodeListener<()>) {
         // Start listening
@@ -96,19 +119,7 @@ impl Server {
         listener.for_each(move |event| match event.network() {
             NetEvent::Connected(_, _) => {}
             NetEvent::Message(endpoint, data) => {
-                // match crate::SENDER
-                //     .read()
-                //     .send(Event::OnMessage(endpoint, data.to_vec()))
-                // {
-                //     Ok(_) => {}
-                //     Err(error) => {
-                //         error!(
-                //             "#listen - {} Failed to send OnConnected event. Error: {:?}",
-                //             endpoint.resource_id(),
-                //             error
-                //         );
-                //     }
-                // }
+                self.on_message(endpoint, data.to_vec())
             }
             NetEvent::Disconnected(endpoint) => {
                 // match crate::SENDER.read().send(Event::OnDisconnect(endpoint)) {
@@ -131,37 +142,28 @@ impl Server {
     /// Spawn's workers to handle delegating and processing messages to/from the bot
     pub async fn start_workers(&self) {
         // Delegate inbound messages
-        let server = self.clone();
-        let _ = tokio::spawn(async move {
-            server.delegate_inbound_messages().await
-        });
-
-        let server = self.clone();
-        let _ = tokio::spawn(async move {
-            server.delegate_inbound_messages().await
-        });
+        for _ in 1..=2 {
+            let server = self.clone();
+            let _ = tokio::spawn(async move {
+                server.delegate_inbound_messages().await
+            });
+        }
 
         // Process inbound messages
-        let server = self.clone();
-        let _ = tokio::spawn(async move {
-            server.process_inbound_messages().await
-        });
-
-        let server = self.clone();
-        let _ = tokio::spawn(async move {
-            server.process_inbound_messages().await
-        });
+        for _ in 1..=2 {
+            let mut server = self.clone();
+            let _ = tokio::spawn(async move {
+                server.process_inbound_messages().await
+            });
+        }
 
         // Delegate outbound messages
-        let server = self.clone();
-        let _ = tokio::spawn(async move {
-            server.delegate_outbound_messages().await
-        });
-
-        let server = self.clone();
-        let _ = tokio::spawn(async move {
-            server.delegate_outbound_messages().await
-        });
+        for _ in 1..=2 {
+            let server = self.clone();
+            let _ = tokio::spawn(async move {
+                server.delegate_outbound_messages().await
+            });
+        }
     }
 
     /// Moves messages from the connection server outbound queue to the tcp server inbound queue.
@@ -225,7 +227,7 @@ impl Server {
 
     /// Processes messages from the redis inbound queue based on their message_type.
     /// These messages are moved into this queue by #delegate_inbound_messages
-    async fn process_inbound_messages(&self) -> redis::RedisResult<isize> {
+    async fn process_inbound_messages(&mut self) -> redis::RedisResult<isize> {
         let mut connection = match self.get_redis_connection().await {
             Ok(connection) => connection,
             Err(e) => panic!("#process_inbound_messages - {}", e)
@@ -253,34 +255,14 @@ impl Server {
                 }
             };
 
-            info!("#process_inbound_messages - Incoming message: {:?}", message);
+            info!("#process_inbound_messages - Incoming message: {:#?}", message);
 
             match message.message_type {
+                Type::UpdateKeys => self.update_server_keys(&mut connection).await,
                 _ => {}
             }
         }
     }
-
-    // fn handler(&self) -> Option<RwLockReadGuard<NodeHandler<()>>> {
-    //     let mut attempt_counter = 0;
-    //     let handler = loop {
-    //         match self.handler.try_read() {
-    //             Some(handler) => break handler,
-    //             None => {
-    //                 if attempt_counter <= 15 {
-    //                     attempt_counter += 1;
-    //                     thread::sleep(Duration::from_secs(1));
-    //                     continue;
-    //                 }
-
-    //                 error!("#handler - Failed to gain lock");
-    //                 return None;
-    //             }
-    //         }
-    //     };
-
-    //     Some(handler)
-    // }
 
     // pub fn send_message(&self, resource_id: i64, message: crate::ServerMessage) {
     //     let endpoints = match self.endpoints() {
@@ -327,47 +309,25 @@ impl Server {
             endpoint.addr()
         );
 
-        match self.connection_manager.write().add_to_lobby(resource_id, endpoint) {
-            Some(_) => {
-                self.disconnect(resource_id);
-                error!("#connect - {} Endpoint already connected", resource_id);
-                return;
-            },
-            None => {}
-        }
-
+        self.connection_manager.write().add_to_lobby(resource_id, endpoint);
         trace!("#on_connect - {} Connection added", resource_id);
     }
 
-    // fn on_message(&self, endpoint: Endpoint, data: Vec<u8>) {
-    //     let resource_id = endpoint.resource_id();
-    //     let message = Message::from_bytes(
-    //         data,
-    //         "connection_event",
-    //         Some(resource_id.adapter_id() as i64),
-    //     );
+    fn on_message(&self, endpoint: Endpoint, data: Vec<u8>) {
+        let message = Message::from_bytes(data, |server_id| self.server_key(server_id));
 
-    //     let mut message = match message {
-    //         Ok(message) => message,
-    //         Err(e) => {
-    //             error!("#on_message - {}", e);
-    //             self.disconnect(resource_id.adapter_id() as usize);
-    //             return;
-    //         }
-    //     };
+        let message = match message {
+            Ok(message) => message,
+            Err(e) => {
+                error!("#on_message - {}", e);
+                self.disconnect(endpoint.resource_id());
+                return;
+            }
+        };
 
-    //     message.add_data("event", RString::new_utf8("on_message").into());
 
-    //     debug!("#on_message - {} Message: {:?}", resource_id, message);
-
-    //     // Trigger the on_message on the ruby side
-    //     match self.rb_sender_mut() {
-    //         Some(mut sender) => {
-    //             sender.push(message.to_hash());
-    //         }
-    //         None => return,
-    //     };
-    // }
+        debug!("#on_message - {} Message: {:?}", endpoint.resource_id(), message);
+    }
 
     // fn on_disconnect(&self, endpoint: Endpoint) {
     //     let resource_id = endpoint.resource_id();
