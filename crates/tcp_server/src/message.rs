@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use aes_gcm::aead::{Aead, NewAead};
 use aes_gcm::{Aes256Gcm, Key, Nonce};
+use message_io::network::ResourceId;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 
@@ -12,6 +13,7 @@ pub struct Message {
     #[serde(rename = "type")]
     pub message_type: Type,
 
+    resource_id: Option<i64>,
     server_id: Option<String>,
     data: HashMap<String, Value>,
     metadata: HashMap<String, Value>,
@@ -22,26 +24,31 @@ pub struct Message {
 #[serde(rename_all = "snake_case")]
 pub enum Type {
     OnConnect,
+    OnDisconnect,
     UpdateKeys,
 }
 
 impl Message {
-    pub fn new(message_type: Type, server_id: Option<String>) -> Self {
+    pub fn new(message_type: Type, resource_id: ResourceId) -> Self {
         Message {
             id: "".into(),
             message_type,
-            server_id,
+            resource_id: Some(resource_id.adapter_id() as i64),
+            server_id: None,
             data: HashMap::new(),
             metadata: HashMap::new(),
             errors: Vec::new(),
         }
     }
 
-    pub fn from_bytes<F>(data: Vec<u8>, server_key_getter: F) -> Result<Message, String>
+    pub fn from_bytes<F>(data: Vec<u8>, resource_id: ResourceId, server_key_getter: F) -> Result<Message, String>
     where
         F: Fn(&String) -> Option<Vec<u8>>,
     {
-        Ok(extract_data(data, server_key_getter)?)
+        let mut message = extract_data(data, server_key_getter)?;
+        message.resource_id = Some(resource_id.adapter_id() as i64);
+
+        Ok(message)
     }
 
     /*
@@ -85,39 +92,29 @@ where
         Err(_e) => return Err("Failed to extract server ID".into()),
     };
 
-    println!("Id: {:?}", &server_id);
-
     // Find the server key so the message can be decrypted
     let server_key = match (server_key_getter)(&server_id) {
         Some(key) => key,
         None => return Err(format!("Failed to retrieve server_key for {}", server_id))
     };
 
-    // println!("Key: {:?}", &server_key);
-
-    // Now to decrypt
+    // Now to decrypt. First step, extract the nonce
     let nonce_offset = 1 + id_length;
     let nonce_size = bytes[nonce_offset] as usize;
-
     let nonce_offset = 1 + nonce_offset;
     let nonce = bytes[nonce_offset..(nonce_offset + nonce_size)].to_vec();
-
-    println!("Nonce: {:?}", &nonce);
-
     let nonce = Nonce::from_slice(&nonce);
 
+    // Next, extract the encrypted bytes
     let enc_offset = nonce_offset + nonce_size;
     let encrypted_bytes = bytes[enc_offset..].to_vec();
 
-    println!("Enc Bytes: {:?}", &encrypted_bytes);
-
+    // Build the cipher
     let server_key = &server_key[0..32];
-
-    println!("Key: {:?}", &server_key);
-
     let key = Key::from_slice(server_key); // server_key has to be exactly 32 bytes
     let cipher = Aes256Gcm::new(key);
 
+    // Decrypt!
     let message = match cipher.decrypt(nonce, encrypted_bytes.as_ref()) {
         Ok(message) => message,
         Err(_e) => {
@@ -125,7 +122,7 @@ where
         }
     };
 
-
+    // And deserialize into a struct
     match bincode::deserialize::<Message>(&message) {
         Ok(message) => Ok(message),
         Err(_e) => Err(format!("#extract_data - Failed to deserialize. Message: {:?}", &message)),

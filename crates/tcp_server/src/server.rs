@@ -19,7 +19,6 @@ pub struct Server {
     connection_manager: Arc<SyncRwLock<ConnectionManager>>,
     redis_client: Client,
     redis: Arc<SyncRwLock<Connection>>,
-    server_keys: Arc<SyncRwLock<HashMap<String, Vec<u8>>>>,
     outbound_sender: UnboundedSender<Message>,
     outbound_receiver:  Arc<RwLock<UnboundedReceiver<Message>>>,
     address: String,
@@ -53,7 +52,6 @@ impl Server {
             outbound_receiver: Arc::new(RwLock::new(receiver)),
             redis_client: redis_client,
             redis: Arc::new(SyncRwLock::new(redis)),
-            server_keys: Arc::new(SyncRwLock::new(HashMap::new())),
             address,
         }
     }
@@ -82,23 +80,6 @@ impl Server {
         }
     }
 
-    async fn update_server_keys(&mut self, connection: &mut MultiplexedConnection) {
-        let keys: HashMap<String, String> = match connection.hgetall("server_keys").await {
-            Ok(keys) => keys,
-            Err(e) => {
-                error!("#update_server_keys - {}", e);
-                return;
-            }
-        };
-
-        for (id, key) in keys {
-            let mut writer = self.server_keys.write();
-            writer.insert(id, key.as_bytes().to_vec());
-        }
-
-        debug!("#update_server_keys")
-    }
-
     pub async fn listen(&mut self, listener: NodeListener<()>) {
         // Start listening
         match self
@@ -122,16 +103,7 @@ impl Server {
                 self.on_message(endpoint, data.to_vec())
             }
             NetEvent::Disconnected(endpoint) => {
-                // match crate::SENDER.read().send(Event::OnDisconnect(endpoint)) {
-                //     Ok(_) => {}
-                //     Err(error) => {
-                //         error!(
-                //             "#listen - {} Failed to send OnDisconnected event. Error: {:?}",
-                //             endpoint.resource_id(),
-                //             error
-                //         );
-                //     }
-                // }
+                self.on_disconnect(endpoint)
             }
             NetEvent::Accepted(endpoint, resource_id) => {
                 self.on_connect(endpoint, resource_id)
@@ -258,7 +230,6 @@ impl Server {
             info!("#process_inbound_messages - Incoming message: {:#?}", message);
 
             match message.message_type {
-                Type::UpdateKeys => self.update_server_keys(&mut connection).await,
                 _ => {}
             }
         }
@@ -314,7 +285,8 @@ impl Server {
     }
 
     fn on_message(&self, endpoint: Endpoint, data: Vec<u8>) {
-        let message = Message::from_bytes(data, |server_id| self.server_key(server_id));
+        let resource_id = endpoint.resource_id();
+        let message = Message::from_bytes(data, resource_id, |server_id| self.server_key(server_id));
 
         let message = match message {
             Ok(message) => message,
@@ -325,39 +297,22 @@ impl Server {
             }
         };
 
+        debug!("#on_message - {} Message: {:?}", resource_id, message);
 
-        debug!("#on_message - {} Message: {:?}", endpoint.resource_id(), message);
+        match message.message_type {
+            // Feed the message through to the bot
+            _ => self.send_to_bot(message)
+        };
     }
 
-    // fn on_disconnect(&self, endpoint: Endpoint) {
-    //     let resource_id = endpoint.resource_id();
-    //     debug!("#on_disconnect - {} has disconnected", resource_id);
+    fn on_disconnect(&self, endpoint: Endpoint) {
+        let resource_id = endpoint.resource_id();
+        debug!("#on_disconnect - {} has disconnected", resource_id);
 
-    //     match self.remove_endpoint(resource_id.adapter_id() as usize) {
-    //         Some(_) => (),
-    //         None => {
-    //             warn!("#on_disconnect - {} Endpoint already removed", resource_id);
-    //         }
-    //     };
+        // Remove the resource from the connection_manager
+        self.connection_manager.write().remove_by_resource_id(resource_id);
 
-    //     // Trigger the on_message on the ruby side
-    //     match self.rb_sender_mut() {
-    //         Some(mut sender) => {
-    //             let mut message = Hash::new();
-    //             message.store(Symbol::new("type"), Symbol::new("connection_event"));
-    //             message.store(
-    //                 Symbol::new("resource_id"),
-    //                 Integer::new(resource_id.adapter_id() as i64),
-    //             );
-
-    //             let mut data = Hash::new();
-    //             data.store(Symbol::new("event"), Symbol::new("on_disconnect"));
-
-    //             message.store(Symbol::new("data"), data);
-
-    //             sender.push(message);
-    //         }
-    //         None => return,
-    //     };
-    // }
+        let message = Message::new(Type::OnDisconnect, resource_id);
+        self.send_to_bot(message);
+    }
 }

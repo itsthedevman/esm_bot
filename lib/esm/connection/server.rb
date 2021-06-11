@@ -36,6 +36,7 @@ module ESM
 
       def initialize
         @connections = {}
+        @server_id_by_resource_id = {}
 
         # Redis connection for sending messages and reloading keys
         @redis = Redis.new(REDIS_OPTS)
@@ -67,6 +68,12 @@ module ESM
       end
 
       def send_message(**args)
+        if args[:server_id]
+          args.merge(
+            resource_id: @server_id_by_resource_id.key(args[:server_id])
+          )
+        end
+
         message = ESM::Connection::Message.new(**args)
 
         ESM::Notifications.trigger("info", class: self.class, method: __method__, message: message.to_h)
@@ -83,9 +90,6 @@ module ESM
 
         # Store the data in Redis
         @redis.hmset("server_keys", *server_keys)
-
-        # Tell the TCP server to refresh its keys
-        self.send_message(type: "update_keys")
       end
 
       # TODO: Documentation
@@ -121,11 +125,15 @@ module ESM
       # TODO: Documentation
       #
       def process_inbound_message(message)
-        ESM::Notifications.trigger("info", class: self.class, method: __method__, message: message)
+        ESM::Notifications.trigger("info", class: self.class, method: __method__, message: message.to_h)
 
         case message.type
         when "on_connect"
           self.on_connect(message)
+        when "on_disconnect"
+          self.on_disconnect(message)
+        else
+          self.on_message(message)
         end
       end
 
@@ -133,11 +141,11 @@ module ESM
       #
       def on_connect(message)
         server_id = message.server_id
-
         connection = ESM::Connection.new(self, server_id)
         connection.run_callback(:on_open)
 
         @connections[server_id] = connection
+        @server_id_by_resource_id[message.resource_id] = message.server_id
       end
 
       # TODO: Documentation
@@ -150,7 +158,8 @@ module ESM
       # TODO: Documentation
       #
       def on_disconnect(message)
-        connection = @connections.delete(message.server_id)
+        server_id = @server_id_by_resource_id.delete(message.resource_id)
+        connection = @connections.delete(server_id)
         return if connection.nil?
 
         connection.run_callback(:on_close)

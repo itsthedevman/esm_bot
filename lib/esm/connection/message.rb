@@ -3,7 +3,7 @@
 module ESM
   class Connection
     class Message
-      attr_reader :id, :server_id, :type, :data, :metadata, :errors
+      attr_reader :id, :server_id, :resource_id, :type, :data, :metadata, :errors
 
       # @param server_id [String, nil]
       # @param type [String]
@@ -24,6 +24,7 @@ module ESM
 
         @id = json.id
         @server_id = json.server_id
+        @resource_id = json.resource_id
         @type = json.type
         @data = json.data
         @metadata = json.metadata
@@ -36,12 +37,13 @@ module ESM
 
       def to_h
         {
-          id: @id,
-          server_id: @server_id,
-          type: @type,
-          data: @data.to_h,
-          metadata: @metadata.to_h,
-          errors: @errors
+          id: self.id,
+          server_id: self.server_id,
+          resource_id: self.resource_id,
+          type: self.type,
+          data: self.data.to_h,
+          metadata: self.metadata.to_h,
+          errors: self.errors
         }
       end
     end

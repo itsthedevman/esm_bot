@@ -12,18 +12,17 @@ module ESM
     # add_callback :on_ping, :on_ping
     # add_callback :on_pong, :on_pong
 
-    # A instance of ESM::Server
-    attr_accessor :server
+    attr_reader :server
 
     def initialize(tcp_server, server_id)
       @tcp_server = tcp_server
-      @server_id = server_id
+      @server = ESM::Server.find_by_server_id(server_id)
     end
 
-    delegate :server_id, to: :@server, allow_nil: true
+    delegate :server_id, to: :@server
 
     def close
-      @tcp_server.disconnect(@server_id)
+      @tcp_server.disconnect(self.server_id)
     end
 
     def send_message(type:, data: {}, metadata: {})
