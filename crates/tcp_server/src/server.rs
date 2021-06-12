@@ -6,9 +6,9 @@ use message_io::{
     node::NodeListener,
 };
 use serde_json::json;
-use tokio::sync::RwLock;
+use tokio::{sync::{RwLock, RwLockReadGuard}, time::sleep};
 use redis::{AsyncCommands, Client, Commands, Connection, RedisError, aio::MultiplexedConnection};
-use std::{collections::HashMap, env};
+use std::{collections::HashMap, env, time::Duration};
 use std::{sync::Arc};
 use tokio::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
 use parking_lot::{RwLock as SyncRwLock};
@@ -18,10 +18,16 @@ pub struct Server {
     handler: NodeHandler<()>,
     connection_manager: Arc<SyncRwLock<ConnectionManager>>,
     redis_client: Client,
-    redis: Arc<SyncRwLock<Connection>>,
+    pub redis: Arc<SyncRwLock<Connection>>,
     outbound_sender: UnboundedSender<Message>,
     outbound_receiver:  Arc<RwLock<UnboundedReceiver<Message>>>,
     address: String,
+
+    // The master flag
+    bot_alive: Arc<RwLock<bool>>,
+
+    // Used for tracking if there was a pong received. Use `bot_alive` for checking if the bot is still online
+    bot_pong_received: Arc<RwLock<bool>>
 }
 
 impl Server {
@@ -51,6 +57,8 @@ impl Server {
             outbound_sender: sender,
             outbound_receiver: Arc::new(RwLock::new(receiver)),
             redis_client: redis_client,
+            bot_alive: Arc::new(RwLock::new(false)),
+            bot_pong_received: Arc::new(RwLock::new(true)), // Defaulted to true. It will automatically be reset to false when the initial ping is sent
             redis: Arc::new(SyncRwLock::new(redis)),
             address,
         }
@@ -80,7 +88,7 @@ impl Server {
         }
     }
 
-    pub async fn listen(&mut self, listener: NodeListener<()>) {
+    pub async fn listen(&self, listener: NodeListener<()>) {
         // Start listening
         match self
             .handler
@@ -97,22 +105,29 @@ impl Server {
         }
 
         // Process the events
+        let mut server = self.clone();
         listener.for_each(move |event| match event.network() {
             NetEvent::Connected(_, _) => {}
             NetEvent::Message(endpoint, data) => {
-                self.on_message(endpoint, data.to_vec())
+                server.on_message(endpoint, data.to_vec())
             }
             NetEvent::Disconnected(endpoint) => {
-                self.on_disconnect(endpoint)
+                server.on_disconnect(endpoint)
             }
             NetEvent::Accepted(endpoint, resource_id) => {
-                self.on_connect(endpoint, resource_id)
+                server.on_connect(endpoint, resource_id)
             }
         });
     }
 
     /// Spawn's workers to handle delegating and processing messages to/from the bot
     pub async fn start_workers(&self) {
+        // Ping the bot
+        let mut server = self.clone();
+        let _ = tokio::spawn(async move {
+            server.ping_bot().await
+        });
+
         // Delegate inbound messages
         for _ in 1..=2 {
             let server = self.clone();
@@ -227,46 +242,61 @@ impl Server {
                 }
             };
 
-            info!("#process_inbound_messages - Incoming message: {:#?}", message);
-
             match message.message_type {
-                _ => {}
+                // Respond to the ping
+                Type::Ping => {
+                    let message = Message::new(Type::Pong);
+                    self.send_to_bot(message);
+                },
+
+                // Received from the bot after a ping has been sent
+                Type::Pong => {
+                    // Set the flag to true
+                    *(self.bot_pong_received.write().await) = true;
+                },
+                _ => {
+                    info!("#process_inbound_messages - {:#?}", message);
+                }
             }
         }
     }
 
-    // pub fn send_message(&self, resource_id: i64, message: crate::ServerMessage) {
-    //     let endpoints = match self.endpoints() {
-    //         Some(endpoints) => endpoints,
-    //         None => {
-    //             error!("#endpoint - Failed to gain read lock.");
-    //             return;
-    //         },
-    //     };
+    /// Pings the bot every 500ms and tracks if the bot is alive
+    async fn ping_bot(&mut self) {
+        loop {
+            sleep(Duration::from_millis(500)).await;
+            if *(self.bot_pong_received.read().await) == false { continue; }
 
-    //     let endpoint = match endpoints.get(&(resource_id as usize)) {
-    //         Some(endpoint) => endpoint,
-    //         None => {
-    //             // Raise an exception in ruby
-    //             return VM::raise(
-    //                 Module::from_existing("ESM")
-    //                     .get_nested_module("Exception")
-    //                     .get_nested_class("ClientNotConnected"),
-    //                 &format!("{}", resource_id),
-    //             );
-    //         }
-    //     };
+            // Set the flag back to false before sending the ping
+            *(self.bot_pong_received.write().await) = false;
 
-    //     // Using the endpoint, send the message via the handler
-    //     let handler = match self.handler() {
-    //         Some(handler) => handler,
-    //         None => return,
-    //     };
+            let message = Message::new(Type::Ping);
+            self.send_to_bot(message);
 
-    //     debug!("#send_message - Sending message: {:?}", message);
+            // Give the bot up to 200ms to reply before considering it "offline"
+            let mut currently_alive = false;
+            for _ in 0..200 {
+                if *(self.bot_pong_received.read().await) {
+                    currently_alive = true;
+                    break;
+                }
 
-    //     handler.network().send(*endpoint, message.as_bytes());
-    // }
+                sleep(Duration::from_millis(1)).await;
+            }
+
+            // Only write and log if the status has changed
+            let previously_alive = *(self.bot_alive.read().await);
+            if currently_alive == previously_alive { continue; }
+
+            *(self.bot_alive.write().await) = currently_alive;
+
+            if currently_alive {
+                info!("#ping_bot - Connected");
+            } else {
+                warn!("#ping_bot - Disconnected");
+            }
+        }
+    }
 
     pub fn disconnect(&self, resource_id: ResourceId) {
         self.connection_manager.write().remove_by_resource_id(resource_id);
@@ -312,7 +342,9 @@ impl Server {
         // Remove the resource from the connection_manager
         self.connection_manager.write().remove_by_resource_id(resource_id);
 
-        let message = Message::new(Type::OnDisconnect, resource_id);
+        let mut message = Message::new(Type::Disconnect);
+        message.set_resource(resource_id);
+
         self.send_to_bot(message);
     }
 }

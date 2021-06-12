@@ -5,25 +5,20 @@ module ESM
     include ESM::Callbacks
 
     # These callbacks correspond to events sent from the server.
-    register_callbacks :on_open, :on_close, :on_message # :on_ping, :on_pong
+    register_callbacks :on_open, :on_close, :on_message
     add_callback :on_open, :on_open
     add_callback :on_close, :on_close
     add_callback :on_message, :on_message
-    # add_callback :on_ping, :on_ping
-    # add_callback :on_pong, :on_pong
 
     attr_reader :server
 
-    def initialize(tcp_server, server_id)
+    def initialize(tcp_server, server_id, resource_id)
       @tcp_server = tcp_server
       @server = ESM::Server.find_by_server_id(server_id)
+      @resource_id = resource_id
     end
 
     delegate :server_id, to: :@server
-
-    def close
-      @tcp_server.disconnect(self.server_id)
-    end
 
     def send_message(type:, data: {}, metadata: {})
       message = ESM::Connection::Message.new(server_id: self.server_id, type: type, data: data, metadata: metadata)

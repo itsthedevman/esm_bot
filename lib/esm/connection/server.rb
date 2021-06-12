@@ -37,11 +37,14 @@ module ESM
       def initialize
         @connections = {}
         @server_id_by_resource_id = {}
+        @server_alive = false
+        @server_pong_received = true
 
         # Redis connection for sending messages and reloading keys
         @redis = Redis.new(REDIS_OPTS)
 
         self.refresh_keys
+        self.ping_server
         self.delegate_inbound_messages
         self.process_inbound_messages
       end
@@ -49,25 +52,26 @@ module ESM
       # TODO: Documentation
       #
       def stop
-        return if ESM::TCPServer.nil?
+        # Kill the processing threads
+        [
+          @thread_delegate_inbound_messages,
+          @thread_process_inbound_messages,
+          @thread_ping_server
+        ].each { |id| Thread.kill(id) }
 
-        ESM::TCPServer.stop
-        Thread.kill(@thread) if !@thread.nil?
-      end
+        # TODO: Close any open requests with an error message
 
-      # TODO: Documentation
-      #
-      def disconnect(resource_id)
-        disconnected = ESM::TCPServer.disconnect(resource_id)
-        return if !disconnected
+        # Tell the tcp server that we're closing
+        self.send_message(type: "close")
 
-        connection = @connections.remove(resource_id)
-        return if connection.nil?
-
-        connection.run_callback("on_close")
+        # Close the connection to redis
+        @redis.close
+        @redis_process_inbound_messages.close
+        @redis_delegate_inbound_messages.close
       end
 
       def send_message(**args)
+        # Raise exception if @server_alive false and args[:ignore_alive] false
         if args[:server_id]
           args.merge(
             resource_id: @server_id_by_resource_id.key(args[:server_id])
@@ -75,9 +79,6 @@ module ESM
         end
 
         message = ESM::Connection::Message.new(**args)
-
-        ESM::Notifications.trigger("info", class: self.class, method: __method__, message: message.to_h)
-
         @redis.rpush("connection_server_outbound", message.to_s)
       end
 
@@ -97,7 +98,7 @@ module ESM
       def delegate_inbound_messages
         @redis_delegate_inbound_messages = Redis.new(REDIS_OPTS)
 
-        @thread =
+        @thread_delegate_inbound_messages =
           Thread.new do
             loop do
               # Redis gem does not support BLMOVE as a method :(
@@ -113,7 +114,7 @@ module ESM
       def process_inbound_messages
         @redis_process_inbound_messages = Redis.new(REDIS_OPTS)
 
-        @thread =
+        @thread_process_inbound_messages =
           Thread.new do
             loop do
               _name, message = @redis_process_inbound_messages.blpop("connection_server_inbound")
@@ -124,14 +125,50 @@ module ESM
 
       # TODO: Documentation
       #
-      def process_inbound_message(message)
-        ESM::Notifications.trigger("info", class: self.class, method: __method__, message: message.to_h)
+      def ping_server
+        @thread_ping_server =
+          Thread.new do
+            loop do
+              sleep(0.5)
+              next if !@server_pong_received
 
+              @server_pong_received = false
+              self.send_message(type: "ping")
+
+              # Wait 200ms for the server to reply before considering it offline
+              currently_alive = false
+              0..200.times do
+                break currently_alive = true if @server_pong_received
+
+                sleep(0.001)
+              end
+
+              # Only set the value if it differs
+              next if @server_alive == currently_alive
+
+              @server_alive = currently_alive
+
+              if currently_alive
+                ESM::Notifications.trigger("info", class: self.class, method: __method__, server_status: "Connected")
+              else
+                ESM::Notifications.trigger("warn", class: self.class, method: __method__, server_status: "Disconnected")
+              end
+            end
+          end
+      end
+
+      # TODO: Documentation
+      #
+      def process_inbound_message(message)
         case message.type
-        when "on_connect"
+        when "connect"
           self.on_connect(message)
-        when "on_disconnect"
+        when "disconnect"
           self.on_disconnect(message)
+        when "ping"
+          self.on_ping(message)
+        when "pong"
+          self.on_pong(message)
         else
           self.on_message(message)
         end
@@ -141,11 +178,13 @@ module ESM
       #
       def on_connect(message)
         server_id = message.server_id
-        connection = ESM::Connection.new(self, server_id)
+        resource_id = message.resource_id
+
+        connection = ESM::Connection.new(self, server_id, resource_id)
         connection.run_callback(:on_open)
 
         @connections[server_id] = connection
-        @server_id_by_resource_id[message.resource_id] = message.server_id
+        @server_id_by_resource_id[resource_id] = message.server_id
       end
 
       # TODO: Documentation
@@ -163,6 +202,18 @@ module ESM
         return if connection.nil?
 
         connection.run_callback(:on_close)
+      end
+
+      # TODO: Documentation
+      #
+      def on_ping(_message)
+        self.send_message(type: "pong")
+      end
+
+      # TODO: Documentation
+      #
+      def on_pong(_message)
+        @server_pong_received = true
       end
     end
   end

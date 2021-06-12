@@ -284,10 +284,11 @@ GEM
       rack (~> 2.2)
       rack-protection (= 2.1.0)
       tilt (~> 2.0)
-    solargraph (0.41.2)
+    solargraph (0.42.1)
       backport (~> 1.1)
       benchmark
       bundler (>= 1.17.2)
+      diff-lcs (~> 1.4)
       e2mmap
       jaro_winkler (~> 1.5)
       kramdown (~> 2.3)

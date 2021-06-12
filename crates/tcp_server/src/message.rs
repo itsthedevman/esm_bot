@@ -23,17 +23,19 @@ pub struct Message {
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "snake_case")]
 pub enum Type {
-    OnConnect,
-    OnDisconnect,
+    Connect,
+    Disconnect,
     UpdateKeys,
+    Ping,
+    Pong
 }
 
 impl Message {
-    pub fn new(message_type: Type, resource_id: ResourceId) -> Self {
+    pub fn new(message_type: Type) -> Self {
         Message {
             id: "".into(),
             message_type,
-            resource_id: Some(resource_id.adapter_id() as i64),
+            resource_id: None,
             server_id: None,
             data: HashMap::new(),
             metadata: HashMap::new(),
@@ -66,6 +68,12 @@ impl Message {
             metadata: Hash<Symbol, AnyObject> {}
         }
     */
+
+    pub fn set_resource<'a>(&'a mut self, resource_id: ResourceId) -> &'a mut Message {
+        self.resource_id = Some(resource_id.adapter_id() as i64);
+        self
+    }
+
     pub fn add_data<'a>(&'a mut self, name: &'static str, value: Value) -> &'a mut Message {
         self.data.insert(name.to_string(), value);
         self
@@ -134,25 +142,9 @@ enum Data {
     Empty,
 }
 
-impl Data {
-    pub fn to_hash_map(&self) -> HashMap<String, Value> {
-        match self {
-            Data::Empty => HashMap::new(),
-        }
-    }
-}
-
 #[derive(Serialize, Deserialize, Debug, Clone)]
 enum Metadata {
     Empty,
-}
-
-impl Metadata {
-    pub fn to_hash_map(&self) -> HashMap<String, Value> {
-        match self {
-            Metadata::Empty => HashMap::new(),
-        }
-    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
