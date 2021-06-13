@@ -41,7 +41,11 @@ module ESM
     class AddressInUse < Error; end
 
     # Raised when attempting to send a message to a ESM::Server when it is not connected
-    class ClientNotConnected < Error; end
+    class ServerNotConnected < Error
+      def initialize
+        super(I18n.t("exceptions.server_not_connected"))
+      end
+    end
 
     # Handles an error code response from the extension
     class ExtensionError < Error

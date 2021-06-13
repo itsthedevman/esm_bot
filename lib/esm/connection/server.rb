@@ -78,11 +78,18 @@ module ESM
           )
         end
 
-        message = ESM::Connection::Message.new(**args)
-        @redis.rpush("connection_server_outbound", message.to_s)
+        raise ServerNotConnected if !@server_alive
+
+        send_to_server(**args)
       end
 
       private
+
+      # Using the provided arguments, build and send a message to the server
+      def send_to_server(**args)
+        message = ESM::Connection::Message.new(**args)
+        @redis.rpush("connection_server_outbound", message.to_s)
+      end
 
       # Store all of the server_ids and their keys in redis.
       # This will allow the TCPServer to quickly pull a key by a server_id to decrypt messages
