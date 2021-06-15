@@ -1,4 +1,4 @@
-use crate::{connection::ConnectionManager, message::Message, message::Type};
+use crate::{connection::{self, ConnectionManager}, message::{ErrorType, Message}, message::Type};
 use log::*;
 use message_io::{network::{Endpoint, ResourceId}, node::{self, NodeHandler}};
 use message_io::{
@@ -76,6 +76,39 @@ impl Server {
                 error!("#send_message - {}", e);
             }
         }
+    }
+
+    fn send_to_client(&self, message: &mut Message) -> bool {
+        let server_id = match message.server_id.clone() {
+            Some(id) => id,
+            None => {
+                message.add_error(ErrorType::Message, "Cannot send message - Missing server_id");
+                return false;
+            }
+        };
+
+        let connection_manager = self.connection_manager.read();
+        let endpoint = match connection_manager.find_by_server_id(server_id) {
+            Some(endpoint) => endpoint,
+            None => {
+                message.add_error(ErrorType::Code, "client_not_connected");
+                return false;
+            }
+        };
+
+        match message.as_bytes(|server_id| self.server_key(server_id)) {
+            Ok(bytes) => {
+                info!("#send_to_client - {}", message.id);
+
+                self.handler.network().send(endpoint.to_owned(), &bytes);
+                true
+            },
+            Err(error) => {
+                error!("#send_to_client - {}", error);
+                false
+            }
+        }
+
     }
 
     pub fn server_key<'a>(&self, server_id: &String) -> Option<Vec<u8>> {
@@ -221,12 +254,7 @@ impl Server {
         };
 
         loop {
-            let (_, json): (String, String) = match redis::cmd("BLPOP")
-                .arg("tcp_server_inbound")
-                .arg(0)
-                .query_async(&mut connection)
-                .await
-            {
+            let (_, json): (String, String) = match connection.blpop("tcp_server_inbound", 0).await {
                 Ok(json) => json,
                 Err(e) => {
                     error!("#process_inbound_messages - {:?}", e);
@@ -234,13 +262,17 @@ impl Server {
                 }
             };
 
-            let message: Message = match serde_json::from_str(&json) {
+            let mut message: Message = match serde_json::from_str(&json) {
                 Ok(message) => message,
                 Err(e) => {
                     error!("#process_inbound_messages - {}", e);
                     continue;
                 }
             };
+
+            if message.message_type != Type::Ping && message.message_type != Type::Pong {
+                trace!("#process_inbound_messages - {:#?}", message);
+            }
 
             match message.message_type {
                 // Respond to the ping
@@ -255,7 +287,11 @@ impl Server {
                     *(self.bot_pong_received.write().await) = true;
                 },
                 _ => {
-                    info!("#process_inbound_messages - {:#?}", message);
+                    let success = self.send_to_client(&mut message);
+                    if success { continue; }
+
+                    // The message failed, send it back to the bot
+                    self.send_to_bot(message);
                 }
             }
         }
@@ -298,9 +334,9 @@ impl Server {
         }
     }
 
-    pub fn disconnect(&self, resource_id: ResourceId) {
-        self.connection_manager.write().remove_by_resource_id(resource_id);
-        self.handler.network().remove(resource_id);
+    pub fn disconnect(&self, endpoint: Endpoint) {
+        self.connection_manager.write().remove(endpoint);
+        self.handler.network().remove(endpoint.resource_id());
     }
 
     fn on_connect(&mut self, endpoint: Endpoint, resource_id: ResourceId) {
@@ -310,7 +346,9 @@ impl Server {
             endpoint.addr()
         );
 
-        self.connection_manager.write().add_to_lobby(resource_id, endpoint);
+        let mut connection_manager = self.connection_manager.write();
+        connection_manager.add_to_lobby(endpoint);
+
         trace!("#on_connect - {} Connection added", resource_id);
     }
 
@@ -322,14 +360,35 @@ impl Server {
             Ok(message) => message,
             Err(e) => {
                 error!("#on_message - {}", e);
-                self.disconnect(endpoint.resource_id());
+                self.disconnect(endpoint);
                 return;
             }
         };
 
-        debug!("#on_message - {} Message: {:?}", resource_id, message);
+        info!("#on_message - {} {:#?}", resource_id, message);
 
         match message.message_type {
+            Type::Connect => {
+                let server_id = match message.server_id.clone() {
+                    Some(id) => id,
+                    None => {
+                        error!("#on_message - Message has no server ID");
+                        return;
+                    }
+                };
+
+                let mut connection_manager = self.connection_manager.write();
+                match connection_manager.accept(server_id, endpoint) {
+                    Ok(_) => {},
+                    Err(e) => {
+                        error!("#on_message - {}", e);
+                        return;
+                    }
+                }
+
+                // Route it through to the bot
+                self.send_to_bot(message);
+            },
             // Feed the message through to the bot
             _ => self.send_to_bot(message)
         };
@@ -340,7 +399,7 @@ impl Server {
         debug!("#on_disconnect - {} has disconnected", resource_id);
 
         // Remove the resource from the connection_manager
-        self.connection_manager.write().remove_by_resource_id(resource_id);
+        self.connection_manager.write().remove(endpoint);
 
         let mut message = Message::new(Type::Disconnect);
         message.set_resource(resource_id);

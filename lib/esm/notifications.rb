@@ -3,6 +3,7 @@
 module ESM
   class Notifications
     EVENTS = %w[
+      debug
       info
       warn
       error
@@ -33,6 +34,19 @@ module ESM
     def self.subscribe
       EVENTS.each do |event|
         ActiveSupport::Notifications.subscribe("#{event}.esm", &method(event))
+      end
+    end
+
+    def self.debug(name, _start, _finish, _id, payload)
+      if payload.key?(:class) && payload.key?(:method)
+        name = "#{payload[:class]}##{payload[:method]}"
+
+        payload.delete(:class)
+        payload.delete(:method)
+      end
+
+      ESM.logger.info(name) do
+        ESM::JSON.pretty_generate(payload)
       end
     end
 

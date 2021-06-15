@@ -18,3 +18,4 @@ parking_lot = "0.10"
 aes-gcm = "0.9.1"
 tokio = { version = "1.5.0", features = ["full", "parking_lot"] }
 redis = { version = "0.20.1", features = ["tokio-comp", "connection-manager"] }
+rand = "0.8.3"

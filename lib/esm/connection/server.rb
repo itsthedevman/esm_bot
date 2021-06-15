@@ -78,7 +78,7 @@ module ESM
           )
         end
 
-        raise ServerNotConnected if !@server_alive
+        raise ESM::Exception::ServerNotConnected if !@server_alive
 
         send_to_server(**args)
       end
@@ -88,6 +88,11 @@ module ESM
       # Using the provided arguments, build and send a message to the server
       def send_to_server(**args)
         message = ESM::Connection::Message.new(**args)
+
+        if %w[ping pong].exclude?(message.type) # rubocop:disable Style/IfUnlessModifier
+          ESM::Notifications.trigger("info", class: self.class, method: __method__, message: message.to_h)
+        end
+
         @redis.rpush("connection_server_outbound", message.to_s)
       end
 
@@ -140,7 +145,7 @@ module ESM
               next if !@server_pong_received
 
               @server_pong_received = false
-              self.send_message(type: "ping")
+              self.send_to_server(type: "ping")
 
               # Wait 200ms for the server to reply before considering it offline
               currently_alive = false
@@ -158,7 +163,7 @@ module ESM
               if currently_alive
                 ESM::Notifications.trigger("info", class: self.class, method: __method__, server_status: "Connected")
               else
-                ESM::Notifications.trigger("warn", class: self.class, method: __method__, server_status: "Disconnected")
+                ESM::Notifications.trigger("error", class: self.class, method: __method__, server_status: "Disconnected")
               end
             end
           end
@@ -179,6 +184,8 @@ module ESM
         else
           self.on_message(message)
         end
+      rescue StandardError => e
+        ESM::Notifications.trigger("error", class: self.class, method: __method__, error: e)
       end
 
       # TODO: Documentation
@@ -192,11 +199,15 @@ module ESM
 
         @connections[server_id] = connection
         @server_id_by_resource_id[resource_id] = message.server_id
+
+        ESM::Notifications.trigger("info", class: self.class, method: __method__, server_id: message.server_id)
       end
 
       # TODO: Documentation
       #
       def on_message(message)
+        ESM::Notifications.trigger("info", class: self.class, method: __method__, message: message.to_h)
+
         connection = @connections[message.server_id]
         connection.run_callback(:on_message, message)
       end
@@ -206,6 +217,8 @@ module ESM
       def on_disconnect(message)
         server_id = @server_id_by_resource_id.delete(message.resource_id)
         connection = @connections.delete(server_id)
+
+        ESM::Notifications.trigger("info", class: self.class, method: __method__, server_id: server_id)
         return if connection.nil?
 
         connection.run_callback(:on_close)

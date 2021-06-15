@@ -3,7 +3,8 @@
 module ESM
   class Connection
     class Message
-      attr_reader :id, :server_id, :resource_id, :type, :data, :metadata, :errors
+      attr_reader :id, :server_id, :type, :data, :metadata, :errors
+      attr_accessor :resource_id
 
       # @param server_id [String, nil]
       # @param type [String]
@@ -43,7 +44,7 @@ module ESM
           type: self.type,
           data: self.data.to_h,
           metadata: self.metadata.to_h,
-          errors: self.errors
+          errors: self.errors.map(&:to_h)
         }
       end
     end

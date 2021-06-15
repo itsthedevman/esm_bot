@@ -40,12 +40,8 @@ module ESM
     # Raised when the address is already in use. The message is the IP and port
     class AddressInUse < Error; end
 
-    # Raised when attempting to send a message to a ESM::Server when it is not connected
-    class ServerNotConnected < Error
-      def initialize
-        super(I18n.t("exceptions.server_not_connected"))
-      end
-    end
+    # Raised when attempting to send a message the tcp_server when it's not online
+    class ServerNotConnected < Error; end
 
     # Handles an error code response from the extension
     class ExtensionError < Error

@@ -3,28 +3,30 @@ use std::collections::HashMap;
 use aes_gcm::aead::{Aead, NewAead};
 use aes_gcm::{Aes256Gcm, Key, Nonce};
 use message_io::network::ResourceId;
+use rand::random;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Message {
-    id: String,
+    pub id: String,
 
     #[serde(rename = "type")]
     pub message_type: Type,
 
     resource_id: Option<i64>,
-    server_id: Option<String>,
+    pub server_id: Option<String>,
     data: HashMap<String, Value>,
     metadata: HashMap<String, Value>,
-    errors: Vec<String>,
+    errors: Vec<Error>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
 #[serde(rename_all = "snake_case")]
 pub enum Type {
     Connect,
     Disconnect,
+    Testing,
     UpdateKeys,
     Ping,
     Pong
@@ -47,7 +49,7 @@ impl Message {
     where
         F: Fn(&String) -> Option<Vec<u8>>,
     {
-        let mut message = extract_data(data, server_key_getter)?;
+        let mut message = decrypt_message(data, server_key_getter)?;
         message.resource_id = Some(resource_id.adapter_id() as i64);
 
         Ok(message)
@@ -83,9 +85,71 @@ impl Message {
         self.metadata.insert(name.to_string(), value);
         self
     }
+
+    pub fn add_error<'a>(&'a mut self, error_type: ErrorType, error_message: &'static str) -> &'a mut Message {
+        let error = Error::new(error_type, error_message.into());
+        self.errors.push(error);
+        self
+    }
+
+    pub fn as_bytes<F>(&self, server_key_getter: F) -> Result<Vec<u8>, String>
+    where
+        F: Fn(&String) -> Option<Vec<u8>>,
+    {
+        let server_id = match self.server_id.clone() {
+            Some(id) => id,
+            None => return Err(format!("Message does not have a server ID"))
+        };
+
+        encrypt_message(self, &server_id, server_key_getter)
+    }
 }
 
-fn extract_data<F>(bytes: Vec<u8>, server_key_getter: F) -> Result<Message, String>
+fn encrypt_message<F>(message: &Message, server_id: &String, server_key_getter: F) -> Result<Vec<u8>, String>
+where
+    F: Fn(&String) -> Option<Vec<u8>>,
+{
+    // Find the server key so the message can be encrypted
+    let server_key = match (server_key_getter)(server_id) {
+        Some(key) => key,
+        None => return Err(format!("Failed to retrieve server_key for {}", server_id))
+    };
+
+    // Setup everything for encryption
+    let encryption_key = Key::from_slice(&server_key[0..32]);
+    let encryption_cipher = Aes256Gcm::new(encryption_key);
+    let nonce_key: Vec<u8> = (0..12).map(|_| random::<u8>()).collect();
+    let encryption_nonce = Nonce::from_slice(&nonce_key);
+
+    // Serialize this message
+    let message = match bincode::serialize(message) {
+        Ok(bytes) => bytes,
+        Err(e) => return Err("Failed to deserialize".into())
+    };
+
+    // Encrypt the message
+    let encrypted_message = match encryption_cipher.encrypt(encryption_nonce, message.as_ref()) {
+        Ok(bytes) => bytes,
+        Err(e) => return Err(e.to_string())
+    };
+
+    // Start the packet off as the server_id bytes
+    let mut packet = server_id.as_bytes().to_vec();
+
+    // Insert the length of the server_id as byte zero
+    packet.insert(0, packet.len() as u8);
+
+    // Append the nonce length and itself to the packet
+    packet.push(nonce_key.len() as u8);
+    packet.extend(&*nonce_key);
+
+    // Now add the encrypted message to the end. This completes the packet
+    packet.extend(&*encrypted_message);
+
+    Ok(packet)
+}
+
+fn decrypt_message<F>(bytes: Vec<u8>, server_key_getter: F) -> Result<Message, String>
 where
     F: Fn(&String) -> Option<Vec<u8>>,
 {
@@ -135,6 +199,31 @@ where
         Ok(message) => Ok(message),
         Err(_e) => Err(format!("#extract_data - Failed to deserialize. Message: {:?}", &message)),
     }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+struct Error {
+    // Controls how the error_message is treated
+    #[serde(rename = "type")]
+    error_type: ErrorType,
+
+    #[serde(rename = "message")]
+    error_message: String,
+}
+
+impl Error {
+    pub fn new(error_type: ErrorType, error_message: String) -> Self {
+        Error { error_type, error_message }
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub enum ErrorType {
+    // Treats the error_message as a locale error code.
+    Code,
+
+    // Treats the error_message as a normal string
+    Message
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

@@ -20,25 +20,22 @@ module ESM
 
     delegate :server_id, to: :@server
 
-    def send_message(type:, data: {}, metadata: {})
-      message = ESM::Connection::Message.new(server_id: self.server_id, type: type, data: data, metadata: metadata)
-      @tcp_server.send_message(message)
-
-      ESM::Notifications.trigger("info", class: self.class, method: __method__, message: message)
+    def send_message(**args)
+      @tcp_server.send_message(**args.merge(server_id: self.server_id))
     end
 
     private
 
     def on_open
-      ESM::Notifications.trigger("info", class: self.class, method: __method__, server_id: self.server_id)
+
     end
 
     def on_message(message)
-      ESM::Notifications.trigger("info", class: self.class, method: __method__, server_id: self.server_id, message: message.to_h)
+
     end
 
     def on_close
-      ESM::Notifications.trigger("info", class: self.class, method: __method__, server_id: self.server_id)
+
     end
 
     # def on_ping(_message)
