@@ -1,14 +1,14 @@
-use crate::{connection::{self, ConnectionManager}, message::{ErrorType, Message}, message::Type};
+use crate::{connection::ConnectionManager};
 use log::*;
 use message_io::{network::{Endpoint, ResourceId}, node::{self, NodeHandler}};
 use message_io::{
     network::{NetEvent, Transport},
     node::NodeListener,
 };
-use serde_json::json;
-use tokio::{sync::{RwLock, RwLockReadGuard}, time::sleep};
+use esm_message::{ErrorType, Message, Type};
+use tokio::{sync::{RwLock}, time::sleep};
 use redis::{AsyncCommands, Client, Commands, Connection, RedisError, aio::MultiplexedConnection};
-use std::{collections::HashMap, env, time::Duration};
+use std::{env, time::Duration};
 use std::{sync::Arc};
 use tokio::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
 use parking_lot::{RwLock as SyncRwLock};

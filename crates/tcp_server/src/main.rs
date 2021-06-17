@@ -1,5 +1,4 @@
 mod server;
-mod message;
 mod connection;
 use message_io::node;
 use server::Server;
