@@ -18,4 +18,4 @@
 .env
 test_*.yml
 
-crates/**/target/
+server/target/
