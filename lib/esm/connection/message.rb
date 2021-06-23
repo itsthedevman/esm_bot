@@ -6,6 +6,11 @@ module ESM
       attr_reader :id, :server_id, :type, :data, :metadata, :errors
       attr_accessor :resource_id
 
+      def self.from_string(string)
+        json = string.to_h
+        self.new(**json)
+      end
+
       # @param server_id [String, nil]
       # @param type [String]
       # @param data [Hash]
@@ -13,23 +18,21 @@ module ESM
       # @param errors [Array<String>]
       def initialize(**args)
         @id = SecureRandom.uuid
-        @server_id = args[:server_id]
+
+        # The server provides the server_id as a UTF8 byte array. Convert it to a string
+        @server_id =
+          if args[:server_id].is_a?(Array)
+            args[:server_id].pack("U*")
+          else
+            args[:server_id]
+          end
+
         @type = args[:type] || ""
         @data = (args[:data] || {}).to_ostruct
+        @data_type = args[:data_type] || "empty"
         @metadata = (args[:metadata] || {}).to_ostruct
+        @metadata_type = args[:metadata_type] || "empty"
         @errors = args[:errors] || []
-      end
-
-      def from_string(json)
-        json = json.to_ostruct
-
-        @id = json.id
-        @server_id = json.server_id
-        @resource_id = json.resource_id
-        @type = json.type
-        @data = json.data
-        @metadata = json.metadata
-        @errors = json.errors
       end
 
       def to_s
@@ -42,8 +45,14 @@ module ESM
           server_id: self.server_id,
           resource_id: self.resource_id,
           type: self.type,
-          data: self.data.to_h,
-          metadata: self.metadata.to_h,
+          data: {
+            type: @data_type,
+            content: self.data.to_h
+          },
+          metadata: {
+            type: @metadata_type,
+            content: self.metadata.to_h
+          },
           errors: self.errors.map(&:to_h)
         }
       end

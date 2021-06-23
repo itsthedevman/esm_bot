@@ -130,7 +130,7 @@ module ESM
           Thread.new do
             loop do
               _name, message = @redis_process_inbound_messages.blpop("connection_server_inbound")
-              Thread.new { process_inbound_message(message.to_ostruct) }
+              Thread.new { process_inbound_message(message) }
             end
           end
       end
@@ -172,6 +172,8 @@ module ESM
       # TODO: Documentation
       #
       def process_inbound_message(message)
+        message = ESM::Connection::Message.from_string(message)
+
         case message.type
         when "connect"
           self.on_connect(message)
@@ -227,7 +229,8 @@ module ESM
       # TODO: Documentation
       #
       def on_ping(_message)
-        self.send_message(type: "pong")
+        # This has to use `#send_to_server` otherwise it will be blocked by the connection check
+        self.send_to_server(type: "pong")
       end
 
       # TODO: Documentation

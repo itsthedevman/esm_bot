@@ -111,7 +111,15 @@ impl Server {
 
     }
 
-    pub fn server_key<'a>(&self, server_id: &String) -> Option<Vec<u8>> {
+    pub fn server_key<'a>(&self, server_id: &Vec<u8>) -> Option<Vec<u8>> {
+        let server_id = match String::from_utf8(server_id.to_owned()) {
+            Ok(id) => id,
+            Err(e) => {
+                error!("#server_key - {}", e);
+                return None
+            }
+        };
+
         match self.redis.write().hget("server_keys", server_id) {
             Ok(key) => key,
             Err(e) => {

@@ -1,8 +1,12 @@
 [package]
-name = "tcp_server"
+name = "esm_bot"
 version = "0.1.0"
 authors = ["Bryan <WolfkillArcadia@gmail.com>"]
 edition = "2018"
+
+[[bin]]
+name = "esm_server"
+path = "server/main.rs"
 
 [dependencies]
 lazy_static = "1.4.0"
@@ -16,3 +20,6 @@ parking_lot = "0.10"
 tokio = { version = "1.5.0", features = ["full", "parking_lot"] }
 redis = { version = "0.20.1", features = ["tokio-comp", "connection-manager"] }
 esm_message = { git = "https://github.com/WolfkillArcadia/esm_message", branch = "main" }
+
+[patch."https://github.com/WolfkillArcadia/esm_message"]
+esm_message = { path = "../esm_message" }

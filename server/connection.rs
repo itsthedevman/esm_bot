@@ -1,12 +1,10 @@
 use std::collections::HashMap;
-use message_io::network::{Endpoint, ResourceId};
-
-use crate::server;
+use message_io::network::{Endpoint};
 
 #[derive(Debug)]
 pub struct ConnectionManager {
     pub lobby: Vec<Endpoint>,
-    connections: HashMap<String, Endpoint>,
+    connections: HashMap<Vec<u8>, Endpoint>,
 }
 
 impl ConnectionManager {
@@ -21,10 +19,10 @@ impl ConnectionManager {
         self.lobby.push(endpoint);
     }
 
-    pub fn accept(&mut self, server_id: String, endpoint: Endpoint) -> Result<(), String> {
+    pub fn accept(&mut self, server_id: Vec<u8>, endpoint: Endpoint) -> Result<(), String> {
         let endpoint = match self.lobby.iter().find(|e| **e == endpoint) {
             Some(endpoint) => endpoint,
-            None => return Err(format!("Failed to find endpoint to link to server ID {}", server_id))
+            None => return Err(format!("Failed to find endpoint to link to server ID {:?}", String::from_utf8(server_id)))
         };
 
         self.connections.insert(server_id, *endpoint);
@@ -32,7 +30,7 @@ impl ConnectionManager {
         Ok(())
     }
 
-    pub fn find_by_server_id<'a>(&'a self, server_id: String) -> Option<&'a Endpoint> {
+    pub fn find_by_server_id<'a>(&'a self, server_id: Vec<u8>) -> Option<&'a Endpoint> {
         self.connections.get(&server_id)
     }
 
