@@ -287,9 +287,6 @@ impl Server {
                 Type::Pong => {
                     // Set the flag to true
                     self.bot_pong_received.store(true, Ordering::Relaxed);
-
-                    let message = Message::new(Type::Pong);
-                    self.send_to_bot(message);
                 },
                 _ => {
                     let success = self.send_to_client(&mut message);
@@ -359,10 +356,13 @@ impl Server {
 
     fn on_message(&self, endpoint: Endpoint, data: Vec<u8>) {
         let resource_id = endpoint.resource_id();
-        let message = Message::from_bytes(data, resource_id, |server_id| self.server_key(server_id));
+        let message = Message::from_bytes(data, |server_id| self.server_key(server_id));
 
         let message = match message {
-            Ok(message) => message,
+            Ok(mut message) => {
+                message.set_resource(resource_id);
+                message
+            },
             Err(e) => {
                 error!("#on_message - {}", e);
                 self.disconnect(endpoint);
