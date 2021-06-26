@@ -37,14 +37,13 @@ module ESM
       def initialize
         @connections = {}
         @server_id_by_resource_id = {}
-        @server_alive = false
-        @server_pong_received = true
-
-        # Redis connection for sending messages and reloading keys
+        @mutex = Mutex.new
         @redis = Redis.new(REDIS_OPTS)
 
+        self.server_alive = false
+        self.server_ping_received = true
         self.refresh_keys
-        self.ping_server
+        self.health_check
         self.delegate_inbound_messages
         self.process_inbound_messages
       end
@@ -56,7 +55,7 @@ module ESM
         [
           @thread_delegate_inbound_messages,
           @thread_process_inbound_messages,
-          @thread_ping_server
+          @thread_health_check
         ].each { |id| Thread.kill(id) }
 
         # TODO: Close any open requests with an error message
@@ -89,7 +88,7 @@ module ESM
       def send_to_server(**args)
         message = ESM::Connection::Message.new(**args)
 
-        if %w[ping pong].exclude?(message.type) # rubocop:disable Style/IfUnlessModifier
+        if %w[pong].exclude?(message.type) # rubocop:disable Style/IfUnlessModifier
           ESM::Notifications.trigger("info", class: self.class, method: __method__, message: message.to_h)
         end
 
@@ -137,36 +136,46 @@ module ESM
 
       # TODO: Documentation
       #
-      def ping_server
-        @thread_ping_server =
+      def health_check
+        @thread_health_check =
           Thread.new do
-            loop do
-              sleep(0.5)
-              next if !@server_pong_received
+            self.server_ping_received = false
 
-              @server_pong_received = false
-              self.send_to_server(type: "ping")
+            currently_alive = false
+            0..100.times do
+              break currently_alive = true if self.server_ping_received?
 
-              # Wait 200ms for the server to reply before considering it offline
-              currently_alive = false
-              0..200.times do
-                break currently_alive = true if @server_pong_received
+              sleep(0.01)
+            end
 
-                sleep(0.001)
-              end
+            # Only set the value if it differs
+            previously_alive = self.server_alive?
+            next if currently_alive == previously_alive
 
-              # Only set the value if it differs
-              next if @server_alive == currently_alive
+            self.server_alive = currently_alive
 
-              @server_alive = currently_alive
-
-              if currently_alive
-                ESM::Notifications.trigger("info", class: self.class, method: __method__, server_status: "Connected")
-              else
-                ESM::Notifications.trigger("error", class: self.class, method: __method__, server_status: "Disconnected")
-              end
+            if self.server_alive?
+              ESM::Notifications.trigger("info", class: self.class, method: __method__, server_status: "Connected")
+            else
+              ESM::Notifications.trigger("error", class: self.class, method: __method__, server_status: "Disconnected")
             end
           end
+      end
+
+      def server_ping_received?
+        @mutex.synchronize { @server_ping_received }
+      end
+
+      def server_ping_received=(value)
+        @mutex.synchronize { @server_ping_received = value }
+      end
+
+      def server_alive?
+        @mutex.synchronize { @server_alive }
+      end
+
+      def server_alive=(value)
+        @mutex.synchronize { @server_alive = value }
       end
 
       # TODO: Documentation
@@ -181,8 +190,6 @@ module ESM
           self.on_disconnect(message)
         when "ping"
           self.on_ping(message)
-        when "pong"
-          self.on_pong(message)
         else
           self.on_message(message)
         end
@@ -229,14 +236,11 @@ module ESM
       # TODO: Documentation
       #
       def on_ping(_message)
-        # This has to use `#send_to_server` otherwise it will be blocked by the connection check
-        self.send_to_server(type: "pong")
-      end
+        self.server_ping_received = true
+        @thread_health_check.join
 
-      # TODO: Documentation
-      #
-      def on_pong(_message)
-        @server_pong_received = true
+        self.health_check
+        self.send_to_server(type: "pong")
       end
     end
   end

@@ -8,7 +8,7 @@ use message_io::{
 use esm_message::{ErrorType, Message, Type};
 use tokio::{sync::{RwLock}, time::sleep};
 use redis::{AsyncCommands, Client, Commands, Connection, RedisError, aio::MultiplexedConnection};
-use std::{env, time::Duration};
+use std::{env, sync::atomic::{AtomicBool, Ordering}, time::Duration};
 use std::{sync::Arc};
 use tokio::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
 use parking_lot::{RwLock as SyncRwLock};
@@ -24,10 +24,10 @@ pub struct Server {
     address: String,
 
     // The master flag
-    bot_alive: Arc<RwLock<bool>>,
+    bot_alive: Arc<AtomicBool>,
 
     // Used for tracking if there was a pong received. Use `bot_alive` for checking if the bot is still online
-    bot_pong_received: Arc<RwLock<bool>>
+    bot_pong_received: Arc<AtomicBool>
 }
 
 impl Server {
@@ -53,14 +53,14 @@ impl Server {
 
         Server {
             handler,
+            redis_client,
+            address,
             connection_manager: Arc::new(SyncRwLock::new(ConnectionManager::new())),
             outbound_sender: sender,
             outbound_receiver: Arc::new(RwLock::new(receiver)),
-            redis_client: redis_client,
-            bot_alive: Arc::new(RwLock::new(false)),
-            bot_pong_received: Arc::new(RwLock::new(true)), // Defaulted to true. It will automatically be reset to false when the initial ping is sent
+            bot_alive: Arc::new(AtomicBool::new(false)),
+            bot_pong_received: Arc::new(AtomicBool::new(true)),
             redis: Arc::new(SyncRwLock::new(redis)),
-            address,
         }
     }
 
@@ -111,7 +111,7 @@ impl Server {
 
     }
 
-    pub fn server_key<'a>(&self, server_id: &Vec<u8>) -> Option<Vec<u8>> {
+    pub fn server_key(&self, server_id: &[u8]) -> Option<Vec<u8>> {
         let server_id = match String::from_utf8(server_id.to_owned()) {
             Ok(id) => id,
             Err(e) => {
@@ -278,21 +278,18 @@ impl Server {
                 }
             };
 
-            if message.message_type != Type::Ping && message.message_type != Type::Pong {
-                trace!("#process_inbound_messages - {:#?}", message);
+            if message.message_type != Type::Pong {
+                debug!("#process_inbound_messages - {:#?}", message);
             }
 
             match message.message_type {
-                // Respond to the ping
-                Type::Ping => {
-                    let message = Message::new(Type::Pong);
-                    self.send_to_bot(message);
-                },
-
                 // Received from the bot after a ping has been sent
                 Type::Pong => {
                     // Set the flag to true
-                    *(self.bot_pong_received.write().await) = true;
+                    self.bot_pong_received.store(true, Ordering::Relaxed);
+
+                    let message = Message::new(Type::Pong);
+                    self.send_to_bot(message);
                 },
                 _ => {
                     let success = self.send_to_client(&mut message);
@@ -305,14 +302,14 @@ impl Server {
         }
     }
 
-    /// Pings the bot every 500ms and tracks if the bot is alive
+    /// Pings the bot and tracks if it replies
     async fn ping_bot(&mut self) {
         loop {
             sleep(Duration::from_millis(500)).await;
-            if *(self.bot_pong_received.read().await) == false { continue; }
+            if !self.bot_pong_received.load(Ordering::SeqCst) { continue; }
 
             // Set the flag back to false before sending the ping
-            *(self.bot_pong_received.write().await) = false;
+            self.bot_pong_received.store(false, Ordering::SeqCst);
 
             let message = Message::new(Type::Ping);
             self.send_to_bot(message);
@@ -320,7 +317,7 @@ impl Server {
             // Give the bot up to 200ms to reply before considering it "offline"
             let mut currently_alive = false;
             for _ in 0..200 {
-                if *(self.bot_pong_received.read().await) {
+                if self.bot_pong_received.load(Ordering::SeqCst) {
                     currently_alive = true;
                     break;
                 }
@@ -329,10 +326,10 @@ impl Server {
             }
 
             // Only write and log if the status has changed
-            let previously_alive = *(self.bot_alive.read().await);
+            let previously_alive = self.bot_alive.load(Ordering::SeqCst);
             if currently_alive == previously_alive { continue; }
 
-            *(self.bot_alive.write().await) = currently_alive;
+            self.bot_alive.store(currently_alive, Ordering::SeqCst);
 
             if currently_alive {
                 info!("#ping_bot - Connected");

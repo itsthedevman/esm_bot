@@ -42,7 +42,7 @@ module ESM
       def to_h
         {
           id: self.id,
-          server_id: self.server_id,
+          server_id: self.server_id&.bytes,
           resource_id: self.resource_id,
           type: self.type,
           data: {
