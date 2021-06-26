@@ -2,7 +2,7 @@
 
 module ESM
   module Event
-    class DiscordLog
+    class DiscordLogV1
       def initialize(connection:, server:, parameters:)
         @server = server
         @community = server.community

@@ -2,7 +2,7 @@
 
 module ESM
   module Event
-    class ServerInitialization
+    class ServerInitializationV1
       attr_reader :packet if ESM.env.test?
 
       def initialize(connection:, server:, parameters:)
