@@ -8,6 +8,32 @@ module ESM
         self.merge!(parse_from_hash_map(input))
       end
 
+      def to_a
+        convert_value =
+          lambda do |value|
+            case value
+            when Array
+              value.map { |v| convert_value.call(v) }
+            when Hash
+              value.deep_stringify_keys!
+              value.each { |k, v| value[k] = convert_value.call(v) }
+
+              # Convert the hash to array pairs
+              value.to_a
+            else
+              value
+            end
+          end
+
+        self.map do |key, value|
+          [key.to_s, convert_value.call(value)]
+        end
+      end
+
+      def to_s
+        self.to_a.to_json
+      end
+
       private
 
       # Goes over every item in the array and checks to see if an item needs converted to a hash

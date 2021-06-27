@@ -125,4 +125,82 @@ describe ESM::Arma::HashMap do
       expect(hash_map.send(:valid_array_hash?, input)).to be(true)
     end
   end
+
+  describe "#to_a" do
+    it "converts" do
+      input = {
+        key_1: "string value",
+        key_2: 1,
+        key_3: 2.5,
+        key_4: [1, "two", ["three", 4, 5], ["six", 7], [["eight", false]]],
+        key_5: [
+          [
+            ["key_6", true],
+            ["key_7", false]
+          ],
+          true
+        ]
+      }
+
+      expected = [
+        ["key_1", "string value"],
+        ["key_2", 1],
+        ["key_3", 2.5],
+        ["key_4", [1, "two", ["three", 4, 5], ["six", 7], [["eight", false]]]],
+        [
+          "key_5",
+          [
+            [
+              ["key_6", true],
+              ["key_7", false]
+            ],
+            true
+          ]
+        ]
+      ]
+
+      hash_map = described_class.new(input)
+
+      expect(hash_map.to_a).to eql(expected)
+    end
+  end
+
+  describe "#to_s" do
+    it "converts" do
+      input = {
+        key_1: "string value",
+        key_2: 1,
+        key_3: 2.5,
+        key_4: [1, "two", ["three", 4, 5], ["six", 7], [["eight", false]]],
+        key_5: [
+          [
+            ["key_6", true],
+            ["key_7", false]
+          ],
+          true
+        ]
+      }
+
+      expected = [
+        ["key_1", "string value"],
+        ["key_2", 1],
+        ["key_3", 2.5],
+        ["key_4", [1, "two", ["three", 4, 5], ["six", 7], [["eight", false]]]],
+        [
+          "key_5",
+          [
+            [
+              ["key_6", true],
+              ["key_7", false]
+            ],
+            true
+          ]
+        ]
+      ].to_json
+
+      hash_map = described_class.new(input)
+
+      expect(hash_map.to_s).to eql(expected)
+    end
+  end
 end
