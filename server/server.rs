@@ -148,16 +148,16 @@ impl Server {
         // Process the events
         let mut server = self.clone();
         listener.for_each(move |event| match event.network() {
-            NetEvent::Connected(_, _) => {}
+            NetEvent::Connected(_, _) => {},
             NetEvent::Message(endpoint, data) => {
                 server.on_message(endpoint, data.to_vec())
-            }
+            },
             NetEvent::Disconnected(endpoint) => {
                 server.on_disconnect(endpoint)
-            }
+            },
             NetEvent::Accepted(endpoint, resource_id) => {
                 server.on_connect(endpoint, resource_id)
-            }
+            },
         });
     }
 
@@ -332,6 +332,9 @@ impl Server {
                 info!("#ping_bot - Connected");
             } else {
                 warn!("#ping_bot - Disconnected");
+
+                // Disconnect all connections to simulate a disconnect
+                self.disconnect_all();
             }
         }
     }
@@ -339,6 +342,13 @@ impl Server {
     pub fn disconnect(&self, endpoint: Endpoint) {
         self.connection_manager.write().remove(endpoint);
         self.handler.network().remove(endpoint.resource_id());
+    }
+
+    fn disconnect_all(&self) {
+        let endpoints = self.connection_manager.write().remove_all();
+        for endpoint in endpoints.into_iter() {
+            self.handler.network().remove(endpoint.resource_id());
+        }
     }
 
     fn on_connect(&mut self, endpoint: Endpoint, resource_id: ResourceId) {
@@ -355,6 +365,11 @@ impl Server {
     }
 
     fn on_message(&self, endpoint: Endpoint, data: Vec<u8>) {
+        if !self.bot_alive.load(Ordering::SeqCst) {
+            self.disconnect(endpoint);
+            return;
+        }
+
         let resource_id = endpoint.resource_id();
         let message = Message::from_bytes(data, |server_id| self.server_key(server_id));
 

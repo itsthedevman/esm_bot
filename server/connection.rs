@@ -30,12 +30,22 @@ impl ConnectionManager {
         Ok(())
     }
 
-    pub fn find_by_server_id<'a>(&'a self, server_id: Vec<u8>) -> Option<&'a Endpoint> {
+    pub fn find_by_server_id(&self, server_id: Vec<u8>) -> Option<&Endpoint> {
         self.connections.get(&server_id)
     }
 
     pub fn remove(&mut self, endpoint: Endpoint) {
         self.lobby.iter().position(|e| *e == endpoint);
         self.connections.retain(|_, e| *e == endpoint);
+    }
+
+    pub fn remove_all(&mut self) -> Vec<Endpoint> {
+        let mut endpoints = self.lobby.clone();
+        self.lobby.clear();
+
+        endpoints.extend(self.connections.values().clone());
+        self.connections.clear();
+
+        endpoints
     }
 }
