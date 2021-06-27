@@ -8,7 +8,7 @@ describe ESM::Command::System::Preferences, category: "command" do
   end
 
   it "should have 3 argument" do
-    expect(command.arguments.size).to eql(3)
+    expect(command.arguments.size).to eq(3)
   end
 
   it "should have a description" do

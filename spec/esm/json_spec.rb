@@ -13,7 +13,7 @@ describe ESM::JSON do
     end
 
     it "parses the json as a Hash" do
-      expect(described_class.parse(data.to_json)).to eql(data)
+      expect(described_class.parse(data.to_json)).to eq(data)
     end
 
     it "parses the JSON as an OpenStruct" do
@@ -25,7 +25,7 @@ describe ESM::JSON do
         hash: OpenStruct.new(foo: "bar")
       )
 
-      expect(described_class.parse(data.to_json, as_ostruct: true)).to eql(expectation)
+      expect(described_class.parse(data.to_json, as_ostruct: true)).to eq(expectation)
     end
 
     it "fails to parse and returns nil" do

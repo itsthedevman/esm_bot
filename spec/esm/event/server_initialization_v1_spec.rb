@@ -34,7 +34,7 @@ describe ESM::Event::ServerInitializationV1 do
     let(:event) { ESM::Event::ServerInitializationV1.new(server: server, parameters: packet, connection: connection) }
 
     before :each do
-      wait_for { wsc.connected? }.to eql(true)
+      wait_for { wsc.connected? }.to eq(true)
       expect { event.run! }.not_to raise_error
     end
 
@@ -52,31 +52,31 @@ describe ESM::Event::ServerInitializationV1 do
       end
 
       it "should have updated the server" do
-        expect(server.server_name).to eql(packet.server_name)
-        expect(server.server_start_time).to eql(DateTime.parse(packet.server_start_time).utc)
+        expect(server.server_name).to eq(packet.server_name)
+        expect(server.server_start_time).to eq(DateTime.parse(packet.server_start_time).utc)
       end
 
       it "should have updated the server settings" do
         settings = server.server_setting
 
-        expect(settings.territory_price_per_object).to eql(packet.price_per_object)
-        expect(settings.territory_lifetime).to eql(packet.territory_lifetime)
-        expect(settings.server_restart_hour).to eql(packet.server_restart.first)
-        expect(settings.server_restart_min).to eql(packet.server_restart.second)
+        expect(settings.territory_price_per_object).to eq(packet.price_per_object)
+        expect(settings.territory_lifetime).to eq(packet.territory_lifetime)
+        expect(settings.server_restart_hour).to eq(packet.server_restart.first)
+        expect(settings.server_restart_min).to eq(packet.server_restart.second)
       end
 
       it "should have created territories" do
-        expect(ESM::Territory.where(server_id: server.id).size).to eql(10)
+        expect(ESM::Territory.where(server_id: server.id).size).to eq(10)
 
         packet_territories = packet.to_h.select { |key, _| key.to_s.starts_with?("territory_level_") }
 
         packet_territories.each do |_, info|
           territory = ESM::Territory.where(server_id: server.id, territory_level: info[:level]).first
           expect(territory).not_to be_nil
-          expect(territory.territory_level).to eql(info[:level])
-          expect(territory.territory_purchase_price).to eql(info[:purchase_price])
-          expect(territory.territory_radius).to eql(info[:radius])
-          expect(territory.territory_object_count).to eql(info[:object_count])
+          expect(territory.territory_level).to eq(info[:level])
+          expect(territory.territory_purchase_price).to eq(info[:purchase_price])
+          expect(territory.territory_radius).to eq(info[:radius])
+          expect(territory.territory_object_count).to eq(info[:object_count])
         end
       end
     end
@@ -89,37 +89,37 @@ describe ESM::Event::ServerInitializationV1 do
       end
 
       it "should be valid" do
-        expect(event.packet.function_name).to eql("postServerInitialization")
-        expect(event.packet.server_id).to eql(server.server_id)
-        expect(event.packet.territory_admins).to eql("[\"#{user.steam_uid}\"]")
-        expect(event.packet.extdb_path).to eql(setting.extdb_path || "")
-        expect(event.packet.gambling_modifier).to eql(setting.gambling_modifier)
-        expect(event.packet.gambling_payout).to eql(setting.gambling_payout)
-        expect(event.packet.gambling_randomizer_max).to eql(setting.gambling_randomizer_max)
-        expect(event.packet.gambling_randomizer_mid).to eql(setting.gambling_randomizer_mid)
-        expect(event.packet.gambling_randomizer_min).to eql(setting.gambling_randomizer_min)
-        expect(event.packet.gambling_win_chance).to eql(setting.gambling_win_chance)
-        expect(event.packet.logging_add_player_to_territory).to eql(setting.logging_add_player_to_territory)
-        expect(event.packet.logging_demote_player).to eql(setting.logging_demote_player)
-        expect(event.packet.logging_exec).to eql(setting.logging_exec)
-        expect(event.packet.logging_gamble).to eql(setting.logging_gamble)
-        expect(event.packet.logging_modify_player).to eql(setting.logging_modify_player)
-        expect(event.packet.logging_pay_territory).to eql(setting.logging_pay_territory)
-        expect(event.packet.logging_promote_player).to eql(setting.logging_promote_player)
-        expect(event.packet.logging_remove_player_from_territory).to eql(setting.logging_remove_player_from_territory)
-        expect(event.packet.logging_reward).to eql(setting.logging_reward)
-        expect(event.packet.logging_transfer).to eql(setting.logging_transfer)
-        expect(event.packet.logging_upgrade_territory).to eql(setting.logging_upgrade_territory)
-        expect(event.packet.logging_path).to eql(setting.logging_path || "")
-        expect(event.packet.max_payment_count).to eql(setting.max_payment_count)
-        expect(event.packet.request_thread_tick).to eql(setting.request_thread_tick)
-        expect(event.packet.request_thread_type).to eql(setting.request_thread_type == "exile")
-        expect(event.packet.taxes_territory_payment).to eql(setting.territory_payment_tax / 100)
-        expect(event.packet.taxes_territory_upgrade).to eql(setting.territory_upgrade_tax / 100)
-        expect(event.packet.reward_player_poptabs).to eql(reward.player_poptabs)
-        expect(event.packet.reward_locker_poptabs).to eql(reward.locker_poptabs)
-        expect(event.packet.reward_respect).to eql(reward.respect)
-        expect(event.packet.reward_items).to eql("[[\"Exile_Item_EMRE\",2],[\"Chemlight_blue\",5]]")
+        expect(event.packet.function_name).to eq("postServerInitialization")
+        expect(event.packet.server_id).to eq(server.server_id)
+        expect(event.packet.territory_admins).to eq("[\"#{user.steam_uid}\"]")
+        expect(event.packet.extdb_path).to eq(setting.extdb_path || "")
+        expect(event.packet.gambling_modifier).to eq(setting.gambling_modifier)
+        expect(event.packet.gambling_payout).to eq(setting.gambling_payout)
+        expect(event.packet.gambling_randomizer_max).to eq(setting.gambling_randomizer_max)
+        expect(event.packet.gambling_randomizer_mid).to eq(setting.gambling_randomizer_mid)
+        expect(event.packet.gambling_randomizer_min).to eq(setting.gambling_randomizer_min)
+        expect(event.packet.gambling_win_chance).to eq(setting.gambling_win_chance)
+        expect(event.packet.logging_add_player_to_territory).to eq(setting.logging_add_player_to_territory)
+        expect(event.packet.logging_demote_player).to eq(setting.logging_demote_player)
+        expect(event.packet.logging_exec).to eq(setting.logging_exec)
+        expect(event.packet.logging_gamble).to eq(setting.logging_gamble)
+        expect(event.packet.logging_modify_player).to eq(setting.logging_modify_player)
+        expect(event.packet.logging_pay_territory).to eq(setting.logging_pay_territory)
+        expect(event.packet.logging_promote_player).to eq(setting.logging_promote_player)
+        expect(event.packet.logging_remove_player_from_territory).to eq(setting.logging_remove_player_from_territory)
+        expect(event.packet.logging_reward).to eq(setting.logging_reward)
+        expect(event.packet.logging_transfer).to eq(setting.logging_transfer)
+        expect(event.packet.logging_upgrade_territory).to eq(setting.logging_upgrade_territory)
+        expect(event.packet.logging_path).to eq(setting.logging_path || "")
+        expect(event.packet.max_payment_count).to eq(setting.max_payment_count)
+        expect(event.packet.request_thread_tick).to eq(setting.request_thread_tick)
+        expect(event.packet.request_thread_type).to eq(setting.request_thread_type == "exile")
+        expect(event.packet.taxes_territory_payment).to eq(setting.territory_payment_tax / 100)
+        expect(event.packet.taxes_territory_upgrade).to eq(setting.territory_upgrade_tax / 100)
+        expect(event.packet.reward_player_poptabs).to eq(reward.player_poptabs)
+        expect(event.packet.reward_locker_poptabs).to eq(reward.locker_poptabs)
+        expect(event.packet.reward_respect).to eq(reward.respect)
+        expect(event.packet.reward_items).to eq("[[\"Exile_Item_EMRE\",2],[\"Chemlight_blue\",5]]")
       end
     end
   end

@@ -8,7 +8,7 @@ describe ESM::Command::Server::Reward, category: "command" do
   end
 
   it "should have 1 argument" do
-    expect(command.arguments.size).to eql(1)
+    expect(command.arguments.size).to eq(1)
   end
 
   it "should have a description" do
@@ -47,7 +47,7 @@ describe ESM::Command::Server::Reward, category: "command" do
       expect(embed).not_to be_nil
 
       # Checks for requestees message
-      expect(ESM::Test.messages.size).to eql(2)
+      expect(ESM::Test.messages.size).to eq(2)
 
       # Process the request
       request = command.request
@@ -62,7 +62,7 @@ describe ESM::Command::Server::Reward, category: "command" do
       # Wait for the server to respond
       wait_for { connection.requests }.to be_blank
 
-      expect(ESM::Test.messages.size).to eql(1)
+      expect(ESM::Test.messages.size).to eq(1)
 
       embed = ESM::Test.messages.first.second
 

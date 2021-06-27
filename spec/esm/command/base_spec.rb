@@ -12,31 +12,31 @@ describe ESM::Command::Base do
   let(:connection) { ESM::Websocket.connections[server.server_id] }
 
   it "should have a valid name" do
-    expect(command.name).to eql("base")
+    expect(command.name).to eq("base")
   end
 
   it "should have a valid category" do
-    expect(command.category).to eql("test")
+    expect(command.category).to eq("test")
   end
 
   it "should have 2 aliases" do
-    expect(command.aliases.size).to eql(2)
+    expect(command.aliases.size).to eq(2)
   end
 
   it "should have #{ESM::Command::Test::Base::ARGUMENT_COUNT} arguments" do
-    expect(command.arguments.size).to eql(ESM::Command::Test::Base::ARGUMENT_COUNT)
+    expect(command.arguments.size).to eq(ESM::Command::Test::Base::ARGUMENT_COUNT)
   end
 
   it "should have description" do
-    expect(command.description).to eql("A test command")
+    expect(command.description).to eq("A test command")
   end
 
   it "should have a type" do
-    expect(command.type).to eql(:player)
+    expect(command.type).to eq(:player)
   end
 
   it "should have an example" do
-    expect(command.example).to eql("A test example")
+    expect(command.example).to eq("A test example")
   end
 
   it "should have defines" do
@@ -44,13 +44,13 @@ describe ESM::Command::Base do
     expect(command.defines.enabled.modifiable).to be(true)
     expect(command.defines.enabled.default).to be(true)
     expect(command.defines.whitelist_enabled.modifiable).to be(true)
-    expect(command.defines.whitelist_enabled.default).to eql(false)
+    expect(command.defines.whitelist_enabled.default).to eq(false)
     expect(command.defines.whitelisted_role_ids.modifiable).to be(true)
-    expect(command.defines.whitelisted_role_ids.default).to eql([])
+    expect(command.defines.whitelisted_role_ids.default).to eq([])
     expect(command.defines.allowed_in_text_channels.modifiable).to be(true)
     expect(command.defines.allowed_in_text_channels.default).to be(true)
     expect(command.defines.cooldown_time.modifiable).to be(true)
-    expect(command.defines.cooldown_time.default).to eql(2.seconds)
+    expect(command.defines.cooldown_time.default).to eq(2.seconds)
   end
 
   it "should have requires" do
@@ -86,7 +86,7 @@ describe ESM::Command::Base do
       )
       event = CommandEvent.create(command_statement, user: user)
       expect { command.execute(event) }.to raise_error(ESM::Exception::CheckFailure)
-      expect(ESM::User.all.size).to eql(1)
+      expect(ESM::User.all.size).to eq(1)
     end
   end
 
@@ -117,7 +117,7 @@ describe ESM::Command::Base do
       event = CommandEvent.create(command_statement, user: user)
       expect { command.execute(event) }.not_to raise_error
       expect(command.current_user).not_to be_nil
-      expect(command.current_user.id).to eql(event.user.id)
+      expect(command.current_user.id).to eq(event.user.id)
     end
 
     it "should create" do
@@ -139,7 +139,7 @@ describe ESM::Command::Base do
       expect { command.execute(event) }.to raise_error(ESM::Exception::CheckFailure)
       new_current_user = ESM::User.find_by_discord_id(discord_id)
       expect(new_current_user).not_to be(nil)
-      expect(command.current_user.id.to_s).to eql(new_current_user.discord_id)
+      expect(command.current_user.id.to_s).to eq(new_current_user.discord_id)
     end
   end
 
@@ -168,7 +168,7 @@ describe ESM::Command::Base do
       event = CommandEvent.create(command_statement, user: user)
       expect { command.execute(event) }.not_to raise_error
       expect(command.current_community).not_to be_nil
-      expect(command.current_community.id).to eql(community.id)
+      expect(command.current_community.id).to eq(community.id)
     end
   end
 
@@ -197,8 +197,8 @@ describe ESM::Command::Base do
       event = CommandEvent.create(command_statement, user: user)
       expect { command.execute(event) }.not_to raise_error
       expect(command.target_server).not_to be_nil
-      expect(command.target_server.id).to eql(server.id)
-      expect(command.arguments.server_id).to eql(server.server_id)
+      expect(command.target_server.id).to eq(server.id)
+      expect(command.arguments.server_id).to eq(server.server_id)
     end
 
     it "should be invalid" do
@@ -240,7 +240,7 @@ describe ESM::Command::Base do
       event = CommandEvent.create(command_statement, user: user)
       expect { command.execute(event) }.not_to raise_error
       expect(command.target_community).not_to be_nil
-      expect(command.target_community.id).to eql(community.id)
+      expect(command.target_community.id).to eq(community.id)
     end
 
     it "should be invalid" do
@@ -286,7 +286,7 @@ describe ESM::Command::Base do
       event = CommandEvent.create(command_statement, user: user)
       expect { command.execute(event) }.not_to raise_error
       expect(command.target_user).not_to be_nil
-      expect(command.target_user.id.to_s).to eql(secondary_user.discord_id)
+      expect(command.target_user.id.to_s).to eq(secondary_user.discord_id)
     end
 
     it "should be invalid" do
@@ -321,7 +321,7 @@ describe ESM::Command::Base do
       expect { command.execute(event) }.not_to raise_error
       new_target_user = ESM::User.find_by_discord_id(discord_id)
       expect(new_target_user).not_to be(nil)
-      expect(command.target_user.id.to_s).to eql(new_target_user.discord_id)
+      expect(command.target_user.id.to_s).to eq(new_target_user.discord_id)
     end
   end
 
@@ -350,7 +350,7 @@ describe ESM::Command::Base do
       event = CommandEvent.create(command_statement, user: user)
       expect { command.execute(event) }.not_to raise_error
 
-      expect(command.target_uid).to eql(secondary_user.steam_uid)
+      expect(command.target_uid).to eq(secondary_user.steam_uid)
     end
 
     it "from mention" do
@@ -365,7 +365,7 @@ describe ESM::Command::Base do
       event = CommandEvent.create(command_statement, user: user)
       expect { command.execute(event) }.not_to raise_error
 
-      expect(command.target_uid).to eql(secondary_user.steam_uid)
+      expect(command.target_uid).to eq(secondary_user.steam_uid)
     end
 
     it "from discord ID" do
@@ -380,7 +380,7 @@ describe ESM::Command::Base do
       event = CommandEvent.create(command_statement, user: user)
       expect { command.execute(event) }.not_to raise_error
 
-      expect(command.target_uid).to eql(secondary_user.steam_uid)
+      expect(command.target_uid).to eq(secondary_user.steam_uid)
     end
 
     it "from unregistered" do
@@ -397,7 +397,7 @@ describe ESM::Command::Base do
       event = CommandEvent.create(command_statement, user: user)
       expect { command.execute(event) }.not_to raise_error
 
-      expect(command.target_uid).to eql(nil)
+      expect(command.target_uid).to eq(nil)
     end
 
     it "from gibberish" do
@@ -412,7 +412,7 @@ describe ESM::Command::Base do
       event = CommandEvent.create(command_statement, user: user)
       expect { command.execute(event) }.to raise_error(ESM::Exception::CheckFailure)
 
-      expect(command.target_uid).to eql(nil)
+      expect(command.target_uid).to eq(nil)
     end
   end
 
@@ -437,7 +437,7 @@ describe ESM::Command::Base do
     end
 
     it "should be callable" do
-      expect(command.discord).to eql("discord")
+      expect(command.discord).to eq("discord")
     end
   end
 
@@ -447,7 +447,7 @@ describe ESM::Command::Base do
     end
 
     it "should be callable" do
-      expect(command.server).to eql("server")
+      expect(command.server).to eq("server")
     end
   end
 
@@ -500,7 +500,7 @@ describe ESM::Command::Base do
       expect { request = server_command.execute(event) }.not_to raise_error
       expect(request).not_to be_nil
       wait_for { connection.requests }.to be_blank
-      expect(ESM::Test.messages.size).to eql(1)
+      expect(ESM::Test.messages.size).to eq(1)
       expect(server_command.current_cooldown.active?).to be(false)
     end
 
@@ -520,10 +520,10 @@ describe ESM::Command::Base do
         event = CommandEvent.create(test_command.statement, channel_type: :text, user: user)
 
         expect { test_command.execute(event) }.not_to raise_error
-        expect(ESM::Test.messages.size).to eql(1)
+        expect(ESM::Test.messages.size).to eq(1)
 
         error = ESM::Test.messages.first.second
-        expect(error.description).to eql("Hey #{user.mention}, this command can only be used in a **Direct Message** with me.\n\nJust right click my name, click **Message**, and send it there")
+        expect(error.description).to eq("Hey #{user.mention}, this command can only be used in a **Direct Message** with me.\n\nJust right click my name, click **Message**, and send it there")
       end
 
       it "should send error (StandardError)" do
@@ -531,7 +531,7 @@ describe ESM::Command::Base do
         event = CommandEvent.create(test_command.statement, channel_type: :text, user: user)
 
         expect { test_command.execute(event) }.not_to raise_error
-        expect(ESM::Test.messages.size).to eql(1)
+        expect(ESM::Test.messages.size).to eq(1)
 
         error = ESM::Test.messages.first.second
         expect(error.description).to include("Well, this is awkward.\nWill you please join my Discord (https://esmbot.com/join) and let my developer know that this happened?\nPlease give him this code:\n```")
@@ -572,7 +572,7 @@ describe ESM::Command::Base do
 
     it "should be limited to DM" do
       command.limit_to = :dm
-      expect(command.limit_to).to eql(:dm)
+      expect(command.limit_to).to eq(:dm)
       expect(command.dm_only?).to be(true)
       expect(command.text_only?).to be(false)
       command.limit_to = nil
@@ -580,7 +580,7 @@ describe ESM::Command::Base do
 
     it "should be limited to text" do
       command.limit_to = :text
-      expect(command.limit_to).to eql(:text)
+      expect(command.limit_to).to eq(:text)
       expect(command.dm_only?).to be(false)
       expect(command.text_only?).to be(true)
       command.limit_to = nil
@@ -780,7 +780,7 @@ describe ESM::Command::Base do
       expect { request = server_command.execute(event) }.not_to raise_error
       expect(request).not_to be_nil
       wait_for { connection.requests }.to be_blank
-      expect(ESM::Test.messages.size).to eql(1)
+      expect(ESM::Test.messages.size).to eq(1)
     end
   end
 
@@ -791,11 +791,11 @@ describe ESM::Command::Base do
       server_command.event = event
 
       server_command.reply("Hello")
-      expect(ESM::Test.messages.size).to eql(1)
+      expect(ESM::Test.messages.size).to eq(1)
 
       message_array = ESM::Test.messages.first
-      expect(message_array.first.id).to eql(event.channel.id)
-      expect(message_array.second).to eql("Hello")
+      expect(message_array.first.id).to eq(event.channel.id)
+      expect(message_array.second).to eq("Hello")
     end
   end
 
@@ -901,7 +901,7 @@ describe ESM::Command::Base do
           expect { command.execute(event) }.to raise_error(ESM::Exception::CheckFailureNoMessage)
 
           # It should not send a message
-          expect(ESM::Test.messages.size).to eql(0)
+          expect(ESM::Test.messages.size).to eq(0)
         end
 
         it "enabled: false, whitelist_enabled: false, whitelisted: false, allowed: true" do
@@ -1296,7 +1296,7 @@ describe ESM::Command::Base do
       skip_command = ESM::Command::Test::SkipCooldownCommand.new
       event = CommandEvent.create(skip_command.statement(server_id: server.server_id), channel_type: :text, user: user)
       expect { skip_command.execute(event) }.not_to raise_error
-      expect(skip_command.current_cooldown).to eql(nil)
+      expect(skip_command.current_cooldown).to eq(nil)
     end
   end
 
@@ -1307,8 +1307,8 @@ describe ESM::Command::Base do
       request_command = ESM::Command::Test::RequestCommand.new
       event = CommandEvent.create(request_command.statement(target: secondary_user.discord_id), channel_type: :text, user: user)
       expect { request_command.execute(event) }.not_to raise_error
-      expect(ESM::Request.all.size).to eql(1)
-      expect(secondary_user.pending_requests.size).to eql(1)
+      expect(ESM::Request.all.size).to eq(1)
+      expect(secondary_user.pending_requests.size).to eq(1)
     end
   end
 
@@ -1323,9 +1323,9 @@ describe ESM::Command::Base do
       request = ESM::Request.first
       request.respond(true)
 
-      expect(ESM::Test.messages.size).to eql(2)
+      expect(ESM::Test.messages.size).to eq(2)
       expect(ESM::Test.messages.first.second).to be_a(ESM::Embed)
-      expect(ESM::Test.messages.second.second).to eql("accepted")
+      expect(ESM::Test.messages.second.second).to eq("accepted")
     end
 
     it "should be declined" do
@@ -1336,9 +1336,9 @@ describe ESM::Command::Base do
       request = ESM::Request.first
       request.respond(false)
 
-      expect(ESM::Test.messages.size).to eql(2)
+      expect(ESM::Test.messages.size).to eq(2)
       expect(ESM::Test.messages.first.second).to be_a(ESM::Embed)
-      expect(ESM::Test.messages.second.second).to eql("declined")
+      expect(ESM::Test.messages.second.second).to eq("declined")
     end
   end
 end

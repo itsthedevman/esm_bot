@@ -8,7 +8,7 @@ describe ESM::Command::Server::Add, category: "command" do
   end
 
   it "should have 3 argument" do
-    expect(command.arguments.size).to eql(3)
+    expect(command.arguments.size).to eq(3)
   end
 
   it "should have a description" do
@@ -68,7 +68,7 @@ describe ESM::Command::Server::Add, category: "command" do
       expect(embed).not_to be_nil
 
       # Checks for requestees message
-      expect(ESM::Test.messages.size).to eql(2)
+      expect(ESM::Test.messages.size).to eq(2)
 
       # Process the request
       request = command.request
@@ -83,7 +83,7 @@ describe ESM::Command::Server::Add, category: "command" do
       # Wait for the server to respond
       wait_for { connection.requests }.to be_blank
 
-      expect(ESM::Test.messages.size).to eql(2)
+      expect(ESM::Test.messages.size).to eq(2)
     end
 
     it "should add (Same user / Territory Admin)" do
@@ -91,10 +91,10 @@ describe ESM::Command::Server::Add, category: "command" do
       event = CommandEvent.create(command_statement, user: user, channel_type: :dm)
 
       expect { command.execute(event) }.not_to raise_error
-      expect(ESM::Test.messages.size).to eql(0)
+      expect(ESM::Test.messages.size).to eq(0)
 
       # We don't create a request for this
-      expect(ESM::Request.all.size).to eql(0)
+      expect(ESM::Request.all.size).to eq(0)
 
       # Reset so we can track the response
       ESM::Test.reset!
@@ -102,7 +102,7 @@ describe ESM::Command::Server::Add, category: "command" do
       # Wait for the server to respond
       wait_for { connection.requests }.to be_blank
 
-      expect(ESM::Test.messages.size).to eql(1)
+      expect(ESM::Test.messages.size).to eq(1)
     end
 
     it "should not allow adding by non-registered steam uid" do

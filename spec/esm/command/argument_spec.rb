@@ -13,7 +13,7 @@ describe ESM::Command::Argument do
 
     it "should have regex" do
       expect(argument.regex).not_to be_nil
-      expect(argument.regex.source).to eql("(foo)")
+      expect(argument.regex.source).to eq("(foo)")
     end
   end
 
@@ -37,8 +37,8 @@ describe ESM::Command::Argument do
 
     it "should have a different display name" do
       expect(argument.display_as).not_to be_nil
-      expect(argument.display_as).to eql("FOOBAR")
-      expect(argument.name).not_to eql(argument.display_as)
+      expect(argument.display_as).to eq("FOOBAR")
+      expect(argument.name).not_to eq(argument.display_as)
     end
   end
 
@@ -49,7 +49,7 @@ describe ESM::Command::Argument do
     end
 
     it "should be a integer" do
-      expect(argument.type).to eql(:integer)
+      expect(argument.type).to eq(:integer)
     end
   end
 
@@ -83,7 +83,7 @@ describe ESM::Command::Argument do
 
     it "should have a default value" do
       expect(argument.default?).to be(true)
-      expect(argument.default).to eql("Hello World")
+      expect(argument.default).to eq("Hello World")
     end
 
     it "should not be required" do
@@ -98,7 +98,7 @@ describe ESM::Command::Argument do
     end
 
     it "should have a description" do
-      expect(argument.description).to eql("This is a test")
+      expect(argument.description).to eq("This is a test")
     end
   end
 
@@ -117,11 +117,11 @@ describe ESM::Command::Argument do
     end
 
     it "should be a string" do
-      expect(argument.type).to eql(:string)
+      expect(argument.type).to eq(:string)
     end
 
     it "should have a display name" do
-      expect(argument.display_as).to eql("foo")
+      expect(argument.display_as).to eq("foo")
     end
 
     it "should have a nil default" do
@@ -133,7 +133,7 @@ describe ESM::Command::Argument do
     end
 
     it "should have a description" do
-      expect(argument.description).to eql("This is a test")
+      expect(argument.description).to eq("This is a test")
     end
   end
 
@@ -141,19 +141,19 @@ describe ESM::Command::Argument do
     it "should be a standard argument" do
       container = ESM::Command::ArgumentContainer.new([[:foo, { regex: /.+/, description: "test" }]])
       argument = container.first
-      expect(argument.to_s).to eql("<foo>")
+      expect(argument.to_s).to eq("<foo>")
     end
 
     it "should be an optional argument" do
       container = ESM::Command::ArgumentContainer.new([[:foo, { regex: /.+/, default: "foobar", description: "test" }]])
       argument = container.first
-      expect(argument.to_s).to eql("<?foo>")
+      expect(argument.to_s).to eq("<?foo>")
     end
 
     it "should use the display_as" do
       container = ESM::Command::ArgumentContainer.new([[:foo, { regex: /.+/, display_as: "bar", description: "test" }]])
       argument = container.first
-      expect(argument.to_s).to eql("<bar>")
+      expect(argument.to_s).to eq("<bar>")
     end
   end
 
@@ -161,7 +161,7 @@ describe ESM::Command::Argument do
     it "should get defaults" do
       container = ESM::Command::ArgumentContainer.new([[:server_id, {}]])
       argument = container.first
-      expect(argument.regex).to eql(Regexp.new("(#{ESM::Regex::SERVER_ID_OPTIONAL_COMMUNITY.source})", Regexp::IGNORECASE))
+      expect(argument.regex).to eq(Regexp.new("(#{ESM::Regex::SERVER_ID_OPTIONAL_COMMUNITY.source})", Regexp::IGNORECASE))
       expect(argument.description).not_to be_blank
     end
   end
@@ -170,8 +170,8 @@ describe ESM::Command::Argument do
     it "should get defaults" do
       container = ESM::Command::ArgumentContainer.new([[:some_other_argument, { template: :server_id }]])
       argument = container.first
-      expect(argument.name).to eql(:some_other_argument)
-      expect(argument.regex).to eql(Regexp.new("(#{ESM::Regex::SERVER_ID_OPTIONAL_COMMUNITY.source})", Regexp::IGNORECASE))
+      expect(argument.name).to eq(:some_other_argument)
+      expect(argument.regex).to eq(Regexp.new("(#{ESM::Regex::SERVER_ID_OPTIONAL_COMMUNITY.source})", Regexp::IGNORECASE))
       expect(argument.description).not_to be_blank
     end
   end
@@ -196,7 +196,7 @@ describe ESM::Command::Argument do
       argument.parse(command, server.server_id.split("_").second)
 
       expect(argument.invalid?).to be(false)
-      expect(argument.value).to eql(server.server_id)
+      expect(argument.value).to eq(server.server_id)
     end
 
     it "should autofill (community_id)" do
@@ -207,7 +207,7 @@ describe ESM::Command::Argument do
       argument.parse(command, "")
 
       expect(argument.invalid?).to be(false)
-      expect(argument.value).to eql(community.community_id)
+      expect(argument.value).to eq(community.community_id)
     end
   end
 end

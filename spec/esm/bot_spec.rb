@@ -17,7 +17,7 @@ describe ESM::Bot do
     describe "Sending a string message" do
       it "should send (Channel)" do
         ESM.bot.deliver("Hello!", to: ESM::Community::ESM::SPAM_CHANNEL)
-        expect(ESM::Test.messages.size).to eql(1)
+        expect(ESM::Test.messages.size).to eq(1)
 
         message_array = ESM::Test.messages.first
 
@@ -29,12 +29,12 @@ describe ESM::Bot do
         # Message tests
         expect(message_array.second).not_to be_nil
         expect(message_array.second).to be_kind_of(String)
-        expect(message_array.second).to eql("Hello!")
+        expect(message_array.second).to eq("Hello!")
       end
 
       it "should send (User)" do
         ESM.bot.deliver("Hello!", to: TestUser::User1::ID)
-        expect(ESM::Test.messages.size).to eql(1)
+        expect(ESM::Test.messages.size).to eq(1)
 
         message_array = ESM::Test.messages.first
 
@@ -46,7 +46,7 @@ describe ESM::Bot do
         # Message tests
         expect(message_array.second).not_to be_nil
         expect(message_array.second).to be_kind_of(String)
-        expect(message_array.second).to eql("Hello!")
+        expect(message_array.second).to eq("Hello!")
       end
     end
 
@@ -59,7 +59,7 @@ describe ESM::Bot do
           end
 
         ESM.bot.deliver(embed, to: ESM::Community::ESM::SPAM_CHANNEL)
-        expect(ESM::Test.messages.size).to eql(1)
+        expect(ESM::Test.messages.size).to eq(1)
 
         message_array = ESM::Test.messages.first
 
@@ -71,13 +71,13 @@ describe ESM::Bot do
         # Message tests
         expect(message_array.second).not_to be_nil
         expect(message_array.second).to be_kind_of(ESM::Embed)
-        expect(message_array.second.title).to eql(embed.title)
-        expect(message_array.second.description).to eql(embed.description)
+        expect(message_array.second.title).to eq(embed.title)
+        expect(message_array.second.description).to eq(embed.description)
       end
 
       it "should send (User)" do
         ESM.bot.deliver("Hello!", to: TestUser::User1::ID)
-        expect(ESM::Test.messages.size).to eql(1)
+        expect(ESM::Test.messages.size).to eq(1)
 
         message_array = ESM::Test.messages.first
 
@@ -89,7 +89,7 @@ describe ESM::Bot do
         # Message tests
         expect(message_array.second).not_to be_nil
         expect(message_array.second).to be_kind_of(String)
-        expect(message_array.second).to eql("Hello!")
+        expect(message_array.second).to eq("Hello!")
       end
     end
   end
@@ -100,7 +100,7 @@ describe ESM::Bot do
         ESM::Test.response = "good"
         ESM.bot.deliver_and_await!("Hello, how are you today?", to: TestUser::User1::ID, expected: %w[good bad])
 
-        expect(ESM::Test.messages.size).to eql(1)
+        expect(ESM::Test.messages.size).to eq(1)
         message_array = ESM::Test.messages.first
 
         # Channel
@@ -111,7 +111,7 @@ describe ESM::Bot do
         # Message tests
         expect(message_array.second).not_to be_nil
         expect(message_array.second).to be_kind_of(String)
-        expect(message_array.second).to eql("Hello, how are you today?")
+        expect(message_array.second).to eq("Hello, how are you today?")
       end
     end
 
@@ -136,7 +136,7 @@ describe ESM::Bot do
           expected: ["i do", "i don't"]
         )
 
-        expect(ESM::Test.messages.size).to eql(2)
+        expect(ESM::Test.messages.size).to eq(2)
         message_array = ESM::Test.messages.first
         response = ESM::Test.messages.second[1]
 
@@ -148,11 +148,11 @@ describe ESM::Bot do
         # Message tests
         expect(message_array.second).not_to be_nil
         expect(message_array.second).to be_kind_of(String)
-        expect(message_array.second).to eql("Who wants to party?!?")
+        expect(message_array.second).to eq("Who wants to party?!?")
 
         # Invalid response
         expect(response).not_to be_nil
-        expect(response).to eql("I'm sorry, I don't know how to reply to your response.\nI was expecting `i do` or `i don't`")
+        expect(response).to eq("I'm sorry, I don't know how to reply to your response.\nI was expecting `i do` or `i don't`")
       end
 
       it "should send and reply (Incorrect/Custom Response)" do
@@ -165,7 +165,7 @@ describe ESM::Bot do
           invalid_response: "Noup" # Useful!
         )
 
-        expect(ESM::Test.messages.size).to eql(2)
+        expect(ESM::Test.messages.size).to eq(2)
         message_array = ESM::Test.messages.first
         response = ESM::Test.messages.second[1]
 
@@ -177,11 +177,11 @@ describe ESM::Bot do
         # Message tests
         expect(message_array.second).not_to be_nil
         expect(message_array.second).to be_kind_of(String)
-        expect(message_array.second).to eql("Who wants to party?!?")
+        expect(message_array.second).to eq("Who wants to party?!?")
 
         # Invalid response
         expect(response).not_to be_nil
-        expect(response).to eql("Noup")
+        expect(response).to eq("Noup")
       end
     end
 

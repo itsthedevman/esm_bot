@@ -8,7 +8,7 @@ describe ESM::Command::Server::SetId, category: "command" do
   end
 
   it "should have 3 argument" do
-    expect(command.arguments.size).to eql(3)
+    expect(command.arguments.size).to eq(3)
   end
 
   it "should have a description" do
@@ -47,11 +47,11 @@ describe ESM::Command::Server::SetId, category: "command" do
       expect { request = command.execute(event) }.not_to raise_error
       expect(request).not_to be_nil
       wait_for { connection.requests }.to be_blank
-      expect(ESM::Test.messages.size).to eql(1)
+      expect(ESM::Test.messages.size).to eq(1)
 
       embed = ESM::Test.messages.first.second
       expect(embed.description).to match(/you can now use this id wherever/i)
-      expect(embed.color).to eql(ESM::Color::Toast::GREEN)
+      expect(embed.color).to eq(ESM::Color::Toast::GREEN)
     end
 
     it "should error (Minimum characters)" do
@@ -90,11 +90,11 @@ describe ESM::Command::Server::SetId, category: "command" do
       expect { request = command.execute(event) }.not_to raise_error
       expect(request).not_to be_nil
       wait_for { connection.requests }.to be_blank
-      expect(ESM::Test.messages.size).to eql(1)
+      expect(ESM::Test.messages.size).to eq(1)
 
       embed = ESM::Test.messages.first.second
       expect(embed.description).to match(/some reason/i)
-      expect(embed.color).to eql(ESM::Color::Toast::RED)
+      expect(embed.color).to eq(ESM::Color::Toast::RED)
     end
 
     it "should error (Permission denied)" do
@@ -110,11 +110,11 @@ describe ESM::Command::Server::SetId, category: "command" do
       expect { request = command.execute(event) }.not_to raise_error
       expect(request).not_to be_nil
       wait_for { connection.requests }.to be_blank
-      expect(ESM::Test.messages.size).to eql(1)
+      expect(ESM::Test.messages.size).to eq(1)
 
       embed = ESM::Test.messages.first.second
       expect(embed.description).to match(/you are not allowed to do that/i)
-      expect(embed.color).to eql(ESM::Color::Toast::RED)
+      expect(embed.color).to eq(ESM::Color::Toast::RED)
     end
   end
 end

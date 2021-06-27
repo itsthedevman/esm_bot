@@ -12,7 +12,7 @@ describe ESM::Callbacks do
       callbacks = object.class.__callbacks
       expect(callbacks).not_to be_blank
 
-      expect(callbacks).to eql({ before_execute: [:method_to_call_from_class], after_execute: [] })
+      expect(callbacks).to eq({ before_execute: [:method_to_call_from_class], after_execute: [] })
     end
   end
 
@@ -21,8 +21,8 @@ describe ESM::Callbacks do
       object.add_callback(:before_execute, :method_to_call_on_before_execute)
       callbacks = object.__callbacks[:before_execute]
       expect(callbacks).not_to be_blank
-      expect(callbacks.size).to eql(2)
-      expect(callbacks).to eql([:method_to_call_from_class, :method_to_call_on_before_execute])
+      expect(callbacks.size).to eq(2)
+      expect(callbacks).to eq([:method_to_call_from_class, :method_to_call_on_before_execute])
     end
 
     it "should add a callback (block)" do
@@ -31,12 +31,12 @@ describe ESM::Callbacks do
       end
 
       callbacks = object.__callbacks[:before_execute]
-      expect(callbacks.size).to eql(2)
+      expect(callbacks.size).to eq(2)
       expect(callbacks).not_to be_blank
     end
 
     it "should support adding callbacks on the class level" do
-      expect(object.class.respond_to?(:add_callback)).to eql(true)
+      expect(object.class.respond_to?(:add_callback)).to eq(true)
     end
   end
 
@@ -51,7 +51,7 @@ describe ESM::Callbacks do
       expect { object.run_callback(:before_execute) }.not_to raise_error
       expect { object.run_callback(:after_execute) }.not_to raise_error
 
-      expect(tracker).to eql([
+      expect(tracker).to eq([
         "from_class",
         "before_execute",
         "before_execute_2",

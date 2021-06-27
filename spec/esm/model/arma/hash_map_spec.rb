@@ -28,7 +28,7 @@ describe ESM::Arma::HashMap do
       }
 
       hash_map = described_class.new(input)
-      expect(hash_map).to eql(conversion_result)
+      expect(hash_map).to eq(conversion_result)
     end
 
     it "should normalize (Input is OpenStruct)" do
@@ -52,7 +52,7 @@ describe ESM::Arma::HashMap do
       }
 
       hash_map = described_class.new(input)
-      expect(hash_map).to eql(conversion_result)
+      expect(hash_map).to eq(conversion_result)
     end
 
     it "should normalize (Input is Hash)" do
@@ -79,7 +79,7 @@ describe ESM::Arma::HashMap do
       }
 
       hash_map = described_class.new(input)
-      expect(hash_map).to eql(conversion_result)
+      expect(hash_map).to eq(conversion_result)
     end
   end
 
@@ -161,7 +161,7 @@ describe ESM::Arma::HashMap do
 
       hash_map = described_class.new(input)
 
-      expect(hash_map.to_a).to eql(expected)
+      expect(hash_map.to_a).to eq(expected)
     end
   end
 
@@ -200,7 +200,7 @@ describe ESM::Arma::HashMap do
 
       hash_map = described_class.new(input)
 
-      expect(hash_map.to_json).to eql(expected)
+      expect(hash_map.to_json).to eq(expected)
     end
   end
 end

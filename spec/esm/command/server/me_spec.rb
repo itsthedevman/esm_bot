@@ -8,7 +8,7 @@ describe ESM::Command::Server::Me, category: "command" do
   end
 
   it "should have 1 argument" do
-    expect(command.arguments.size).to eql(1)
+    expect(command.arguments.size).to eq(1)
   end
 
   it "should have a description" do
@@ -52,8 +52,8 @@ describe ESM::Command::Server::Me, category: "command" do
       expect(embed.fields.size).to be >= 3
 
       if server_response.territories.present?
-        expect(embed.fields.size).to eql(4)
-        expect(embed.fields[3].name).to eql("Territories")
+        expect(embed.fields.size).to eq(4)
+        expect(embed.fields[3].name).to eq("Territories")
         expect(embed.fields[3].value).not_to be_blank
       end
     end
