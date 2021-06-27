@@ -144,22 +144,21 @@ module ESM
     end
 
     def self.command_from_server(name, _start, _finish, _id, payload)
-      received_command = payload[:received_command]
-      command = received_command.request.command
+      command = payload[:command]
 
       # This is triggered by system commands as well
       return if command.nil?
       return if command.event.nil?
 
       ESM.logger.info(name) do
-        ESM::JSON.pretty_generate(
+        JSON.pretty_generate(
           author: "#{command.current_user.distinct} (#{command.current_user.id})",
           channel: "#{Discordrb::Channel::TYPE_NAMES[command.event.channel.type]} (#{command.event.channel.id})",
           command: command.name,
           message: command.event.message.content,
           arguments: command.arguments.to_h,
           cooldown: command.current_cooldown&.attributes,
-          response: received_command.to_h
+          response: payload[:response]
         )
       end
     end
