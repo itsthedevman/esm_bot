@@ -25,7 +25,7 @@ class OpenStruct
 
     # Loop over each key and call the passed block with the key and the original value
     # This means nested OpenStructs stay as OpenStructs
-    self.to_h.each_keys do |key|
+    self.to_h.each_key do |key|
       block.call(key.to_s, self[key])
     end
 

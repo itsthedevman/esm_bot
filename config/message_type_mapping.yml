@@ -1,0 +1,25 @@
+# This file controls how each message from the TCP server is parsed, type wise.
+# Any attribute not listed in here will be dropped from the message
+# Supported Types:
+#   String
+#   Integer
+#   Hash
+#   Array
+#   HashMap -> Arma 3's HashMap represented as a String
+#   DateTime
+#   Date
+
+test_mapping:
+  string: String
+  integer: Integer
+  rhash: Hash
+  array: Array
+  hash_map: HashMap
+  date_time: DateTime
+  date: Date
+
+server_initialization:
+  server_name: String
+  price_per_object: Integer
+  territory_lifetime: Integer
+  territory_data: HashMap
