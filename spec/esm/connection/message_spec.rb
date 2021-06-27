@@ -27,33 +27,35 @@ describe ESM::Connection::Message do
     }
   end
 
+  let(:input_message) do
+    described_class.new(**input.merge(
+      data_type: input.dig(:data, :type),
+      data: input.dig(:data, :content),
+      metadata_type: input.dig(:metadata, :type),
+      metadata: input.dig(:metadata, :content)
+    ))
+  end
+
   describe ".from_string" do
     it "parses" do
       message = described_class.from_string(input.to_json)
 
-      expectation = described_class.new(**input.merge(
-        data_type: input.dig(:data, :type),
-        data: input.dig(:data, :content),
-        metadata_type: input.dig(:metadata, :type),
-        metadata: input.dig(:metadata, :content)
-      ))
-
-      expect(message.id).to eq(expectation.id)
-      expect(message.server_id).to eq(expectation.server_id)
-      expect(message.resource_id).to eq(expectation.resource_id)
-      expect(message.type).to eq(expectation.type)
-      expect(message.data_type).to eq(expectation.data_type)
-      expect(message.metadata_type).to eq(expectation.metadata_type)
-      expect(message.errors).to eq(expectation.errors)
+      expect(message.id).to eq(input_message.id)
+      expect(message.server_id).to eq(input_message.server_id)
+      expect(message.resource_id).to eq(input_message.resource_id)
+      expect(message.type).to eq(input_message.type)
+      expect(message.data_type).to eq(input_message.data_type)
+      expect(message.metadata_type).to eq(input_message.metadata_type)
+      expect(message.errors).to eq(input_message.errors)
 
       # Data
-      expect(message.data.string).to eq(expectation.data.string)
-      expect(message.data.integer).to eq(expectation.data.integer)
-      expect(message.data.rhash).to eq(expectation.data.rhash)
-      expect(message.data.array).to eq(expectation.data.array)
-      expect(message.data.hash_map).to eq(expectation.data.hash_map)
-      expect(message.data.date_time.to_s).to eq(expectation.data.date_time.to_s)
-      expect(message.data.date).to eq(expectation.data.date)
+      expect(message.data.string).to eq(input_message.data.string)
+      expect(message.data.integer).to eq(input_message.data.integer)
+      expect(message.data.rhash).to eq(input_message.data.rhash)
+      expect(message.data.array).to eq(input_message.data.array)
+      expect(message.data.hash_map).to eq(input_message.data.hash_map)
+      expect(message.data.date_time.to_s).to eq(input_message.data.date_time.to_s)
+      expect(message.data.date).to eq(input_message.data.date)
     end
   end
 
@@ -133,11 +135,15 @@ describe ESM::Connection::Message do
     end
   end
 
-  describe "#to_s" do
-    it ""
+  describe "#to_s/#to_json" do
+    it "is valid json" do
+      expect(input_message.to_s).to eq(input.to_json)
+    end
   end
 
   describe "#to_h" do
-    it ""
+    it "is a valid hash" do
+      expect(input_message.to_h).to eq(input)
+    end
   end
 end
