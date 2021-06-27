@@ -99,6 +99,7 @@ module ESM
       # This will allow the TCPServer to quickly pull a key by a server_id to decrypt messages
       def refresh_keys
         server_keys = ESM::Server.all.pluck(:server_id, :server_key)
+        return if server_keys.blank?
 
         # Store the data in Redis
         @redis.hmset("server_keys", *server_keys)
@@ -204,7 +205,7 @@ module ESM
         resource_id = message.resource_id
 
         connection = ESM::Connection.new(self, server_id, resource_id)
-        connection.run_callback(:on_open)
+        connection.run_callback(:on_open, message)
 
         @connections[server_id] = connection
         @server_id_by_resource_id[resource_id] = message.server_id
