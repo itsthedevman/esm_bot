@@ -133,6 +133,18 @@ describe ESM::Connection::Message do
         described_class.convert_types(input, type: "test", mapping: mapping(input, "Date"))
       ).to eq(expectation)
     end
+
+    it "raises (failed to find type in the global mapping)" do
+      input = { foo: "bar" }
+
+      expect { described_class.convert_types(input, type: "test", mapping: {}) }.to raise_error("Failed to find type \"test\" in \"message_type_mapping.yml\"")
+    end
+
+    it "raises (failed to find key in the mapping)" do
+      input = { foo: "bar" }
+
+      expect { described_class.convert_types(input, type: "test", mapping: { test: {} }) }.to raise_error("Failed to find key \"foo\" in mapping for \"test\"")
+    end
   end
 
   describe "#to_s/#to_json" do

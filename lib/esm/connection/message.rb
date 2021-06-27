@@ -31,6 +31,9 @@ module ESM
       def self.convert_types(data, type:, mapping: {})
         mapping = MAPPINGS[type.to_sym] if mapping.blank?
 
+        # Catches if MAPPINGS does not have type defined
+        raise ESM::Exception::Error, "Failed to find type \"#{type}\" in \"message_type_mapping.yml\"" if mapping.nil?
+
         data.each do |key, value|
           mapping_class = mapping[key.to_sym]
           raise ESM::Exception::Error, "Failed to find key \"#{key}\" in mapping for \"#{type}\"" if mapping_class.nil?
