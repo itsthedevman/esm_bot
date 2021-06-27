@@ -165,7 +165,7 @@ describe ESM::Arma::HashMap do
     end
   end
 
-  describe "#to_s" do
+  describe "#to_json" do
     it "converts" do
       input = {
         key_1: "string value",
@@ -200,7 +200,7 @@ describe ESM::Arma::HashMap do
 
       hash_map = described_class.new(input)
 
-      expect(hash_map.to_s).to eql(expected)
+      expect(hash_map.to_json).to eql(expected)
     end
   end
 end

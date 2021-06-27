@@ -31,9 +31,8 @@ module ESM
       end
 
       def to_json(*args)
-        JSON.generate(self.to_s, *args)
+        ::JSON.generate(self.to_a, *args)
       end
-      alias_method :to_s, :to_json
 
       private
 
