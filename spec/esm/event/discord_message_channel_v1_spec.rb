@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-describe ESM::Event::DiscordMessageChannel do
+describe ESM::Event::DiscordMessageChannelV1 do
   let!(:community) { create(:esm_community) }
   let!(:server) { create(:server, community_id: community.id) }
 
   def event(params)
-    ESM::Event::DiscordMessageChannel.new(server: server, parameters: params, connection: nil)
+    ESM::Event::DiscordMessageChannelV1.new(server: server, parameters: params, connection: nil)
   end
 
   describe "Errors" do

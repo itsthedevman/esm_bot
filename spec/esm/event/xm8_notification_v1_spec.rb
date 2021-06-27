@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-describe ESM::Event::Xm8Notification do
+describe ESM::Event::Xm8NotificationV1 do
   let!(:community) { ESM::Test.community }
   let!(:server) { ESM::Test.server }
   let!(:wsc) { WebsocketClient.new(server) }

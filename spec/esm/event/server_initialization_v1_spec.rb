@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-describe ESM::Event::ServerInitialization do
+describe ESM::Event::ServerInitializationV1 do
   # This has to be esm_community for roles
   let!(:community) { create(:esm_community, territory_admin_ids: ["440254072780488714", "440296219726708747"]) }
   let!(:server) { create(:server, community_id: community.id) }
@@ -31,7 +31,7 @@ describe ESM::Event::ServerInitialization do
   describe "#run!" do
     let!(:wsc) { WebsocketClient.new(server) }
     let(:connection) { ESM::Websocket.connections[server.server_id] }
-    let(:event) { ESM::Event::ServerInitialization.new(server: server, parameters: packet, connection: connection) }
+    let(:event) { ESM::Event::ServerInitializationV1.new(server: server, parameters: packet, connection: connection) }
 
     before :each do
       wait_for { wsc.connected? }.to eql(true)
