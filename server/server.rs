@@ -408,6 +408,7 @@ impl Server {
 
         let mut message = Message::new(Type::Disconnect);
         message.set_resource(resource_id);
+        // TODO: Set Server ID!
 
         self.send_to_bot(message);
     }

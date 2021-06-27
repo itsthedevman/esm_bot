@@ -18,8 +18,12 @@ test_mapping:
   date_time: DateTime
   date: Date
 
+empty:
+  blank: # Required
+
 server_initialization:
   server_name: String
   price_per_object: Integer
   territory_lifetime: Integer
   territory_data: HashMap
+  server_start_time: DateTime

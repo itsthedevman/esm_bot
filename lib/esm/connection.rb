@@ -26,17 +26,16 @@ module ESM
 
     private
 
-    def on_open
-
+    def on_open(message)
+      # TODO: Implement server initialization
+      binding.pry
     end
 
     def on_message(message)
-
+      binding.pry
     end
 
-    def on_close
-
-    end
+    def on_close; end
 
     # def on_ping(_message)
     #   ESM::Notifications.trigger("info", event: "on_ping", message: message)
