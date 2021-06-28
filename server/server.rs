@@ -41,12 +41,12 @@ impl Server {
 
         let redis_client = match redis::Client::open("redis://127.0.0.1/") {
             Ok(client) => client,
-            Err(e) => panic!(format!("Failed to connect to redis. Reason: {}", e))
+            Err(e) => panic!("Failed to connect to redis. Reason: {}", e)
         };
 
         let redis = match redis_client.get_connection() {
             Ok(con) => con,
-            Err(e) => panic!(format!("Failed to get sync connection. Reason: {}", e))
+            Err(e) => panic!("Failed to get sync connection. Reason: {}", e)
         };
 
         let (sender, receiver) = mpsc::unbounded_channel();
