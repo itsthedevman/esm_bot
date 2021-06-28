@@ -18,17 +18,66 @@ module ESM
         data_hash[:metadata_type] = data_hash.dig(:metadata, :type)
         data_hash[:metadata] = data_hash.dig(:metadata, :content)
 
-        # Perform any conversions to the data according to the mapping
-        data = data_hash[:data]
-        type = data_hash[:data_type]
-        self.convert_types(data, type: type)
+        # Convert based on the mapping
+        data_hash[:convert_types] = true
 
         self.new(**data_hash)
       end
 
+      # @param server_id [String, nil]
+      # @param type [String]
+      # @param data [Hash]
+      # @param metadata [Hash]
+      # @param errors [Array<String>]
+      # @param convert_types [true/false]
+      def initialize(**args)
+        @id = args[:id] || SecureRandom.uuid
+
+        # The server provides the server_id as a UTF8 byte array. Convert it to a string
+        @server_id =
+          if args[:server_id].is_a?(Array)
+            args[:server_id].pack("U*")
+          else
+            args[:server_id]
+          end
+
+        @type = args[:type] || ""
+        @data = OpenStruct.new(args[:data] || {})
+        @data_type = args[:data_type] || "empty"
+        @metadata = OpenStruct.new(args[:metadata] || {})
+        @metadata_type = args[:metadata_type] || "empty"
+        @errors = args[:errors] || []
+
+        self.convert_types(data, type: @data_type) if args[:convert_types]
+      end
+
+      def to_s
+        to_h.to_json
+      end
+
+      def to_h
+        {
+          id: self.id,
+          server_id: self.server_id&.bytes,
+          resource_id: self.resource_id,
+          type: self.type,
+          data: {
+            type: @data_type,
+            content: self.data.to_h
+          },
+          metadata: {
+            type: @metadata_type,
+            content: self.metadata.to_h
+          },
+          errors: self.errors.map(&:to_h)
+        }
+      end
+
+      private
+
       # Converts a hash's data based on the provided type mapping.
       # @see config/message_type_mapping.yml for more information
-      def self.convert_types(data, type:, mapping: {})
+      def convert_types(data, type:, mapping: {})
         mapping = MAPPINGS[type.to_sym] if mapping.blank?
 
         # Catches if MAPPINGS does not have type defined
@@ -70,52 +119,6 @@ module ESM
               raise ESM::Exception::Error, "Invalid type \"#{mapping_class}\" mapped to \"#{key}\" in mapping for \"#{data_hash[:data_type]}\""
             end
         end
-      end
-
-      # @param server_id [String, nil]
-      # @param type [String]
-      # @param data [Hash]
-      # @param metadata [Hash]
-      # @param errors [Array<String>]
-      def initialize(**args)
-        @id = args[:id] || SecureRandom.uuid
-
-        # The server provides the server_id as a UTF8 byte array. Convert it to a string
-        @server_id =
-          if args[:server_id].is_a?(Array)
-            args[:server_id].pack("U*")
-          else
-            args[:server_id]
-          end
-
-        @type = args[:type] || ""
-        @data = OpenStruct.new(args[:data] || {})
-        @data_type = args[:data_type] || "empty"
-        @metadata = OpenStruct.new(args[:metadata] || {})
-        @metadata_type = args[:metadata_type] || "empty"
-        @errors = args[:errors] || []
-      end
-
-      def to_s
-        to_h.to_json
-      end
-
-      def to_h
-        {
-          id: self.id,
-          server_id: self.server_id&.bytes,
-          resource_id: self.resource_id,
-          type: self.type,
-          data: {
-            type: @data_type,
-            content: self.data.to_h
-          },
-          metadata: {
-            type: @metadata_type,
-            content: self.metadata.to_h
-          },
-          errors: self.errors.map(&:to_h)
-        }
       end
     end
   end

@@ -59,7 +59,7 @@ describe ESM::Connection::Message do
     end
   end
 
-  describe ".convert_types" do
+  describe "#convert_types" do
     def mapping(data, type)
       data.each_with_object({}) { |pair, out| out[pair.first] = type }
     end
@@ -69,7 +69,7 @@ describe ESM::Connection::Message do
       expectation = { string: "Hello World", bytes: "[1, 2, 3, 4, 5, 6, 7]", bool: "true" }
 
       expect(
-        described_class.convert_types(input, type: "test", mapping: mapping(input, "String"))
+        input_message.send(:convert_types, input, type: "test", mapping: mapping(input, "String"))
       ).to eq(expectation)
     end
 
@@ -78,7 +78,7 @@ describe ESM::Connection::Message do
       expectation = { int: 1, float: 4, string: 7 }
 
       expect(
-        described_class.convert_types(input, type: "test", mapping: mapping(input, "Integer"))
+        input_message.send(:convert_types, input, type: "test", mapping: mapping(input, "Integer"))
       ).to eq(expectation)
     end
 
@@ -87,7 +87,7 @@ describe ESM::Connection::Message do
       expectation = { hash: { foo: "bar" }, json: { foo: "bar" } }
 
       expect(
-        described_class.convert_types(input, type: "test", mapping: mapping(input, "Hash"))
+        input_message.send(:convert_types, input, type: "test", mapping: mapping(input, "Hash"))
       ).to eq(expectation)
     end
 
@@ -96,7 +96,7 @@ describe ESM::Connection::Message do
       expectation = { array: [1, 2, 3, "four"], hash: [[:foo, "bar"]] }
 
       expect(
-        described_class.convert_types(input, type: "test", mapping: mapping(input, "Array"))
+        input_message.send(:convert_types, input, type: "test", mapping: mapping(input, "Array"))
       ).to eq(expectation)
     end
 
@@ -111,14 +111,14 @@ describe ESM::Connection::Message do
       expectation = { hash_map: { "1": 2, three: "4", four: { five: true } } }
 
       expect(
-        described_class.convert_types(input, type: "test", mapping: mapping(input, "HashMap"))
+        input_message.send(:convert_types, input, type: "test", mapping: mapping(input, "HashMap"))
       ).to eq(expectation)
     end
 
     it "converts (DateTime)" do
       current_time = DateTime.current
       input = { date_time: current_time, string: current_time.to_s }
-      output = described_class.convert_types(input, type: "test", mapping: mapping(input, "DateTime"))
+      output = input_message.send(:convert_types, input, type: "test", mapping: mapping(input, "DateTime"))
 
       # Can't directly compare two DateTime objects
       expect(output[:date_time].to_s).to eq(current_time.to_s)
@@ -130,20 +130,20 @@ describe ESM::Connection::Message do
       expectation = { date: Date.today, string: Date.today }
 
       expect(
-        described_class.convert_types(input, type: "test", mapping: mapping(input, "Date"))
+        input_message.send(:convert_types, input, type: "test", mapping: mapping(input, "Date"))
       ).to eq(expectation)
     end
 
     it "raises (failed to find type in the global mapping)" do
       input = { foo: "bar" }
 
-      expect { described_class.convert_types(input, type: "test", mapping: {}) }.to raise_error("Failed to find type \"test\" in \"message_type_mapping.yml\"")
+      expect { input_message.send(:convert_types, input, type: "test", mapping: {}) }.to raise_error("Failed to find type \"test\" in \"message_type_mapping.yml\"")
     end
 
     it "raises (failed to find key in the mapping)" do
       input = { foo: "bar" }
 
-      expect { described_class.convert_types(input, type: "test", mapping: { test: {} }) }.to raise_error("Failed to find key \"foo\" in mapping for \"test\"")
+      expect { input_message.send(:convert_types, input, type: "test", mapping: { test: {} }) }.to raise_error("Failed to find key \"foo\" in mapping for \"test\"")
     end
   end
 
