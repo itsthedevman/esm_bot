@@ -69,25 +69,22 @@ module ESM
         @redis_delegate_inbound_messages.close
       end
 
-      def send_message(**args)
-        # Raise exception if @server_alive false and args[:ignore_alive] false
-        if args[:server_id]
-          args.merge(
-            resource_id: @server_id_by_resource_id.key(args[:server_id])
-          )
-        end
+      # Creates and adds a message to the server queue for processing.
+      #
+      # @param message [Hash, ESM::Connection::Message] This can be either a hash of arguments for ESM::Connection::Message, or an instance of it.
+      def send_message(message = {})
+        message = ESM::Connection::Message.new(**message) if message.is_a?(Hash)
+        message.resource_id = @server_id_by_resource_id.key(message.server_id) if message.server_id
 
         raise ESM::Exception::ServerNotConnected if !@server_alive
 
-        send_to_server(**args)
+        send_to_server(message)
       end
 
       private
 
       # Using the provided arguments, build and send a message to the server
-      def send_to_server(**args)
-        message = ESM::Connection::Message.new(**args)
-
+      def send_to_server(message)
         if %w[pong].exclude?(message.type) # rubocop:disable Style/IfUnlessModifier
           ESM::Notifications.trigger("info", class: self.class, method: __method__, message: message.to_h)
         end
@@ -185,7 +182,7 @@ module ESM
         message = ESM::Connection::Message.from_string(message)
 
         case message.type
-        when "connect"
+        when "init"
           self.on_connect(message)
         when "disconnect"
           self.on_disconnect(message)
@@ -202,15 +199,12 @@ module ESM
       #
       def on_connect(message)
         server_id = message.server_id
-        resource_id = message.resource_id
 
-        connection = ESM::Connection.new(self, server_id, resource_id)
+        connection = ESM::Connection.new(self, server_id)
         connection.run_callback(:on_open, message)
 
         @connections[server_id] = connection
-        @server_id_by_resource_id[resource_id] = message.server_id
-
-        ESM::Notifications.trigger("info", class: self.class, method: __method__, server_id: message.server_id)
+        @server_id_by_resource_id[message.resource_id] = message.server_id
       end
 
       # TODO: Documentation
@@ -219,6 +213,8 @@ module ESM
         ESM::Notifications.trigger("info", class: self.class, method: __method__, message: message.to_h)
 
         connection = @connections[message.server_id]
+        connection.server.reload # Refresh the server
+
         connection.run_callback(:on_message, message)
       end
 
@@ -241,7 +237,9 @@ module ESM
         @thread_health_check.join
 
         self.health_check
-        self.send_to_server(type: "pong")
+
+        message = ESM::Connection::Message.new(type: "pong", data_type: "empty")
+        self.send_to_server(message)
       end
     end
   end

@@ -1,14 +1,17 @@
 # This file controls how each message from the TCP server is parsed, type wise.
 # Any attribute not listed in here will be dropped from the message
+# @see spec/esm/connection/message for examples
 # Supported Types:
 #   String
 #   Integer
 #   Hash
 #   Array
+#   Array<T> -> Different from "Array", this performs an additional type conversion to every item in the array.
 #   HashMap -> Arma 3's HashMap represented as a String
 #   DateTime
 #   Date
 
+# For detailed testing
 test_mapping:
   string: String
   integer: Integer
@@ -21,9 +24,13 @@ test_mapping:
 empty:
   blank: # Required
 
-server_initialization:
+# For quicker testing
+test:
+  foo: String
+
+init:
   server_name: String
   price_per_object: Integer
   territory_lifetime: Integer
-  territory_data: HashMap
+  territory_data: Array<HashMap>
   server_start_time: DateTime

@@ -13,19 +13,18 @@ module ESM
 
       # These callbacks correspond to events sent from the server.
       # Events:
-      #   before_execute: Sent before the message processed and executed based on it's contents.
-      #   after_execute: Sent after the message has finished executing.
-      #                  For messages that interact with Arma, this event triggers when Arma passes the message back to the client
-      register_callbacks :before_execute, :after_execute
+      #   on_response   -   Called when a message receives a response to its contents.
+      #                     Message does not implement this callback by default
+      register_callbacks :on_response
 
       def self.from_string(json)
         data_hash = json.to_h
 
         # Unpack the data and metadata
-        data_hash[:data_type] = data_hash.dig(:data, :type)
+        data_hash[:data_type] = data_hash.dig(:data, :type) || "empty"
         data_hash[:data] = data_hash.dig(:data, :content)
 
-        data_hash[:metadata_type] = data_hash.dig(:metadata, :type)
+        data_hash[:metadata_type] = data_hash.dig(:metadata, :type) || "empty"
         data_hash[:metadata] = data_hash.dig(:metadata, :content)
 
         # Convert based on the mapping
@@ -60,8 +59,8 @@ module ESM
 
         @type = args[:type] || ""
         @data = OpenStruct.new(args[:data] || {})
-        @data_type = args[:data_type] || "empty"
         @metadata = OpenStruct.new(args[:metadata] || {})
+        @data_type = args[:data_type] || args[:type].presence || "empty"
         @metadata_type = args[:metadata_type] || "empty"
         @errors = args[:errors] || []
         @routing_data = OpenStruct.new(command: nil)
@@ -143,6 +142,7 @@ module ESM
         end
       end
 
+      # TODO: Documentation
       def convert_type(value, message_type:, into_type:, data_key:)
         return value if value.class.to_s == into_type
 

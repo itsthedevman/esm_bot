@@ -15,6 +15,7 @@ class String
   def to_h
     ESM::JSON.parse(self)
   end
+  alias_method :to_a, :to_h
 
   def to_poptab
     # Convert from Scientific notation.

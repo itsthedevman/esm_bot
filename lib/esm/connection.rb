@@ -12,27 +12,33 @@ module ESM
 
     attr_reader :server
 
-    def initialize(tcp_server, server_id, resource_id)
+    def initialize(tcp_server, server_id)
       @tcp_server = tcp_server
       @server = ESM::Server.find_by_server_id(server_id)
-      @resource_id = resource_id
     end
 
     delegate :server_id, to: :@server
 
-    def send_message(**args)
-      @tcp_server.send_message(**args.merge(server_id: self.server_id))
+    # @param args [Hash, ESM::Connection::Message] This can be either a hash of arguments for ESM::Connection::Message, or an instance of it.
+    def send_message(message = {})
+      message = ESM::Connection::Message.new(**message) if message.is_a?(Hash)
+
+      @tcp_server.send_message(message)
     end
 
     private
 
     def on_open(message)
-      # TODO: Implement server initialization
-      binding.pry
+      ESM::Event::ServerInitialization.new(self, message).run!
     end
 
     def on_message(message)
       binding.pry
+      # case message.type
+      # when "event"
+      # else
+      #   ESM::Notifications.trigger("error", class: self.class, method: __method__, error: e, message: "[#{message.id}] Connection#on_message does not implement this type: \"#{message.type}\"")
+      # end
     end
 
     def on_close; end

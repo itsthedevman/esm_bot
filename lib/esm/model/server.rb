@@ -34,6 +34,10 @@ module ESM
       self.order(:server_id).where(server_id: id).first
     end
 
+    def discord_server
+      @discord_server ||= ESM.bot.server(self.guild_id)
+    end
+
     def territories
       ESM::Territory.order(:server_id).where(server_id: self.id).order(:territory_level)
     end
