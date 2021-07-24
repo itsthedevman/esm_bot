@@ -1,6 +1,6 @@
 use crate::{connection::ConnectionManager};
 use log::*;
-use message_io::{network::{Endpoint, ResourceId}, node::{self, NodeHandler}};
+use message_io::{network::{Endpoint, ResourceId}, node::{NodeHandler}};
 use message_io::{
     network::{NetEvent, Transport},
     node::NodeListener,
@@ -274,6 +274,7 @@ impl Server {
                 Ok(message) => message,
                 Err(e) => {
                     error!("#process_inbound_messages - {}", e);
+                    error!("json: {:#?}", json);
                     continue;
                 }
             };
@@ -388,7 +389,7 @@ impl Server {
         info!("#on_message - {} {:#?}", resource_id, message);
 
         match message.message_type {
-            Type::Connect => {
+            Type::Init => {
                 let server_id = match message.server_id.clone() {
                     Some(id) => id,
                     None => {
