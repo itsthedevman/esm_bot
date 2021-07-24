@@ -3,6 +3,7 @@
 module ESM
   module Arma
     class HashMap < Hash
+      # @param input [String, Array, Hash, OpenStruct] The data to be converted. If a String, data must be array pairs
       def initialize(input = "")
         super
         self.merge!(parse_from_hash_map(input))
@@ -45,7 +46,8 @@ module ESM
       def parse_from_hash_map(input)
         return {} if input.blank?
 
-        output = normalize_input(input.to_h)
+        input = input.to_h if input.respond_to?(:to_h)
+        output = normalize_input(input)
         output.deep_symbolize_keys
       end
 

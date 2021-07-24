@@ -2,7 +2,7 @@
 
 describe ESM::Arma::HashMap do
   describe ".new" do
-    it "should normalize (Input is ArrayPairs)" do
+    it "normalizes (Input is String)" do
       input = <<~STRING
         [
           ["key_1", "string value"],
@@ -31,7 +31,34 @@ describe ESM::Arma::HashMap do
       expect(hash_map).to eq(conversion_result)
     end
 
-    it "should normalize (Input is OpenStruct)" do
+    it "normalizes (Input is Array)" do
+      input = [
+        ["key_1", "string value"],
+        ["key_2", 1],
+        ["key_3", 2.5],
+        ["key_4", [1, "two", ["three", 4, 5], ["six", 7], [["eight", false]]]],
+        [
+          "key_5",
+          [
+            ["key_6", true],
+            ["key_7", false]
+          ]
+        ]
+      ]
+
+      conversion_result = {
+        key_1: "string value",
+        key_2: 1,
+        key_3: 2.5,
+        key_4: [1, "two", ["three", 4, 5], ["six", 7], { eight: false }],
+        key_5: { key_6: true, key_7: false }
+      }
+
+      hash_map = described_class.new(input)
+      expect(hash_map).to eq(conversion_result)
+    end
+
+    it "normalizes (Input is OpenStruct)" do
       input = OpenStruct.new(
         key_1: "string value",
         key_2: 1,
@@ -55,7 +82,7 @@ describe ESM::Arma::HashMap do
       expect(hash_map).to eq(conversion_result)
     end
 
-    it "should normalize (Input is Hash)" do
+    it "normalizes (Input is Hash)" do
       input = {
         key_1: "string value",
         key_2: 1,
@@ -84,7 +111,7 @@ describe ESM::Arma::HashMap do
   end
 
   describe "#valid_array_hash?" do
-    it "should be valid" do
+    it "be valid" do
       hash_map = described_class.new
       input = [
         ["key_1", 1],
@@ -95,7 +122,7 @@ describe ESM::Arma::HashMap do
       expect(hash_map.send(:valid_array_hash?, input)).to be(true)
     end
 
-    it "should not be valid" do
+    it "not be valid" do
       hash_map = described_class.new
 
       input = [1, 2, 3, 4, 5]
@@ -114,7 +141,7 @@ describe ESM::Arma::HashMap do
       expect(hash_map.send(:valid_array_hash?, input)).to be(false)
     end
 
-    it "should be valid (duplicated keys)" do
+    it "be valid (duplicated keys)" do
       hash_map = described_class.new
       input = [
         ["key_1", 1],
