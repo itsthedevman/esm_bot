@@ -70,7 +70,7 @@ module ESM
         @metadata = OpenStruct.new(args[:metadata] || {})
         @data_type = args[:data_type] || args[:type].presence || "empty"
         @metadata_type = args[:metadata_type] || "empty"
-        @errors = args[:errors].map(&:to_ostruct) || []
+        @errors = (args[:errors] || []).map(&:to_ostruct)
         @routing_data = OpenStruct.new(command: nil)
         @delivered = false
 
