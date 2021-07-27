@@ -49,8 +49,6 @@ module ESM
         self.process_inbound_messages
       end
 
-      # TODO: Documentation
-      #
       def stop
         # Kill the processing threads
         [
@@ -106,8 +104,6 @@ module ESM
         @redis.hmset("server_keys", *server_keys)
       end
 
-      # TODO: Documentation
-      #
       def delegate_inbound_messages
         @redis_delegate_inbound_messages = Redis.new(REDIS_OPTS)
 
@@ -122,8 +118,6 @@ module ESM
           end
       end
 
-      # TODO: Documentation
-      #
       def process_inbound_messages
         @redis_process_inbound_messages = Redis.new(REDIS_OPTS)
 
@@ -136,8 +130,6 @@ module ESM
           end
       end
 
-      # TODO: Documentation
-      #
       def health_check
         @thread_health_check =
           Thread.new do
@@ -180,8 +172,6 @@ module ESM
         @mutex.synchronize { @server_alive = value }
       end
 
-      # TODO: Documentation
-      #
       def process_inbound_message(message)
         message = ESM::Connection::Message.from_string(message)
 
@@ -199,8 +189,6 @@ module ESM
         ESM::Notifications.trigger("error", class: self.class, method: __method__, error: e)
       end
 
-      # TODO: Documentation
-      #
       def on_connect(message)
         server_id = message.server_id
 
@@ -211,8 +199,6 @@ module ESM
         @server_id_by_resource_id[message.resource_id] = message.server_id
       end
 
-      # TODO: Documentation
-      #
       def on_message(incoming_message)
         # Retrieve the original message
         outgoing_message = @message_overseer.retrieve(incoming_message.id)
@@ -233,8 +219,6 @@ module ESM
         connection.on_message(incoming_message, outgoing_message)
       end
 
-      # TODO: Documentation
-      #
       def on_disconnect(message)
         server_id = @server_id_by_resource_id.delete(message.resource_id)
         connection = @connections.delete(server_id)
@@ -245,8 +229,6 @@ module ESM
         connection.on_close
       end
 
-      # TODO: Documentation
-      #
       def on_ping(_message)
         self.server_ping_received = true
         @thread_health_check.join
