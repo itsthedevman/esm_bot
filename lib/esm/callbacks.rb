@@ -54,6 +54,10 @@ module ESM
       end
     end
 
+    def callback?(name)
+      __callbacks[name.to_sym].present?
+    end
+
     private
 
     # __callbacks values are arrays so they're shared across the class and all of the instances
