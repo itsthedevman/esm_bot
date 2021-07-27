@@ -113,12 +113,12 @@ module ESM
 
       def send_response
         message = ESM::Connection::Message.new(server_id: @server.server_id, type: "post_init", data: @packet)
-        message.add_callback("on_response") do |_message|
+        message.add_callback("on_response") do |_incoming, _outgoing|
           # Trigger a connect notification
           ESM::Notifications.trigger("server_on_connect", server: @connection.server)
 
           # Set the connection to be available for commands
-          @connection.ready = true
+          @connection.initialized = true
         end
 
         @connection.send_message(message)

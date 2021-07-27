@@ -39,6 +39,7 @@ module ESM
         @server_id_by_resource_id = {}
         @mutex = Mutex.new
         @redis = Redis.new(REDIS_OPTS)
+        @message_overseer = ESM::Connection::MessageOverseer.new
 
         self.server_alive = false
         self.server_ping_received = true
@@ -76,7 +77,10 @@ module ESM
         message = ESM::Connection::Message.new(**message) if message.is_a?(Hash)
         message.resource_id = @server_id_by_resource_id.key(message.server_id) if message.server_id
 
-        raise ESM::Exception::ServerNotConnected if !@server_alive
+        raise ESM::Exception::ServerNotConnected if !self.server_alive?
+
+        # Watch the message to see if it's been acknowledged or responded to.
+        @message_overseer.watch(message)
 
         send_to_server(message)
       end
@@ -201,7 +205,7 @@ module ESM
         server_id = message.server_id
 
         connection = ESM::Connection.new(self, server_id)
-        connection.run_callback(:on_open, message)
+        connection.on_open(message)
 
         @connections[server_id] = connection
         @server_id_by_resource_id[message.resource_id] = message.server_id
@@ -209,13 +213,24 @@ module ESM
 
       # TODO: Documentation
       #
-      def on_message(message)
-        ESM::Notifications.trigger("info", class: self.class, method: __method__, message: message.to_h)
+      def on_message(incoming_message)
+        # Retrieve the original message
+        outgoing_message = @message_overseer.retrieve(incoming_message.id)
+        # outgoing_message.nil? #=> This is a client command like discord_log
 
-        connection = @connections[message.server_id]
+        connection = @connections[outgoing_message.server_id]
         connection.server.reload # Refresh the server
 
-        connection.run_callback(:on_message, message)
+        ESM::Notifications.trigger(
+          "info",
+          class: self.class,
+          method: __method__,
+          server_id: connection.server.server_id,
+          outgoing_message: outgoing_message.to_h.without(:server_id, :resource_id),
+          incoming_message: incoming_message.to_h.without(:server_id, :resource_id)
+        )
+
+        connection.on_message(incoming_message, outgoing_message)
       end
 
       # TODO: Documentation
@@ -227,7 +242,7 @@ module ESM
         ESM::Notifications.trigger("info", class: self.class, method: __method__, server_id: server_id)
         return if connection.nil?
 
-        connection.run_callback(:on_close)
+        connection.on_close
       end
 
       # TODO: Documentation

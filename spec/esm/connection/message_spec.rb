@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
 describe ESM::Connection::Message do
+  let(:community) { ESM::Test.community }
+  let(:user) { ESM::Test.user }
+  let(:command) { ESM::Command::Test::AdminCommand.new }
   let(:input) do
     {
       id: SecureRandom.uuid,
@@ -229,5 +232,32 @@ describe ESM::Connection::Message do
     it "is a valid hash" do
       expect(input_message.to_h).to eq(input)
     end
+  end
+
+  describe "#on_error" do
+    it "handles codes" do
+      # Preload the command with user data
+      event = CommandEvent.create(command.statement(community_id: community.community_id), channel_type: :text, user: user)
+      expect { command.execute(event) }.not_to raise_error
+
+      message = ESM::Connection::Message.new(
+        server_id: Faker::ESM.server_id,
+        type: "testing",
+        data_type: "test",
+        data: { foo: "bar" },
+        metadata_type: "test",
+        metadata: { bar: "baz" },
+        errors: [{ type: "code", message: "test" }],
+        convert_types: false
+      )
+
+      message.routing_data(command: command)
+
+      embed = message.send(:on_error, message, nil)
+      expect(embed.description).to eq("#{user.mention} | #{message.id} | #{message.server_id} | #{message.type} | #{message.data_type} | #{message.metadata_type} | #{message.data.foo} | #{message.metadata.bar}")
+    end
+
+    it "handles messages"
+    it "handles embeds"
   end
 end

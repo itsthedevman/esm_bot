@@ -352,7 +352,7 @@ module ESM
     def self.server_on_connect(name, _start, _finish, _id, payload)
       server = payload[:server]
 
-      ESM.logger.debug(name) do
+      ESM.logger.info(name) do
         ESM::JSON.pretty_generate(server_id: server.server_id, uptime: server.uptime)
       end
 

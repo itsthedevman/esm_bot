@@ -37,9 +37,6 @@ module ESM
     # Generic exception for any checks
     class CheckFailure < DataError; end
 
-    # Raised when the address is already in use. The message is the IP and port
-    class AddressInUse < Error; end
-
     # Raised when attempting to send a message the tcp_server when it's not online
     class ServerNotConnected < Error; end
 
