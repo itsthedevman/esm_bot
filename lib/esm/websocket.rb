@@ -65,7 +65,7 @@ module ESM
     # Retrieves the WS connection based on a server_id
     #
     # @param server_id [String] The ESM set ID, not the DB ID
-    # @returns [WebsocketConnection, nil]
+    # @return [WebsocketConnection, nil]
     def self.connection(server_id)
       @connections[server_id]
     end
@@ -100,7 +100,7 @@ module ESM
     end
 
     # Removes a request via its commandID
-    # @returns [ESM::Websocket::Request, nil]
+    # @return [ESM::Websocket::Request, nil]
     def remove_request(command_id)
       @requests.remove(command_id)
     end

@@ -50,8 +50,8 @@ module ESM
 
       # Translates the underlying error code.
       # In normal workflow, this method will be passed the following arguments:
-      # @param user [String] The mention for the user that ran the command
-      # @param server_id [String] The ID of the server the command was ran on
+      # @option [String] :user The mention for the user that ran the command
+      # @option [String] :server_id The ID of the server the command was ran on
       def translate(**args)
         I18n.t(
           "exceptions.extension.#{@error_code}",

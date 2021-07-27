@@ -12,7 +12,7 @@ module ESM
 
     delegate :server_id, to: :@server
 
-    # @param args [Hash, ESM::Connection::Message] This can be either a hash of arguments for ESM::Connection::Message, or an instance of it.
+    # @param message [Hash, ESM::Connection::Message] This can be either a hash of arguments for ESM::Connection::Message, or an instance of it.
     def send_message(message = {})
       message = ESM::Connection::Message.new(**message) if message.is_a?(Hash)
 

@@ -187,7 +187,7 @@ module ESM
         @current_user = discord_user
       end
 
-      # @returns [ESM::Community, nil] The community the command was executed from. Nil if sent from Direct Message
+      # @return [ESM::Community, nil] The community the command was executed from. Nil if sent from Direct Message
       def current_community
         return @current_community if defined?(@current_community) && @current_community.present?
         return nil if @event&.server.nil?
@@ -195,7 +195,7 @@ module ESM
         @current_community = ESM::Community.find_by_guild_id(@event.server.id)
       end
 
-      # @returns [ESM::Cooldown] The cooldown for this command and user
+      # @return [ESM::Cooldown] The cooldown for this command and user
       def current_cooldown
         @current_cooldown ||= load_current_cooldown
       end
@@ -204,14 +204,14 @@ module ESM
         @current_channel ||= @event.channel
       end
 
-      # @returns [ESM::Server, nil] The server that the command was executed for
+      # @return [ESM::Server, nil] The server that the command was executed for
       def target_server
         return nil if @arguments.server_id.blank?
 
         @target_server ||= ESM::Server.find_by_server_id(@arguments.server_id)
       end
 
-      # @returns [ESM::Community, nil] The community that the command was executed for
+      # @return [ESM::Community, nil] The community that the command was executed for
       def target_community
         @target_community ||= lambda do
           return ESM::Community.find_by_community_id(@arguments.community_id) if @arguments.community_id.present?
@@ -221,7 +221,7 @@ module ESM
         end.call
       end
 
-      # @returns [ESM::User, nil] The user that the command was executed against
+      # @return [ESM::User, nil] The user that the command was executed against
       def target_user
         return @target_user if defined?(@target_user) && @target_user.present?
         return if @arguments.target.nil?
@@ -273,7 +273,7 @@ module ESM
         end.call
       end
 
-      # @returns [Boolean] If the current user is the target user.
+      # @return [Boolean] If the current user is the target user.
       def same_user?
         return false if target_user.nil?
 

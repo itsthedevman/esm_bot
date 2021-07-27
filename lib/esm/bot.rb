@@ -57,8 +57,6 @@ module ESM
     end
 
     # Overriding DiscordRB's variant to allow commands to be case-insensitive
-    #
-    # @override
     def simple_execute(chain, event)
       return nil if chain.empty?
 
