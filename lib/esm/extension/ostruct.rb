@@ -41,4 +41,8 @@ class OpenStruct
       block.call(key.to_s, self[key])
     end
   end
+
+  def to_ostruct
+    self
+  end
 end
