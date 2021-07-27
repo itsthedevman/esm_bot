@@ -97,10 +97,14 @@ module ESM
 
       # Wait until the bot has connected before starting the websocket.
       # This is to avoid servers connecting before the bot is ready
-      # ESM::API.run!
+      ESM::API.run!
+
+      # V1
       ESM::Websocket.start!
-      ESM::Connection::Server.run!
       ESM::Request::Overseer.watch
+      # V1
+
+      ESM::Connection::Server.run!
 
       @esm_status = :ready
     end
