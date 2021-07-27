@@ -23,6 +23,14 @@ module ESM
       register_callbacks :on_response, :on_error
       add_callback :on_error, :on_error
 
+      #
+      # Creates an instance of ESM::Connection::Message from JSON. See #to_h for the structure
+      # @see #to_h
+      #
+      # @param json [String] The JSON to parse
+      #
+      # @return [Self]
+      #
       def self.from_string(json)
         data_hash = json.to_h
 
@@ -41,19 +49,19 @@ module ESM
 
       # The driver of communication between the bot, server, and client.
       #
-      # @param server_id [String, Array<Integer>, nil] The ID of the server this messages should be sent to. Array<Integer> will be converted to string automatically
-      # @param type [String] The type of message. This gives context to the message
-      # @param data [Hash] The primary data for this message. It's the good stuff.
-      # @param metadata [Hash] Any extra data that may be needed. For most command messages, this will contain the user's discord and steam data.
-      # @param errors [Array<Hash>] Any errors that were caused by this message.
-      #                             Each hash has the following attributes:
-      #                               type [String] The type of error. Valid options are:
-      #                                               "code" # Uses the message to look up a predefined message in the locales
-      #                                               "message" # Treats the message like a string and sends it as is
-      #                               message [String] The content of this error.
-      # @param data_type [String]
-      # @param metadata_type [String]
-      # @param convert_types [true/false] Runs the message's data values against the pre-configured mapping and perform any type conversions if needed
+      # @option args [String, Array<Integer>, nil] :server_id The ID of the server this messages should be sent to. Array<Integer> will be converted to string automatically
+      # @option args [String] :type The type of message. This gives context to the message
+      # @option args [Hash] :data The primary data for this message. It's the good stuff.
+      # @option args [Hash] :metadata Any extra data that may be needed. For most command messages, this will contain the user's discord and steam data.
+      # @option args [Array<Hash>] :errors Any errors that were caused by this message.
+      #   Each hash has the following attributes:
+      #     type [String] The type of error. Valid options are:
+      #       "code" # Uses the message to look up a predefined message in the locales
+      #       "message" # Treats the message like a string and sends it as is
+      #     message [String] The content of this error.
+      # @option args [String] :data_type The name of the type that gives the "data" its structure.
+      # @option args [String] :metadata_type The name of the type that gives the "metadata" its structure.
+      # @option args [Boolean] :convert_types Runs the message's data values against the pre-configured mapping and perform any type conversions if needed
       def initialize(**args)
         @id = args[:id] || SecureRandom.uuid
 
@@ -79,14 +87,19 @@ module ESM
 
       # Sets the various config options used by the overseer when routes the message
       #
-      # @param command [ESM::Command] The command that triggered this message. The overseer uses this hook back into the command
+      # @param opts [Hash]
+      # @option opts [ESM::Command] :command The command that triggered this message. The overseer uses this hook back into the command
       def routing_data(**opts)
         opts.each { |key, value| @routing_data.send("#{key}=", value) }
         self
       end
 
-      # If this Message was provided a command, calling this method will automatically add the user's discord and steam info to the metadata
-      # This is done separately because not every message type will use the data. It would be a waste to send it over the wire if it's not used
+      #
+      # Sets the user's ID, name, mention, and steam uid to the metadata for this message.
+      # This only applies to messages that have a command in their routing data
+      #
+      # @note If this Message was provided a command, calling this method will automatically add the user's discord and steam info to the metadata
+      #   This is done separately because not every message type will use the data. It would be a waste to send it over the wire if it's not used
       def apply_user_metadata
         user = @routing_data.try(:command).try(:current_user)
         return if user.nil?
@@ -97,14 +110,45 @@ module ESM
         @metadata[:user_steam_uid] = user.steam_uid
       end
 
+      #
+      # Adds the provided error to this message
+      #
+      # @param type [String] The error type. Valid types are: "code" and "message"
+      # @param message [String] The message or code for this error
+      #
       def add_error(type, message)
         @errors << OpenStruct.new(type: type, message: message)
       end
 
+      #
+      # Converts the message to JSON
+      #
+      # @return [String] The message as JSON
+      #
       def to_s
         to_h.to_json
       end
 
+      #
+      # Converts the message to a Hash
+      #
+      # @return [Hash] The message as a Hash. It has the following keys
+      #   {
+      #     id: The ID of this message as a UUID
+      #     server_id: The server ID this message is being sent to or from as a byte array
+      #     resource_id: The internal resource ID used by tcp_server
+      #     type: The context of this message
+      #     data: {
+      #       type: Describes the structure of content
+      #       content: The actual "data"
+      #     },
+      #     metadata: {
+      #       type: Describes the structure of content
+      #       content: The actual "metadata"
+      #     },
+      #     errors: Any errors associated to this message
+      #   }
+      #
       def to_h
         data = self.data.to_h
         metadata = self.metadata.to_h
@@ -126,20 +170,39 @@ module ESM
         }
       end
 
+      #
+      # Returns if there is any data on this message
+      #
+      # @return [Boolean]
+      #
       def data?
         self.data.to_h.present?
       end
 
+      #
+      # Returns if there is any metadata on this message
+      #
+      # @return [Boolean]
+      #
       def errors?
         self.errors.any?
       end
 
+      #
       # Used by MessageOverseer, this returns if the message has been delivered and is no longer needing to be watched
+      #
+      # @return [Boolean]
+      #
       def delivered?
         @delivered
       end
 
-      # Sets the delivered flag to true. See #delivered?
+      #
+      # Sets the delivered flag to true.
+      # @see #delivered?
+      #
+      # @return [true]
+      #
       def delivered
         @delivered = true
       end
@@ -176,7 +239,6 @@ module ESM
         end
       end
 
-      # TODO: Documentation
       def convert_type(value, message_type:, into_type:, data_key:)
         return value if value.class.to_s == into_type
 
@@ -206,7 +268,6 @@ module ESM
         end
       end
 
-      # TODO: Documentation
       def on_error(incoming_message, _outgoing_message)
         # For now, only support a single error until multiple error support is needed
         error = incoming_message.errors.first
