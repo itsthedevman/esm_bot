@@ -36,7 +36,7 @@ module ESM
       # Instance methods
       ################################
 
-      attr_reader :server, :connections
+      attr_reader :server, :connections, :message_overseer
 
       def initialize
         @connections = {}
