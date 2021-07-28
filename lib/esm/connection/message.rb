@@ -116,8 +116,8 @@ module ESM
       # @param type [String] The error type. Valid types are: "code" and "message"
       # @param message [String] The message or code for this error
       #
-      def add_error(type, message)
-        @errors << OpenStruct.new(type: type, message: message)
+      def add_error(type:, content:)
+        @errors << OpenStruct.new(type: type, message: content)
       end
 
       #
@@ -295,9 +295,10 @@ module ESM
             # Call the exception with the replacements
             I18n.t("exceptions.extension.#{error.message}", **replacements)
           when "message"
-
+            error.message
           when "embed"
-
+            # A special type only available to the bot. Used internally
+            return error.message
           else
             I18n.t("exceptions.extension.default", type: error.type)
           end

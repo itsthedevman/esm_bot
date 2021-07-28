@@ -44,7 +44,7 @@ module ESM
           next if !envelope.undeliverable?
 
           message = envelope.message
-          message.add_error("code", "message_undeliverable")
+          message.add_error(type: "code", content: "message_undeliverable")
           message.run_callback(:on_error, message, nil)
 
           @mailbox.delete(envelope)
