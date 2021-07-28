@@ -59,9 +59,6 @@ module ESM
 
         # TODO: Close any open requests with an error message
 
-        # Tell the tcp server that we're closing
-        self.send_message(type: "close")
-
         # Close the connection to redis
         @redis.close
         @redis_process_inbound_messages.close
