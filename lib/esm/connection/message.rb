@@ -117,7 +117,7 @@ module ESM
       # @param message [String] The message or code for this error
       #
       def add_error(type:, content:)
-        @errors << OpenStruct.new(type: type, message: content)
+        @errors << OpenStruct.new(type: type, content: content)
       end
 
       #
@@ -226,8 +226,10 @@ module ESM
             case mapping_class
             when "HashMap"
               ESM::Arma::HashMap
-            when ARRAY_REGEX
+            when "Boolean", ARRAY_REGEX
               NilClass # Use the exact opposite to skip the check below
+            when "Decimal"
+              BigDecimal
             else
               mapping_class.constantize
             end
@@ -257,6 +259,10 @@ module ESM
           value.to_i
         when "Hash"
           value.to_h
+        when "Decimal"
+          value.to_d
+        when "Boolean"
+          value.to_s == "true"
         when "HashMap"
           ESM::Arma::HashMap.new(value)
         when "DateTime"
@@ -293,17 +299,22 @@ module ESM
             incoming_message.metadata.to_h.each { |key, value| replacements["mdata_content_#{key}".to_sym] = value }
 
             # Call the exception with the replacements
-            I18n.t("exceptions.extension.#{error.message}", **replacements)
+            I18n.t("exceptions.extension.#{error.content}", **replacements)
           when "message"
-            error.message
+            error.content
           when "embed"
             # A special type only available to the bot. Used internally
-            return error.message
+            return error.content
           else
             I18n.t("exceptions.extension.default", type: error.type)
           end
 
-        ESM::Embed.build(:error, description: description)
+        embed = ESM::Embed.build(:error, description: description)
+
+        # Attempt to send the embed through the command
+        @routing_data.try(:command).try(:reply, embed)
+
+        embed
       end
     end
   end

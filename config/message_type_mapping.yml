@@ -10,6 +10,8 @@
 #   HashMap -> Arma 3's HashMap represented as a String
 #   DateTime
 #   Date
+#   Decimal
+#   Boolean
 
 # For detailed testing
 test_mapping:
@@ -34,3 +36,27 @@ init:
   territory_lifetime: Integer
   territory_data: Array<HashMap>
   server_start_time: DateTime
+
+post_init:
+  extdb_path: String
+  gambling_modifier: Integer
+  gambling_payout: Integer
+  gambling_randomizer_max: Decimal
+  gambling_randomizer_mid: Decimal
+  gambling_randomizer_min: Decimal
+  gambling_win_chance: Integer
+  logging_add_player_to_territory: Boolean
+  logging_demote_player: Boolean
+  logging_exec: Boolean
+  logging_gamble: Boolean
+  logging_modify_player: Boolean
+  logging_pay_territory: Boolean
+  logging_promote_player: Boolean
+  logging_remove_player_from_territory: Boolean
+  logging_reward: Boolean
+  logging_transfer: Boolean
+  logging_upgrade_territory: Boolean
+  max_payment_count: Integer
+  territory_payment_tax: Integer
+  territory_upgrade_tax: Integer
+  territory_admins: Array<String>
