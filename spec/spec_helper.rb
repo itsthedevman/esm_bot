@@ -26,14 +26,14 @@ loader.collapse("#{__dir__}/support/model")
 loader.setup
 loader.eager_load
 
-# Start the bot
-ESM.run!
-
 # Enable discordrb logging
 Discordrb::LOGGER.debug = false
 
 # Ignore debug messages when running tests
 ActiveRecord::Base.logger.level = Logger::INFO
+
+# Start the bot
+ESM.run!
 
 RSpec.configure do |config|
   config.include FactoryBot::Syntax::Methods

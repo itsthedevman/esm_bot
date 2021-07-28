@@ -12,20 +12,24 @@ module ESM
       # Class methods
       ################################
 
-      def self.run!
-        @instance = self.new
-      end
+      class << self
+        attr_reader :instance if ESM.env.test?
 
-      def self.stop!
-        return if @instance.nil?
+        def run!
+          @instance = self.new
+        end
 
-        @instance.stop
-      end
+        def stop!
+          return if @instance.nil?
 
-      def self.connections
-        return if @instance.nil?
+          @instance.stop
+        end
 
-        @instance.connections
+        def connections
+          return if @instance.nil?
+
+          @instance.connections
+        end
       end
 
       ################################
@@ -89,6 +93,8 @@ module ESM
         end
 
         @redis.rpush("connection_server_outbound", message.to_s)
+
+        message
       end
 
       # Store all of the server_ids and their keys in redis.
@@ -201,18 +207,20 @@ module ESM
         outgoing_message = @message_overseer.retrieve(incoming_message.id)
         # outgoing_message.nil? #=> This is a client command like discord_log
 
-        connection = @connections[outgoing_message.server_id]
-        connection.server.reload # Refresh the server
-
         ESM::Notifications.trigger(
           "info",
           class: self.class,
           method: __method__,
-          server_id: connection.server.server_id,
+          server_id: { incoming: incoming_message.server_id, outgoing: outgoing_message.server_id },
           outgoing_message: outgoing_message.to_h.without(:server_id, :resource_id),
           incoming_message: incoming_message.to_h.without(:server_id, :resource_id)
         )
 
+        # Handle any errors
+        return outgoing_message.run_callback(:on_error, incoming_message, outgoing_message) if incoming_message.errors?
+
+        # The message is good, call the on_message for this connection
+        connection = @connections[outgoing_message.server_id]
         connection.on_message(incoming_message, outgoing_message)
       end
 

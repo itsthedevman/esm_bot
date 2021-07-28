@@ -24,7 +24,7 @@ describe ESM::Connection::Message do
       },
       metadata: {
         type: "empty",
-        content: {}
+        content: nil
       },
       errors: []
     }
@@ -212,7 +212,7 @@ describe ESM::Connection::Message do
     it "raises (failed to find type in the global mapping)" do
       input = { foo: "bar" }
 
-      expect { input_message.send(:convert_types, input, message_type: "test", mapping: {}) }.to raise_error("Failed to find type \"test\" in \"message_type_mapping.yml\"")
+      expect { input_message.send(:convert_types, input, message_type: "foo") }.to raise_error("Failed to find type \"foo\" in \"message_type_mapping.yml\"")
     end
 
     it "raises (failed to find key in the mapping)" do
