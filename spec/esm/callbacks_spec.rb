@@ -60,4 +60,17 @@ describe ESM::Callbacks do
       ])
     end
   end
+
+  describe "#remove_callback" do
+    it "removes the callback" do
+      object.add_callback(:before_execute, :method_to_call_on_before_execute)
+      callbacks = object.__callbacks[:before_execute]
+      expect(callbacks.size).to eq(2)
+
+      object.remove_callback(:before_execute, :method_to_call_on_before_execute)
+
+      callbacks = object.__callbacks[:before_execute]
+      expect(callbacks.size).to eq(1)
+    end
+  end
 end

@@ -54,6 +54,13 @@ module ESM
       end
     end
 
+    def remove_callback(callback_name, method_name)
+      callbacks = __callbacks[callback_name.to_sym]
+      return true if callbacks.blank?
+
+      callbacks.reject! { |callback| callback == method_name.to_sym }
+    end
+
     def callback?(name)
       __callbacks[name.to_sym].present?
     end
