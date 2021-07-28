@@ -45,6 +45,10 @@ module ESM
       @second_server ||= FactoryBot.create(:server, community_id: second_community.id)
     end
 
+    def self.redis
+      @redis ||= Redis.new(ESM::Connection::Server::REDIS_OPTS)
+    end
+
     def self.response=(value)
       return @response = nil if value.nil?
 
@@ -73,6 +77,9 @@ module ESM
 
       # Auto resume in case if was paused
       ESM.bot.resend_queue.resume
+
+      # Clear the test list in Redis
+      self.redis.del("test")
     end
 
     # I hate this code, it doesn't make me happy

@@ -24,13 +24,13 @@ module ESM
     end
 
     def on_message(incoming_message, outgoing_message)
-      return outgoing_message.run_callback(:on_error, outgoing_message, incoming_message) if incoming_message.errors?
+      @server.reload # Ensure the server is up-to-date
 
       case incoming_message.type
       when "event"
         self.on_event(incoming_message, outgoing_message)
       else
-        ESM::Notifications.trigger("error", class: self.class, method: __method__, message: "[#{incoming_message.id}] Connection#on_message does not implement this type: \"#{incoming_message.type}\"")
+        raise "[#{incoming_message.id}] Connection#on_message does not implement this type: \"#{incoming_message.type}\""
       end
     end
 
@@ -43,8 +43,8 @@ module ESM
       # end
 
       # Acknowledge the message
-      outgoing_message.run_callback(:on_response, incoming_message, outgoing_message)
       outgoing_message.delivered
+      outgoing_message.run_callback(:on_response, incoming_message, outgoing_message)
     end
   end
 end

@@ -105,6 +105,7 @@ impl Server {
             },
             Err(error) => {
                 error!("#send_to_client - {}", error);
+                message.add_error(ErrorType::Code, "client_not_connected");
                 false
             }
         }
@@ -196,7 +197,7 @@ impl Server {
 
     /// Moves messages from the connection server outbound queue to the tcp server inbound queue.
     /// Processing of these messages occurs in #process_inbound_messages
-    async fn delegate_inbound_messages(&self) -> redis::RedisResult<isize> {
+    async fn delegate_inbound_messages(&self) {
         let mut connection = match self.get_redis_connection().await {
             Ok(connection) => connection,
             Err(e) => panic!("#process_inbound_messages - {}", e)
@@ -255,7 +256,7 @@ impl Server {
 
     /// Processes messages from the redis inbound queue based on their message_type.
     /// These messages are moved into this queue by #delegate_inbound_messages
-    async fn process_inbound_messages(&mut self) -> redis::RedisResult<isize> {
+    async fn process_inbound_messages(&mut self) {
         let mut connection = match self.get_redis_connection().await {
             Ok(connection) => connection,
             Err(e) => panic!("#process_inbound_messages - {}", e)
@@ -284,11 +285,18 @@ impl Server {
             }
 
             match message.message_type {
+                // For automated testing. Push the message into a different list so the test can check for it
+                Type::Test => {
+                    let _: () = redis::cmd("RPUSH").arg("test").arg(json).query_async(&mut connection).await.unwrap();
+                },
+
                 // Received from the bot after a ping has been sent
                 Type::Pong => {
                     // Set the flag to true
                     self.bot_pong_received.store(true, Ordering::Relaxed);
                 },
+
+                // Everything else is sent to the client
                 _ => {
                     let success = self.send_to_client(&mut message);
                     if success { continue; }
