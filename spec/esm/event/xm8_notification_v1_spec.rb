@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-describe ESM::Event::Xm8Notification do
+describe ESM::Event::Xm8NotificationV1 do
   let!(:community) { ESM::Test.community }
   let!(:server) { ESM::Test.server }
   let!(:wsc) { WebsocketClient.new(server) }
@@ -39,35 +39,35 @@ describe ESM::Event::Xm8Notification do
     it "should send to all" do
       community.update(log_xm8_event: false)
       send_notification
-      wait_for { ESM::Test.messages.size }.to eql(2)
+      wait_for { ESM::Test.messages.size }.to eq(2)
 
       # To ensure all messages have been sent
       sleep(1)
-      expect(ESM::Test.messages.size).to eql(2)
+      expect(ESM::Test.messages.size).to eq(2)
 
       # Check the embeds
       embed = ESM::Test.messages.first.second
-      expect(embed.title).to eql("Oh noes! #{attributes[:message]} is being raided!")
-      expect(embed.description).to eql("Hop on quick, **#{attributes[:message]}** (`#{attributes[:id]}`) is being raided")
+      expect(embed.title).to eq("Oh noes! #{attributes[:message]} is being raided!")
+      expect(embed.description).to eq("Hop on quick, **#{attributes[:message]}** (`#{attributes[:id]}`) is being raided")
 
       embed = ESM::Test.messages.second.second
-      expect(embed.title).to eql("Oh noes! #{attributes[:message]} is being raided!")
-      expect(embed.description).to eql("Hop on quick, **#{attributes[:message]}** (`#{attributes[:id]}`) is being raided")
+      expect(embed.title).to eq("Oh noes! #{attributes[:message]} is being raided!")
+      expect(embed.description).to eq("Hop on quick, **#{attributes[:message]}** (`#{attributes[:id]}`) is being raided")
     end
 
     it "should log" do
       community.update(log_xm8_event: true)
       send_notification
-      wait_for { ESM::Test.messages.size }.to eql(3)
+      wait_for { ESM::Test.messages.size }.to eq(3)
 
       # To ensure all messages have been sent
       sleep(1)
-      expect(ESM::Test.messages.size).to eql(3)
+      expect(ESM::Test.messages.size).to eq(3)
 
       # Check the embed
       embed = ESM::Test.messages.third.second
-      expect(embed.title).to eql("(Delivered) `#{attributes[:type]}` XM8 Notification for `#{server.server_id}`")
-      expect(embed.description).to eql("**Title:**\nOh noes! #{attributes[:message]} is being raided!\n**Description:**\nHop on quick, **#{attributes[:message]}** (`#{attributes[:id]}`) is being raided")
+      expect(embed.title).to eq("(Delivered) `#{attributes[:type]}` XM8 Notification for `#{server.server_id}`")
+      expect(embed.description).to eq("**Title:**\nOh noes! #{attributes[:message]} is being raided!\n**Description:**\nHop on quick, **#{attributes[:message]}** (`#{attributes[:id]}`) is being raided")
     end
   end
 
@@ -85,35 +85,35 @@ describe ESM::Event::Xm8Notification do
     it "should send to all" do
       community.update(log_xm8_event: false)
       send_notification
-      wait_for { ESM::Test.messages.size }.to eql(2)
+      wait_for { ESM::Test.messages.size }.to eq(2)
 
       # To ensure all messages have been sent
       sleep(1)
-      expect(ESM::Test.messages.size).to eql(2)
+      expect(ESM::Test.messages.size).to eq(2)
 
       # Check the embeds
       embed = ESM::Test.messages.first.second
-      expect(embed.title).to eql("Flag Restored `(#{attributes[:id]})`")
-      expect(embed.description).to eql("**#{attributes[:message]}'s** flag has been restored! Good job getting it back!")
+      expect(embed.title).to eq("Flag Restored `(#{attributes[:id]})`")
+      expect(embed.description).to eq("**#{attributes[:message]}'s** flag has been restored! Good job getting it back!")
 
       embed = ESM::Test.messages.second.second
-      expect(embed.title).to eql("Flag Restored `(#{attributes[:id]})`")
-      expect(embed.description).to eql("**#{attributes[:message]}'s** flag has been restored! Good job getting it back!")
+      expect(embed.title).to eq("Flag Restored `(#{attributes[:id]})`")
+      expect(embed.description).to eq("**#{attributes[:message]}'s** flag has been restored! Good job getting it back!")
     end
 
     it "should log" do
       community.update(log_xm8_event: true)
       send_notification
-      wait_for { ESM::Test.messages.size }.to eql(3)
+      wait_for { ESM::Test.messages.size }.to eq(3)
 
       # To ensure all messages have been sent
       sleep(1)
-      expect(ESM::Test.messages.size).to eql(3)
+      expect(ESM::Test.messages.size).to eq(3)
 
       # Check the embed
       embed = ESM::Test.messages.third.second
-      expect(embed.title).to eql("(Delivered) `#{attributes[:type]}` XM8 Notification for `#{server.server_id}`")
-      expect(embed.description).to eql("**Title:**\nFlag Restored `(#{attributes[:id]})`\n**Description:**\n**#{attributes[:message]}'s** flag has been restored! Good job getting it back!")
+      expect(embed.title).to eq("(Delivered) `#{attributes[:type]}` XM8 Notification for `#{server.server_id}`")
+      expect(embed.description).to eq("**Title:**\nFlag Restored `(#{attributes[:id]})`\n**Description:**\n**#{attributes[:message]}'s** flag has been restored! Good job getting it back!")
     end
   end
 
@@ -131,35 +131,35 @@ describe ESM::Event::Xm8Notification do
     it "should send to all" do
       community.update(log_xm8_event: false)
       send_notification
-      wait_for { ESM::Test.messages.size }.to eql(2)
+      wait_for { ESM::Test.messages.size }.to eq(2)
 
       # To ensure all messages have been sent
       sleep(1)
-      expect(ESM::Test.messages.size).to eql(2)
+      expect(ESM::Test.messages.size).to eq(2)
 
       # Check the embeds
       embed = ESM::Test.messages.first.second
-      expect(embed.title).to eql("Flag Steal Started `(#{attributes[:id]})`")
-      expect(embed.description).to eql("Someone is trying to steal **#{attributes[:message]}'s** flag!")
+      expect(embed.title).to eq("Flag Steal Started `(#{attributes[:id]})`")
+      expect(embed.description).to eq("Someone is trying to steal **#{attributes[:message]}'s** flag!")
 
       embed = ESM::Test.messages.second.second
-      expect(embed.title).to eql("Flag Steal Started `(#{attributes[:id]})`")
-      expect(embed.description).to eql("Someone is trying to steal **#{attributes[:message]}'s** flag!")
+      expect(embed.title).to eq("Flag Steal Started `(#{attributes[:id]})`")
+      expect(embed.description).to eq("Someone is trying to steal **#{attributes[:message]}'s** flag!")
     end
 
     it "should log" do
       community.update(log_xm8_event: true)
       send_notification
-      wait_for { ESM::Test.messages.size }.to eql(3)
+      wait_for { ESM::Test.messages.size }.to eq(3)
 
       # To ensure all messages have been sent
       sleep(1)
-      expect(ESM::Test.messages.size).to eql(3)
+      expect(ESM::Test.messages.size).to eq(3)
 
       # Check the embed
       embed = ESM::Test.messages.third.second
-      expect(embed.title).to eql("(Delivered) `#{attributes[:type]}` XM8 Notification for `#{server.server_id}`")
-      expect(embed.description).to eql("**Title:**\nFlag Steal Started `(#{attributes[:id]})`\n**Description:**\nSomeone is trying to steal **#{attributes[:message]}'s** flag!")
+      expect(embed.title).to eq("(Delivered) `#{attributes[:type]}` XM8 Notification for `#{server.server_id}`")
+      expect(embed.description).to eq("**Title:**\nFlag Steal Started `(#{attributes[:id]})`\n**Description:**\nSomeone is trying to steal **#{attributes[:message]}'s** flag!")
     end
   end
 
@@ -177,35 +177,35 @@ describe ESM::Event::Xm8Notification do
     it "should send to all" do
       community.update(log_xm8_event: false)
       send_notification
-      wait_for { ESM::Test.messages.size }.to eql(2)
+      wait_for { ESM::Test.messages.size }.to eq(2)
 
       # To ensure all messages have been sent
       sleep(1)
-      expect(ESM::Test.messages.size).to eql(2)
+      expect(ESM::Test.messages.size).to eq(2)
 
       # Check the embeds
       embed = ESM::Test.messages.first.second
-      expect(embed.title).to eql("Flag Stolen `(#{attributes[:id]})`")
-      expect(embed.description).to eql("**#{attributes[:message]}'s** flag has been stolen! Go get it back!")
+      expect(embed.title).to eq("Flag Stolen `(#{attributes[:id]})`")
+      expect(embed.description).to eq("**#{attributes[:message]}'s** flag has been stolen! Go get it back!")
 
       embed = ESM::Test.messages.second.second
-      expect(embed.title).to eql("Flag Stolen `(#{attributes[:id]})`")
-      expect(embed.description).to eql("**#{attributes[:message]}'s** flag has been stolen! Go get it back!")
+      expect(embed.title).to eq("Flag Stolen `(#{attributes[:id]})`")
+      expect(embed.description).to eq("**#{attributes[:message]}'s** flag has been stolen! Go get it back!")
     end
 
     it "should log" do
       community.update(log_xm8_event: true)
       send_notification
-      wait_for { ESM::Test.messages.size }.to eql(3)
+      wait_for { ESM::Test.messages.size }.to eq(3)
 
       # To ensure all messages have been sent
       sleep(1)
-      expect(ESM::Test.messages.size).to eql(3)
+      expect(ESM::Test.messages.size).to eq(3)
 
       # Check the embed
       embed = ESM::Test.messages.third.second
-      expect(embed.title).to eql("(Delivered) `#{attributes[:type]}` XM8 Notification for `#{server.server_id}`")
-      expect(embed.description).to eql("**Title:**\nFlag Stolen `(#{attributes[:id]})`\n**Description:**\n**#{attributes[:message]}'s** flag has been stolen! Go get it back!")
+      expect(embed.title).to eq("(Delivered) `#{attributes[:type]}` XM8 Notification for `#{server.server_id}`")
+      expect(embed.description).to eq("**Title:**\nFlag Stolen `(#{attributes[:id]})`\n**Description:**\n**#{attributes[:message]}'s** flag has been stolen! Go get it back!")
     end
   end
 
@@ -223,35 +223,35 @@ describe ESM::Event::Xm8Notification do
     it "should send to all" do
       community.update(log_xm8_event: false)
       send_notification
-      wait_for { ESM::Test.messages.size }.to eql(2)
+      wait_for { ESM::Test.messages.size }.to eq(2)
 
       # To ensure all messages have been sent
       sleep(1)
-      expect(ESM::Test.messages.size).to eql(2)
+      expect(ESM::Test.messages.size).to eq(2)
 
       # Check the embeds
       embed = ESM::Test.messages.first.second
-      expect(embed.title).to eql("Grinding Started `(#{attributes[:id]})`")
-      expect(embed.description).to eql("Some scalliwag is tryna grind yer locks! **#{attributes[:message]}** is being raided!")
+      expect(embed.title).to eq("Grinding Started `(#{attributes[:id]})`")
+      expect(embed.description).to eq("Some scalliwag is tryna grind yer locks! **#{attributes[:message]}** is being raided!")
 
       embed = ESM::Test.messages.second.second
-      expect(embed.title).to eql("Grinding Started `(#{attributes[:id]})`")
-      expect(embed.description).to eql("Some scalliwag is tryna grind yer locks! **#{attributes[:message]}** is being raided!")
+      expect(embed.title).to eq("Grinding Started `(#{attributes[:id]})`")
+      expect(embed.description).to eq("Some scalliwag is tryna grind yer locks! **#{attributes[:message]}** is being raided!")
     end
 
     it "should log" do
       community.update(log_xm8_event: true)
       send_notification
-      wait_for { ESM::Test.messages.size }.to eql(3)
+      wait_for { ESM::Test.messages.size }.to eq(3)
 
       # To ensure all messages have been sent
       sleep(1)
-      expect(ESM::Test.messages.size).to eql(3)
+      expect(ESM::Test.messages.size).to eq(3)
 
       # Check the embed
       embed = ESM::Test.messages.third.second
-      expect(embed.title).to eql("(Delivered) `#{attributes[:type]}` XM8 Notification for `#{server.server_id}`")
-      expect(embed.description).to eql("**Title:**\nGrinding Started `(#{attributes[:id]})`\n**Description:**\nSome scalliwag is tryna grind yer locks! **#{attributes[:message]}** is being raided!")
+      expect(embed.title).to eq("(Delivered) `#{attributes[:type]}` XM8 Notification for `#{server.server_id}`")
+      expect(embed.description).to eq("**Title:**\nGrinding Started `(#{attributes[:id]})`\n**Description:**\nSome scalliwag is tryna grind yer locks! **#{attributes[:message]}** is being raided!")
     end
   end
 
@@ -269,35 +269,35 @@ describe ESM::Event::Xm8Notification do
     it "should send to all" do
       community.update(log_xm8_event: false)
       send_notification
-      wait_for { ESM::Test.messages.size }.to eql(2)
+      wait_for { ESM::Test.messages.size }.to eq(2)
 
       # To ensure all messages have been sent
       sleep(1)
-      expect(ESM::Test.messages.size).to eql(2)
+      expect(ESM::Test.messages.size).to eq(2)
 
       # Check the embeds
       embed = ESM::Test.messages.first.second
-      expect(embed.title).to eql("Hacking Started `(#{attributes[:id]})`")
-      expect(embed.description).to eql("H4x0rs are trying to get into your stuff! **#{attributes[:message]}** is being robbed! ")
+      expect(embed.title).to eq("Hacking Started `(#{attributes[:id]})`")
+      expect(embed.description).to eq("H4x0rs are trying to get into your stuff! **#{attributes[:message]}** is being robbed! ")
 
       embed = ESM::Test.messages.second.second
-      expect(embed.title).to eql("Hacking Started `(#{attributes[:id]})`")
-      expect(embed.description).to eql("H4x0rs are trying to get into your stuff! **#{attributes[:message]}** is being robbed! ")
+      expect(embed.title).to eq("Hacking Started `(#{attributes[:id]})`")
+      expect(embed.description).to eq("H4x0rs are trying to get into your stuff! **#{attributes[:message]}** is being robbed! ")
     end
 
     it "should log" do
       community.update(log_xm8_event: true)
       send_notification
-      wait_for { ESM::Test.messages.size }.to eql(3)
+      wait_for { ESM::Test.messages.size }.to eq(3)
 
       # To ensure all messages have been sent
       sleep(1)
-      expect(ESM::Test.messages.size).to eql(3)
+      expect(ESM::Test.messages.size).to eq(3)
 
       # Check the embed
       embed = ESM::Test.messages.third.second
-      expect(embed.title).to eql("(Delivered) `#{attributes[:type]}` XM8 Notification for `#{server.server_id}`")
-      expect(embed.description).to eql("**Title:**\nHacking Started `(#{attributes[:id]})`\n**Description:**\nH4x0rs are trying to get into your stuff! **#{attributes[:message]}** is being robbed! ")
+      expect(embed.title).to eq("(Delivered) `#{attributes[:type]}` XM8 Notification for `#{server.server_id}`")
+      expect(embed.description).to eq("**Title:**\nHacking Started `(#{attributes[:id]})`\n**Description:**\nH4x0rs are trying to get into your stuff! **#{attributes[:message]}** is being robbed! ")
     end
   end
 
@@ -315,37 +315,37 @@ describe ESM::Event::Xm8Notification do
     it "should send to all" do
       community.update(log_xm8_event: false)
       send_notification
-      wait_for { ESM::Test.messages.size }.to eql(2)
+      wait_for { ESM::Test.messages.size }.to eq(2)
 
       # To ensure all messages have been sent
       sleep(1)
-      expect(ESM::Test.messages.size).to eql(2)
+      expect(ESM::Test.messages.size).to eq(2)
 
       # Check the embeds
       # attributes[:message]
       # attributes[:id]
       embed = ESM::Test.messages.first.second
-      expect(embed.title).to eql("Protection Money Paid `(#{attributes[:id]})`")
-      expect(embed.description).to eql("**#{attributes[:message]}'s** protection money has been paid")
+      expect(embed.title).to eq("Protection Money Paid `(#{attributes[:id]})`")
+      expect(embed.description).to eq("**#{attributes[:message]}'s** protection money has been paid")
 
       embed = ESM::Test.messages.second.second
-      expect(embed.title).to eql("Protection Money Paid `(#{attributes[:id]})`")
-      expect(embed.description).to eql("**#{attributes[:message]}'s** protection money has been paid")
+      expect(embed.title).to eq("Protection Money Paid `(#{attributes[:id]})`")
+      expect(embed.description).to eq("**#{attributes[:message]}'s** protection money has been paid")
     end
 
     it "should log" do
       community.update(log_xm8_event: true)
       send_notification
-      wait_for { ESM::Test.messages.size }.to eql(3)
+      wait_for { ESM::Test.messages.size }.to eq(3)
 
       # To ensure all messages have been sent
       sleep(1)
-      expect(ESM::Test.messages.size).to eql(3)
+      expect(ESM::Test.messages.size).to eq(3)
 
       # Check the embed
       embed = ESM::Test.messages.third.second
-      expect(embed.title).to eql("(Delivered) `#{attributes[:type]}` XM8 Notification for `#{server.server_id}`")
-      expect(embed.description).to eql("**Title:**\nProtection Money Paid `(#{attributes[:id]})`\n**Description:**\n**#{attributes[:message]}'s** protection money has been paid")
+      expect(embed.title).to eq("(Delivered) `#{attributes[:type]}` XM8 Notification for `#{server.server_id}`")
+      expect(embed.description).to eq("**Title:**\nProtection Money Paid `(#{attributes[:id]})`\n**Description:**\n**#{attributes[:message]}'s** protection money has been paid")
     end
   end
 
@@ -363,37 +363,37 @@ describe ESM::Event::Xm8Notification do
     it "should send to all" do
       community.update(log_xm8_event: false)
       send_notification
-      wait_for { ESM::Test.messages.size }.to eql(2)
+      wait_for { ESM::Test.messages.size }.to eq(2)
 
       # To ensure all messages have been sent
       sleep(1)
-      expect(ESM::Test.messages.size).to eql(2)
+      expect(ESM::Test.messages.size).to eq(2)
 
       # Check the embeds
       values = attributes[:message].to_ostruct
       embed = ESM::Test.messages.first.second
-      expect(embed.title).to eql("Item sold on MarXet")
-      expect(embed.description).to eql("You just sold **#{values.item}** for **#{values.amount}** poptabs")
+      expect(embed.title).to eq("Item sold on MarXet")
+      expect(embed.description).to eq("You just sold **#{values.item}** for **#{values.amount}** poptabs")
 
       embed = ESM::Test.messages.second.second
-      expect(embed.title).to eql("Item sold on MarXet")
-      expect(embed.description).to eql("You just sold **#{values.item}** for **#{values.amount}** poptabs")
+      expect(embed.title).to eq("Item sold on MarXet")
+      expect(embed.description).to eq("You just sold **#{values.item}** for **#{values.amount}** poptabs")
     end
 
     it "should log" do
       community.update(log_xm8_event: true)
       send_notification
-      wait_for { ESM::Test.messages.size }.to eql(3)
+      wait_for { ESM::Test.messages.size }.to eq(3)
 
       # To ensure all messages have been sent
       sleep(1)
-      expect(ESM::Test.messages.size).to eql(3)
+      expect(ESM::Test.messages.size).to eq(3)
 
       # Check the embed
       values = attributes[:message].to_ostruct
       embed = ESM::Test.messages.third.second
-      expect(embed.title).to eql("(Delivered) `#{attributes[:type]}` XM8 Notification for `#{server.server_id}`")
-      expect(embed.description).to eql("**Title:**\nItem sold on MarXet\n**Description:**\nYou just sold **#{values.item}** for **#{values.amount}** poptabs")
+      expect(embed.title).to eq("(Delivered) `#{attributes[:type]}` XM8 Notification for `#{server.server_id}`")
+      expect(embed.description).to eq("**Title:**\nItem sold on MarXet\n**Description:**\nYou just sold **#{values.item}** for **#{values.amount}** poptabs")
     end
   end
 
@@ -411,37 +411,37 @@ describe ESM::Event::Xm8Notification do
     it "should send to all" do
       community.update(log_xm8_event: false)
       send_notification
-      wait_for { ESM::Test.messages.size }.to eql(2)
+      wait_for { ESM::Test.messages.size }.to eq(2)
 
       # To ensure all messages have been sent
       sleep(1)
-      expect(ESM::Test.messages.size).to eql(2)
+      expect(ESM::Test.messages.size).to eq(2)
 
       # Check the embeds
       values = attributes[:message].to_ostruct
       embed = ESM::Test.messages.first.second
-      expect(embed.title).to eql(values[:title])
-      expect(embed.description).to eql(values[:body])
+      expect(embed.title).to eq(values[:title])
+      expect(embed.description).to eq(values[:body])
 
       embed = ESM::Test.messages.second.second
-      expect(embed.title).to eql(values[:title])
-      expect(embed.description).to eql(values[:body])
+      expect(embed.title).to eq(values[:title])
+      expect(embed.description).to eq(values[:body])
     end
 
     it "should log" do
       community.update(log_xm8_event: true)
       send_notification
-      wait_for { ESM::Test.messages.size }.to eql(3)
+      wait_for { ESM::Test.messages.size }.to eq(3)
 
       # To ensure all messages have been sent
       sleep(1)
-      expect(ESM::Test.messages.size).to eql(3)
+      expect(ESM::Test.messages.size).to eq(3)
 
       # Check the embed
       values = attributes[:message].to_ostruct
       embed = ESM::Test.messages.third.second
-      expect(embed.title).to eql("(Delivered) `#{attributes[:type]}` XM8 Notification for `#{server.server_id}`")
-      expect(embed.description).to eql("**Title:**\n#{values[:title]}\n**Description:**\n#{values[:body]}")
+      expect(embed.title).to eq("(Delivered) `#{attributes[:type]}` XM8 Notification for `#{server.server_id}`")
+      expect(embed.description).to eq("**Title:**\n#{values[:title]}\n**Description:**\n#{values[:body]}")
     end
   end
 end

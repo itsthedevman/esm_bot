@@ -2,7 +2,7 @@
 
 module ESM
   module Event
-    class DiscordMessageChannel
+    class DiscordMessageChannelV1
       # Unfortunately, this class is bound by the code I wrote 2 years ago. It's very implicit.
       def initialize(connection:, server:, parameters:)
         @server = server

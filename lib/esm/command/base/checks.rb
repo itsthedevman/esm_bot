@@ -282,7 +282,7 @@ module ESM
         # Checks if the target_user is registered
         # This will always raise if the target_user is an instance of TargetUser.
         #
-        # @raises ESM::Exception::CheckFailure
+        # @raise ESM::Exception::CheckFailure
         def registered_target_user!
           return if target_user.nil? || target_user.is_a?(Discordrb::User) && target_user.esm_user.registered?
 

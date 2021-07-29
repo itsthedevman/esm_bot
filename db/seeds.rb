@@ -79,8 +79,7 @@ ESM::ServerMod.create!(
   mod_required: false
 )
 
-ESM::ServerReward.create!(
-  server_id: server.id,
+server.server_reward.update!(
   reward_items: {
     "Exile_Item_EMRE": 1
   },

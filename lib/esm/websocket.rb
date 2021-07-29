@@ -27,8 +27,8 @@ module ESM
     # @note Do not rescue. This will fall down to the calling class
     def self.deliver!(server_id, request)
       connection = @connections[server_id]
-      request.command.check_failed!(:server_not_connected, user: request.current_user.mention, server_id: server_id) if connection.nil?
-      request.command.check_failed!(:server_not_initialized, user: request.current_user.mention, server_id: server_id) if !connection.ready?
+      request.command.check_failed!(:server_not_connected, user: request.user.mention, server_id: server_id) if connection.nil?
+      request.command.check_failed!(:server_not_initialized, user: request.user.mention, server_id: server_id) if !connection.ready?
 
       connection.deliver!(request)
     end
@@ -65,7 +65,7 @@ module ESM
     # Retrieves the WS connection based on a server_id
     #
     # @param server_id [String] The ESM set ID, not the DB ID
-    # @returns [WebsocketConnection, nil]
+    # @return [WebsocketConnection, nil]
     def self.connection(server_id)
       @connections[server_id]
     end
@@ -73,15 +73,11 @@ module ESM
     ###########################
     # Public Instance Methods
     ###########################
-    attr_reader :server, :connection, :requests, :version
-    attr_writer :ready
+    attr_reader :server, :connection, :requests
 
     attr_writer :requests if ESM.env.test?
 
     def initialize(connection)
-      # Set the version of the extension.
-      # This will be nil for v1 and "2.0.0" and above for v2.
-      @version = connection.env["HTTP_EXTENSION_VERSION"]
       @ready = false
       @connection = connection
       @requests = ESM::Websocket::Queue.new
@@ -104,7 +100,7 @@ module ESM
     end
 
     # Removes a request via its commandID
-    # @returns [ESM::Websocket::Request, nil]
+    # @return [ESM::Websocket::Request, nil]
     def remove_request(command_id)
       @requests.remove(command_id)
     end
@@ -113,6 +109,11 @@ module ESM
     # @return boolean
     def ready?
       @ready
+    end
+
+    # Sets if the server has been sent the post_init package
+    def ready=(boolean)
+      @ready = boolean
     end
 
     # Sends a ping to the WS client.
@@ -133,11 +134,10 @@ module ESM
 
       raise ESM::Exception::FailedAuthentication, "Missing authorization key" if authorization.blank?
 
-      # Decode the authorization request
-      key = Base64.strict_decode64(authorization)
-      key = key[12..] if @version.nil? # V1
+      # Once decoded, it becomes "arma_server:esm_key"
+      key = Base64.strict_decode64(authorization)[12..-1].strip
 
-      @server = ESM::Server.where(server_key: key.strip).first
+      @server = ESM::Server.where(server_key: key).first
       raise ESM::Exception::FailedAuthentication, "Invalid Key" if @server.nil?
 
       # If the bot is no longer a member of the server, don't allow it to connect
@@ -162,43 +162,40 @@ module ESM
       # Authorize the request and extract the server key
       authorize!
 
-      ESM.logger.debug("#{self.class}##{__method__}") { "Connection success: #{@connection.env["REMOTE_ADDR"]}, version: #{@version}" }
-
       # Tell the server to store the connection for access later
       ESM::Websocket.add_connection(self)
-
-      # V1: This does not apply to it
-      return if @version.nil?
-
-      # Request the server for a server_initialization package
-      request = ESM::Websocket::Request.new(executing_command: "server_initialization")
-      deliver!(request)
     rescue ESM::Exception::FailedAuthentication => e
-      ESM.logger.fatal("#{self.class}##{__method__}") { "Message:\n#{e.message}\n\nBacktrace:\n#{e.backtrace}" }
-
       # Application code may only use codes from 1000, 3000-4999
-      if @version.nil?
-        @connection.close(1002, e.message)
-      else
-        @connection.close
-      end
+      @connection.close(1002, e.message)
     rescue StandardError => e
       ESM.logger.fatal("#{self.class}##{__method__}") { "Message:\n#{e.message}\n\nBacktrace:\n#{e.backtrace}" }
-      @connection.close
     end
 
     # @private
     # Websocket event, executes when a A3 server sends a message
     def on_message(event)
-      Thread.new do
-        # Process the request
-        command = ESM::BotCommand.new(connection: self, received_data: event.data.to_ostruct)
+      # Messages with commandID are requests from the Bot
+      # Messages without are DLL generated requests
+      server_request = ESM::Websocket::ServerRequest.new(connection: self, message: event.data.to_ostruct)
 
-        command.execute!
+      # Checks if the request should be processed
+      if server_request.invalid?
+        server_request.remove_request if server_request.remove_on_ignore?
+        return
+      end
+
+      # Reload the server so our data is fresh
+      @server.reload
+
+      # Process the request
+      Thread.new do
+        server_request.process
       rescue StandardError => e
         ESM.logger.error("#{self.class}##{__method__}") { "Exception: #{e.message}\n#{e.backtrace[0..5].join("\n")}" }
-        raise e if ESM.env.test?
       end
+    rescue StandardError => e
+      ESM.logger.error("#{self.class}##{__method__}") { "Exception: #{e.message}\n#{e.backtrace[0..5].join("\n")}" }
+      raise e if ESM.env.test?
     end
 
     # @private

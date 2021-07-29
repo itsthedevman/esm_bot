@@ -15,8 +15,8 @@ describe ESM::User do
       discord_user = user.discord_user
 
       expect(discord_user).not_to be_nil
-      expect(discord_user.instance_variable_get("@esm_user")).to eql(user)
-      expect(discord_user.instance_variable_get("@steam_uid")).to eql(user.steam_uid)
+      expect(discord_user.instance_variable_get("@esm_user")).to eq(user)
+      expect(discord_user.instance_variable_get("@steam_uid")).to eq(user.steam_uid)
     end
   end
 
@@ -26,8 +26,8 @@ describe ESM::User do
       user = ESM::User.parse(TestUser::User1::STEAM_UID).discord_user
 
       expect(user).not_to be_nil
-      expect(user.esm_user.steam_uid).to eql(TestUser::User1::STEAM_UID)
-      expect(user.esm_user.discord_id).to eql(TestUser::User1::ID)
+      expect(user.esm_user.steam_uid).to eq(TestUser::User1::STEAM_UID)
+      expect(user.esm_user.discord_id).to eq(TestUser::User1::ID)
     end
 
     it "should parse discord_id" do
@@ -35,8 +35,8 @@ describe ESM::User do
       user = ESM::User.parse(TestUser::User1::ID).discord_user
 
       expect(user).not_to be_nil
-      expect(user.esm_user.steam_uid).to eql(TestUser::User1::STEAM_UID)
-      expect(user.esm_user.discord_id).to eql(TestUser::User1::ID)
+      expect(user.esm_user.steam_uid).to eq(TestUser::User1::STEAM_UID)
+      expect(user.esm_user.discord_id).to eq(TestUser::User1::ID)
     end
 
     it "should parse discord_tag" do
@@ -44,8 +44,8 @@ describe ESM::User do
       user = ESM::User.parse("<@#{TestUser::User1::ID}>").discord_user
 
       expect(user).not_to be_nil
-      expect(user.esm_user.steam_uid).to eql(TestUser::User1::STEAM_UID)
-      expect(user.esm_user.discord_id).to eql(TestUser::User1::ID)
+      expect(user.esm_user.steam_uid).to eq(TestUser::User1::STEAM_UID)
+      expect(user.esm_user.discord_id).to eq(TestUser::User1::ID)
     end
 
     it "should parse discord_tag (nickname)" do
@@ -53,8 +53,8 @@ describe ESM::User do
       user = ESM::User.parse("<@!#{TestUser::User1::ID}>").discord_user
 
       expect(user).not_to be_nil
-      expect(user.esm_user.steam_uid).to eql(TestUser::User1::STEAM_UID)
-      expect(user.esm_user.discord_id).to eql(TestUser::User1::ID)
+      expect(user.esm_user.steam_uid).to eq(TestUser::User1::STEAM_UID)
+      expect(user.esm_user.discord_id).to eq(TestUser::User1::ID)
     end
 
     it "should parse discord_tag (bot?)" do
@@ -62,8 +62,8 @@ describe ESM::User do
       user = ESM::User.parse("<@&#{TestUser::User1::ID}>").discord_user
 
       expect(user).not_to be_nil
-      expect(user.esm_user.steam_uid).to eql(TestUser::User1::STEAM_UID)
-      expect(user.esm_user.discord_id).to eql(TestUser::User1::ID)
+      expect(user.esm_user.steam_uid).to eq(TestUser::User1::STEAM_UID)
+      expect(user.esm_user.discord_id).to eq(TestUser::User1::ID)
     end
 
     it "should fail parse and return nil" do
@@ -78,7 +78,7 @@ describe ESM::User do
 
       expect(user).not_to be_nil
       expect(user.steam_uid).to be_nil
-      expect(user.esm_user.id).to eql(unregistered_user.id)
+      expect(user.esm_user.id).to eq(unregistered_user.id)
     end
 
     it "should handle parsing an int" do
@@ -87,7 +87,7 @@ describe ESM::User do
 
       expect(user).not_to be_nil
       expect(user.steam_uid).to be_nil
-      expect(user.esm_user.id).to eql(unregistered_user.id)
+      expect(user.esm_user.id).to eq(unregistered_user.id)
     end
   end
 
@@ -102,8 +102,8 @@ describe ESM::User do
       user = ESM::User.find_by_discord_id(registered_user.discord_id).discord_user
 
       expect(user).not_to be_nil
-      expect(user.steam_uid).to eql(registered_user.steam_uid)
-      expect(user.esm_user.id).to eql(registered_user.id)
+      expect(user.steam_uid).to eq(registered_user.steam_uid)
+      expect(user.esm_user.id).to eq(registered_user.id)
     end
 
     it "should not be registered" do
@@ -112,7 +112,7 @@ describe ESM::User do
 
       expect(user).not_to be_nil
       expect(user.steam_uid).to be_nil
-      expect(user.esm_user.id).to eql(unregistered_user.id)
+      expect(user.esm_user.id).to eq(unregistered_user.id)
     end
   end
 

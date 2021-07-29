@@ -3,6 +3,10 @@
 module ESM
   class Notifications
     EVENTS = %w[
+      debug
+      info
+      warn
+      error
       ready
       argument_parse
       server_on_connect
@@ -24,7 +28,7 @@ module ESM
 
       ActiveSupport::Notifications.instrument("#{name}.esm", args)
     rescue StandardError => e
-      ESM.logger.error("#{self.class}##{__method__}") { JSON.pretty_generate(uuid: SecureRandom.uuid, message: e.message, backtrace: e.backtrace) }
+      ESM.logger.error("#{self.class}##{__method__}") { ESM::JSON.pretty_generate(uuid: SecureRandom.uuid, message: e.message, backtrace: e.backtrace) }
     end
 
     def self.subscribe
@@ -33,9 +37,70 @@ module ESM
       end
     end
 
+    def self.debug(name, _start, _finish, _id, payload)
+      if payload.key?(:class) && payload.key?(:method)
+        name = "#{payload[:class]}##{payload[:method]}"
+
+        payload.delete(:class)
+        payload.delete(:method)
+      end
+
+      ESM.logger.info(name) do
+        ESM::JSON.pretty_generate(payload)
+      end
+    end
+
+    def self.info(name, _start, _finish, _id, payload)
+      if payload.key?(:class) && payload.key?(:method)
+        name = "#{payload[:class]}##{payload[:method]}"
+
+        payload.delete(:class)
+        payload.delete(:method)
+      end
+
+      ESM.logger.info(name) do
+        ESM::JSON.pretty_generate(payload)
+      end
+    end
+
+    def self.warn(name, _start, _finish, _id, payload)
+      if payload.key?(:class) && payload.key?(:method)
+        name = "#{payload[:class]}##{payload[:method]}"
+
+        payload.delete(:class)
+        payload.delete(:method)
+      end
+
+      ESM.logger.warn(name) do
+        ESM::JSON.pretty_generate(payload)
+      end
+    end
+
+    def self.error(name, _start, _finish, _id, payload)
+      if payload[:error].is_a?(StandardError)
+        e = payload[:error].dup
+
+        payload[:error] = {
+          message: e.message,
+          backtrace: e.backtrace[0..10]
+        }
+      end
+
+      if payload.key?(:class) && payload.key?(:method)
+        name = "#{payload[:class]}##{payload[:method]}"
+
+        payload.delete(:class)
+        payload.delete(:method)
+      end
+
+      ESM.logger.error(name) do
+        ESM::JSON.pretty_generate(payload)
+      end
+    end
+
     def self.ready(name, _start, _finish, _id, _payload)
       ESM.logger.info(name) do
-        JSON.pretty_generate(
+        ESM::JSON.pretty_generate(
           invite_url: ESM.bot.invite_url(permission_bits: ESM::Bot::PERMISSION_BITS)
         )
       end
@@ -48,7 +113,7 @@ module ESM
       return if command.event.nil?
 
       ESM.logger.info(name) do
-        JSON.pretty_generate(
+        ESM::JSON.pretty_generate(
           author: "#{command.current_user.distinct} (#{command.current_user.id})",
           channel: "#{Discordrb::Channel::TYPE_NAMES[command.event.channel.type]} (#{command.event.channel.id})",
           command: command.name,
@@ -67,7 +132,7 @@ module ESM
       return if command.event.nil?
 
       ESM.logger.info(name) do
-        JSON.pretty_generate(
+        ESM::JSON.pretty_generate(
           author: "#{command.current_user.distinct} (#{command.current_user.id})",
           channel: "#{Discordrb::Channel::TYPE_NAMES[command.event.channel.type]} (#{command.event.channel.id})",
           command: command.name,
@@ -79,8 +144,7 @@ module ESM
     end
 
     def self.command_from_server(name, _start, _finish, _id, payload)
-      received_command = payload[:received_command]
-      command = received_command.request.command
+      command = payload[:command]
 
       # This is triggered by system commands as well
       return if command.nil?
@@ -94,7 +158,7 @@ module ESM
           message: command.event.message.content,
           arguments: command.arguments.to_h,
           cooldown: command.current_cooldown&.attributes,
-          response: received_command.to_h
+          response: payload[:response]
         )
       end
     end
@@ -105,7 +169,7 @@ module ESM
       ESM.logger.debug(name) do
         parser = payload[:parser]
 
-        JSON.pretty_generate(
+        ESM::JSON.pretty_generate(
           argument: payload[:argument],
           message: payload[:message],
           regex: payload[:regex],
@@ -119,13 +183,13 @@ module ESM
 
     def self.websocket_server_deliver(name, _start, _finish, _id, payload)
       ESM.logger.info(name) do
-        JSON.pretty_generate(payload[:request].to_h)
+        ESM::JSON.pretty_generate(payload[:request])
       end
     end
 
     def self.websocket_client_on_message(name, _start, _finish, _id, payload)
       ESM.logger.debug(name) do
-        JSON.pretty_generate(JSON.parse(payload[:event].data))
+        ESM::JSON.pretty_generate(payload[:event].data)
       end
     end
 
@@ -133,7 +197,7 @@ module ESM
       message = payload[:message]
 
       ESM.logger.info(name) do
-        JSON.pretty_generate(
+        ESM::JSON.pretty_generate(
           channel: "#{payload[:channel].name} (#{payload[:channel].id})",
           message: message.is_a?(ESM::Embed) ? message.to_h : message
         )
@@ -145,7 +209,7 @@ module ESM
       exception = payload[:exception]
 
       ESM.logger.debug(name) do
-        JSON.pretty_generate(
+        ESM::JSON.pretty_generate(
           message: payload[:message],
           to: recipient_id,
           exception: exception.message,
@@ -240,7 +304,7 @@ module ESM
 
       # For debugging
       ESM.logger.info(name) do
-        JSON.pretty_generate(
+        ESM::JSON.pretty_generate(
           type: type,
           server: server.server_id,
           embed: notification.to_h,
@@ -288,8 +352,8 @@ module ESM
     def self.server_on_connect(name, _start, _finish, _id, payload)
       server = payload[:server]
 
-      ESM.logger.debug(name) do
-        JSON.pretty_generate(server_id: server.server_id, uptime: server.uptime)
+      ESM.logger.info(name) do
+        ESM::JSON.pretty_generate(server_id: server.server_id, uptime: server.uptime)
       end
 
       server.community.log_event(:reconnect, I18n.t("server_connected", server: server.server_id, uptime: server.uptime))
@@ -299,7 +363,7 @@ module ESM
       server = payload[:server]
 
       ESM.logger.debug(name) do
-        JSON.pretty_generate(bot_stopping: ESM.bot.stopping?, server_id: server.server_id, uptime: server.uptime)
+        ESM::JSON.pretty_generate(bot_stopping: ESM.bot.stopping?, server_id: server.server_id, uptime: server.uptime)
       end
 
       message =

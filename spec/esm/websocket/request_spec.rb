@@ -10,7 +10,7 @@ describe ESM::Websocket::Request do
     )
 
     expect(request).not_to be_nil
-    expect(request.command_name).to eql("testing")
+    expect(request.command_name).to eq("testing")
   end
 
   it "should accept ESM::Command for command" do
@@ -22,7 +22,7 @@ describe ESM::Websocket::Request do
     )
 
     expect(request).not_to be_nil
-    expect(request.command_name).to eql("base")
+    expect(request.command_name).to eq("base")
   end
 
   it "should accept nil for user" do
@@ -35,7 +35,7 @@ describe ESM::Websocket::Request do
 
     expect(request).not_to be_nil
     expect(request.user).to be_nil
-    expect(request.user_info).to eql(["", ""])
+    expect(request.user_info).to eq(["", ""])
   end
 
   it "should accept a valid user" do
@@ -49,7 +49,7 @@ describe ESM::Websocket::Request do
 
     expect(request).not_to be_nil
     expect(request.user).not_to be_nil
-    expect(request.user_info).to eql([user.mention, user.id])
+    expect(request.user_info).to eq([user.mention, user.id])
   end
 
   describe "#to_s" do
@@ -70,7 +70,7 @@ describe ESM::Websocket::Request do
         "parameters" => params
     }.to_json
 
-      expect(request.to_s).to eql(valid_hash_string)
+      expect(request.to_s).to eq(valid_hash_string)
     end
   end
 

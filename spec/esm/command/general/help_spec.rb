@@ -8,7 +8,7 @@ describe ESM::Command::General::Help, category: "command" do
   end
 
   it "should have 1 argument" do
-    expect(command.arguments.size).to eql(1)
+    expect(command.arguments.size).to eq(1)
   end
 
   it "should have a description" do
@@ -31,10 +31,10 @@ describe ESM::Command::General::Help, category: "command" do
 
       embed = ESM::Test.messages.first.second
       expect(embed.title).to match(/my name is exile server manager/i)
-      expect(embed.description).to eql(I18n.t("commands.help.getting_started.description"))
-      expect(embed.fields.size).to eql(1)
-      expect(embed.fields.first.name).to eql(I18n.t("commands.help.categories.name"))
-      expect(embed.fields.first.value).to eql(I18n.t("commands.help.categories.value", prefix: ESM.config.prefix))
+      expect(embed.description).to eq(I18n.t("commands.help.getting_started.description"))
+      expect(embed.fields.size).to eq(1)
+      expect(embed.fields.first.name).to eq(I18n.t("commands.help.categories.name"))
+      expect(embed.fields.first.value).to eq(I18n.t("commands.help.categories.value", prefix: ESM.config.prefix))
     end
 
     it "should return a valid embed (commands)" do

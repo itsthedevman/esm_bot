@@ -29,46 +29,46 @@ describe ESM::Cooldown do
   it "should show time left" do
     # These will always be one second off.
     cooldown = build(:cooldown, :active)
-    expect(cooldown.to_s).to eql("9 seconds")
+    expect(cooldown.to_s).to eq("9 seconds")
 
     cooldown = build(:cooldown, :active, delay: 2.days)
-    expect(cooldown.to_s).to eql("1 day, 23 hours, 59 minutes, and 59 seconds")
+    expect(cooldown.to_s).to eq("1 day, 23 hours, 59 minutes, and 59 seconds")
   end
 
   describe "Singular Times" do
     it "should be singlular (1 Second)" do
       cooldown = build(:cooldown, :active, delay: 2.seconds)
-      expect(cooldown.to_s).to eql("1 second")
+      expect(cooldown.to_s).to eq("1 second")
     end
 
     it "should be singlular (1 Minute)" do
       cooldown = build(:cooldown, :active, delay: (1.minute + 1.second))
-      expect(cooldown.to_s).to eql("1 minute")
+      expect(cooldown.to_s).to eq("1 minute")
     end
 
     it "should be singlular (1 Hour)" do
       cooldown = build(:cooldown, :active, delay: (1.hour + 1.second))
-      expect(cooldown.to_s).to eql("1 hour")
+      expect(cooldown.to_s).to eq("1 hour")
     end
 
     it "should be singlular (1 Day)" do
       cooldown = build(:cooldown, :active, delay: (1.day + 1.second))
-      expect(cooldown.to_s).to eql("1 day")
+      expect(cooldown.to_s).to eq("1 day")
     end
 
     it "should be singlular (1 Week)" do
       cooldown = build(:cooldown, :active, delay: (1.week + 1.second))
-      expect(cooldown.to_s).to eql("1 week")
+      expect(cooldown.to_s).to eq("1 week")
     end
 
     it "should be singlular (1 Month)" do
       cooldown = build(:cooldown, :active, delay: (1.month + 1.second))
-      expect(cooldown.to_s).to eql("1 month")
+      expect(cooldown.to_s).to eq("1 month")
     end
 
     it "should be singlular (1 Year)" do
       cooldown = build(:cooldown, :active, delay: (1.year + 1.second))
-      expect(cooldown.to_s).to eql("1 year")
+      expect(cooldown.to_s).to eq("1 year")
     end
   end
 
@@ -95,34 +95,34 @@ describe ESM::Cooldown do
 
     it "should not change (seconds, no changes)" do
       cooldown = create(:cooldown, cooldown_defaults.merge(cooldown_type: configuration.cooldown_type, cooldown_quantity: configuration.cooldown_quantity)).reload
-      expect(cooldown.expires_at.to_s).to eql(expires_at.to_s)
+      expect(cooldown.expires_at.to_s).to eq(expires_at.to_s)
     end
 
     it "should not change (times, no changes)" do
       configuration.update!(cooldown_type: "times", cooldown_quantity: 1)
       cooldown = create(:cooldown, cooldown_defaults.merge(cooldown_type: configuration.cooldown_type, cooldown_quantity: configuration.cooldown_quantity)).reload
-      expect(cooldown.expires_at.to_s).to eql(expires_at.to_s)
-      expect(cooldown.cooldown_amount).to eql(0)
+      expect(cooldown.expires_at.to_s).to eq(expires_at.to_s)
+      expect(cooldown.cooldown_amount).to eq(0)
     end
 
     it "should reset (seconds -> times)" do
       configuration.update(cooldown_type: "times", cooldown_quantity: 1)
       cooldown = create(:cooldown, cooldown_defaults.merge(cooldown_type: "seconds", cooldown_quantity: 2)).reload
-      expect(cooldown.expires_at.to_s).not_to eql(expires_at.to_s)
-      expect(cooldown.cooldown_amount).to eql(0)
+      expect(cooldown.expires_at.to_s).not_to eq(expires_at.to_s)
+      expect(cooldown.cooldown_amount).to eq(0)
     end
 
     it "should reset (times -> seconds)" do
       configuration.update(cooldown_type: "seconds", cooldown_quantity: 2)
       cooldown = create(:cooldown, cooldown_defaults.merge(cooldown_type: "times", cooldown_quantity: 1)).reload
-      expect(cooldown.expires_at.to_s).not_to eql(expires_at.to_s)
-      expect(cooldown.cooldown_amount).to eql(0)
+      expect(cooldown.expires_at.to_s).not_to eq(expires_at.to_s)
+      expect(cooldown.cooldown_amount).to eq(0)
     end
 
     it "should not change (seconds, new value is greater than current)" do
       configuration.update(cooldown_type: "seconds", cooldown_quantity: 5)
       cooldown = create(:cooldown, cooldown_defaults.merge(cooldown_type: "seconds", cooldown_quantity: 2)).reload
-      expect(cooldown.expires_at.to_s).to eql(expires_at.to_s)
+      expect(cooldown.expires_at.to_s).to eq(expires_at.to_s)
     end
 
     # This test needs to use hard coded values because of maths
@@ -132,25 +132,25 @@ describe ESM::Cooldown do
       it "5 seconds to 2 seconds (compensated 3 seconds)" do
         configuration.update(cooldown_type: "seconds", cooldown_quantity: 2)
         cooldown = create(:cooldown, cooldown_defaults.merge(cooldown_type: "seconds", cooldown_quantity: 5, expires_at: expires_at)).reload
-        expect(cooldown.expires_at.to_s).to eql("2039-12-31 23:59:57 UTC")
+        expect(cooldown.expires_at.to_s).to eq("2039-12-31 23:59:57 UTC")
       end
 
       it "1 minute to 30 seconds (compensated 30 seconds)" do
         configuration.update(cooldown_type: "seconds", cooldown_quantity: 30)
         cooldown = create(:cooldown, cooldown_defaults.merge(cooldown_type: "minutes", cooldown_quantity: 1, expires_at: expires_at)).reload
-        expect(cooldown.expires_at.to_s).to eql("2039-12-31 23:59:30 UTC")
+        expect(cooldown.expires_at.to_s).to eq("2039-12-31 23:59:30 UTC")
       end
 
       it "1 hour to 15 seconds (compensated 59 minutes and 45 seconds)" do
         configuration.update(cooldown_type: "seconds", cooldown_quantity: 15)
         cooldown = create(:cooldown, cooldown_defaults.merge(cooldown_type: "hour", cooldown_quantity: 1, expires_at: expires_at)).reload
-        expect(cooldown.expires_at.to_s).to eql("2039-12-31 23:00:15 UTC")
+        expect(cooldown.expires_at.to_s).to eq("2039-12-31 23:00:15 UTC")
       end
 
       it "1 day to 2 minute (compensated 23 hours and 58 minutes" do
         configuration.update(cooldown_type: "minutes", cooldown_quantity: 2)
         cooldown = create(:cooldown, cooldown_defaults.merge(cooldown_type: "days", cooldown_quantity: 1, expires_at: expires_at)).reload
-        expect(cooldown.expires_at.to_s).to eql("2039-12-31 00:02:00 UTC")
+        expect(cooldown.expires_at.to_s).to eq("2039-12-31 00:02:00 UTC")
       end
     end
   end

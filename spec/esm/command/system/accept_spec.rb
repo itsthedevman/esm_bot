@@ -8,7 +8,7 @@ describe ESM::Command::System::Accept, category: "command" do
   end
 
   it "should have 1 argument" do
-    expect(command.arguments.size).to eql(1)
+    expect(command.arguments.size).to eq(1)
   end
 
   it "should have a description" do
@@ -44,7 +44,7 @@ describe ESM::Command::System::Accept, category: "command" do
       expect { command.execute(event) }.not_to raise_error
 
       expect(ESM::Test.messages).to be_empty
-      expect(ESM::Request.all.size).to eql(0)
+      expect(ESM::Request.all.size).to eq(0)
     end
 
     it "should run (Invalid UUID)" do

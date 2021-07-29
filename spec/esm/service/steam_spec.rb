@@ -8,6 +8,6 @@ describe ESM::Service::Steam do
   end
 
   it "should return 'Public'" do
-    expect(steam.profile_visibility).to eql("Public")
+    expect(steam.profile_visibility).to eq("Public")
   end
 end

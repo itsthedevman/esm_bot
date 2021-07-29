@@ -11,7 +11,7 @@ describe ESM::Command::Development::Say, category: "command" do
   end
 
   it "should have 1 argument" do
-    expect(command.arguments.size).to eql(1)
+    expect(command.arguments.size).to eq(1)
   end
 
   it "should have a description" do
@@ -29,7 +29,7 @@ describe ESM::Command::Development::Say, category: "command" do
       expect { command.execute(event) }.not_to raise_error
 
       response = ESM::Test.messages.first.second
-      expect(response).to eql("Hello World")
+      expect(response).to eq("Hello World")
     end
   end
 end

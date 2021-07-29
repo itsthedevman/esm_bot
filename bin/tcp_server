@@ -1,0 +1,5 @@
+#!/bin/bash
+
+export RUST_LOG='debug'
+export TCP_SERVER_PORT='3003'
+cargo run

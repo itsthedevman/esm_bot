@@ -3,143 +3,105 @@
 module ESM
   module Event
     class ServerInitialization
-      attr_reader :packet if ESM.env.test?
+      attr_reader :data
 
-      def initialize(connection:, server:, parameters:)
+      def initialize(connection, message)
         @connection = connection
-        @server = server
-        @params = parameters
+        @server = connection.server
+        @message = message
         @community = @server.community
-        @guild = ESM.bot.server(@community.guild_id)
+        @discord_server = @community.discord_server
       end
 
       def run!
         # Updates the database with information from the server
-        initialize_server!
+        initialize_server
 
         # We need to let the DLL know some stuff (namely a lot of stuff)
-        build_settings_packet
+        build_setting_data
 
-        # Send packet to server
+        # Send message to server
         send_response
       end
 
       # Called when an admin updates some settings.
       def update
         # We need to let the DLL know some stuff (namely a lot of stuff)
-        build_settings_packet
+        build_setting_data
 
-        # Send packet to server
+        # Send message to server
         send_response
       end
 
       private
 
-      def initialize_server!
-        update_server!
-        update_server_settings!
-        store_territory_info!
+      def initialize_server
+        update_server
+        update_server_settings
+        store_territory_data
       end
 
-      def update_server!
+      def update_server
         @server.update!(
-          server_name: @params.server_name,
-          server_start_time: DateTime.parse(@params.server_start_time).utc,
+          server_name: @message.data.server_name,
+          server_start_time: @message.data.server_start_time.utc,
           disconnected_at: nil
         )
       end
 
-      def update_server_settings!
+      def update_server_settings
         @server.server_setting.update(
-          territory_price_per_object: @params.price_per_object,
-          territory_lifetime: @params.territory_lifetime
+          territory_price_per_object: @message.data.price_per_object,
+          territory_lifetime: @message.data.territory_lifetime
         )
       end
 
-      def store_territory_info!
+      def store_territory_data
         @server.territories.delete_all
 
-        # A nil version means v1 extension
         territories =
-          if @connection.version.nil?
-            # All territory info is prefixed with `territory_level_`
-            territory_info = @params.to_h.select { |key, _| key.to_s.starts_with?("territory_level_") }
-
-            territory_info.map do |_, info|
-              {
-                server_id: @server.id,
-                territory_level: info[:level],
-                territory_purchase_price: info[:purchase_price],
-                territory_radius: info[:radius],
-                territory_object_count: info[:object_count]
-              }
-            end
-          else
-            @params.territory_data.map do |level, data|
-              {
-                server_id: @server.id,
-                territory_level: level.to_i,
-                territory_purchase_price: data.purchase_price,
-                territory_radius: data.radius,
-                territory_object_count: data.object_count
-              }
-            end
+          @message.data.territory_data.map do |data|
+            {
+              server_id: @server.id,
+              territory_level: data[:level],
+              territory_purchase_price: data[:purchase_price],
+              territory_radius: data[:radius],
+              territory_object_count: data[:object_count]
+            }
           end
 
         ESM::Territory.import(territories)
       end
 
-      def build_settings_packet
+      def build_setting_data
         settings = @server.server_setting
         rewards = @server.server_reward
-        territory_admins = build_territory_admins
 
-        @packet = OpenStruct.new(
-          server_id: @server.server_id,
-          territory_admins: territory_admins,
+        # Remove the database and v1 fields
+        data = settings.attributes.without(
+          *%w[
+            id server_id created_at updated_at deleted_at
+            server_restart_hour server_restart_min request_thread_type request_thread_tick logging_path
+          ]
+        ).symbolize_keys
+
+        data = data.merge(
+          territory_payment_tax: settings.territory_payment_tax / 100,
+          territory_upgrade_tax: settings.territory_upgrade_tax / 100,
           extdb_path: settings.extdb_path || "",
-          gambling_modifier: settings.gambling_modifier,
-          gambling_payout: settings.gambling_payout,
-          gambling_randomizer_max: settings.gambling_randomizer_max,
-          gambling_randomizer_mid: settings.gambling_randomizer_mid,
-          gambling_randomizer_min: settings.gambling_randomizer_min,
-          gambling_win_chance: settings.gambling_win_chance,
-          logging_add_player_to_territory: settings.logging_add_player_to_territory,
-          logging_demote_player: settings.logging_demote_player,
-          logging_exec: settings.logging_exec,
-          logging_gamble: settings.logging_gamble,
-          logging_modify_player: settings.logging_modify_player,
-          logging_pay_territory: settings.logging_pay_territory,
-          logging_promote_player: settings.logging_promote_player,
-          logging_remove_player_from_territory: settings.logging_remove_player_from_territory,
-          logging_reward: settings.logging_reward,
-          logging_transfer: settings.logging_transfer,
-          logging_upgrade_territory: settings.logging_upgrade_territory,
-          max_payment_count: settings.max_payment_count,
-          taxes_territory_payment: settings.territory_payment_tax / 100,
-          taxes_territory_upgrade: settings.territory_upgrade_tax / 100,
+          territory_admins: build_territory_admins,
           reward_player_poptabs: rewards.player_poptabs,
           reward_locker_poptabs: rewards.locker_poptabs,
           reward_respect: rewards.respect,
-          reward_items: rewards.reward_items.to_a
+          reward_items: rewards.reward_items
         )
 
-        # V2 exits
-        return if @connection.version.present?
-
-        # V1
-        @packet.function_name = "postServerInitialization"
-        @packet.is_premium = true
-        @packet.request_thread_tick = settings.request_thread_tick
-        @packet.request_thread_type = settings.request_thread_type == "exile"
-        @packet.territory_admins = territory_admins.to_json
-        @packet.reward_items = @packet.reward_items.to_json
-        @packet.logging_path = settings.logging_path || ""
+        @data = OpenStruct.new(data)
       end
 
       def build_territory_admins
         # Get all roles with administrator or that are set as territory admins
-        roles = @guild.roles.select { |role| role.permissions.administrator || @community.territory_admin_ids.include?(role.id.to_s) }
+        roles = @discord_server.roles.select { |role| role.permissions.administrator || @community.territory_admin_ids.include?(role.id.to_s) }
 
         # Get all of the user's discord IDs who have these roles
         discord_ids =
@@ -148,43 +110,21 @@ module ESM
           end.flatten
 
         # Pluck all the steam UIDs we have, including the guild owners
-        ESM::User.where(discord_id: discord_ids + [@guild.owner.id.to_s]).where.not(steam_uid: nil).pluck(:steam_uid)
+        ESM::User.where(discord_id: discord_ids + [@discord_server.owner.id.to_s]).where.not(steam_uid: nil).pluck(:steam_uid)
       end
 
       def send_response
-        # Build the request
-        request =
-          if @connection.version.nil?
-            # V1
-            ESM::Websocket::RequestV1.new(command_name: "post_initialization", parameters: @packet.to_h, remove_on_ignore: true)
-          else
-            # V2
-            ESM::Websocket::Request.new(executing_command: "server_post_initialization", parameters: @packet.to_h)
-          end
+        message = ESM::Connection::Message.new(server_id: @server.server_id, type: "post_init", data: @data)
+        message.add_callback(:on_error, :on_error)
+        message.add_callback("on_response") do |_incoming, _outgoing|
+          # Trigger a connect notification
+          ESM::Notifications.trigger("server_on_connect", server: @connection.server)
 
-        # After the server has replied to this request, notify the community and allow commands.
-        if @connection.version.nil?
-          # V1
-          request.on_reply = lambda do |connection|
-            # Trigger a connect notification
-            ESM::Notifications.trigger("server_on_connect", server: connection.server)
-
-            # Set the connection to be available for commands
-            connection.ready = true
-          end
-        else
-          # V2
-          request.add_callback(:after_execute) do |connection, _parameters|
-            # Trigger a connect notification
-            ESM::Notifications.trigger("server_on_connect", server: connection.server)
-
-            # Set the connection to be available for commands
-            connection.ready = true
-          end
+          # Set the connection to be available for commands
+          @connection.initialized = true
         end
 
-        # Send it to the dll, don't use `Websocket#deliver` for this since it will raise on the connection not being ready.
-        @connection.deliver!(request)
+        @connection.send_message(message)
       end
     end
   end

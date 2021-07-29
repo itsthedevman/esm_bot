@@ -1,6 +1,6 @@
 module ESM
   module Event
-    class Xm8Notification
+    class Xm8NotificationV1
       TYPES = %w[
         custom
         base-raid

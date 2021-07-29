@@ -5,9 +5,7 @@ class Hash
     self.to_json.to_ostruct
   end
 
-  def format(join_with: "", &_block)
-    self.map do |key, value|
-      yield(key, value)
-    end.join(join_with)
+  def format(join_with: "", &block)
+    self.map(&block).join(join_with)
   end
 end

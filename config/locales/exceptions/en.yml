@@ -15,8 +15,10 @@ en:
       **Message:**
       ```%{message}```
     extension:
-      default: "Error code `%{error_code}` is not registered as a valid locale. If you are trying to send a custom error message, please use `ESM_fnc_respondWithError`"
-      account_does_not_exist: "Hey %{user}, you need to join `%{server_id}` first before you can run **any** commands on it."
+      test: "%{user} | %{message_id} | %{server_id} | %{type} | %{data_type} | %{mdata_type} | %{data_content_foo} | %{mdata_content_bar}"
+      default: "Error type `%{type}` is not registered as a valid locale"
+      account_does_not_exist: "Hey %{user}, you will need to join `%{server_id}` first before you can run **any** commands on it."
+      client_not_connected: "Hey %{user}, it looks like `%{server_id}` isn't connected right now.\nPlease try again in a few minutes as the server may be restarting."
   command_errors:
     # base
     text_only: "Hey %{user}, this command can only be used in a Discord server's **text channel**.\n\n__I will not be able to process your request in this channel__"

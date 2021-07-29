@@ -31,11 +31,17 @@ module ESM
     # Raised if a server fails to authenticate to the Websocket server
     class FailedAuthentication < Error; end
 
+    # Raised when a message fails validation or fails to create
+    class InvalidMessage < Error; end
+
     # Raised if the parser failed to find the argument in a message from a user
     class FailedArgumentParse < DataError; end
 
     # Generic exception for any checks
     class CheckFailure < DataError; end
+
+    # Raised when attempting to send a message the tcp_server when it's not online
+    class ServerNotConnected < Error; end
 
     # Handles an error code response from the extension
     class ExtensionError < Error
@@ -47,8 +53,8 @@ module ESM
 
       # Translates the underlying error code.
       # In normal workflow, this method will be passed the following arguments:
-      # @param user [String] The mention for the user that ran the command
-      # @param server_id [String] The ID of the server the command was ran on
+      # @option [String] :user The mention for the user that ran the command
+      # @option [String] :server_id The ID of the server the command was ran on
       def translate(**args)
         I18n.t(
           "exceptions.extension.#{@error_code}",

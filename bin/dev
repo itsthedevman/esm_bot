@@ -4,6 +4,20 @@ export RUBYOPT='-W:no-deprecated -W:no-experimental'
 export PRINT_LOG='true'
 export ESM_ENV='development'
 
+working_dir=$(pwd)
+
+# # Compile all dependencies
+# for dir in crates/*/; do
+#   cd $working_dir/$dir
+#   cargo build --release
+#   if [ $? -ne 0 ]
+#   then
+#     exit $?
+#   fi
+# done
+
+cd $working_dir
+
 if [[ -z $1 ]]
 then
   rerun --dir lib bin/start_dev.rb

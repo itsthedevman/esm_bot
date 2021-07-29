@@ -10,10 +10,10 @@ module ESM
     PERMISSION_BITS = 52_288
 
     STATUS_TYPES = {
-      "PLAYING": 0,
-      "STREAMING": 1,
-      "LISTENING": 2,
-      "WATCHING": 3
+      PLAYING: 0,
+      STREAMING: 1,
+      LISTENING: 2,
+      WATCHING: 3
     }.freeze
 
     attr_reader :config, :prefix
@@ -27,8 +27,7 @@ module ESM
       # Connect to the database
       ESM::Database.connect!
 
-      # load_community_prefixes
-
+      load_community_prefixes
       @resend_queue = ESM::Bot::ResendQueue.new(self)
 
       super(token: ESM.config.token, prefix: method(:determine_activation_prefix), help_command: false)
@@ -50,6 +49,7 @@ module ESM
 
       @esm_status = :stopping
       ESM::Websocket::Server.stop
+      ESM::Connection::Server.stop!
       ESM::Request::Overseer.die
       @resend_queue.die
 
@@ -57,8 +57,6 @@ module ESM
     end
 
     # Overriding DiscordRB's variant to allow commands to be case-insensitive
-    #
-    # @override
     def simple_execute(chain, event)
       return nil if chain.empty?
 
@@ -98,8 +96,13 @@ module ESM
       # Wait until the bot has connected before starting the websocket.
       # This is to avoid servers connecting before the bot is ready
       ESM::API.run!
+
+      # V1
       ESM::Websocket.start!
       ESM::Request::Overseer.watch
+      # V1
+
+      ESM::Connection::Server.run!
 
       @esm_status = :ready
     end

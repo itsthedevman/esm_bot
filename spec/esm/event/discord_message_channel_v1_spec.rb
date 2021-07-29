@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-describe ESM::Event::DiscordMessageChannel do
+describe ESM::Event::DiscordMessageChannelV1 do
   let!(:community) { create(:esm_community) }
   let!(:server) { create(:server, community_id: community.id) }
 
   def event(params)
-    ESM::Event::DiscordMessageChannel.new(server: server, parameters: params, connection: nil)
+    ESM::Event::DiscordMessageChannelV1.new(server: server, parameters: params, connection: nil)
   end
 
   describe "Errors" do
@@ -13,20 +13,20 @@ describe ESM::Event::DiscordMessageChannel do
       params = OpenStruct.new(channelID: ESM::Community::Secondary::SPAM_CHANNEL, message: "TESTING!")
 
       expect { event(params).run! }.not_to raise_error
-      expect(ESM::Test.messages.size).to eql(1)
+      expect(ESM::Test.messages.size).to eq(1)
       message = ESM::Test.messages.first.second
 
-      expect(message).to eql("**[`ESM_fnc_sendToChannel`]**\nYour Discord Server does not have a channel with ID `#{params.channelID}`. Please provide `ESM_fnc_sendToChannel` a channel ID that belongs to your Discord Server.")
+      expect(message).to eq("**[`ESM_fnc_sendToChannel`]**\nYour Discord Server does not have a channel with ID `#{params.channelID}`. Please provide `ESM_fnc_sendToChannel` a channel ID that belongs to your Discord Server.")
     end
 
     it "should log and not send (Malformed)" do
       params = OpenStruct.new(channelID: community.logging_channel_id, message: '["title", "description"]')
 
       expect { event(params).run! }.not_to raise_error
-      expect(ESM::Test.messages.size).to eql(1)
+      expect(ESM::Test.messages.size).to eq(1)
       message = ESM::Test.messages.first.second
 
-      expect(message).to eql("**[`ESM_fnc_sendToChannel`]**\nThe provided message is malformed and unable to be delivered.\nPlease read the API documentation on my website (https://www.esmbot.com/wiki/api) for the correct format.\nThis is the message I attempted to send: ```#{params.message}```")
+      expect(message).to eq("**[`ESM_fnc_sendToChannel`]**\nThe provided message is malformed and unable to be delivered.\nPlease read the API documentation on my website (https://www.esmbot.com/wiki/api) for the correct format.\nThis is the message I attempted to send: ```#{params.message}```")
     end
   end
 
@@ -35,11 +35,11 @@ describe ESM::Event::DiscordMessageChannel do
       params = OpenStruct.new(channelID: community.logging_channel_id, message: "TESTING!")
 
       expect { event(params).run! }.not_to raise_error
-      expect(ESM::Test.messages.size).to eql(1)
+      expect(ESM::Test.messages.size).to eq(1)
       channel, message = ESM::Test.messages.first
 
-      expect(channel.id.to_s).to eql(params.channelID)
-      expect(message).to eql("**Message from #{server.server_id}**\n#{params.message}")
+      expect(channel.id.to_s).to eq(params.channelID)
+      expect(message).to eq("**Message from #{server.server_id}**\n#{params.message}")
     end
   end
 
@@ -56,17 +56,17 @@ describe ESM::Event::DiscordMessageChannel do
       )
 
       expect { event(params).run! }.not_to raise_error
-      expect(ESM::Test.messages.size).to eql(1)
+      expect(ESM::Test.messages.size).to eq(1)
       channel, embed = ESM::Test.messages.first
 
-      expect(channel.id.to_s).to eql(params.channelID)
-      expect(embed.title).to eql("Title")
-      expect(embed.description).to eql("Description")
-      expect(embed.fields.size).to eql(3)
-      expect(embed.fields.first.name).to eql("Field 1 Name")
-      expect(embed.fields.first.value).to eql("Field 1 Value")
-      expect(embed.fields.first.inline).to eql(true)
-      expect(embed.color).to eql(ESM::Color::Toast::BLUE)
+      expect(channel.id.to_s).to eq(params.channelID)
+      expect(embed.title).to eq("Title")
+      expect(embed.description).to eq("Description")
+      expect(embed.fields.size).to eq(3)
+      expect(embed.fields.first.name).to eq("Field 1 Name")
+      expect(embed.fields.first.value).to eq("Field 1 Value")
+      expect(embed.fields.first.inline).to eq(true)
+      expect(embed.color).to eq(ESM::Color::Toast::BLUE)
     end
 
     it "should send (Hex Color)" do
@@ -81,17 +81,17 @@ describe ESM::Event::DiscordMessageChannel do
       )
 
       expect { event(params).run! }.not_to raise_error
-      expect(ESM::Test.messages.size).to eql(1)
+      expect(ESM::Test.messages.size).to eq(1)
       channel, embed = ESM::Test.messages.first
 
-      expect(channel.id.to_s).to eql(params.channelID)
-      expect(embed.title).to eql("Title")
-      expect(embed.description).to eql("Description")
-      expect(embed.fields.size).to eql(3)
-      expect(embed.fields.first.name).to eql("Field 1 Name")
-      expect(embed.fields.first.value).to eql("Field 1 Value")
-      expect(embed.fields.first.inline).to eql(true)
-      expect(embed.color.upcase).to eql(ESM::Color::BLUE)
+      expect(channel.id.to_s).to eq(params.channelID)
+      expect(embed.title).to eq("Title")
+      expect(embed.description).to eq("Description")
+      expect(embed.fields.size).to eq(3)
+      expect(embed.fields.first.name).to eq("Field 1 Name")
+      expect(embed.fields.first.value).to eq("Field 1 Value")
+      expect(embed.fields.first.inline).to eq(true)
+      expect(embed.color.upcase).to eq(ESM::Color::BLUE)
     end
 
     it "should send (Invalid/Random Color)" do
@@ -106,16 +106,16 @@ describe ESM::Event::DiscordMessageChannel do
       )
 
       expect { event(params).run! }.not_to raise_error
-      expect(ESM::Test.messages.size).to eql(1)
+      expect(ESM::Test.messages.size).to eq(1)
       channel, embed = ESM::Test.messages.first
 
-      expect(channel.id.to_s).to eql(params.channelID)
-      expect(embed.title).to eql("Title")
-      expect(embed.description).to eql("Description")
-      expect(embed.fields.size).to eql(3)
-      expect(embed.fields.first.name).to eql("Field 1 Name")
-      expect(embed.fields.first.value).to eql("Field 1 Value")
-      expect(embed.fields.first.inline).to eql(true)
+      expect(channel.id.to_s).to eq(params.channelID)
+      expect(embed.title).to eq("Title")
+      expect(embed.description).to eq("Description")
+      expect(embed.fields.size).to eq(3)
+      expect(embed.fields.first.name).to eq("Field 1 Name")
+      expect(embed.fields.first.value).to eq("Field 1 Value")
+      expect(embed.fields.first.inline).to eq(true)
       expect(embed.color).not_to be_nil
     end
   end

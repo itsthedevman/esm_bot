@@ -8,7 +8,7 @@ describe ESM::Command::General::Mode, category: "command" do
   end
 
   it "should have 2 arguments" do
-    expect(command.arguments.size).to eql(2)
+    expect(command.arguments.size).to eq(2)
   end
 
   it "should have a description" do
@@ -37,8 +37,8 @@ describe ESM::Command::General::Mode, category: "command" do
 
       expect(community.player_mode_enabled?).to be(false)
 
-      expect(response.description).to eql(I18n.t("commands.mode.disabled", community_name: community.name))
-      expect(response.color).to eql(ESM::Color::Toast::GREEN)
+      expect(response.description).to eq(I18n.t("commands.mode.disabled", community_name: community.name))
+      expect(response.color).to eq(ESM::Color::Toast::GREEN)
     end
 
     it "should enable player mode and return an embed" do
@@ -54,8 +54,8 @@ describe ESM::Command::General::Mode, category: "command" do
 
       expect(community.player_mode_enabled?).to be(true)
 
-      expect(response.description).to eql(I18n.t("commands.mode.enabled", community_name: community.name))
-      expect(response.color).to eql(ESM::Color::Toast::GREEN)
+      expect(response.description).to eq(I18n.t("commands.mode.enabled", community_name: community.name))
+      expect(response.color).to eq(ESM::Color::Toast::GREEN)
     end
 
     it "should raise same_mode error (server)" do

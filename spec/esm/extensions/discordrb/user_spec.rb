@@ -10,7 +10,7 @@ describe Discordrb::User do
     it "should get and set" do
       user = ESM.bot.user(TestUser::User1::ID)
       user.steam_uid = TestUser::User1::STEAM_UID
-      expect(user.steam_uid).to eql(TestUser::User1::STEAM_UID)
+      expect(user.steam_uid).to eq(TestUser::User1::STEAM_UID)
     end
   end
 
@@ -24,7 +24,7 @@ describe Discordrb::User do
       user = ESM.bot.user(TestUser::User1::ID)
       db_user = create(:esm_dev)
       user.instance_variable_set("@esm_user", db_user)
-      expect(user.esm_user.id).to eql(db_user.id)
+      expect(user.esm_user.id).to eq(db_user.id)
     end
   end
 end

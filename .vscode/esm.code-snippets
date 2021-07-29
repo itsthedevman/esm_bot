@@ -35,7 +35,7 @@
 		"scope": "ruby",
 		"prefix": ["debug", "ESM.logger.debug"],
 		"body": [
-			"ESM.logger.debug(\"#{self.class}##{__method__}\") { \"${1:message}\" }"
+			"ESM::Notifications.trigger(\"debug\", class: self.class, method: __method__, ${0})"
 		],
 		"description": "Create an debug logger with ESM"
  	},
@@ -43,7 +43,7 @@
 	 	"scope": "ruby",
 	 	"prefix": ["info", "ESM.logger.info"],
 	 	"body": [
-			 "ESM.logger.info(\"#{self.class}##{__method__}\") { \"${1:message}\" }"
+			 "ESM::Notifications.trigger(\"info\", class: self.class, method: __method__, ${0})"
 	 	],
 	 	"description": "Create an info logger with ESM"
 	},
@@ -51,7 +51,7 @@
 		"scope": "ruby",
 		"prefix": ["warn", "ESM.logger.warn"],
 		"body": [
-			"ESM.logger.warn(\"#{self.class}##{__method__}\") { \"${1:message}\" }"
+			"ESM::Notifications.trigger(\"warn\", class: self.class, method: __method__, ${0})"
 		],
 		"description": "Create an warn logger with ESM"
 	 },
@@ -59,7 +59,7 @@
 		"scope": "ruby",
 		"prefix": ["error", "ESM.logger.error"],
 		"body": [
-			"ESM.logger.error(\"#{self.class}##{__method__}\") { \"${1:message}\" }"
+			"ESM::Notifications.trigger(\"error\", class: self.class, method: __method__, error: e, ${0})"
 		],
 		"description": "Create an error logger with ESM"
  	},

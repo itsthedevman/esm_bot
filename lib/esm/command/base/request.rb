@@ -5,7 +5,6 @@ module ESM
     class Base
       module Request
         # @param request [ESM::Request] The request to build this command with
-        # @param accepted [Boolean] If the request was accepted (true) or denied (false)
         # @note Don't load `target_user` from the request. If the arguments contain a target, it will handle it
         def from_request(request)
           @request = request

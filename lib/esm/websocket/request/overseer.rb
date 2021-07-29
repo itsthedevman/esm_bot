@@ -46,7 +46,7 @@ module ESM
           @connection.remove_request(id)
 
           # Don't warn on our internal messages
-          return if request.current_user.nil?
+          return if request.user.nil?
 
           embed =
             ESM::Embed.build do |e|
@@ -54,7 +54,7 @@ module ESM
                 "request_timed_out",
                 command_message: request.command.event.message.content,
                 server_id: @connection.server.server_id,
-                user: request.current_user.mention
+                user: request.user.mention
               )
 
               e.color = :red
@@ -64,7 +64,7 @@ module ESM
           request.command.reply(embed)
         rescue StandardError => e
           ESM.logger.error("#{self.class}##{__method__}") do
-            JSON.pretty_generate(
+            ESM::JSON.pretty_generate(
               server_id: @connection&.server&.server_id,
               command_name: request&.command&.name,
               request: request&.to_h,

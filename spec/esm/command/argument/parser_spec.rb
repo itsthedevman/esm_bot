@@ -8,7 +8,7 @@ describe ESM::Command::Argument::Parser do
       container = container_klass.new([[:test, { regex: /test/, description: "d" }]])
       argument = container.first
       parser = described_class.new(argument, "test").parse!
-      expect(parser.value).to eql("test")
+      expect(parser.value).to eq("test")
     end
 
     it "2" do
@@ -16,7 +16,7 @@ describe ESM::Command::Argument::Parser do
       argument = container.first
 
       parser = described_class.new(argument, "12345").parse!
-      expect(parser.value).to eql("12345")
+      expect(parser.value).to eq("12345")
     end
   end
 
@@ -25,7 +25,7 @@ describe ESM::Command::Argument::Parser do
     argument = container.first
 
     parser = described_class.new(argument, "").parse!
-    expect(parser.value).to eql("testing")
+    expect(parser.value).to eq("testing")
   end
 
   describe "Type-casting" do
@@ -34,7 +34,7 @@ describe ESM::Command::Argument::Parser do
       argument = container.first
 
       parser = described_class.new(argument, "testing").parse!
-      expect(parser.value).to eql("testing")
+      expect(parser.value).to eq("testing")
     end
 
     it "should be integer" do
@@ -42,7 +42,7 @@ describe ESM::Command::Argument::Parser do
       argument = container.first
 
       parser = described_class.new(argument, "1").parse!
-      expect(parser.value).to eql(1)
+      expect(parser.value).to eq(1)
     end
 
     it "should be float" do
@@ -50,7 +50,7 @@ describe ESM::Command::Argument::Parser do
       argument = container.first
 
       parser = described_class.new(argument, "2.5").parse!
-      expect(parser.value).to eql(2.5)
+      expect(parser.value).to eq(2.5)
     end
 
     it "should be json" do
@@ -58,8 +58,8 @@ describe ESM::Command::Argument::Parser do
       argument = container.first
 
       parser = described_class.new(argument, '{ "foo": "bar" }').parse!
-      expect(parser.value).to have_key("foo")
-      expect(parser.value["foo"]).to eql("bar")
+      expect(parser.value).to have_key(:foo)
+      expect(parser.value[:foo]).to eq("bar")
     end
 
     it "should be symbol" do
@@ -67,7 +67,7 @@ describe ESM::Command::Argument::Parser do
       argument = container.first
 
       parser = described_class.new(argument, "testing").parse!
-      expect(parser.value).to eql(:testing)
+      expect(parser.value).to eq(:testing)
     end
   end
 end

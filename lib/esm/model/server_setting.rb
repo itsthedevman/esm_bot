@@ -10,7 +10,6 @@ module ESM
     attribute :gambling_randomizer_mid, :float, default: 0.5
     attribute :gambling_randomizer_max, :float, default: 1
     attribute :gambling_win_chance, :integer, default: 35
-    attribute :logging_path, :text, default: nil
     attribute :logging_add_player_to_territory, :boolean, default: true
     attribute :logging_demote_player, :boolean, default: true
     attribute :logging_exec, :boolean, default: true
@@ -33,6 +32,7 @@ module ESM
     # V1
     attribute :request_thread_type, :string, default: "exile"
     attribute :request_thread_tick, :float, default: 0.1
+    attribute :logging_path, :text, default: nil
 
     belongs_to :server
   end
