@@ -66,6 +66,7 @@ module ESM
       # @option args [Boolean] :convert_types Runs the message's data values against the pre-configured mapping and perform any type conversions if needed
       def initialize(type:, **args)
         @id = args[:id] || SecureRandom.uuid
+        @type = type
 
         # The server provides the server_id as a UTF8 byte array. Convert it to a string
         @server_id =
@@ -75,16 +76,31 @@ module ESM
             args[:server_id]
           end
 
-        @type = type
         @data = OpenStruct.new(args[:data] || {})
+
+        # If there is data and no data_type provided, default to the message's type. Otherwise, consider it "empty"
+        @data_type =
+          if args[:data_type]
+            args[:data_type]
+          elsif @data.present?
+            type
+          else
+            "empty"
+          end
+
         @metadata = OpenStruct.new(args[:metadata] || {})
-        @data_type = args[:data_type] || args[:type].presence || "empty"
         @metadata_type = args[:metadata_type] || "empty"
         @errors = (args[:errors] || []).map(&:to_ostruct)
         @routing_data = OpenStruct.new(command: nil)
         @delivered = false
 
         self.convert_types(data, message_type: @data_type) if args[:convert_types]
+        self.validate!
+      end
+
+      def validate!
+        raise ESM::Exception::InvalidMessage, "\"data\" has values, but \"data_type\" is \"empty\"" if @data.present? && @data_type == "empty"
+        raise ESM::Exception::InvalidMessage, "\"metadata\" has values, but \"metadata_type\" is \"empty\"" if @metadata.present? && @metadata_type == "empty"
       end
 
       # Sets the various config options used by the overseer when routes the message
@@ -217,11 +233,11 @@ module ESM
         mapping = MAPPINGS[message_type.to_sym] if mapping.blank?
 
         # Catches if MAPPINGS does not have type defined
-        raise ESM::Exception::Error, "Failed to find type \"#{message_type}\" in \"message_type_mapping.yml\"" if mapping.nil?
+        raise ESM::Exception::InvalidMessage, "Failed to find type \"#{message_type}\" in \"message_type_mapping.yml\"" if mapping.nil?
 
         data.each do |key, value|
           mapping_class = mapping[key.to_sym]
-          raise ESM::Exception::Error, "Failed to find key \"#{key}\" in mapping for \"#{message_type}\"" if mapping_class.nil?
+          raise ESM::Exception::InvalidMessage, "Failed to find key \"#{key}\" in mapping for \"#{message_type}\"" if mapping_class.nil?
 
           # Check for HashMap since it's not a base Ruby class
           mapping_klass =

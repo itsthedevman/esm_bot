@@ -62,6 +62,37 @@ describe ESM::Connection::Message do
     end
   end
 
+  describe "#initialize" do
+    it "requires a type" do
+      expect { described_class.new }.to raise_error(ArgumentError, "missing keyword: :type")
+      expect { described_class.new(type: "test") }.not_to raise_error
+    end
+
+    it "defaults to empty" do
+      message = described_class.new(type: "test")
+      expect(message.data_type).to eq("empty")
+      expect(message.data.to_h).to eq({})
+      expect(message.metadata_type).to eq("empty")
+      expect(message.metadata.to_h).to eq({})
+    end
+
+    it "defaults the data_type to the message type if data is provided" do
+      message = described_class.new(type: "test", data: { foo: "bar" })
+      expect(message.data_type).to eq("test")
+    end
+
+    it "raises if data is provided but data_type is empty" do
+      # These have to be forced because of the test above. More a "just in case"
+      expect do
+        described_class.new(type: "test", data_type: "empty", data: { foo: "bar" })
+      end.to raise_error(ESM::Exception::InvalidMessage, "\"data\" has values, but \"data_type\" is \"empty\"")
+
+      expect do
+        described_class.new(type: "test", metadata_type: "empty", metadata: { foo: "bar" })
+      end.to raise_error(ESM::Exception::InvalidMessage, "\"metadata\" has values, but \"metadata_type\" is \"empty\"")
+    end
+  end
+
   describe "#convert_types" do
     def mapping(data, type)
       data.each_with_object({}) { |pair, out| out[pair.first] = type }
