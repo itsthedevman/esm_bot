@@ -45,7 +45,6 @@ Gem::Specification.new do |spec|
   spec.add_dependency "puma"
   spec.add_dependency "rake"
   spec.add_dependency "redis"
-  spec.add_dependency "rutie"
   spec.add_dependency "sinatra"
   spec.add_dependency "standalone_migrations"
   spec.add_dependency "steam-condenser"
