@@ -3,6 +3,8 @@
 module ESM
   module Event
     class ServerInitialization
+      attr_reader :data
+
       def initialize(connection, message)
         @connection = connection
         @server = connection.server
@@ -16,18 +18,18 @@ module ESM
         initialize_server
 
         # We need to let the DLL know some stuff (namely a lot of stuff)
-        build_settings_packet
+        build_setting_data
 
-        # Send packet to server
+        # Send message to server
         send_response
       end
 
       # Called when an admin updates some settings.
       def update
         # We need to let the DLL know some stuff (namely a lot of stuff)
-        build_settings_packet
+        build_setting_data
 
-        # Send packet to server
+        # Send message to server
         send_response
       end
 
@@ -71,19 +73,19 @@ module ESM
         ESM::Territory.import(territories)
       end
 
-      def build_settings_packet
+      def build_setting_data
         settings = @server.server_setting
         rewards = @server.server_reward
 
         # Remove the database and v1 fields
-        packet = settings.attributes.without(
+        data = settings.attributes.without(
           *%w[
             id server_id created_at updated_at deleted_at
             server_restart_hour server_restart_min request_thread_type request_thread_tick logging_path
           ]
         ).symbolize_keys
 
-        packet = packet.merge(
+        data = data.merge(
           territory_payment_tax: settings.territory_payment_tax / 100,
           territory_upgrade_tax: settings.territory_upgrade_tax / 100,
           extdb_path: settings.extdb_path || "",
@@ -94,7 +96,7 @@ module ESM
           reward_items: rewards.reward_items
         )
 
-        @packet = OpenStruct.new(packet)
+        @data = OpenStruct.new(data)
       end
 
       def build_territory_admins
@@ -112,7 +114,7 @@ module ESM
       end
 
       def send_response
-        message = ESM::Connection::Message.new(server_id: @server.server_id, type: "post_init", data: @packet)
+        message = ESM::Connection::Message.new(server_id: @server.server_id, type: "post_init", data: @data)
         message.add_callback(:on_error, :on_error)
         message.add_callback("on_response") do |_incoming, _outgoing|
           # Trigger a connect notification
