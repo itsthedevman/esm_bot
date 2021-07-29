@@ -20,8 +20,8 @@ module ESM
       #     - Called when a message receives a response to its contents.
       #   on_error
       #     - Called when a message experienced an error.
+      #     - There is a default implementation called "on_error". To use it, call `message.add_callback(:on_error, :on_error)`
       register_callbacks :on_response, :on_error
-      add_callback :on_error, :on_error
 
       #
       # Creates an instance of ESM::Connection::Message from JSON. See #to_h for the structure

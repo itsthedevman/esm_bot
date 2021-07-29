@@ -11,7 +11,6 @@ describe ESM::Connection::MessageOverseer do
     end
 
     it "times out and calls on_error" do
-      message.remove_callback(:on_error, :on_error)
       message.add_callback(:on_error) do |incoming, _|
         expect(incoming.id).to eq(message.id)
       end

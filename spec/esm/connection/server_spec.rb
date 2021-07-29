@@ -10,7 +10,6 @@ describe ESM::Connection::Server do
       outgoing_message.add_error(type: "code", content: "default")
 
       # Remove the default callback and set a new one
-      outgoing_message.remove_callback(:on_error, :on_error)
       outgoing_message.add_callback(:on_error) do |_, outgoing|
         expect(outgoing.errors.first.to_h).to eql({ type: "code", content: "default" })
       end
