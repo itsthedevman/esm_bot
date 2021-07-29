@@ -31,6 +31,9 @@ module ESM
     # Raised if a server fails to authenticate to the Websocket server
     class FailedAuthentication < Error; end
 
+    # Raised when a message fails validation or fails to create
+    class InvalidMessage < Error; end
+
     # Raised if the parser failed to find the argument in a message from a user
     class FailedArgumentParse < DataError; end
 

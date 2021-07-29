@@ -13,6 +13,10 @@
 #   Decimal
 #   Boolean
 
+# For quicker testing
+test:
+  foo: String
+
 # For detailed testing
 test_mapping:
   string: String
@@ -24,11 +28,7 @@ test_mapping:
   date: Date
 
 empty:
-  blank: # Required
-
-# For quicker testing
-test:
-  foo: String
+  blank: # A key is required otherwise, it doesn't fails
 
 init:
   server_name: String
