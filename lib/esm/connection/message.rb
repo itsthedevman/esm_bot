@@ -49,6 +49,8 @@ module ESM
 
       # The driver of communication between the bot, server, and client.
       #
+      # @param type [String] The type of message this is
+      # @param args [Hash]
       # @option args [String, Array<Integer>, nil] :server_id The ID of the server this messages should be sent to. Array<Integer> will be converted to string automatically
       # @option args [String] :type The type of message. This gives context to the message
       # @option args [Hash] :data The primary data for this message. It's the good stuff.
@@ -62,7 +64,7 @@ module ESM
       # @option args [String] :data_type The name of the type that gives the "data" its structure.
       # @option args [String] :metadata_type The name of the type that gives the "metadata" its structure.
       # @option args [Boolean] :convert_types Runs the message's data values against the pre-configured mapping and perform any type conversions if needed
-      def initialize(**args)
+      def initialize(type:, **args)
         @id = args[:id] || SecureRandom.uuid
 
         # The server provides the server_id as a UTF8 byte array. Convert it to a string
@@ -73,7 +75,7 @@ module ESM
             args[:server_id]
           end
 
-        @type = args[:type] || ""
+        @type = type
         @data = OpenStruct.new(args[:data] || {})
         @metadata = OpenStruct.new(args[:metadata] || {})
         @data_type = args[:data_type] || args[:type].presence || "empty"
