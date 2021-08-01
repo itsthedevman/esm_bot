@@ -25,10 +25,10 @@ module ESM
           @instance.stop
         end
 
-        def connections
+        def connection(server_id)
           return if @instance.nil?
 
-          @instance.connections
+          @instance.connections[server_id]
         end
       end
 
@@ -39,7 +39,7 @@ module ESM
       attr_reader :server, :connections, :message_overseer
 
       def initialize
-        @connections = {}
+        @connections = {} # By server_id
         @server_id_by_resource_id = {}
         @mutex = Mutex.new
         @redis = Redis.new(REDIS_OPTS)
@@ -194,6 +194,14 @@ module ESM
 
       def on_connect(message)
         server_id = message.server_id
+
+        ESM::Notifications.trigger(
+          "info",
+          class: self.class,
+          method: __method__,
+          server_id: { incoming: message.server_id },
+          incoming_message: message.to_h.without(:server_id, :resource_id)
+        )
 
         connection = ESM::Connection.new(self, server_id)
         connection.on_open(message)

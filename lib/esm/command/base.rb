@@ -99,12 +99,14 @@ module ESM
       #########################
       # Public Instance Methods
       #########################
-      attr_reader :name, :category, :type, :arguments, :aliases, :limit_to,
-                  :defines, :requires, :executed_at, :response, :cooldown_time,
-                  :event, :permissions, :checks
+      attr_reader :name, :category, :type, :aliases, :limit_to,
+                  :requires, :executed_at, :response, :cooldown_time,
+                  :defines, :permissions, :checks
 
-      attr_writer :limit_to, :event, :executed_at, :requires if ESM.env.test?
+      attr_writer :limit_to, :executed_at, :requires if ESM.env.test?
       attr_writer :current_community
+
+      attr_accessor :event, :arguments
 
       def initialize
         attributes = self.class.attributes
@@ -404,8 +406,26 @@ module ESM
         # Run some checks
         @checks.run_all!
 
-        # Call the discord method
-        discord
+        # Call #on_execute. Or #discord if this command is being execute on a server running 1.0.0
+        if target_server.present? && target_server.version < Semantic::Version.new("2.0.0")
+          class_name = self.class.to_s
+
+          # Initialize the v1 version of this command and give it the required data before calling #discord
+          # If the v1 command is used, avoid initializing CommandV1V1
+          command =
+            if class_name.match?(/v1$/i)
+              self
+            else
+              "#{class_name}V1".constantize.new
+            end
+
+          command.event = @event
+          command.arguments = @arguments
+
+          command.discord
+        else
+          on_execute
+        end
 
         # Update the cooldown
         create_or_update_cooldown if !@skip_flags.include?(:cooldown)

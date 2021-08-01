@@ -44,7 +44,7 @@ module ESM
         end
 
         def commands
-          types = %i[player admin]
+          types = ESM::Command::TYPES.dup
           types << :development if ESM.env.development?
 
           # Remove :admin if player mode is enabled for this community

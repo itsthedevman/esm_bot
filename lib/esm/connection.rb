@@ -2,7 +2,9 @@
 
 module ESM
   class Connection
-    attr_reader :server
+    attr_reader :server, :version
+
+    # @return [Boolean] Returns true the connection has been initialized and is ready for use
     attr_accessor :initialized
 
     def initialize(tcp_server, server_id)
@@ -20,6 +22,7 @@ module ESM
     end
 
     def on_open(message)
+      @version = Semantic::Version.new(message.data.extension_version)
       ESM::Event::ServerInitialization.new(self, message).run!
     end
 

@@ -43,13 +43,25 @@ module ESM
     end
 
     def connection
-      ESM::Connection::Server.find_by_server_id(self.server_id)
+      # Don't memoize to avoid holding onto the data
+      ESM::Connection::Server.connection(self.server_id)
     end
 
+    #
+    # Returns the server's current version
+    #
+    # @return [Semantic::Version] Returns a version 2.0.0 or greater if there is a connection. If there is no connection, 1.0.0 is assumed.
+    #
+    def version
+      self.connection.try(:version) || Semantic::Version.new("1.0.0")
+    end
+
+    # V2
     def connected?
       !self.connection.nil?
     end
 
+    # V1
     def online?
       ESM::Websocket.connected?(self.server_id)
     end
@@ -98,7 +110,7 @@ module ESM
     def generate_key
       return if !self.server_key.blank?
 
-      self.server_key = 7.times.map { SecureRandom.uuid.gsub("-", "") }.join("")
+      self.server_key = 7.times.map { SecureRandom.uuid.gsub("-", "") }.join
     end
 
     def create_server_setting

@@ -36,6 +36,7 @@ init:
   territory_lifetime: Integer
   territory_data: Array<HashMap>
   server_start_time: DateTime
+  extension_version: String
 
 post_init:
   extdb_path: String
