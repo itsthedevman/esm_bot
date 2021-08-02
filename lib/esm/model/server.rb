@@ -34,6 +34,11 @@ module ESM
       self.order(:server_id).where(server_id: id).first
     end
 
+    # V1
+    def server_reward
+      self.server_rewards.default
+    end
+
     def discord_server
       @discord_server ||= ESM.bot.server(self.guild_id)
     end

@@ -100,16 +100,16 @@ describe ESM::Command::Server::RewardV1, category: "command" do
     end
 
     describe "No rewards" do
-      before :each do
-        server.server_reward = ESM::ServerReward.create!(server_id: server.id)
-      end
-
       it "errors" do
+        # Remove the default reward and create a blank one
+        server.server_reward.delete
+        server.send(:create_default_reward)
+
         command_statement = command.statement(server_id: server.server_id)
         event = CommandEvent.create(command_statement, user: user, channel_type: :text)
         expect { command.execute(event) }.to raise_error do |error|
           embed = error.data
-          expect(embed.description).to match(/it looks like this server does not have any rewards for you to redeem/i)
+          expect(embed.description).to match(/the selected reward package is not available at this tim/i)
         end
       end
     end

@@ -30,8 +30,13 @@ FactoryBot.define do
     end
 
     after :create do |server, _evaluator|
-      server.server_reward = create(:server_reward, server_id: server.id)
-      server.server_setting = create(:server_setting, server_id: server.id)
+      # Remove the default
+      server.server_reward.delete
+
+      create(:server_setting, server_id: server.id)
+      create(:server_reward, server_id: server.id)
+
+      server.reload
     end
 
     factory :esm_malden do

@@ -227,7 +227,7 @@ exile:
         Exile_Item_TurtleFilet_Raw: "Turtle Filet (Raw)"
         Exile_Item_TurtleFilet_Cooked: "Turtle Filet (Cooked)"
 
-    exile medical:
+    exile_medical:
       name: "Exile Medical"
       entries:
         Exile_Item_Bandage: "Bandage"
