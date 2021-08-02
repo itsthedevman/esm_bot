@@ -16,7 +16,7 @@ if ENV["ESM_ENV"] == "test"
   task :default => :spec
 end
 
-Rake.add_rakelib('tasks')
+Rake.add_rakelib('tasks/migrations')
 
 # Some db tasks require your app code to be loaded; they'll expect to find it here
 task :environment do
