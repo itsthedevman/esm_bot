@@ -52,6 +52,9 @@ module ESM
   end
 
   def self.run!
+    # Cache the A3 lookup data
+    ESM::Arma::ClassLookup.cache
+
     load_i18n
     initialize_steam
     initialize_logger
