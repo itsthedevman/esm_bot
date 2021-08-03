@@ -11,14 +11,13 @@ describe ESM::Command::Server::RewardV1, category: "command" do
     expect(command.arguments.size).to eq(1)
   end
 
-  # Does not matter
-  # it "should have a description" do
-  #   expect(command.description).not_to be_blank
-  # end
+  it "should have a description" do
+    expect(command.description).not_to be_blank
+  end
 
-  # it "should have examples" do
-  #   expect(command.example).not_to be_blank
-  # end
+  it "should have examples" do
+    expect(command.example).not_to be_blank
+  end
 
   describe "#execute" do
     let!(:community) { ESM::Test.community }

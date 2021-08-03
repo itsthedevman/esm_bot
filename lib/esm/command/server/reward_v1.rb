@@ -26,7 +26,7 @@ module ESM
           # Add the request
           add_request(
             to: current_user,
-            description: I18n.t("commands.reward.request_description", user: current_user.mention, server: target_server.server_id)
+            description: I18n.t("commands.reward_v1.request_description", user: current_user.mention, server: target_server.server_id)
           )
 
           # Remind them to check their PMs
@@ -41,7 +41,7 @@ module ESM
           embed = ESM::Embed.build(
             :success,
             description: I18n.t(
-              "commands.reward.receipt",
+              "commands.reward_v1.receipt",
               user: current_user.mention,
               items: receipt.format { |item, quantity| "- #{quantity}x #{item}\n" }
             )
