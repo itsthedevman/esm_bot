@@ -3,7 +3,7 @@
 #############################
 # Load Extensions
 #############################
-Dir["#{__dir__}/esm/extension/**/*.rb"].each { |extension| require extension }
+Dir["#{__dir__}/esm/extension/**/*.rb"].sort.each { |extension| require extension }
 
 #############################
 # Autoload ESM
