@@ -103,7 +103,6 @@ module ESM
                   :requires, :executed_at, :response, :cooldown_time,
                   :defines, :permissions, :checks
 
-      attr_writer :limit_to, :executed_at, :requires if ESM.env.test?
       attr_writer :current_community
 
       attr_accessor :event, :arguments
@@ -309,7 +308,7 @@ module ESM
         current_cooldown.active?
       end
 
-      # Send a request to the DLL
+      # V1: Send a request to the DLL
       #
       # @param command_name [String, nil] V1: The name of the command to send to the DLL. Default: self.name.
       def deliver!(command_name: nil, timeout: 30, **parameters)
@@ -330,30 +329,20 @@ module ESM
         ESM::Websocket.deliver!(target_server.server_id, request)
       end
 
+      #
+      # Builds a ESM::Connection::Message from the provided data and sends it to `target_server`
+      #
+      # @return [ESM::Connection::Message] The message that was sent
+      #
+      def send_to_a3(type: self.name, **data)
+        raise ESM::Exception::CheckFailure, "#send_to_a3 was called on #{self.name} but this command does not require a server" if target_server.nil?
+
+        target_server.connection.send_message(type: type, data: data)
+      end
+
       # Convenience method for replying back to the event's channel
       def reply(message)
         ESM.bot.deliver(message, to: current_channel)
-      end
-
-      # Returns a valid command string for execution.
-      #
-      # @example No arguments
-      #   ESM::Command::SomeCommand.statement -> "!somecommand"
-      # @example With arguments !argumentcommand <argument_1> <argument_2>
-      #   ESM::Command::ArgumentCommand.statement(argument_1: "foo", argument_2: "bar") -> !argumentcommand foo bar
-      def statement(**flags)
-        # Can't use distinct here - 2020-03-10
-        command_statement = "#{prefix}#{flags[:_use_alias] || @name}"
-
-        # !birb, !doggo, etc.
-        return command_statement if @arguments.empty?
-
-        # !whois <target> -> !whois #{flags[:target]} -> !whois 1234567890
-        @arguments.map(&:name).each do |name|
-          command_statement += " #{flags[name]}"
-        end
-
-        command_statement
       end
 
       # Raises an exception of the given class or ESM::Exception::CheckFailure.

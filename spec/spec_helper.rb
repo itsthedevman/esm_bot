@@ -16,6 +16,8 @@ require "colorize"
 require "ruby-prof"
 require "rspec/expectations"
 
+require_relative "./support/esm/command/base"
+
 # Load all of our support files
 loader = Zeitwerk::Loader.new
 loader.inflector.inflect("esm" => "ESM")
