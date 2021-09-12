@@ -13,7 +13,7 @@ module ESM
         define :allowed_in_text_channels, modifiable: true, default: true
         define :cooldown_time, modifiable: false, default: 5.seconds
 
-        def discord
+        def on_execute
           send_waiting_message
           check_for_empty_link!
           remove_waiting_message

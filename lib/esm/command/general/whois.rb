@@ -15,7 +15,7 @@ module ESM
 
         argument :target
 
-        def discord
+        def on_execute
           check_for_user_access!
 
           embed =

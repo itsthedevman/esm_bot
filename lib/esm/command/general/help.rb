@@ -15,7 +15,7 @@ module ESM
 
         argument :category, regex: /.*/, default: nil, description: "commands.help.arguments.category"
 
-        def discord
+        def on_execute
           if @arguments.category == "commands"
             commands
           elsif ESM::Command.include?(@arguments.category)

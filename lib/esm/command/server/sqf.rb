@@ -21,7 +21,7 @@ module ESM
         argument :target, description: "commands.sqf.arguments.execution_target", default: nil, display_as: :execution_target
         argument :code_to_execute, regex: /[\s\S]+/, description: "commands.sqf.arguments.code_to_execute", preserve: true, multiline: true
 
-        def discord
+        def on_execute
           @checks.owned_server!
 
           execute_on =

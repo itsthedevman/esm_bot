@@ -18,7 +18,7 @@ module ESM
         argument :territory_id
         argument :target
 
-        def discord
+        def on_execute
           # Check for registered target_user
           @checks.registered_target_user! if target_user.is_a?(Discordrb::User)
 

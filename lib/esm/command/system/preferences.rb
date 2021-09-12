@@ -37,7 +37,7 @@ module ESM
         argument :state, regex: /allow|deny/, description: "commands.preferences.arguments.state", default: nil
         argument :type, regex: /#{TYPES.join("|")}/, description: "commands.preferences.arguments.type", default: "all"
 
-        def discord
+        def on_execute
           return send_preferences if @arguments.state.nil?
 
           # Creates an array of ["custom"] or ["base-raid", "flag-stolen", "flag-restored", etc...]

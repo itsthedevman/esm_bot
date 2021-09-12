@@ -46,7 +46,7 @@ module ESM
         # In order to utilize the `#target_user` logic, the argument must have a name as target.
         argument :target, regex: /.+/, description: "commands.logs.arguments.query", multiline: true, display_as: :query
 
-        def discord
+        def on_execute
           query = ""
 
           # If the target was given, check to make sure they're registered and then set the steam_uid

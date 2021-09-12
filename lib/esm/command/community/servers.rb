@@ -14,7 +14,7 @@ module ESM
 
         argument :community_id
 
-        def discord
+        def on_execute
           servers = ESM::Server.where(community_id: target_community.id)
           check_for_no_servers!(servers)
 

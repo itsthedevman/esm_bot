@@ -15,7 +15,7 @@ module ESM
 
         argument :server_id
 
-        def discord
+        def on_execute
           deliver!(query: "player_info", uid: current_user.esm_user.steam_uid)
         end
 

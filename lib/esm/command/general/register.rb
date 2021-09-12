@@ -13,7 +13,7 @@ module ESM
         define :allowed_in_text_channels, modifiable: true, default: true
         define :cooldown_time, modifiable: false, default: 2.seconds
 
-        def discord
+        def on_execute
           message =
             if current_user.esm_user.registered?
               already_registered_message

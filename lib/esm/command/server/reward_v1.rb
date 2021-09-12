@@ -16,7 +16,7 @@ module ESM
 
         argument :server_id
 
-        def discord
+        def on_execute
           # Check for pending requests
           @checks.pending_request!
 

@@ -18,7 +18,7 @@ module ESM
         argument :server_id
         argument :order_by, regex: /id|territory_name|owner_uid/, description: "commands.server_territories.arguments.order_by", default: :territory_name, type: :symbol
 
-        def discord
+        def on_execute
           @checks.owned_server!
           deliver!(command_name: "allterritories", query: "list_territories_all")
         end

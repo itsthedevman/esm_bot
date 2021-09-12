@@ -16,7 +16,7 @@ module ESM
         argument :community_id
         argument :mode, regex: /player|server/, description: "commands.mode.arguments.mode"
 
-        def discord
+        def on_execute
           check_for_owner!
           check_for_same_mode!
 

@@ -34,7 +34,7 @@ module ESM
           }
         argument :server_id, default: nil
 
-        def discord
+        def on_execute
           @checks.owned_server! if @arguments.server_id
           check_for_valid_command!
           @checks.registered_target_user! if target_user

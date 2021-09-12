@@ -16,7 +16,7 @@ module ESM
 
         argument :code, regex: /.*/, preserve: true, multiline: true, description: "Code to execute"
 
-        def discord
+        def on_execute
           response = eval @arguments.code # rubocop:disable Security/Eval
           reply("Input:\n```ruby\n#{@arguments.code}\n```\nOutput:\n```ruby\n#{response}\n```")
         rescue StandardError => e

@@ -18,7 +18,7 @@ module ESM
         argument :server_id
         argument :territory_id
 
-        def discord
+        def on_execute
           @checks.owned_server!
           deliver!(query: "restore", territory_id: @arguments.territory_id)
         end

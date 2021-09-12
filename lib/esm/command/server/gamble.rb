@@ -19,7 +19,7 @@ module ESM
         argument :server_id
         argument :amount, regex: /^(?!-\d+$)\d+|half|all|stats/, description: "commands.gamble.arguments.amount"
 
-        def discord
+        def on_execute
           return reply(send_stats) if @arguments.amount == "stats"
 
           @checks.connected_server!

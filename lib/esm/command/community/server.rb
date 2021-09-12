@@ -14,7 +14,7 @@ module ESM
 
         argument :server_id
 
-        def discord
+        def on_execute
           embed =
             ESM::Embed.build do |e|
               e.title = target_server.server_name
