@@ -40,7 +40,8 @@ module ESM
           @checks.registered_target_user! if target_user
 
           # Send the confirmation request
-          response = ESM.bot.deliver_and_await!(confirmation_embed, to: current_channel, owner: current_user, expected: [I18n.t("yes"), I18n.t("no")], timeout: 120)
+          reply(confirmation_embed)
+          response = ESM.bot.await_response(current_user, expected: [I18n.t("yes"), I18n.t("no")], timeout: 120)
           return reply(I18n.t("commands.reset_cooldown.cancellation_reply")) if response.nil? || response.downcase == I18n.t("no").downcase
 
           # Reset all cooldowns for that user.

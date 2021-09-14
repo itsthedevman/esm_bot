@@ -176,22 +176,19 @@ module ESM
       nil
     end
 
-    def deliver_and_await!(message, to:, owner: to, expected:, invalid_response: nil, timeout: nil, give_up_after: 99)
+    def await_response(responding_user, expected:, timeout: nil)
       counter = 0
       match = nil
-      invalid_response = format_invalid_response(expected) if invalid_response.nil?
-      channel = determine_delivery_channel(to)
-      owner = self.user(owner)
+      invalid_response = format_invalid_response(expected)
+      responding_user = self.user(responding_user)
 
-      while match.nil? && counter < give_up_after
-        deliver(message, to: channel)
-
+      while match.nil? && counter < 99
         response =
           if ESM.env.test?
             ESM::Test.await
           else
             # Add the await event
-            owner.await!(timeout: timeout)
+            responding_user.await!(timeout: timeout)
           end
 
         # We timed out, return nil

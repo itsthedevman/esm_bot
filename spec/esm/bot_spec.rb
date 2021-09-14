@@ -94,11 +94,11 @@ describe ESM::Bot do
     end
   end
 
-  describe "#deliver_and_await!" do
+  describe "#await_response" do
     describe "Send to user" do
       it "should send and reply (Correct)" do
         ESM::Test.response = "good"
-        ESM.bot.deliver_and_await!("Hello, how are you today?", to: TestUser::User1::ID, expected: %w[good bad])
+        ESM.bot.await_response(TestUser::User1::ID, expected: %w[good bad])
 
         expect(ESM::Test.messages.size).to eq(1)
         message_array = ESM::Test.messages.first
@@ -129,10 +129,8 @@ describe ESM::Bot do
 
       it "should send and reply (Incorrect)" do
         # Start the request
-        ESM.bot.deliver_and_await!(
-          "Who wants to party?!?",
-          to: ESM::Community::ESM::SPAM_CHANNEL,
-          owner: TestUser::User1::ID,
+        ESM.bot.await_response(
+          TestUser::User1::ID,
           expected: ["i do", "i don't"]
         )
 
@@ -154,40 +152,11 @@ describe ESM::Bot do
         expect(response).not_to be_nil
         expect(response).to eq("I'm sorry, I don't know how to reply to your response.\nI was expecting `i do` or `i don't`")
       end
-
-      it "should send and reply (Incorrect/Custom Response)" do
-        # Start the request
-        ESM.bot.deliver_and_await!(
-          "Who wants to party?!?",
-          to: ESM::Community::ESM::SPAM_CHANNEL,
-          owner: TestUser::User1::ID,
-          expected: ["i do", "i don't"],
-          invalid_response: "Noup" # Useful!
-        )
-
-        expect(ESM::Test.messages.size).to eq(2)
-        message_array = ESM::Test.messages.first
-        response = ESM::Test.messages.second[1]
-
-        # Channel
-        expect(message_array.first).not_to be_nil
-        expect(message_array.first).to be_kind_of(Discordrb::Channel)
-        expect(message_array.first.text?).to be(true)
-
-        # Message tests
-        expect(message_array.second).not_to be_nil
-        expect(message_array.second).to be_kind_of(String)
-        expect(message_array.second).to eq("Who wants to party?!?")
-
-        # Invalid response
-        expect(response).not_to be_nil
-        expect(response).to eq("Noup")
-      end
     end
 
     it "should give a failed response" do
       expect do
-        ESM.bot.deliver_and_await!("Who wants to party?!?", to: ESM::Community::ESM::SPAM_CHANNEL, owner: TestUser::User1::ID, expected: [], give_up_after: 0)
+        ESM.bot.await_response(owner: TestUser::User1::ID, expected: [], give_up_after: 0)
       end.to raise_error(ESM::Exception::CheckFailure, /failure to communicate/i)
     end
   end
