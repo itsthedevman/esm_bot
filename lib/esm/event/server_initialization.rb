@@ -121,7 +121,7 @@ module ESM
       end
 
       def send_response
-        message = ESM::Connection::Message.new(type: "post_init", data: @data)
+        message = ESM::Connection::Message.new(type: "init", data_type: "post_init", data: @data)
         message.add_callback(:on_error, :on_error)
         message.add_callback(:on_response) do |_incoming, _outgoing|
           # Trigger a connect notification
