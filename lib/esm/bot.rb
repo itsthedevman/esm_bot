@@ -16,9 +16,11 @@ module ESM
       WATCHING: 3
     }.freeze
 
-    attr_reader :config, :prefix
+    attr_reader :config, :prefix, :reply_overseer
 
     attr_reader :resend_queue if ESM.env.test?
+
+    delegate :watch, to: :@reply_overseer
 
     def initialize
       @prefixes = {}
@@ -29,6 +31,7 @@ module ESM
 
       load_community_prefixes
       @resend_queue = ESM::Bot::ResendQueue.new(self)
+      @reply_overseer = ESM::Bot::ReplyOverseer.new(self)
 
       super(token: ESM.config.token, prefix: method(:determine_activation_prefix), help_command: false)
     end
@@ -75,6 +78,7 @@ module ESM
       self.user_ban(&method(:esm_user_ban))
       self.user_unban(&method(:esm_user_unban))
       self.member_join(&method(:esm_member_join))
+      self.message(&method(:esm_message))
     end
 
     def esm_mention(_event)
@@ -126,6 +130,11 @@ module ESM
       return if ESM.env.development? && ESM.config.dev_user_whitelist.include?(event.user.id.to_s)
 
       ESM::Event::MemberJoin.new(event).run!
+    end
+
+    # Fires when a message is sent to a channel the bot is in
+    def esm_message(event)
+      @reply_overseer.on_message(event)
     end
 
     ###########################
