@@ -13,6 +13,7 @@ module ESM
     attribute :server_ip, :string
     attribute :server_port, :string
     attribute :server_start_time, :datetime
+    attribute :server_version, :string
     attribute :disconnected_at, :datetime
     attribute :created_at, :datetime
     attribute :updated_at, :datetime
@@ -58,7 +59,7 @@ module ESM
     # @return [Semantic::Version] Returns a version 2.0.0 or greater if there is a connection. If there is no connection, 1.0.0 is assumed.
     #
     def version
-      self.connection.try(:version) || Semantic::Version.new("1.0.0")
+      @version ||= Semantic::Version.new(self.server_version || "1.0.0")
     end
 
     # V2
@@ -108,6 +109,36 @@ module ESM
 
     def most_poptabs_lost
       user_gamble_stats.order(total_poptabs_loss: :desc).first
+    end
+
+    # vg_enabled
+    # vg_max_sizes
+    def metadata
+      @metadata ||= ESM::Server::Metadata.new(self.server_id)
+    end
+
+    #
+    # Converts a database ID into a unique obfuscated string.
+    #
+    # @param id [Integer] The ID to convert
+    #
+    # @return [String] The obfuscated ID as a string
+    #
+    def encode_id(id)
+      hasher = Hashids.new(self.server_key, 5, "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890")
+      hasher.encode(id.to_i)
+    end
+
+    #
+    # Converts a obfuscated string into a database ID
+    #
+    # @param data [String] The obfuscated database ID
+    #
+    # @return [Integer] The database ID
+    #
+    def decode_id(data)
+      hasher = Hashids.new(self.server_key, 5, "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890")
+      hasher.decode(data.upcase).first
     end
 
     private

@@ -39,12 +39,14 @@ module ESM
         update_server
         update_server_settings
         store_territory_data
+        store_metadata
       end
 
       def update_server
         @server.update!(
           server_name: @message.data.server_name,
           server_start_time: @message.data.server_start_time.utc,
+          server_version: @connection.version,
           disconnected_at: nil
         )
       end
@@ -71,6 +73,11 @@ module ESM
           end
 
         ESM::Territory.import(territories)
+      end
+
+      def store_metadata
+        @server.metadata.vg_enabled = @message.data.vg_enabled
+        @server.metadata.vg_max_sizes = @message.data.vg_max_sizes
       end
 
       def build_setting_data
@@ -114,9 +121,9 @@ module ESM
       end
 
       def send_response
-        message = ESM::Connection::Message.new(server_id: @server.server_id, type: "post_init", data: @data)
+        message = ESM::Connection::Message.new(type: "post_init", data: @data)
         message.add_callback(:on_error, :on_error)
-        message.add_callback("on_response") do |_incoming, _outgoing|
+        message.add_callback(:on_response) do |_incoming, _outgoing|
           # Trigger a connect notification
           ESM::Notifications.trigger("server_on_connect", server: @connection.server)
 
