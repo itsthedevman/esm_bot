@@ -35,6 +35,8 @@ init:
   price_per_object: Integer
   territory_lifetime: Integer
   territory_data: Array<HashMap>
+  vg_enabled: Boolean
+  vg_max_sizes: Array<Integer>
   server_start_time: DateTime
   extension_version: String
 
@@ -61,3 +63,10 @@ post_init:
   territory_payment_tax: Integer
   territory_upgrade_tax: Integer
   territory_admins: Array<String>
+
+query:
+  name: String
+  arguments: Hash
+
+query_result:
+  results: Array<Hash>

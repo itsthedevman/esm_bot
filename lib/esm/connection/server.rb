@@ -72,16 +72,33 @@ module ESM
       # Creates and adds a message to the server queue for processing.
       #
       # @param message [Hash, ESM::Connection::Message] This can be either a hash of arguments for ESM::Connection::Message, or an instance of it.
-      def send_message(message = {})
+      def send_message(server_id, message = {})
         message = ESM::Connection::Message.new(**message) if message.is_a?(Hash)
-        message.resource_id = @server_id_by_resource_id.key(message.server_id) if message.server_id
 
+        # Set some internal data for sending
+        message.server_id = server_id
+        message.resource_id = @server_id_by_resource_id.key(server_id)
         raise ESM::Exception::ServerNotConnected if !self.server_alive?
 
         # Watch the message to see if it's been acknowledged or responded to.
         @message_overseer.watch(message)
 
         send_to_server(message)
+      end
+
+      #
+      # Sends a message to the server and blocks execution until it has responded, errored, or timed out
+      #
+      # @param message [Hash, ESM::Connection::Message] This can be either a hash of arguments for ESM::Connection::Message, or an instance of it.
+      #
+      # @return [ESM::Connection::Message] The incoming message
+      #
+      def send_message_sync(server_id = nil, message = {})
+        message = ESM::Connection::Message.new(**message) if message.is_a?(Hash)
+        message.synchronous
+
+        self.send_message(server_id, message)
+        message.wait_for_response
       end
 
       private

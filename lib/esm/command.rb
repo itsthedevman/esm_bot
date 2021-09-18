@@ -84,6 +84,7 @@ module ESM
       "ESM::Command::#{category}::#{command_name}".constantize.new
     end
 
+    # TODO: Move this functionality to bot.rb
     def self.define(command_class, name, aliases)
       return if ESM.bot.nil?
 

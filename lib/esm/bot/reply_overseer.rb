@@ -5,13 +5,23 @@ module ESM
     class ReplyOverseer
       def initialize(bot)
         @bot = bot
+        @mutex = Mutex.new
+        @event_queue = []
         @entries = {}
 
         check_every = ESM.config.loops.bot_reply_overseer.check_every
-        @thread = Thread.new do
+        @entry_thread = Thread.new do
           loop do
             check_entries
             sleep(ESM.env.test? ? 0.5 : check_every)
+          end
+        end
+
+        check_every = ESM.config.loops.bot_reply_overseer.check_every
+        @event_thread = Thread.new do
+          loop do
+            process_event_queue
+            sleep(0.5)
           end
         end
       end
@@ -28,7 +38,7 @@ module ESM
       #
       def watch(user_id:, channel_id:, expires_at: 5.minutes.from_now, &callback)
         @entries[user_id.to_s] ||= {}
-        @entries[user_id.to_s][channel_id] = { callback: callback, expires_at: expires_at }
+        @entries[user_id.to_s][channel_id.to_s] = { callback: callback, expires_at: expires_at }
 
         true
       end
@@ -51,11 +61,9 @@ module ESM
       # @param event [Discordrb::Command::CommandEvent] The incoming event
       #
       def on_message(event)
-        entry = @entries[event.user.id.to_s].try(:delete, event.channel.id.to_s)
-        return if entry.nil? || entry[:callback].nil?
-
-        # Call the registered code
-        entry[:callback].call(event)
+        @mutex.synchronize do
+          @event_queue << event
+        end
       end
 
       private
@@ -68,6 +76,18 @@ module ESM
             channel_ids.delete(channel_id)
             entry[:callback].call(nil)
           end
+        end
+      end
+
+      def process_event_queue
+        @event_queue.delete_if do |event|
+          entry = @entries[event.user.id.to_s].try(:delete, event.channel.id.to_s)
+          next true if entry.nil? || entry[:callback].nil?
+
+          # Call the registered code
+          Thread.new { entry[:callback].call(event) }
+
+          true
         end
       end
     end

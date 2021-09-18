@@ -459,7 +459,7 @@ en:
             - Negative numbers will remove the given amount of that type
           For types `heal` and `kill`:
             - This argument is optional
-    reward_v1:
+    reward_v1: # V1
       description: "Requests a reward on the given server. After requesting a reward, you will be sent a confirmation message in your PMs with me. From here, you can confirm you are logged into the server and alive before accepting the rewards."
       example: |-
         **`%{prefix}reward esm_malden`**
@@ -468,12 +468,28 @@ en:
         Hey %{user}, you have requested a rewards on `%{server}`. In order to receive the rewards on the server, you must be spawned in and alive. Any items given will be added to your inventory automatically, and if you do not have space, **they will be dropped on the ground**.
       receipt: "Hi %{user}, the following goodies have been delivered to you!\n%{items}"
     reward:
-      description: "Requests a reward on the given server. After requesting a reward, you will be sent a confirmation message in your PMs with me. From here, you can confirm you are logged into the server and alive before accepting the rewards."
+      description: |-
+        Requests a reward package to be deployed on the provided server. After running this command, you will be sent a confirmation message in your PMs with me. From here, you'll confirm you are online and alive before I send deliver the rewards to you.
+
+        **IMPORTANT**
+        If the provided server is still running v1, this command will ignore `<reward_id>` and use the default reward package.
       example: |-
         **`%{prefix}reward esm_malden`**
-        Requests a reward on `esm_malden`
+        Requests the default reward to be delivered to you on `esm_malden`.
+
+        **`%{prefix}reward esm_altis base_kit`**
+        Requests the `base_kit` reward package to be delivered to you on `esm_altis`
       request_description: |-
-        Hey %{user}, you have requested a rewards on `%{server}`. In order to receive the rewards on the server, you must be spawned in and alive. Any items given will be added to your inventory automatically, and if you do not have space, **they will be dropped on the ground**.
+        You have requested the **%{reward_id}** reward package for `%{server_id}`.
+        This reward contains the following:
+
+        `-----------------------------------`
+        %{rewards}
+        `-----------------------------------`
+      request_confirmation: |-
+        In order to receive this reward package on `%{server_id}`, you must be spawned into the server and alive. Any items given will be automatically added to your inventory. Any items that do not fit will be **dropped on the ground at your feet**.
+      check_pm: "Hey %{user}. Before I can process your request, I need to confirm a few things. Please reply to the message in your Direct Messages to continue."
+      no_reply: "Hey %{user}, I haven't heard from you in awhile so I cancelled your request. Please re-run the previous command when you're ready to continue"
       receipt: "Hi %{user}, the following goodies have been delivered to you!\n%{items}"
     info:
       description: "Displays information about a particular player or territory. This command is the admin equivalent to the `!territories` and `!me` commands."

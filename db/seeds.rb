@@ -96,6 +96,10 @@ server.server_rewards.where(reward_id: nil).first.update!(
     {
       class_name: "Exile_Chopper_Huron_Black",
       spawn_location: "virtual_garage"
+    },
+    {
+      class_name: "Exile_Car_Hunter",
+      spawn_location: "player_decides"
     }
   ],
   player_poptabs: 12_345,

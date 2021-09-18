@@ -20,6 +20,7 @@ en:
       account_does_not_exist: "Hey %{user}, you will need to join `%{server_id}` first before you can run **any** commands on it."
       client_not_connected: "Hey %{user}, it looks like `%{server_id}` isn't connected right now.\nPlease try again in a few minutes as the server may be restarting."
       null_player: "Hey %{user}, you need to be spawned and alive on `%{server_id}` before you can use this command."
+      client_exception: "Hey %{user}, an error occurred while processing your request on `#{server_id}`"
   command_errors:
     # base
     text_only: "Hey %{user}, this command can only be used in a Discord server's **text channel**.\n\n__I will not be able to process your request in this channel__"
@@ -97,8 +98,9 @@ en:
     invalid_command: "I'm sorry %{user}, `%{command_name}` is not one of my commands."
 
     # reward
-    no_reward_items: "Hey %{user}, it looks like this server does not have any rewards for you to redeem."
+    no_reward_items: "I'm sorry %{user}, the selected reward package is not available at this time"
     incorrect_reward_id: "I'm sorry %{user}, I was unable to find a reward with the ID of `%{reward_id}`"
+    territory_query: "I'm sorry %{user}, I ran into an issue syncing territory data. Please wait a moment before trying again"
 
     # info
     no_target: "Hey %{user}, you must provide either a territory ID, Discord ID, steam uid, or @user discord mention."

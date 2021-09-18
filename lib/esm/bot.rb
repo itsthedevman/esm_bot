@@ -134,6 +134,12 @@ module ESM
 
     # Fires when a message is sent to a channel the bot is in
     def esm_message(event)
+      content = determine_activation_prefix(event.message)
+
+      # Ignore any commands. This is detecting if the prefix was remove
+      return if content.present? && content.size < event.message.content.size
+
+      puts event.message.content
       @reply_overseer.on_message(event)
     end
 
@@ -265,7 +271,7 @@ module ESM
     def determine_activation_prefix(message)
       # The default for @prefixes is the config prefix (NOT NIL)
       prefix = @prefixes[message.channel&.server&.id.to_s]
-      return nil if !message.content.start_with?(prefix)
+      return if !message.content.start_with?(prefix)
 
       message.content[prefix.size..]
     end

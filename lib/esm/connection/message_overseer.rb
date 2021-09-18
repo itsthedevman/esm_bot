@@ -31,7 +31,7 @@ module ESM
       # @param message [ESM::Connection::Message] The message to match
       # @param expires_at [DateTime, Time] The time when the message should be considered undeliverable.
       #
-      def watch(message, expires_at: 30.seconds.from_now)
+      def watch(message, expires_at: 10.seconds.from_now)
         # I love Ruby
         envelope = Envelope.new(message, expires_at)
         @mailbox << envelope

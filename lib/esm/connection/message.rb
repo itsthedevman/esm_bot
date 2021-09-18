@@ -8,8 +8,8 @@ module ESM
       MAPPINGS = YAML.safe_load(File.read(File.expand_path("./config/message_type_mapping.yml")), symbolize_names: true).freeze
       ARRAY_REGEX = /array<(?<type>.+)>/i.freeze
 
-      attr_reader :id, :server_id, :type, :data, :metadata, :errors, :data_type, :metadata_type
-      attr_accessor :resource_id
+      attr_reader :id, :type, :data, :metadata, :errors, :data_type, :metadata_type
+      attr_accessor :resource_id, :server_id
 
       # All callbacks are provided with two arguments:
       #   incoming_message [ESM::Connection::Message, nil]  The incoming message from the client, if applicable.
@@ -93,6 +93,7 @@ module ESM
         @errors = (args[:errors] || []).map(&:to_ostruct)
         @routing_data = OpenStruct.new(command: nil)
         @delivered = false
+        @mutex = Mutex.new
 
         self.convert_types(data, message_type: @data_type) if args[:convert_types]
         self.validate!
@@ -225,6 +226,34 @@ module ESM
         @delivered = true
       end
 
+      #
+      # Set's the message as synchronous
+      # This sets the message's callbacks and forces `ESM::Connection::Server#send_message` to become blocking
+      #
+      def synchronous
+        self.add_callback(:on_response, :on_response_sync)
+        self.add_callback(:on_error, :on_error_sync)
+      end
+
+      #
+      # Waits for a synchronous message to receive a response or timeout
+      #
+      # @return [ESM::Connection::Message] The incoming message containing the response or errors
+      #
+      def wait_for_response
+        # Waits 2 minutes. This is a backup in case message overseer doesn't time it out
+        counter = 0
+        while @incoming_message.nil? || counter >= 240
+          sleep(0.5)
+          counter += 1
+        end
+
+        # This should never raise. It's for emergencies
+        raise ESM::Exception::MessageSyncTimeout if counter >= 240
+
+        @incoming_message
+      end
+
       private
 
       # Converts a hash's data based on the provided type mapping.
@@ -333,6 +362,29 @@ module ESM
         @routing_data.try(:command).try(:reply, embed)
 
         embed
+      end
+
+      #
+      # Used when a message needs to be treated like its synchronous.
+      #
+      # @param incoming_message [ESM::Connection::Message] The incoming message
+      # @param _outgoing_message [ESM::Connection::Message] The outgoing message
+      #
+      def on_response_sync(incoming_message, _outgoing_message)
+        @mutex.synchronize { @incoming_message = incoming_message }
+      end
+
+      #
+      # Used when a message needs to be treated like its synchronous.
+      #
+      # @param incoming_message [ESM::Connection::Message] The incoming message
+      # @param _outgoing_message [ESM::Connection::Message] The outgoing message
+      #
+      def on_error_sync(incoming_message, _outgoing_message)
+        @mutex.synchronize do
+          @incoming_message = incoming_message
+          @error = true
+        end
       end
     end
   end

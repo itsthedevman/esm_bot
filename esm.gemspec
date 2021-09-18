@@ -37,6 +37,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency "eye"
   spec.add_dependency "fast_jsonparser", "~> 0.5.0"
   spec.add_dependency "faye-websocket"
+  spec.add_dependency "hashids"
   spec.add_dependency "httparty"
   spec.add_dependency "i18n"
   spec.add_dependency "otr-activerecord"

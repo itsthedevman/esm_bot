@@ -238,6 +238,7 @@ ActiveRecord::Schema.define(version: 2021_02_22_002045) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.datetime "deleted_at"
+    t.string "server_version"
     t.index ["community_id"], name: "index_servers_on_community_id"
     t.index ["deleted_at"], name: "index_servers_on_deleted_at"
     t.index ["server_id"], name: "index_servers_on_server_id", unique: true

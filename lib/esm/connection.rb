@@ -16,9 +16,11 @@ module ESM
 
     # @param message [Hash, ESM::Connection::Message] This can be either a hash of arguments for ESM::Connection::Message, or an instance of it.
     def send_message(message = {})
-      message = ESM::Connection::Message.new(**message) if message.is_a?(Hash)
+      @tcp_server.send_message(self.server_id, message)
+    end
 
-      @tcp_server.send_message(message)
+    def send_message_sync(message = {})
+      @tcp_server.send_message_sync(self.server_id, message)
     end
 
     def on_open(message)
@@ -32,6 +34,9 @@ module ESM
       case incoming_message.type
       when "event"
         self.on_event(incoming_message, outgoing_message)
+      when "query"
+        outgoing_message.delivered
+        outgoing_message.run_callback(:on_response, incoming_message, outgoing_message)
       else
         raise "[#{incoming_message.id}] Connection#on_message does not implement this type: \"#{incoming_message.type}\""
       end

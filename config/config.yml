@@ -23,6 +23,9 @@ default: &default
     connection_message_overseer:
       check_every: 5
 
+    # ESM::Bot::ReplyOverseer
+    bot_reply_overseer:
+      check_every: 15
 
 development:
   <<: *default

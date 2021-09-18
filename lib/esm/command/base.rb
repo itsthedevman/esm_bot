@@ -337,12 +337,33 @@ module ESM
       def send_to_a3(type: self.name, **data)
         raise ESM::Exception::CheckFailure, "#send_to_a3 was called on #{self.name} but this command does not require a server" if target_server.nil?
 
-        target_server.connection.send_message(type: type, data: data)
+        # Allows overwriting the outbound message. Otherwise, build a message from the data
+        message = data[:message]
+        if message.nil?
+          message = ESM::Connection::Message.new(type: type, **data)
+          message.add_callback(:on_error, :on_error)
+          message.add_callback(:on_response) do |incoming_message, _outgoing_message|
+            self.on_response(incoming_message)
+          end
+        end
+
+        target_server.connection.send_message(message)
       end
 
       # Convenience method for replying back to the event's channel
       def reply(message)
         ESM.bot.deliver(message, to: current_channel)
+      end
+
+      def edit(message, content)
+        if content.is_a?(ESM::Embed)
+          embed = Discordrb::Webhooks::Embed.new
+          content.transfer(embed)
+
+          message.edit("", embed)
+        else
+          message.edit(content)
+        end
       end
 
       # Raises an exception of the given class or ESM::Exception::CheckFailure.
@@ -395,11 +416,11 @@ module ESM
         # Run some checks
         @checks.run_all!
 
-        # Call #on_execute. Or #discord if this command is being execute on a server running 1.0.0
+        # Call #on_execute. If the command is for a server version that is 1.0.0, load the V1 version of the command
         if target_server.present? && target_server.version < Semantic::Version.new("2.0.0")
           class_name = self.class.to_s
 
-          # Initialize the v1 version of this command and give it the required data before calling #discord
+          # Initialize the v1 version of this command and give it the required data before calling #on_execute
           # If the v1 command is used, avoid initializing CommandV1V1
           command =
             if class_name.match?(/v1$/i)
@@ -411,7 +432,7 @@ module ESM
           command.event = @event
           command.arguments = @arguments
 
-          command.discord
+          command.on_execute
         else
           on_execute
         end
@@ -423,6 +444,9 @@ module ESM
         ESM::CommandCount.increment_execution_counter(self.name)
       end
 
+      #
+      # V1: This is called when the message is received from the server
+      #
       def from_server(parameters)
         # Parameters is always an array. 90% of the time, parameters size will only be 1
         # This just makes typing a little easier when writing commands

@@ -43,6 +43,9 @@ module ESM
     # Raised when attempting to send a message the tcp_server when it's not online
     class ServerNotConnected < Error; end
 
+    # Raised when a message times out during a sync operation. This should rarely be raised
+    class MessageSyncTimeout < Error; end
+
     # Handles an error code response from the extension
     class ExtensionError < Error
       def initialize(error_code)

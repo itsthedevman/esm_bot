@@ -24,6 +24,7 @@
   "eventmachine",
   "fast_jsonparser",
   "faye/websocket",
+  "hashids",
   "httparty",
   "i18n",
   "puma",
@@ -48,7 +49,7 @@ Dotenv.load(".env.prod") if ENV["ESM_ENV"] == "production"
 
 module ESM
   class << self
-    attr_reader :bot, :config, :logger, :env
+    attr_reader :bot, :config, :logger, :env, :redis
   end
 
   def self.run!
@@ -58,6 +59,7 @@ module ESM
     load_i18n
     initialize_steam
     initialize_logger
+    initialize_redis
 
     # Subscribe to notifications
     ESM::Notifications.subscribe
@@ -134,6 +136,10 @@ module ESM
 
       "#{header}#{body}"
     end
+  end
+
+  def self.initialize_redis
+    @redis  = Redis.new(ESM::Connection::Server::REDIS_OPTS)
   end
 
   # Borrowed from Rails, load the ENV
