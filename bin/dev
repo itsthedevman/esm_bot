@@ -3,24 +3,36 @@
 export RUBYOPT='-W:no-deprecated -W:no-experimental'
 export PRINT_LOG='true'
 export ESM_ENV='development'
+export RUST_LOG='debug'
+export TCP_SERVER_PORT='3003'
 
 working_dir=$(pwd)
-
-# # Compile all dependencies
-# for dir in crates/*/; do
-#   cd $working_dir/$dir
-#   cargo build --release
-#   if [ $? -ne 0 ]
-#   then
-#     exit $?
-#   fi
-# done
-
 cd $working_dir
 
+# Make sure it's not running
+killall -9 esm_server
+
+# Compile tcp_server
+cargo update --package esm_message
+cargo build --release
+
+# Failed to build, don't start
+if [ $? -ne 0 ]
+then
+  exit $?
+fi
+
+# Start the tcp_server
+./target/release/esm_server &
+echo $$ > target/esm_server.pid
+
+# Start the bot
 if [[ -z $1 ]]
 then
   rerun --dir lib bin/start_dev.rb
 else
   bundle exec ruby bin/start_dev.rb
 fi
+
+# Tell it to quit
+killall -9 esm_server
