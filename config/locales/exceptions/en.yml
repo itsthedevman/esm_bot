@@ -52,6 +52,7 @@ en:
     pending_request_different_user: "I'm sorry %{user}, %{target_user} already has a request pending"
     owned_server: "Hey %{user}, you can only access servers belonging to `%{community_id}`. Please provide a different server ID."
     target_not_registered: "Hey %{user}, %{target_user} has not registered with me yet. Tell them to head over to https://www.esmbot.com/register to get started!"
+    waiting_for_reply: "Hey %{user}, I'm awaiting your response to my question in regarding the `%{command_name}` command. \nIf you are no longer in need of my previous services, please reply with `cancel`. After which, you may execute your command again."
 
     # servers
     no_servers: "I was unable to find any registered servers for `%{community_id}`.\nIf you are the owner, you can them via the Admin Dashboard"

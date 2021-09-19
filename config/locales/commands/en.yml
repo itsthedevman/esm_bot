@@ -479,15 +479,16 @@ en:
 
         **`%{prefix}reward esm_altis base_kit`**
         Requests the `base_kit` reward package to be delivered to you on `esm_altis`
-      request_description: |-
-        You have requested the **%{reward_id}** reward package for `%{server_id}`.
-        This reward contains the following:
+      reward_description: |-
+        Hey there, %{user}!
 
-        `-----------------------------------`
-        %{rewards}
-        `-----------------------------------`
-      request_confirmation: |-
-        In order to receive this reward package on `%{server_id}`, you must be spawned into the server and alive. Any items given will be automatically added to your inventory. Any items that do not fit will be **dropped on the ground at your feet**.
+        Before we get to the good stuff, I need you to do the following:
+
+        - Join `%{server_id}` and spawn in. Make sure you're in a safe place!
+        - Confirm you have enough space on or around you to spawn in the following items/vehicles
+        - Remember, items that don't fit in your inventory **will be dropped on the ground at your feet**
+
+        Reward `%{reward_id}` contains the following:
       check_pm: "Hey %{user}. Before I can process your request, I need to confirm a few things. Please reply to the message in your Direct Messages to continue."
       no_reply: "Hey %{user}, I haven't heard from you in awhile so I cancelled your request. Please re-run the previous command when you're ready to continue"
       receipt: "Hi %{user}, the following goodies have been delivered to you!\n%{items}"

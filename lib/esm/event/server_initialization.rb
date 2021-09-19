@@ -82,7 +82,6 @@ module ESM
 
       def build_setting_data
         settings = @server.server_setting
-        rewards = @server.server_reward
 
         # Remove the database and v1 fields
         data = settings.attributes.without(
@@ -96,11 +95,7 @@ module ESM
           territory_payment_tax: settings.territory_payment_tax / 100,
           territory_upgrade_tax: settings.territory_upgrade_tax / 100,
           extdb_path: settings.extdb_path || "",
-          territory_admins: build_territory_admins,
-          reward_player_poptabs: rewards.player_poptabs,
-          reward_locker_poptabs: rewards.locker_poptabs,
-          reward_respect: rewards.respect,
-          reward_items: rewards.reward_items
+          territory_admins: build_territory_admins
         )
 
         @data = OpenStruct.new(data)

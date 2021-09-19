@@ -139,7 +139,6 @@ module ESM
       # Ignore any commands. This is detecting if the prefix was remove
       return if content.present? && content.size < event.message.content.size
 
-      puts event.message.content
       @reply_overseer.on_message(event)
     end
 

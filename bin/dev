@@ -3,7 +3,7 @@
 export RUBYOPT='-W:no-deprecated -W:no-experimental'
 export PRINT_LOG='true'
 export ESM_ENV='development'
-export RUST_LOG='debug'
+export RUST_LOG='info'
 export TCP_SERVER_PORT='3003'
 
 working_dir=$(pwd)

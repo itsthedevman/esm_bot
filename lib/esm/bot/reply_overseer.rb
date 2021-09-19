@@ -52,7 +52,7 @@ module ESM
       # @return [Boolean]
       #
       def watching?(user_id:, channel_id:)
-        @entries[user_id].key?(channel_id)
+        @entries[user_id.to_s]&.key?(channel_id.to_s) || false
       end
 
       #

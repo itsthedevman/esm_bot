@@ -13,16 +13,8 @@ module ESM
     ###########################
     # Class methods
     ###########################
-    def self.build(type = nil, **attributes)
-      embed = ESM::Embed.new
-
-      if block_given?
-        yield(embed)
-      else
-        embed.build_from_template(type, **attributes)
-      end
-
-      embed
+    def self.build(type = nil, **attributes, &block)
+      ESM::Embed.new(type, **attributes, &block)
     end
 
     ###########################
@@ -31,7 +23,7 @@ module ESM
     attr_reader :title, :description, :image, :thumbnail, :footer, :color
     attr_accessor :fields, :author, :url, :timestamp
 
-    def initialize
+    def initialize(type = nil, attributes = {}, &_block)
       @title = nil
       @description = nil
       @fields = []
@@ -42,7 +34,12 @@ module ESM
       @color = ESM::Color::Toast::BLUE
       @url = nil
       @timestamp = DateTime.now
-      super
+
+      if block_given?
+        yield(self)
+      else
+        self.build_from_template(type, **attributes)
+      end
     end
 
     def title=(text)

@@ -70,3 +70,11 @@ query:
 
 query_result:
   results: Array<Hash>
+
+reward:
+  target_uid: String
+  player_poptabs: Integer
+  locker_poptabs: Integer
+  respect: Integer
+  items: Array<Hash>
+  vehicles: Array<Hash>
