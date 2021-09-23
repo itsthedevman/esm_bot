@@ -114,19 +114,30 @@ module ESM
       end
 
       #
-      # Sets the user's ID, name, mention, and steam uid to the metadata for this message.
+      # Sets the user's ID, name, mention, and steam uid to the metadata for this message. Will also do the same for the target user if the command has one
       # This only applies to messages that have a command in their routing data
       #
-      # @note If this Message was provided a command, calling this method will automatically add the user's discord and steam info to the metadata
-      #   This is done separately because not every message type will use the data. It would be a waste to send it over the wire if it's not used
-      def apply_user_metadata
+      def apply_command_metadata
         user = @routing_data.try(:command).try(:current_user)
         return if user.nil?
 
-        @metadata[:user_id] = user.id.to_s
-        @metadata[:user_name] = user.username
-        @metadata[:user_mention] = user.mention
-        @metadata[:user_steam_uid] = user.steam_uid
+        @metadata_type = "command"
+        @metadata.player = OpenStruct.new(
+          steam_uid: user.steam_uid,
+          discord_id: user.id.to_s,
+          discord_name: user.username,
+          discord_mention: user.mention
+        )
+
+        target_user = @routing_data.try(:command).try(:target_user)
+        return if target_user.nil?
+
+        @metadata.target = OpenStruct.new(
+          steam_uid: target_user.steam_uid,
+          discord_id: target_user.id.to_s,
+          discord_name: target_user.username,
+          discord_mention: target_user.mention
+        )
       end
 
       #
