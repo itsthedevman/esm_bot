@@ -94,7 +94,8 @@ describe ESM::Arma::HashMap do
             ["key_7", false]
           ],
           true
-        ]
+        ],
+        key_6: :symbol
       }
 
       conversion_result = {
@@ -102,7 +103,8 @@ describe ESM::Arma::HashMap do
         key_2: 1,
         key_3: 2.5,
         key_4: [1, "two", ["three", 4, 5], ["six", 7], { eight: false }],
-        key_5: [{ key_6: true, key_7: false }, true]
+        key_5: [{ key_6: true, key_7: false }, true],
+        key_6: "symbol"
       }
 
       hash_map = described_class.new(input)

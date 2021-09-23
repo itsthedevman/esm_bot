@@ -67,6 +67,7 @@ module ESM
 
         else
           # Integer, String, boolean, what have you
+          return sanitized_input.to_s if sanitized_input.is_a?(Symbol)
           return sanitized_input if !sanitized_input.is_a?(Array)
 
           # Checks and converts the each item in the array if needed
