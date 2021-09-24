@@ -20,7 +20,24 @@ Exile Server Manager, or ESM for short, is a Discord Bot that facilitates intera
 Are you a server owner or player looking to use Exile Server Manager? If so, please visit my <a href="https://www.esmbot.com/wiki">Getting Started</a> section of the Wiki as this README is focused on the development side of ESM.
 
 ## Getting Started
-ESM is written in MRI Ruby 2.7.1 with DiscordRB 3.4.0 and PostgreSQL 12. I, personally, use <a href="https://rvm.io/">RVM</a> to manage Ruby, but ESM is not dependent on it. This README is still work in progress and will expand over time.
+ESM is written in MRI Ruby 2.7.1 with DiscordRB 3.4.0 and PostgreSQL 12. I, personally, use <a href="https://rvm.io/">RVM</a> to manage Ruby, but ESM is not dependent on it.
+
+ESM is developed using Ubuntu via [Multipass](https://multipass.run/) on Windows. The Arma server runs on the Windows and ESM runs on the linux VM. This setup allows the Arma server to be able to communicate with the bot via a local IP.
+
+You will need to install the following to develop ESM locally:
+- A Linux environment (Ubuntu recommended)
+  - Ruby 2.7.1
+  - Bundler
+    - `gem install bundler`
+  - PostgreSQL 12
+  - Rust
+- A Windows environment
+  - Arma 3
+  - Arma 3 Server with Exile mod and @esm loaded
+  - Rust
+
+## Testing
+
 
 ## Suggestions
 ESM was and still is built for the Exile community with a majority of ESM's features started out as suggestions. If you would like to make a suggestion, please join our <a href="https://esmbot.com/join">Discord</a> and post it in the #suggestions channel.
