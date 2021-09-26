@@ -62,14 +62,9 @@ module ESM
       @version ||= Semantic::Version.new(self.server_version || "1.0.0")
     end
 
-    # V2
     def connected?
-      !self.connection.nil?
-    end
-
-    # V1
-    def online?
-      ESM::Websocket.connected?(self.server_id)
+      # If, for some reason, someone were to run both versions of ESM at once, their server would not register as online.
+      !self.connection.nil? ^ ESM::Websocket.connected?(self.server_id)
     end
 
     def uptime

@@ -39,12 +39,12 @@ module ESM
         def build_server_embed
           ESM::Embed.build do |e|
             e.title = @server.server_name.presence || ""
-            e.color = @server.online? ? :green : :red
+            e.color = @server.connected? ? :green : :red
 
             # Server_id, ip, port
             add_server_connection_info(e)
 
-            if @server.online?
+            if @server.connected?
               e.add_field(name: I18n.t("commands.server.online_for"), value: "```#{@server.uptime}```")
               e.add_field(name: I18n.t("commands.server.restart_in"), value: "```#{@server.time_left_before_restart}```")
             else

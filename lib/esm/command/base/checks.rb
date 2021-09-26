@@ -138,8 +138,7 @@ module ESM
           return if @command.arguments.server_id.nil?
 
           # Return if the server is not connected
-          # #online? is v1, #connected? is v2. The xor is because the expectation is only one can be true
-          return if @command.target_server.online? ^ @command.target_server.connected?
+          return if @command.target_server.connected?
 
           check_failed!(:server_not_connected, user: current_user.mention, server_id: @command.arguments.server_id)
         end
