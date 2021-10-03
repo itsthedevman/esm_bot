@@ -119,9 +119,7 @@ module ESM
 
         body =
           case severity
-          when "INFO"
-            body.colorize(:light_black)
-          when "DEBUG"
+          when "INFO", "DEBUG"
             body.colorize(:light_black)
           when "WARN"
             body.colorize(:yellow)

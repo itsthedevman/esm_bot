@@ -37,64 +37,27 @@ module ESM
       end
     end
 
-    def self.debug(name, _start, _finish, _id, payload)
-      if payload.key?(:class) && payload.key?(:method)
-        name = "#{payload[:class]}##{payload[:method]}"
+    ["debug", "info", "warn", "error"].each do |sev|
+      define_singleton_method(sev) do |name, _start, _finish, _id, payload|
+        if payload[:error].is_a?(StandardError)
+          e = payload[:error].dup
 
-        payload.delete(:class)
-        payload.delete(:method)
-      end
+          payload[:error] = {
+            message: e.message,
+            backtrace: e.backtrace[0..10]
+          }
+        end
 
-      ESM.logger.info(name) do
-        ESM::JSON.pretty_generate(payload)
-      end
-    end
+        if payload.key?(:class) && payload.key?(:method)
+          name = "#{payload[:class]}##{payload[:method]}"
 
-    def self.info(name, _start, _finish, _id, payload)
-      if payload.key?(:class) && payload.key?(:method)
-        name = "#{payload[:class]}##{payload[:method]}"
+          payload.delete(:class)
+          payload.delete(:method)
+        end
 
-        payload.delete(:class)
-        payload.delete(:method)
-      end
-
-      ESM.logger.info(name) do
-        ESM::JSON.pretty_generate(payload)
-      end
-    end
-
-    def self.warn(name, _start, _finish, _id, payload)
-      if payload.key?(:class) && payload.key?(:method)
-        name = "#{payload[:class]}##{payload[:method]}"
-
-        payload.delete(:class)
-        payload.delete(:method)
-      end
-
-      ESM.logger.warn(name) do
-        ESM::JSON.pretty_generate(payload)
-      end
-    end
-
-    def self.error(name, _start, _finish, _id, payload)
-      if payload[:error].is_a?(StandardError)
-        e = payload[:error].dup
-
-        payload[:error] = {
-          message: e.message,
-          backtrace: e.backtrace[0..10]
-        }
-      end
-
-      if payload.key?(:class) && payload.key?(:method)
-        name = "#{payload[:class]}##{payload[:method]}"
-
-        payload.delete(:class)
-        payload.delete(:method)
-      end
-
-      ESM.logger.error(name) do
-        ESM::JSON.pretty_generate(payload)
+        ESM.logger.send(sev.to_sym, name) do
+          ESM::JSON.pretty_generate(payload)
+        end
       end
     end
 
