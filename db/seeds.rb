@@ -2,18 +2,14 @@
 
 require "esm"
 
-ESM.console!
-ESM.run!
-
-# I don't feel like breaking the bot to fix the seeds file.
-# Just wait a couple of seconds for the DB to connect
-sleep 2
+ESM::Database.connect!
+ESM::Command.load_commands
 
 ESM::BotAttribute.create!(
   maintenance_mode_enabled: false,
   maintenance_message: "",
   status_type: "PLAYING",
-  status_message: "!register"
+  status_message: "rewards v2 dev"
 )
 
 user = ESM::User.create!(
@@ -27,7 +23,7 @@ community = ESM::Community.create!(
   community_id: "esm",
   community_name: "Exile Server Manager",
   guild_id: ESM::Community::ESM::ID,
-  logging_channel_id: "624387002443497489",
+  logging_channel_id: "446353502038654987",
   command_prefix: "pls ",
   player_mode_enabled: false
 )
