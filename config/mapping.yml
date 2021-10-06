@@ -1,13 +1,20 @@
-# This file controls how each message from the TCP server is parsed, type wise.
-# Any attribute not listed in here will be dropped from the message
-# @see spec/esm/connection/message for examples
+# This file controls how the data of a message is built and parsed.
+# When building a message, the data will
+#
+# Note! Ensure all attributes are sorted A-Z or the server will reject the message (VSCode: Select all attributes -> Command Palette -> Sort Lines Ascending)
+#
+# data_type:
+#   a_attribute: Type
+#   b_attribute: Type
+#   c_attribute: Type
+
 # Supported Types:
 #   String
 #   Integer
 #   Hash
 #   Array
 #   Array<T> -> Different from "Array", this performs an additional type conversion to every item in the array.
-#   HashMap -> Arma 3's HashMap represented as a String
+#   HashMap -> Arma 3's HashMap represented as a String -> "[[key, value], [key, value]]"
 #   DateTime
 #   Date
 #   Decimal
@@ -19,26 +26,25 @@ test:
 
 # For detailed testing
 test_mapping:
-  string: String
-  integer: Integer
-  rhash: Hash
   array: Array
-  hash_map: HashMap
   date_time: DateTime
   date: Date
+  hash_map: HashMap
+  integer: Integer
+  rhash: Hash
+  string: String
 
-empty:
-  blank: # A key is required otherwise, it doesn't fails
+empty: []
 
 init:
-  server_name: String
+  extension_version: String
   price_per_object: Integer
-  territory_lifetime: Integer
+  server_name: String
+  server_start_time: DateTime
   territory_data: Array<HashMap>
+  territory_lifetime: Integer
   vg_enabled: Boolean
   vg_max_sizes: Array<Integer>
-  server_start_time: DateTime
-  extension_version: String
 
 post_init:
   extdb_path: String
@@ -49,6 +55,7 @@ post_init:
   gambling_randomizer_min: Decimal
   gambling_win_chance: Integer
   logging_add_player_to_territory: Boolean
+  logging_channel_id: String
   logging_demote_player: Boolean
   logging_exec: Boolean
   logging_gamble: Boolean
@@ -60,21 +67,31 @@ post_init:
   logging_transfer: Boolean
   logging_upgrade_territory: Boolean
   max_payment_count: Integer
+  territory_admins: Array<String>
   territory_payment_tax: Integer
   territory_upgrade_tax: Integer
-  territory_admins: Array<String>
 
 query:
-  name: String
   arguments: Hash
+  name: String
 
 query_result:
   results: Array<Hash>
 
 reward:
-  target_uid: String
-  player_poptabs: Integer
-  locker_poptabs: Integer
-  respect: Integer
   items: Array<Hash>
+  locker_poptabs: Integer
+  player_poptabs: Integer
+  respect: Integer
+  target_uid: String
   vehicles: Array<Hash>
+
+send_to_channel:
+  id: String
+  content: String
+
+
+###########################
+## METADATA
+###########################
+command: []
