@@ -203,6 +203,11 @@ impl Server {
             Err(e) => panic!("#process_inbound_messages - {}", e)
         };
 
+        let _: () = match redis::cmd("DEL").arg("tcp_server_inbound").query_async(&mut connection).await {
+            Ok(r) => r,
+            Err(e) => error!("#delegate_inbound_messages - {}", e)
+        };
+
         loop {
             let _: () = match redis::cmd("BLMOVE")
                 .arg("connection_server_outbound")
@@ -224,6 +229,11 @@ impl Server {
         let mut connection = match self.get_redis_connection().await {
             Ok(connection) => connection,
             Err(e) => panic!("#delegate_outbound_messages - {}", e)
+        };
+
+        let _: () = match redis::cmd("DEL").arg("tcp_server_outbound").query_async(&mut connection).await {
+            Ok(r) => r,
+            Err(e) => error!("#delegate_inbound_messages - {}", e)
         };
 
         loop {
