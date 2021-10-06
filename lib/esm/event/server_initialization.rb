@@ -92,6 +92,7 @@ module ESM
         ).symbolize_keys
 
         data = data.merge(
+          logging_channel_id: @community.logging_channel_id,
           territory_payment_tax: settings.territory_payment_tax / 100,
           territory_upgrade_tax: settings.territory_upgrade_tax / 100,
           extdb_path: settings.extdb_path || "",
@@ -117,7 +118,6 @@ module ESM
 
       def send_response
         message = ESM::Connection::Message.new(type: "init", data_type: "post_init", data: @data)
-        message.add_callback(:on_error, :on_error)
         message.add_callback(:on_response) do |_incoming, _outgoing|
           # Trigger a connect notification
           ESM::Notifications.trigger("server_on_connect", server: @connection.server)
