@@ -347,7 +347,7 @@ module ESM
           end
         end
 
-        message.routing_data(command: self)
+        message.add_routing_data(command: self)
         message.apply_command_metadata
         target_server.connection.send_message(message)
       end
