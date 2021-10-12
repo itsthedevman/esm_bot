@@ -5,17 +5,18 @@ describe ESM::Event::ServerInitialization do
   let!(:community) { create(:esm_community, territory_admin_ids: ["440254072780488714", "440296219726708747"]) }
   let!(:server) { create(:server, community_id: community.id) }
   let!(:user) { create(:user) }
-  let(:reward) { server.server_reward }
-  let(:setting) { server.server_setting }
+  let!(:reward) { server.server_reward }
+  let!(:setting) { server.server_setting }
 
   describe "#run!" do
     let(:connection) { ESM::Connection.new(ESM::Connection::Server.instance, server.server_id) }
     let(:event) { described_class.new(connection, message) }
-    let(:message) do
+    let!(:message) do
       ESM::Connection::Message.new(
         type: "init",
         data_type: "init",
         data: {
+          extension_version: "2.0.0",
           server_name: Faker::Commerce.product_name,
           price_per_object: Faker::Number.between(from: 0, to: 1_000_000_000),
           territory_lifetime: Faker::Number.between(from: 0, to: 1_000),
@@ -31,9 +32,10 @@ describe ESM::Event::ServerInitialization do
             [["level", 9], ["purchase_price", 45_000], ["radius", 135], ["object_count", 270]],
             [["level", 10], ["purchase_price", 50_000], ["radius", 150], ["object_count", 300]]
           ].to_json,
-          server_start_time: Time.now.utc.to_s
-        },
-        convert_types: true
+          server_start_time: Time.now.utc.to_s,
+          vg_enabled: true,
+          vg_max_sizes: "[\"-1\",\"5\",\"8\",\"11\",\"13\",\"15\",\"18\",\"21\",\"25\",\"28\"]"
+        }
       )
     end
 
@@ -50,19 +52,19 @@ describe ESM::Event::ServerInitialization do
         server.reload
       end
 
-      it "should have updated the server" do
+      it "updated the server" do
         expect(server.server_name).to eq(message.data.server_name)
         expect(server.server_start_time).to eq(message.data.server_start_time)
       end
 
-      it "should have updated the server settings" do
+      it "updated the server settings" do
         settings = server.server_setting
 
         expect(settings.territory_price_per_object).to eq(message.data.price_per_object)
         expect(settings.territory_lifetime).to eq(message.data.territory_lifetime)
       end
 
-      it "should have created territories" do
+      it "created territories" do
         expect(ESM::Territory.where(server_id: server.id).size).to eq(10)
 
         message.data.territory_data.each do |territory_data|
@@ -83,7 +85,7 @@ describe ESM::Event::ServerInitialization do
         reward.reload
       end
 
-      it "should be valid" do
+      it "is valid" do
         expect(event.data.territory_admins).to eq([user.steam_uid])
         expect(event.data.extdb_path).to eq(setting.extdb_path || "")
         expect(event.data.gambling_modifier).to eq(setting.gambling_modifier)
@@ -106,12 +108,6 @@ describe ESM::Event::ServerInitialization do
         expect(event.data.max_payment_count).to eq(setting.max_payment_count)
         expect(event.data.territory_payment_tax).to eq(setting.territory_payment_tax / 100)
         expect(event.data.territory_upgrade_tax).to eq(setting.territory_upgrade_tax / 100)
-
-        # TODO: REWARDS
-        # expect(event.data.reward_player_poptabs).to eq(reward.player_poptabs)
-        # expect(event.data.reward_locker_poptabs).to eq(reward.locker_poptabs)
-        # expect(event.data.reward_respect).to eq(reward.respect)
-        # expect(event.data.reward_items).to eq("[[\"Exile_Item_EMRE\",2],[\"Chemlight_blue\",5]]")
       end
     end
   end
