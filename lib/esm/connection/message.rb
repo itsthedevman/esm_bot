@@ -163,22 +163,22 @@ module ESM
         return if user.nil?
 
         @metadata_type = "command"
-        @metadata.player = OpenStruct.new(
+        @metadata.player = {
           steam_uid: user.steam_uid,
           discord_id: user.id.to_s,
           discord_name: user.username,
           discord_mention: user.mention
-        )
+        }
 
         target_user = @routing_data.try(:command).try(:target_user)
         return if target_user.nil?
 
-        @metadata.target = OpenStruct.new(
+        @metadata.target = {
           steam_uid: target_user.steam_uid,
           discord_id: target_user.id.to_s,
           discord_name: target_user.username,
           discord_mention: target_user.mention
-        )
+        }
       end
 
       #

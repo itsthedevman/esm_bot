@@ -52,8 +52,6 @@ module ESM
       end
 
       # I wanted these as methods instead of attributes
-      #
-      # rubocop:disable Style/TrivialAccessors
       def self.aliases(*aliases)
         @command_aliases = aliases
       end
@@ -65,7 +63,6 @@ module ESM
       def self.limit_to(channel_type)
         @limit_to = channel_type
       end
-      # rubocop:enable Style/TrivialAccessors
 
       def self.define(attribute, **opts)
         @defines[attribute] = OpenStruct.new(opts)
@@ -387,8 +384,10 @@ module ESM
 
       private
 
+      # @deprecated Use on_execute instead
       def discord; end
 
+      # @deprecated Handled via ESM::Connection::Message
       def server; end
 
       def request_accepted; end

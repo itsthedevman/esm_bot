@@ -20,8 +20,7 @@ module ESM
     BROADCAST = /#{SERVER_ID_OPTIONAL_COMMUNITY.source}|all|preview/.freeze
     HEX_COLOR = /^\#[a-fA-F0-9]{6}$/.freeze
     TARGET_OR_TERRITORY_ID = /#{TARGET.source}|#{TERRITORY_ID.source}/.freeze
-    REWARD_ID_OPTIONAL_COMMUNITY = /(?:#{COMMUNITY_ID.source}_)*[^\s]+/.freeze
-    REWARD_ID = /#{COMMUNITY_ID.source}_[^\s]+/.freeze
+    REWARD_ID = /[^\s]+/.freeze
     REWARD_ID_ONLY = /^#{REWARD_ID.source}$/.freeze
 
     # Log Parsing
