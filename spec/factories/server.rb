@@ -12,7 +12,6 @@ FactoryBot.define do
     # attribute :created_at, :datetime
     # attribute :updated_at, :datetime
 
-    server_id {}
     server_name { Faker::FunnyName.name }
     server_ip { Faker::Internet.public_ip_v4_address }
     server_port { "2302" }
@@ -37,6 +36,9 @@ FactoryBot.define do
       create(:server_reward, server_id: server.id)
 
       server.reload
+
+      # Store the server key so the build tool can pick it up and write it
+      Redis.new.set("test_server_key", { id: server.server_id.bytes, key: server.server_key.bytes }.to_json)
     end
 
     factory :esm_malden do
