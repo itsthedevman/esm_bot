@@ -32,7 +32,7 @@ module ESM
     has_many :user_notification_preferences, dependent: :destroy
 
     def self.find_by_server_id(id)
-      self.order(:server_id).where(server_id: id).first
+      self.includes(:community).order(:server_id).where(server_id: id).first
     end
 
     # V1
@@ -65,6 +65,12 @@ module ESM
     def connected?
       # If, for some reason, someone were to run both versions of ESM at once, their server would not register as online.
       !self.connection.nil? ^ ESM::Websocket.connected?(self.server_id)
+    end
+
+    def disconnect
+      return true if !self.connected?
+
+      self.connection.disconnect
     end
 
     def uptime
@@ -136,12 +142,24 @@ module ESM
       hasher.decode(data.upcase).first
     end
 
+    def log_error(log_message)
+      # Send a message to the client with a unique ID
+      # Log the ID to the communities logging channel
+      message = ESM::Connection::Message.new(type: "event")
+      message.add_error(type: "message", content: log_message)
+
+      self.connection.send_message(message)
+
+      # Let them know there was an error
+      ESM.bot.deliver(I18n.t("exceptions.extension_error"), to: self.community.logging_channel_id)
+    end
+
     private
 
     def generate_key
       return if !self.server_key.blank?
 
-      self.server_key = 7.times.map { SecureRandom.uuid.gsub("-", "") }.join
+      self.server_key = Array.new(7).map { SecureRandom.uuid.delete("-") }.join
     end
 
     def create_server_setting
