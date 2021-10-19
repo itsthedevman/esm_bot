@@ -21,8 +21,11 @@
 #   Boolean
 
 # For quicker testing
-test:
+data_test:
   foo: String
+
+metadata_test:
+  bar: String
 
 # For detailed testing
 test_mapping:
@@ -79,12 +82,11 @@ query_result:
   results: Array<Hash>
 
 reward:
-  items: Array<Hash>
+  items: String
   locker_poptabs: Integer
   player_poptabs: Integer
   respect: Integer
-  target_uid: String
-  vehicles: Array<Hash>
+  vehicles: String
 
 send_to_channel:
   id: String

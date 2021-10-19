@@ -87,7 +87,8 @@ module ESM
         data = settings.attributes.without(
           *%w[
             id server_id created_at updated_at deleted_at
-            server_restart_hour server_restart_min request_thread_type request_thread_tick logging_path
+            server_restart_hour server_restart_min request_thread_type
+            request_thread_tick logging_path
           ]
         ).symbolize_keys
 
@@ -104,7 +105,9 @@ module ESM
 
       def build_territory_admins
         # Get all roles with administrator or that are set as territory admins
-        roles = @discord_server.roles.select { |role| role.permissions.administrator || @community.territory_admin_ids.include?(role.id.to_s) }
+        roles = @discord_server.roles.select do |role|
+          role.permissions.administrator || @community.territory_admin_ids.include?(role.id.to_s)
+        end
 
         # Get all of the user's discord IDs who have these roles
         discord_ids =

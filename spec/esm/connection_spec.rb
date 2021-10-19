@@ -40,8 +40,7 @@ describe ESM::Connection do
             territory_lifetime: 7,
             territory_data: "[]",
             server_start_time: DateTime.now
-          },
-          convert_types: true
+          }
         )
 
       expect { connection.on_open(incoming_message) }.not_to raise_error
