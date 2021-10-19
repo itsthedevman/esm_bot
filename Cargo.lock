@@ -55,7 +55,7 @@ checksum = "e906254e445520903e7fc9da4f709886c84ae4bc4ddaf0e093188d66df4dc820"
 [[package]]
 name = "arma-rs"
 version = "0.3.0"
-source = "git+https://github.com/WolfkillArcadia/arma-rs.git#60c9eb521282d5a2a34b7ebb5f060067d29e413c"
+source = "git+https://github.com/WolfkillArcadia/arma-rs.git#8004e8c3140ed3365c4f8b62180cc37d9717c780"
 dependencies = [
  "arma-rs-codegen",
  "chrono",
@@ -68,7 +68,7 @@ dependencies = [
 [[package]]
 name = "arma-rs-codegen"
 version = "0.2.0"
-source = "git+https://github.com/WolfkillArcadia/arma-rs.git#60c9eb521282d5a2a34b7ebb5f060067d29e413c"
+source = "git+https://github.com/WolfkillArcadia/arma-rs.git#8004e8c3140ed3365c4f8b62180cc37d9717c780"
 dependencies = [
  "lazy_static",
  "log",

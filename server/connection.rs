@@ -30,8 +30,12 @@ impl ConnectionManager {
         Ok(())
     }
 
-    pub fn find_by_server_id(&self, server_id: Vec<u8>) -> Option<&Endpoint> {
-        self.connections.get(&server_id)
+    pub fn find_by_server_id(&self, server_id: &[u8]) -> Option<&Endpoint> {
+        self.connections.get(server_id)
+    }
+
+    pub fn server_id_by_endpoint(&self, endpoint: Endpoint) -> Option<&Vec<u8>> {
+        self.connections.iter().find_map(|(key, &val)| if val == endpoint { Some(key) } else { None })
     }
 
     pub fn remove(&mut self, endpoint: Endpoint) {

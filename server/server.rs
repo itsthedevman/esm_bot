@@ -5,7 +5,7 @@ use message_io::{
     network::{NetEvent, Transport},
     node::NodeListener,
 };
-use esm_message::{ErrorType, Message, Type};
+use esm_message::{Data, ErrorType, Message, Type};
 use tokio::{sync::{RwLock}, time::sleep};
 use redis::{AsyncCommands, Client, Commands, Connection, RedisError, aio::MultiplexedConnection};
 use std::{env, sync::atomic::{AtomicBool, Ordering}, time::Duration};
@@ -73,7 +73,7 @@ impl Server {
         match self.outbound_sender.send(message) {
             Ok(()) => {},
             Err(e) => {
-                error!("#send_message - {}", e);
+                error!("#send_to_bot - {}", e);
             }
         }
     }
@@ -88,7 +88,7 @@ impl Server {
         };
 
         let connection_manager = self.connection_manager.read();
-        let endpoint = match connection_manager.find_by_server_id(server_id) {
+        let endpoint = match connection_manager.find_by_server_id(&server_id) {
             Some(endpoint) => endpoint,
             None => {
                 message.add_error(ErrorType::Code, "client_not_connected");
@@ -96,7 +96,16 @@ impl Server {
             }
         };
 
-        match message.as_bytes(|server_id| self.server_key(server_id)) {
+        let server_key = match self.server_key(&server_id) {
+            Some(key) => key,
+            None => {
+                error!("#send_to_client - Failed to find server key for message. \n{:?} ", message);
+                message.add_error(ErrorType::Message, "Cannot send message - Missing server key");
+                return false;
+            }
+        };
+
+        match message.as_bytes(&server_key) {
             Ok(bytes) => {
                 info!("#send_to_client - {}", message.id);
 
@@ -200,7 +209,7 @@ impl Server {
     async fn delegate_inbound_messages(&self) {
         let mut connection = match self.get_redis_connection().await {
             Ok(connection) => connection,
-            Err(e) => panic!("#process_inbound_messages - {}", e)
+            Err(e) => panic!("#delegate_inbound_messages - {}", e)
         };
 
         let _: () = match redis::cmd("DEL").arg("tcp_server_inbound").query_async(&mut connection).await {
@@ -233,7 +242,7 @@ impl Server {
 
         let _: () = match redis::cmd("DEL").arg("tcp_server_outbound").query_async(&mut connection).await {
             Ok(r) => r,
-            Err(e) => error!("#delegate_inbound_messages - {}", e)
+            Err(e) => error!("#delegate_outbound_messages - {}", e)
         };
 
         loop {
@@ -259,7 +268,7 @@ impl Server {
                 .await
             {
                 Ok(r) => r,
-                Err(e) => error!("#delegate_inbound_messages - {}", e)
+                Err(e) => error!("#delegate_outbound_messages - {}", e)
             };
         }
     }
@@ -312,6 +321,9 @@ impl Server {
                     if success { continue; }
 
                     // The message failed, send it back to the bot
+                    message.message_type = Type::Error;
+                    message.data = Data::Empty;
+
                     self.send_to_bot(message);
                 }
             }
@@ -354,6 +366,8 @@ impl Server {
 
                 // Disconnect all connections to simulate a disconnect
                 self.disconnect_all();
+
+                std::process::exit(1);
             }
         }
     }
@@ -390,9 +404,25 @@ impl Server {
         }
 
         let resource_id = endpoint.resource_id();
-        let message = Message::from_bytes(data, |server_id| self.server_key(server_id));
 
-        let message = match message {
+        let connection_manager = self.connection_manager.read();
+        let server_id = match connection_manager.server_id_by_endpoint(endpoint) {
+            Some(id) => id,
+            None => {
+                self.disconnect(endpoint);
+                return;
+            }
+        };
+
+        let server_key = match self.server_key(&server_id) {
+            Some(key) => key,
+            None => {
+                self.disconnect(endpoint);
+                return;
+            }
+        };
+
+        let message = match Message::from_bytes(data, &server_key) {
             Ok(mut message) => {
                 message.set_resource(resource_id);
                 message
