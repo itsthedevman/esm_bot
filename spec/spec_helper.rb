@@ -5,16 +5,15 @@ ENV["ESM_ENV"] = "test"
 ENV["PRINT_LOG"] = "true"
 
 require "bundler/setup"
-require "esm"
-require "rspec/wait"
+require "awesome_print"
+require "colorize"
 require "database_cleaner"
+require "pry"
+require "esm"
 require "factory_bot"
 require "faker"
-require "awesome_print"
-require "pry"
-require "colorize"
-require "ruby-prof"
 require "rspec/expectations"
+require "rspec/wait"
 
 require_relative "./support/esm/command/base"
 
@@ -37,6 +36,9 @@ ActiveRecord::Base.logger.level = Logger::INFO
 # Start the bot
 ESM.run!
 
+# Start the tcp_server
+TCP_SERVER = IO.popen("bin/tcp_server")
+
 RSpec.configure do |config|
   config.include FactoryBot::Syntax::Methods
 
@@ -44,7 +46,7 @@ RSpec.configure do |config|
   config.example_status_persistence_file_path = ".rspec_status"
 
   # Timeout for rspec/wait, default timeout for requests
-  config.wait_timeout = 10 # seconds
+  config.wait_timeout = 3 # seconds
 
   config.expect_with :rspec do |c|
     c.syntax = :expect
@@ -54,6 +56,11 @@ RSpec.configure do |config|
     FactoryBot.find_definitions
     DatabaseCleaner.clean_with :deletion
     DatabaseCleaner.strategy = :deletion
+  end
+
+  config.after :suite do
+    `kill -9 #{TCP_SERVER.pid}`
+    TCP_SERVER.close
   end
 
   config.before :example do
@@ -92,3 +99,4 @@ end
 
 # Wait until the bot has fully connected
 ESM::Test.wait_until { ESM.bot.ready? }
+ESM::Test.wait_until { ESM::Connection::Server.instance.tcp_server_alive? }
