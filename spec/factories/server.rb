@@ -21,7 +21,7 @@ FactoryBot.define do
 
       server_id =
         loop do
-          server_id = "#{server.community.community_id}_#{Faker::NatoPhoneticAlphabet.code_word.downcase}"
+          server_id = Faker::ESM.server_id(community_id: server.community.community_id)
           break server_id if ESM::Server.find_by_server_id(server_id).nil?
         end
 
