@@ -44,7 +44,7 @@ module ESM
 
             # Call the exception with the replacements
             I18n.t("exceptions.extension.#{@content}", **replacements)
-          when "embed", "message"
+          when "message"
             @content
           else
             I18n.t("exceptions.extension.default", type: @type)
@@ -124,7 +124,7 @@ module ESM
         @data_type =
           if args[:data_type]
             args[:data_type]
-          elsif @data.present?
+          elsif args[:data].present?
             type
           else
             "empty"
@@ -136,13 +136,6 @@ module ESM
         @routing_data = OpenStruct.new(command: nil)
         @delivered = false
         @mutex = Mutex.new
-
-        self.validate!
-      end
-
-      def validate!
-        raise ESM::Exception::InvalidMessage, "\"data\" has values, but \"data_type\" is \"empty\"" if @data.present? && @data_type == "empty"
-        raise ESM::Exception::InvalidMessage, "\"metadata\" has values, but \"metadata_type\" is \"empty\"" if @metadata.present? && @metadata_type == "empty"
       end
 
       # Sets the various config options used by the overseer when routes the message
