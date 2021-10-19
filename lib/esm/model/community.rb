@@ -51,11 +51,11 @@ module ESM
     end
 
     def self.find_by_community_id(id)
-      self.order(:community_id).where(community_id: id).first
+      self.includes(:servers).order(:community_id).where(community_id: id).first
     end
 
     def self.find_by_guild_id(id)
-      self.order(:guild_id).where(guild_id: id).first
+      self.includes(:servers).order(:guild_id).where(guild_id: id).first
     end
 
     def self.find_by_server_id(id)
