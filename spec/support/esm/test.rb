@@ -45,6 +45,10 @@ module ESM
       @second_server ||= FactoryBot.create(:server, community_id: second_community.id)
     end
 
+    def self.channel
+      @channel ||= community.discord_server.channels.sample
+    end
+
     def self.redis
       @redis ||= Redis.new(ESM::Connection::Server::REDIS_OPTS)
     end
