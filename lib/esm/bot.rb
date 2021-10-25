@@ -156,21 +156,19 @@ module ESM
     def deliver(message, to:)
       return if message.blank?
 
-      delivery_channel = determine_delivery_channel(to)
-
-      raise ESM::Exception::ChannelNotFound.new(message, to) if delivery_channel.nil?
-
-      # Format the message if it's an array
       message = message.join("\n") if message.is_a?(Array)
+
+      delivery_channel = determine_delivery_channel(to)
+      raise ESM::Exception::ChannelNotFound.new(message, to) if delivery_channel.nil?
 
       ESM::Notifications.trigger("bot_deliver", message: message, channel: delivery_channel)
 
       # So we can test if it's working
       # env.error_testing? is to allow testing of errors without sending messages
-      return ESM::Test.messages.store(message, to, delivery_channel) if ESM.env.test? || ESM.env.error_testing?
-
       discord_message =
-        if message.is_a?(ESM::Embed)
+        if ESM.env.test? || ESM.env.error_testing?
+          ESM::Test.messages.store(message, delivery_channel)
+        elsif message.is_a?(ESM::Embed)
           # Send the embed
           delivery_channel.send_embed { |embed| message.transfer(embed) }
         else
@@ -183,8 +181,12 @@ module ESM
 
       # Return the Discordrb::Message
       discord_message
+    rescue ESM::Exception::ChannelAccessDenied
+      community = ESM::Community.find_by_guild_id(delivery_channel.server.id)
+      embed = ESM::Embed.build(:error, description: I18n.t("exceptions.deliver_failure", channel_name: delivery_channel.name, message: message))
+      community.log_event(:error, embed)
     rescue StandardError => e
-      ESM.logger.warn("#{self.class}##{__method__}") { "Send failed!\n#{e.message}" }
+      ESM::Notifications.trigger("warn", class: self.class, method: __method__, error: e)
       @resend_queue.enqueue(message, to: to, exception: e)
 
       nil
@@ -199,14 +201,14 @@ module ESM
       while match.nil? && counter < 99
         response =
           if ESM.env.test?
-            ESM::Test.await
+            ESM::Test.await(timeout: timeout)
           else
             # Add the await event
             responding_user.await!(timeout: timeout)
           end
 
-        # We timed out, return nil
-        return nil if response.nil?
+        # We timed out
+        break if response.nil?
 
         # Parse the match from the event
         match = response.message.content.match(Regexp.new("(#{expected.map(&:downcase).join("|")})", Regexp::IGNORECASE))
@@ -214,10 +216,9 @@ module ESM
         # We found what we were looking for
         break if !match.nil?
 
-        # Change our message to the invalid response
-        message = invalid_response
+        # Let the user know that was not quite what we were looking for
+        self.deliver(invalid_response, to: responding_user)
 
-        # Increment
         counter += 1
       end
 
@@ -233,28 +234,53 @@ module ESM
 
     # Channel can be any of the following: An CommandEvent, a Channel, a User/Member, or a String (Channel, or user)
     def determine_delivery_channel(channel)
-      return nil if channel.nil?
+      return if channel.nil?
 
-      case channel
-      when Discordrb::Commands::CommandEvent
-        channel.channel
-      when Discordrb::Channel
-        channel
-      when Discordrb::Member, Discordrb::User
-        channel.pm
-      when String
-        # Try checking if it's a text channel
-        temp_channel = self.channel(channel)
+      channel =
+        case channel
+        when Discordrb::Commands::CommandEvent
+          channel.channel
+        when Discordrb::Channel
+          channel
+        when ESM::User
+          channel.discord_user.pm
+        when Discordrb::Member, Discordrb::User
+          channel.pm
+        when String, Numeric
+          # Try checking if it's a text channel
+          temp_channel = self.channel(channel)
 
-        return temp_channel if temp_channel.present?
+          # Okay, it might be a PM channel, just go with it regardless (it returns nil)
+          if temp_channel.nil?
+            self.pm_channel(channel)
+          else
+            temp_channel
+          end
+        end
 
-        # Okay, it might be a PM channel, just go with it regardless (it returns nil)
-        self.pm_channel(channel)
-      end
+      return if channel.nil?
+      return channel if channel.pm?
+
+      raise ESM::Exception::ChannelAccessDenied if !self.channel_permission?(channel, :read_messages)
+      raise ESM::Exception::ChannelAccessDenied if !self.channel_permission?(channel, :send_messages)
+
+      channel
     end
 
     def update_prefix(community)
       @prefixes[community.guild_id] = community.command_prefix || ESM.config.prefix
+    end
+
+    #
+    # Checks if the bot has send permission to the provided channel
+    #
+    # @param channel [Discordrb::Channel] The channel to check
+    #
+    # @return [Boolean]
+    #
+    def channel_permission?(channel, permission)
+      member = self.profile.on(channel.server)
+      member.permission?(permission, channel)
     end
 
     private

@@ -46,6 +46,9 @@ module ESM
     # Raised when a message times out during a sync operation. This should rarely be raised
     class MessageSyncTimeout < Error; end
 
+    # When the bot does not have access to send a message to a particular channel
+    class ChannelAccessDenied < Error; end
+
     # Handles an error code response from the extension
     class ExtensionError < Error
       def initialize(error_code)
