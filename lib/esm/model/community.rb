@@ -31,6 +31,8 @@ module ESM
 
     alias_attribute :name, :community_name
 
+    attr_accessor :guild_type if ESM.env.test?
+
     module ESM
       ID = "414643176947843073"
       SPAM_CHANNEL = ENV["SPAM_CHANNEL"]
@@ -51,11 +53,11 @@ module ESM
     end
 
     def self.find_by_community_id(id)
-      self.includes(:servers).order(:community_id).where(community_id: id).first
+      default_scoped.includes(:servers).order(:community_id).where(community_id: id).first
     end
 
     def self.find_by_guild_id(id)
-      self.includes(:servers).order(:guild_id).where(guild_id: id).first
+      default_scoped.includes(:servers).order(:guild_id).where(guild_id: id).first
     end
 
     def self.find_by_server_id(id)
@@ -89,8 +91,16 @@ module ESM
         raise ::ESM::Exception::Error, "Attempted to log :#{event} to #{self.guild_id} without explicit permission.\nMessage:\n#{message}"
       end
 
-      # This will also handle resending
-      ::ESM.bot.deliver(message, to: self.logging_channel_id)
+      # Check this first to avoid an infinite loop if the bot cannot send a message to this channel
+      # since this method is called from the #deliver method for this exact reason.
+      channel = ESM.bot.channel(self.logging_channel_id)
+      member = self.profile.on(channel.server)
+      return ::ESM.bot.deliver(message, to: channel) if member.permission?(:send_messages, channel)
+
+      # The bot did not have permission. Send the owner a message letting them know
+      embed = ESM::Embed.build(:error, description: I18n.t("exceptions.logging_channel_access_denied", community_name: self.community_name, channel_name: channel.name))
+
+      ::ESM.bot.deliver(embed, to: channel.server.owner)
     end
 
     private

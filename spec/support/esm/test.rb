@@ -12,6 +12,10 @@ module ESM
       @messages ||= Messages.new
     end
 
+    def self.data
+      @data ||= YAML.load_file(File.expand_path("./spec/test_data.yml")).deep_symbolize_keys
+    end
+
     # Attempt to simulate a random community for tests
     #
     # @note The type of community controls what user type is selected
@@ -46,7 +50,10 @@ module ESM
     end
 
     def self.channel
-      @channel ||= community.discord_server.channels.sample
+      @channel ||= lambda do
+        id = self.data[community.guild_type][:channels].sample
+        ESM.bot.channel(id)
+      end.call
     end
 
     def self.redis
@@ -71,9 +78,9 @@ module ESM
       @user = nil
       @second_user = nil
 
-      @communities = %i[esm_community secondary_community]
+      @communities = %i[primary_community secondary_community]
       @community_type = @communities.sample
-      @user_type = @community_type == :esm_community ? :user : :secondary_user
+      @user_type = @community_type == :primary_community ? :primary_user : :secondary_user
       @second_community_type = @communities.find { |type| type != @community_type }
 
       # Reset the bot's resend_queue
@@ -87,7 +94,9 @@ module ESM
     end
 
     # I hate this code, it doesn't make me happy
-    def self.await(timeout: 5)
+    def self.await(timeout: nil)
+      timeout ||= 5
+
       # Offset the fact that we check every 0.25s
       timeout *= 4
       counter = 0
@@ -97,16 +106,16 @@ module ESM
         counter += 1
 
         # I don't have this in the conditional above because I want it to sleep at least once
-        break if ESM::Test.response.present?
+        break if self.response.present?
       end
 
-      ESM::Test.response
+      self.response
     end
 
     def self.await_and_reply(message, wait: 1)
       Thread.new do
         sleep(wait)
-        ESM::Test.response = message
+        self.response = message
       end
     end
 

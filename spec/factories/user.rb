@@ -24,7 +24,7 @@ FactoryBot.define do
 
     # Tracks the type of guild the user has joined
     # :primary for Exile Server Manager, :secondary for my test server
-    GUILD_TYPE { :primary }
+    guild_type { :primary }
 
     before(:create) do |user, evaluator|
       next if evaluator.not_user.nil?
@@ -35,7 +35,6 @@ FactoryBot.define do
       user.discord_username = new_user[:name]
       user.discord_discriminator = new_user[:discriminator]
       user.steam_uid = new_user[:steam_uid]
-      # user.steam_username = new_user[:steam_username]
     end
 
     trait :unregistered do
@@ -43,52 +42,73 @@ FactoryBot.define do
     end
 
     factory :esm_dev do
-      discord_id { TestUser::User1::ID }
-      discord_username { TestUser::User1::USERNAME }
-      discord_discriminator { TestUser::User1::DISCRIMINATOR }
-      steam_uid { TestUser::User1::STEAM_UID }
-      # steam_username { TestUser::User1::STEAM_USERNAME }
-      GUILD_TYPE { :primary }
+      transient do
+        user { ESM::Test.data[:dev] }
+        discord_user { ESM.bot.user(user[:id]) }
+      end
+
+      discord_id { user[:id] }
+      discord_username { discord_user.username }
+      discord_discriminator { discord_user.discriminator }
+      steam_uid { user[:steam_uid] }
+      guild_type { :primary }
     end
 
-    # These users are only on my test discord server
-    # Attempting to simulate a different community/user set
-    factory :secondary_user do
+    factory :primary_user do
       transient do
-        secondary_user do
-          [
-            {
-              id: TestUser::User2::ID,
-              name: TestUser::User2::USERNAME,
-              discriminator: TestUser::User2::DISCRIMINATOR,
-              steam_uid: TestUser::User2::STEAM_UID,
-              steam_username: TestUser::User2::STEAM_USERNAME
-            },
-            {
-              id: TestUser::User3::ID,
-              name: TestUser::User3::USERNAME,
-              discriminator: TestUser::User3::DISCRIMINATOR,
-              steam_uid: TestUser::User3::STEAM_UID,
-              steam_username: TestUser::User3::STEAM_USERNAME
-            }
-          ].sample
+        user do
+          user_id = ESM::Test.data[:primary][:users].sample
+          user = ESM.bot.user(user_id)
+
+          {
+            id: user_id,
+            name: user.name,
+            discriminator: user.discriminator,
+            steam_uid: ESM::Test.data[:steam_uids].sample
+          }
         end
       end
 
-      discord_id { secondary_user[:id] }
-      discord_username { secondary_user[:name] }
-      discord_discriminator { secondary_user[:discriminator] }
-      steam_uid { secondary_user[:steam_uid] }
-      # steam_username { secondary_user[:steam_username] }
-      GUILD_TYPE { :secondary }
+      discord_id { user[:id] }
+      discord_username { user[:name] }
+      discord_discriminator { user[:discriminator] }
+      steam_uid { user[:steam_uid] }
+      guild_type { :primary }
+    end
+
+    factory :secondary_user do
+      transient do
+        user do
+          user_id = ESM::Test.data[:secondary][:users].sample
+          user = ESM.bot.user(user_id)
+
+          {
+            id: user_id,
+            name: user.name,
+            discriminator: user.discriminator,
+            steam_uid: ESM::Test.data[:steam_uids].sample
+          }
+        end
+      end
+
+      discord_id { user[:id] }
+      discord_username { user[:name] }
+      discord_discriminator { user[:discriminator] }
+      steam_uid { user[:steam_uid] }
+      guild_type { :secondary }
     end
 
     factory :user_with_role do
-      discord_id { ENV["ROLE_USER_ID"] }
-      discord_username { ENV["ROLE_USER_USERNAME"]}
-      discord_discriminator { ENV["ROLE_USER_DISCRIMINATOR"] }
-      steam_uid { ENV["ROLE_USER_STEAM_UID"] }
-      GUILD_TYPE { :primary }
+      transient do
+        user { ESM::Test.data[:primary][:role_user] }
+        discord_user { ESM.bot.user(user[:id]) }
+      end
+
+      discord_id { user[:id] }
+      discord_username { discord_user.username }
+      discord_discriminator { discord_user.discriminator }
+      steam_uid { user[:steam_uid] }
+      guild_type { :primary }
     end
   end
 end

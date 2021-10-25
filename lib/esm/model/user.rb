@@ -21,7 +21,7 @@ module ESM
     has_many :my_requests, foreign_key: :requestor_user_id, class_name: "Request"
     has_many :pending_requests, foreign_key: :requestee_user_id, class_name: "Request"
 
-    attr_accessor :GUILD_TYPE if ESM.env.test?
+    attr_accessor :guild_type if ESM.env.test?
 
     #########################
     # Public Methods
