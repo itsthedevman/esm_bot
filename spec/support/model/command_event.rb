@@ -2,13 +2,13 @@
 
 class CommandEvent
   def self.channel_id(user, channel_type)
-    return user.GUILD_TYPE == :primary ? ESM::Community::ESM::SPAM_CHANNEL : ESM::Community::Secondary::SPAM_CHANNEL if channel_type == :text
+    return user.guild_type == :primary ? ESM::Community::ESM::SPAM_CHANNEL : ESM::Community::Secondary::SPAM_CHANNEL if channel_type == :text
 
     user.discord_user.pm.id
   end
 
   def self.guild_id(user)
-    user.GUILD_TYPE == :primary ? ESM::Community::ESM::ID : ESM::Community::Secondary::ID
+    user.guild_type == :primary ? ESM::Community::ESM::ID : ESM::Community::Secondary::ID
   end
 
   # Can't use initializer because I want to return a different object. This is essentially a wrapper

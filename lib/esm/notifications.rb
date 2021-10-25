@@ -179,22 +179,6 @@ module ESM
           backtrace: exception.backtrace[0..2]
         )
       end
-
-      # Send a notification to the owner, lots of guards in case the message isn't what we expect
-      channel = ESM.bot.channel(recipient_id)
-      return if channel.nil?
-
-      server = channel.server
-      return if server.nil?
-
-      owner = server.owner
-      return if owner.nil?
-
-      embed = ESM::Embed.build(
-        :error,
-        description: I18n.t("exceptions.deliver_failure", message: payload[:message].to_s.gsub("`", ""), channel_name: channel.name, exception: exception)
-      )
-      ESM.bot.deliver(embed, to: owner)
     end
 
     def self.xm8_notification_invalid_type(_name, _start, _finish, _id, payload)
