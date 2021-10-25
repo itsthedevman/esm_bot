@@ -80,6 +80,10 @@ module ESM
         true
       end
 
+      def initialize(**data)
+        super.merge!(data)
+      end
+
       def to_a
         convert_value =
           lambda do |value|
@@ -105,6 +109,8 @@ module ESM
       def to_json(*args)
         ::JSON.generate(self.to_a, *args)
       end
+
+      alias_method :to_s, :to_json
     end
   end
 end
