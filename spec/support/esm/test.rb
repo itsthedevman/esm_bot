@@ -77,6 +77,7 @@ module ESM
       @server = nil
       @user = nil
       @second_user = nil
+      @channel = nil
 
       @communities = %i[primary_community secondary_community]
       @community_type = @communities.sample
