@@ -35,6 +35,10 @@ module ESM
       self.includes(:community).order(:server_id).where(server_id: id).first
     end
 
+    def token
+      @token ||= { id: self.server_id.bytes, key: self.server_key.bytes }
+    end
+
     # V1
     def server_reward
       self.server_rewards.default
@@ -160,6 +164,9 @@ module ESM
       return if !self.server_key.blank?
 
       self.server_key = Array.new(7).map { SecureRandom.uuid.delete("-") }.join
+
+      # Store the key for the server
+      ESM.redis.hmset("server_keys", [self.server_id, self.server_key])
     end
 
     def create_server_setting
