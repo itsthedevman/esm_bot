@@ -403,25 +403,28 @@ impl Server {
             return;
         }
 
-        let resource_id = endpoint.resource_id();
-
-        let connection_manager = self.connection_manager.read();
-        let server_id = match connection_manager.server_id_by_endpoint(endpoint) {
-            Some(id) => id,
-            None => {
-                self.disconnect(endpoint);
-                return;
-            }
-        };
+        // Extract the server ID from the message
+        let id_length = data[0] as usize;
+        let server_id = data[1..=id_length].to_vec();
 
         let server_key = match self.server_key(&server_id) {
             Some(key) => key,
             None => {
+                match std::str::from_utf8(&server_id) {
+                    Ok(id) => {
+                        error!("[client#on_message] Disconnecting {:?}. Failed to find server key", id);
+                    }
+                    Err(_) => {
+                        error!("[client#on_message] Disconnecting {:?}. Failed to find server key", server_id);
+                    },
+                }
+
                 self.disconnect(endpoint);
                 return;
             }
         };
 
+        let resource_id = endpoint.resource_id();
         let message = match Message::from_bytes(data, &server_key) {
             Ok(mut message) => {
                 message.set_resource(resource_id);
@@ -446,8 +449,7 @@ impl Server {
                     }
                 };
 
-                let mut connection_manager = self.connection_manager.write();
-                match connection_manager.accept(server_id, endpoint) {
+                match self.connection_manager.write().accept(server_id, endpoint) {
                     Ok(_) => {},
                     Err(e) => {
                         error!("#on_message - {}", e);
