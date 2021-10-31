@@ -16,13 +16,13 @@ module ESM
       WATCHING: 3
     }.freeze
 
-    attr_reader :config, :prefix, :reply_overseer
+    attr_reader :config, :prefix
 
     attr_reader :resend_queue if ESM.env.test?
 
-    delegate :watch, to: :@reply_overseer
-
     def initialize
+      @waiting_for = {}
+
       @prefixes = {}
       @prefixes.default = ESM.config.prefix
 
@@ -31,7 +31,6 @@ module ESM
 
       load_community_prefixes
       @resend_queue = ESM::Bot::ResendQueue.new(self)
-      @reply_overseer = ESM::Bot::ReplyOverseer.new(self)
 
       super(token: ESM.config.token, prefix: method(:determine_activation_prefix), help_command: false)
     end
@@ -63,8 +62,8 @@ module ESM
     def simple_execute(chain, event)
       return nil if chain.empty?
 
-      args = chain.split(' ')
-      execute_command(args[0].downcase.to_sym, event, args[1..-1])
+      args = chain.split
+      execute_command(args[0].downcase.to_sym, event, args[1..])
     end
 
     ###########################
@@ -72,13 +71,12 @@ module ESM
     # These all have to have unique-to-ESM names since we are inheriting
     ###########################
     def bind_events!
-      self.mention(&method(:esm_mention))
-      self.ready(&method(:esm_ready))
-      self.server_create(&method(:esm_server_create))
-      self.user_ban(&method(:esm_user_ban))
-      self.user_unban(&method(:esm_user_unban))
-      self.member_join(&method(:esm_member_join))
-      self.message(&method(:esm_message))
+      self.mention { |event| esm_mention(event) }
+      self.ready { |event| esm_ready(event) }
+      self.server_create { |event| esm_server_create(event) }
+      self.user_ban { |event| esm_user_ban(event) }
+      self.user_unban { |event| esm_user_unban(event) }
+      self.member_join { |event| esm_member_join(event) }
     end
 
     def esm_mention(_event)
@@ -130,16 +128,6 @@ module ESM
       return if ESM.env.development? && ESM.config.dev_user_whitelist.include?(event.user.id.to_s)
 
       ESM::Event::MemberJoin.new(event).run!
-    end
-
-    # Fires when a message is sent to a channel the bot is in
-    def esm_message(event)
-      content = determine_activation_prefix(event.message)
-
-      # Ignore any commands. This is detecting if the prefix was remove
-      return if content.present? && content.size < event.message.content.size
-
-      @reply_overseer.on_message(event)
     end
 
     ###########################
@@ -281,6 +269,39 @@ module ESM
     def channel_permission?(channel, permission)
       member = self.profile.on(channel.server)
       member.permission?(permission, channel)
+    end
+
+    #
+    # Waits for an event from user_id and channel_id. Once the message event is received, it will execute the callback
+    #
+    # @param user_id [Integer/String] The ID of the user who sends the message
+    # @param channel_id [Integer/String] The ID of the channel where the message is sent to. The bot must be a member of said channel
+    # @param expires_at [DateTime, Time] When this time is reached, the callback will be called with `nil` for the event
+    # @param &callback [Proc] The code to execute once the message has been received
+    #
+    # @return [true]
+    #
+    def wait_for_reply(user_id:, channel_id:, expires_at: 5.minutes.from_now, &callback)
+      @waiting_for[user_id] ||= []
+      @waiting_for[user_id] << channel_id
+
+      event = self.add_await!(Discordrb::Events::MessageEvent, { from: user_id, in: channel_id, timeout: expires_at - Time.now })
+
+      @waiting_for[user_id]&.delete_if { |id| id == channel_id }
+
+      # Event will be nil if it times out
+      if callback
+        yield(event)
+      else
+        event
+      end
+    end
+
+    def waiting_for_reply?(user_id:, channel_id:)
+      channel_ids = @waiting_for[user_id]
+      return false if channel_ids.blank?
+
+      channel_ids.include?(channel_id)
     end
 
     private
