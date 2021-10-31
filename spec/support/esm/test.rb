@@ -91,6 +91,8 @@ module ESM
 
       # Clear the test list in Redis
       self.redis.del("test")
+
+      ESM::Connection::Server.instance.disconnect_all!
     end
 
     # I hate this code, it doesn't make me happy

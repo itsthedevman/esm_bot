@@ -72,6 +72,11 @@ module ESM
         @redis_delegate_inbound_messages.close
       end
 
+      def disconnect_all!
+        message = ESM::Connection::Message.new(type: "disconnect")
+        self.__send_internal(message)
+      end
+
       def tcp_server_alive?
         @mutex.synchronize { @tcp_server_alive }
       end

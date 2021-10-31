@@ -315,6 +315,8 @@ impl Server {
                     self.bot_pong_received.store(true, Ordering::Relaxed);
                 },
 
+                Type::Disconnect => self.disconnect_all(),
+
                 // Everything else is sent to the client
                 _ => {
                     let success = self.send_to_client(&mut message);
