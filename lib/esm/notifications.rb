@@ -44,7 +44,7 @@ module ESM
 
           payload[:error] = {
             message: e.message,
-            backtrace: e.backtrace[0..10]
+            backtrace: e.backtrace[0..20]
           }
         end
 
