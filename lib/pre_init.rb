@@ -24,6 +24,7 @@ loader.ignore("#{__dir__}/esm/extension")
 # Ignore preinits
 loader.ignore("#{__dir__}/pre_init.rb")
 loader.ignore("#{__dir__}/pre_init_dev.rb")
+loader.ignore("#{__dir__}/esm/database.rb")
 
 # gemspec expects this file, but Zeitwerk does not like it
 loader.ignore("#{__dir__}/esm/version.rb")
