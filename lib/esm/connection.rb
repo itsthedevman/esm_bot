@@ -10,7 +10,6 @@ module ESM
     def initialize(tcp_server, server_id)
       @tcp_server = tcp_server
       @server = ESM::Server.find_by_server_id(server_id)
-      ESM::Notifications.trigger("debug", class: self.class, method: __method__, server_id: server_id, :@server => @server)
     end
 
     delegate :server_id, to: :@server
