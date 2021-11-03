@@ -40,6 +40,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency "hashids"
   spec.add_dependency "httparty"
   spec.add_dependency "i18n"
+  spec.add_dependency "neatjson"
   spec.add_dependency "otr-activerecord"
   spec.add_dependency "pg"
   spec.add_dependency "pry"

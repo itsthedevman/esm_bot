@@ -14,6 +14,7 @@ require "factory_bot"
 require "faker"
 require "rspec/expectations"
 require "rspec/wait"
+require "neatjson"
 
 require_relative "./support/esm/command/base"
 

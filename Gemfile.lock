@@ -15,6 +15,7 @@ PATH
       hashids
       httparty
       i18n
+      neatjson
       otr-activerecord
       pg
       pry
@@ -179,6 +180,7 @@ GEM
     multipart-post (2.1.1)
     mustermann (1.1.1)
       ruby2_keywords (~> 0.0.1)
+    neatjson (0.9)
     net-scp (3.0.0)
       net-ssh (>= 2.6.5, < 7.0.0)
     net-ssh (6.1.0)
@@ -277,7 +279,6 @@ GEM
     ruby-prof (1.4.2-x64-mingw32)
     ruby-progressbar (1.11.0)
     ruby2_keywords (0.0.5)
-    rutie (0.0.4)
     semantic (1.6.1)
     simplecov (0.21.2)
       docile (~> 1.1)
@@ -367,7 +368,6 @@ DEPENDENCIES
   rubocop
   rubocop-performance
   ruby-prof
-  rutie
   simplecov
   solargraph
   yard
