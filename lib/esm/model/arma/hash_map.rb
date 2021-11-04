@@ -91,11 +91,12 @@ module ESM
             when Array
               value.map { |v| convert_value.call(v) }
             when Hash
-              value.deep_stringify_keys!
               value.each { |k, v| value[k] = convert_value.call(v) }
 
               # Convert the hash to array pairs
               value.to_a
+            when Symbol
+              value.to_s
             else
               value
             end
