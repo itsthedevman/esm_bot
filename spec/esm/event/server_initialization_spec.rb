@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-describe ESM::Event::ServerInitialization do
+describe ESM::Event::ServerInitialization, requires_connection: true do
   let!(:community) { ESM::Test.community }
   let!(:server) { ESM::Test.server }
   let!(:user) { ESM::Test.user }
@@ -42,6 +42,9 @@ describe ESM::Event::ServerInitialization do
 
     before :each do
       wait_for { server.connected? }.to be(true)
+
+      # This class sends an initialization message to the server and it will cause issues if sent twice
+      allow(connection).to receive(:send_message)
       expect { event.run! }.not_to raise_error
 
       server.reload
