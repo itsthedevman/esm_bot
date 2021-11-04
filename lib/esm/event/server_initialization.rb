@@ -6,9 +6,9 @@ module ESM
       attr_reader :data
 
       def initialize(connection, message)
+        @message = message
         @connection = connection
         @server = connection.server
-        @message = message
         @community = @server.community
         @discord_server = @community.discord_server
       end

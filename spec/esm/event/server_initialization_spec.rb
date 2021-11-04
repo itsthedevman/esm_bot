@@ -1,23 +1,22 @@
 # frozen_string_literal: true
 
 describe ESM::Event::ServerInitialization do
-  # This has to be esm_community for roles
-  let!(:community) { create(:esm_community, territory_admin_ids: ["440254072780488714", "440296219726708747"]) }
-  let!(:server) { create(:server, community_id: community.id) }
-  let!(:user) { create(:user) }
-  let!(:reward) { server.server_reward }
-  let!(:setting) { server.server_setting }
+  let!(:community) { ESM::Test.community }
+  let!(:server) { ESM::Test.server }
+  let!(:user) { ESM::Test.user }
 
   describe "#run!" do
-    let(:connection) { ESM::Connection.new(ESM::Connection::Server.instance, server.server_id) }
-    let(:event) { described_class.new(connection, message) }
+    let(:setting) { server.server_setting }
+    let(:reward) { server.server_reward }
+    let(:connection) { server.connection }
+
     let!(:message) do
       ESM::Connection::Message.new(
         type: "init",
         data_type: "init",
         data: {
           extension_version: "2.0.0",
-          server_name: Faker::Commerce.product_name,
+          server_name: server.server_name,
           price_per_object: Faker::Number.between(from: 0, to: 1_000_000_000),
           territory_lifetime: Faker::Number.between(from: 0, to: 1_000),
           territory_data: [
@@ -39,29 +38,24 @@ describe ESM::Event::ServerInitialization do
       )
     end
 
-    before :each do
-      expect { event.run! }.not_to raise_error
-    end
+    let(:event) { described_class.new(connection, message) }
 
-    it "should valid" do
-      expect(event).not_to be_nil
+    before :each do
+      wait_for { server.connected? }.to be(true)
+      expect { event.run! }.not_to raise_error
+
+      server.reload
     end
 
     describe "#initialize_server!" do
-      before :each do
-        server.reload
-      end
-
       it "updated the server" do
         expect(server.server_name).to eq(message.data.server_name)
         expect(server.server_start_time).to eq(message.data.server_start_time)
       end
 
       it "updated the server settings" do
-        settings = server.server_setting
-
-        expect(settings.territory_price_per_object).to eq(message.data.price_per_object)
-        expect(settings.territory_lifetime).to eq(message.data.territory_lifetime)
+        expect(setting.territory_price_per_object).to eq(message.data.price_per_object)
+        expect(setting.territory_lifetime).to eq(message.data.territory_lifetime)
       end
 
       it "created territories" do
@@ -79,12 +73,6 @@ describe ESM::Event::ServerInitialization do
     end
 
     describe "#build_setting_data" do
-      before :each do
-        server.reload
-        setting.reload
-        reward.reload
-      end
-
       it "is valid" do
         expect(event.data.territory_admins).to eq([user.steam_uid])
         expect(event.data.extdb_path).to eq(setting.extdb_path || "")
