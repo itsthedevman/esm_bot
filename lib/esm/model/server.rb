@@ -68,7 +68,7 @@ module ESM
 
     def connected?
       # If, for some reason, someone were to run both versions of ESM at once, their server would not register as online.
-      !self.connection.nil? ^ ESM::Websocket.connected?(self.server_id)
+      (!self.connection.nil? && self.connection.initialized) ^ ESM::Websocket.connected?(self.server_id)
     end
 
     def disconnect
@@ -146,16 +146,16 @@ module ESM
       hasher.decode(data.upcase).first
     end
 
+    # Sends a message to the client with a unique ID
+    # Then logs the ID to the community's logging channel
     def log_error(log_message)
-      # Send a message to the client with a unique ID
-      # Log the ID to the communities logging channel
-      message = ESM::Connection::Message.new(type: "event")
-      message.add_error(type: "message", content: log_message)
+      uuid = SecureRandom.uuid
 
+      message = ESM::Connection::Message.new(type: "event")
+      message.add_error(type: "message", content: "[#{uuid}] #{log_message}")
       self.connection.send_message(message)
 
-      # Let them know there was an error
-      ESM.bot.deliver(I18n.t("exceptions.extension_error"), to: self.community.logging_channel_id)
+      ESM.bot.deliver(I18n.t("exceptions.extension_error", server_id: self.server_id, id: uuid), to: self.community.logging_channel_id)
     end
 
     private
