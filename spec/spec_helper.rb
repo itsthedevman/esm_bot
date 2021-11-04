@@ -88,6 +88,43 @@ RSpec.configure do |config|
   end
 end
 
+RSpec.shared_context("connection") do
+  let(:connection) { server.connection }
+  before(:each) { wait_for { server.connected? }.to be(true) }
+end
+
+RSpec.shared_examples("command") do |described_class|
+  def execute!(command, channel_type: :pm, **command_args)
+    command_statement = command.statement(command_args)
+    event = CommandEvent.create(command_statement, user: user, channel_type: channel_type)
+    expect { command.execute(event) }.not_to raise_error
+  end
+
+  let!(:command) { described_class.new }
+  let(:community) { ESM::Test.community }
+  let(:server) { ESM::Test.server }
+  let(:user) { ESM::Test.user }
+
+  it "has a valid description text" do
+    expect(command.description).not_to be_blank
+    expect(command.description).not_to match(/todo/i)
+  end
+
+  it "has a valid example text" do
+    expect(command.example).not_to be_blank
+    expect(command.example).not_to match(/todo/i)
+  end
+
+  it "has the required defines" do
+    defines = command.defines.to_h
+    expect(defines).to have_key(:enabled)
+    expect(defines).to have_key(:whitelist_enabled)
+    expect(defines).to have_key(:whitelisted_role_ids)
+    expect(defines).to have_key(:allowed_in_text_channels)
+    expect(defines).to have_key(:cooldown_time)
+  end
+end
+
 def create_request(**params)
   user = ESM.bot.user(TestUser::User1::ID)
   command = ESM::Command::Test::Base.new

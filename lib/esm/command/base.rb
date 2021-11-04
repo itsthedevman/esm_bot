@@ -405,9 +405,6 @@ module ESM
         @checks.text_only!
         @checks.dm_only!
 
-        # Start typing. The bot will automatically stop after 5 seconds or when the next message sends
-        @event.channel.start_typing if !ESM.env.test? || !ESM.env.error_testing?
-
         # Parse arguments or raises FailedArgumentParse
         @arguments.parse!(@event)
 
@@ -515,8 +512,6 @@ module ESM
         case error
         when ESM::Exception::CheckFailure, ESM::Exception::FailedArgumentParse
           message = error.data
-        when ESM::Exception::CheckFailureNoMessage
-          return
         when StandardError
           uuid = SecureRandom.uuid
           ESM.logger.error("#{self.class}##{__method__}") { ESM::JSON.pretty_generate(uuid: uuid, message: error.message, backtrace: error.backtrace) }
