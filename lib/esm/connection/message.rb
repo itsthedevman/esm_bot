@@ -303,6 +303,10 @@ module ESM
         @incoming_message
       end
 
+      def inspect
+        "#<ESM::Message:0x#{object_id} #{JSON.pretty_generate(self.to_h)}>"
+      end
+
       private
 
       # Sanitizes the provided data in accordance to the data defined in config/mapping.yml
