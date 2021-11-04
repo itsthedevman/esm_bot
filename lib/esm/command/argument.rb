@@ -4,7 +4,7 @@ module ESM
   module Command
     class Argument
       # argument :name, regex: /xxx/, preserve: true, type: :integer, display_as: "", multiline: true, default: nil
-      attr_reader :name, :parser
+      attr_reader :name, :parser, :opts
       attr_accessor :value
 
       def initialize(name, container, opts = {})

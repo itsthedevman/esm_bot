@@ -123,6 +123,14 @@ RSpec.shared_examples("command") do |described_class|
     expect(defines).to have_key(:allowed_in_text_channels)
     expect(defines).to have_key(:cooldown_time)
   end
+
+  it "has valid description text for every argument" do
+    descriptions = command.arguments.map { |a| a.opts[:description] }
+    expect(descriptions.any?(&:nil?)).to be(false)
+
+    result = descriptions.any? { |description| description.match?(/^translation missing/i) || description.match?(/todo/i) }
+    expect(result).to be(false)
+  end
 end
 
 def create_request(**params)
