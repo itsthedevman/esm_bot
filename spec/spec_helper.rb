@@ -94,7 +94,7 @@ RSpec.shared_context("connection") do
 end
 
 RSpec.shared_examples("command") do |described_class|
-  def execute!(command, channel_type: :pm, **command_args)
+  def execute!(channel_type: :pm, **command_args)
     command_statement = command.statement(command_args)
     event = CommandEvent.create(command_statement, user: user, channel_type: channel_type)
     expect { command.execute(event) }.not_to raise_error
