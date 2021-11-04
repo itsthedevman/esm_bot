@@ -155,17 +155,29 @@ impl Server {
             }
         }
 
+        let disconnect_if_dead = |server: &Server, endpoint: &Endpoint| -> bool {
+            if server.bot_alive.load(Ordering::SeqCst) { return false }
+
+            server.handler.network().remove(endpoint.resource_id());
+
+            true
+        };
+
         // Process the events
         let mut server = self.clone();
         listener.for_each(move |event| match event.network() {
             NetEvent::Connected(_, _) => {},
             NetEvent::Message(endpoint, data) => {
+                if disconnect_if_dead(&server, &endpoint) { return }
+
                 server.on_message(endpoint, data.to_vec())
             },
             NetEvent::Disconnected(endpoint) => {
                 server.on_disconnect(endpoint)
             },
             NetEvent::Accepted(endpoint, resource_id) => {
+                if disconnect_if_dead(&server, &endpoint) { return }
+
                 server.on_connect(endpoint, resource_id)
             },
         });
@@ -312,7 +324,7 @@ impl Server {
                 // Received from the bot after a ping has been sent
                 Type::Pong => {
                     // Set the flag to true
-                    self.bot_pong_received.store(true, Ordering::Relaxed);
+                    self.bot_pong_received.store(true, Ordering::SeqCst);
                 },
 
                 Type::Disconnect => self.disconnect_all(),
@@ -439,7 +451,7 @@ impl Server {
             }
         };
 
-        info!("#on_message - {} {:#?}", resource_id, message);
+        info!("#on_message - {} - {}", resource_id, message.id);
 
         match message.message_type {
             Type::Init => {
