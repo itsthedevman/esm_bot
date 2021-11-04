@@ -26,7 +26,6 @@ module ESM
     end
 
     def on_open(message)
-      ESM::Notifications.trigger("debug", class: self.class, method: __method__, server: self.server, :@server => @server)
       @version = Semantic::Version.new(message.data.extension_version)
       ESM::Event::ServerInitialization.new(self, message).run!
     end

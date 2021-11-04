@@ -34,10 +34,6 @@ impl ConnectionManager {
         self.connections.get(server_id)
     }
 
-    pub fn server_id_by_endpoint(&self, endpoint: Endpoint) -> Option<&Vec<u8>> {
-        self.connections.iter().find_map(|(key, &val)| if val == endpoint { Some(key) } else { None })
-    }
-
     pub fn remove(&mut self, endpoint: Endpoint) {
         self.lobby.iter().position(|e| *e == endpoint);
         self.connections.retain(|_, e| *e == endpoint);

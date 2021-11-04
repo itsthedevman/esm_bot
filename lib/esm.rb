@@ -137,7 +137,7 @@ module ESM
   end
 
   def self.initialize_redis
-    @redis  = Redis.new(ESM::Connection::Server::REDIS_OPTS)
+    @redis = Redis.new(ESM::Connection::Server::REDIS_OPTS)
   end
 
   # Borrowed from Rails, load the ENV
