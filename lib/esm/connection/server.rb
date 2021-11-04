@@ -137,6 +137,8 @@ module ESM
       # Store all of the server_ids and their keys in redis.
       # This will allow the TCPServer to quickly pull a key by a server_id to decrypt messages
       def refresh_keys
+        @redis.del("server_keys")
+
         server_keys = ESM::Server.all.pluck(:server_id, :server_key)
         return if server_keys.blank?
 
