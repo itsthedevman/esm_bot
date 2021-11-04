@@ -48,6 +48,20 @@ module ESM
         @mailbox.find { |envelope| envelope.message.id == id }.try(:message)
       end
 
+      #
+      # Clears the mailbox and replies to each message with an error
+      #
+      #
+      def remove_all_with_error
+        @mailbox.each do |envelope|
+          message = envelope.message
+          message.add_error(type: "code", content: "message_undeliverable")
+          message.run_callback(:on_error, message, nil)
+
+          @mailbox.delete(envelope)
+        end
+      end
+
       private
 
       def check_messages

@@ -20,9 +20,10 @@ module ESM
         end
 
         def stop!
-          return if @instance.nil?
+          return true if @instance.nil?
 
           @instance.stop
+          @instance = nil
         end
 
         def connection(server_id)
@@ -64,12 +65,15 @@ module ESM
           @thread_health_check
         ].each { |id| Thread.kill(id) }
 
-        # TODO: Close any open requests with an error message
+        @message_overseer.remove_all_with_error
+        self.disconnect_all!
 
         # Close the connection to redis
         @redis.close
         @redis_process_inbound_messages.close
         @redis_delegate_inbound_messages.close
+
+        true
       end
 
       def disconnect_all!
@@ -268,6 +272,8 @@ module ESM
 
         # The message is good, call the on_message for this connection
         connection = @connections[incoming_message.server_id]
+        return ESM::Notifications.trigger("warn", class: self.class, method: __method__, message: "Connection was nil?") if connection.nil?
+
         connection.on_message(incoming_message, outgoing_message)
       end
 
