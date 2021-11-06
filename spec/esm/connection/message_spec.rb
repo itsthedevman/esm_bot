@@ -3,7 +3,8 @@
 describe ESM::Connection::Message do
   let(:community) { ESM::Test.community }
   let(:user) { ESM::Test.user }
-  let(:command) { ESM::Command::Test::AdminCommand.new }
+  let(:server) { ESM::Test.server }
+
   let(:input) do
     {
       id: SecureRandom.uuid,
@@ -81,10 +82,14 @@ describe ESM::Connection::Message do
       message = described_class.new(type: "data_test", data: { foo: "bar" })
       expect(message.data_type).to eq("data_test")
     end
-  end
 
-  describe "#sanitize" do
-
+    it "converts symbols to strings" do
+      message = described_class.new(type: :test, data_type: :empty, metadata_type: :empty, server_id: server.server_id.to_sym)
+      expect(message.type).to eq("test")
+      expect(message.data_type).to eq("empty")
+      expect(message.metadata_type).to eq("empty")
+      expect(message.server_id).to eq(server.server_id)
+    end
   end
 
   describe "#to_s/#to_json" do
@@ -112,9 +117,10 @@ describe ESM::Connection::Message do
     end
 
     it "handles codes" do
-      # Preload the command with user data
-      event = CommandEvent.create(command.statement(community_id: community.community_id), channel_type: :text, user: user)
-      expect { command.execute(event) }.not_to raise_error
+      command = double("command")
+      current_user = double("current_user")
+      allow(command).to receive(:current_user).and_return(current_user)
+      allow(current_user).to receive(:mention).and_return(user.mention)
 
       # Needed for mention
       message.add_routing_data(command: command)

@@ -5,7 +5,7 @@ module ESM
     class Message
       include ESM::Callbacks
 
-      MAPPING = YAML.safe_load(File.read(File.expand_path("./config/mapping.yml")), symbolize_names: true).freeze
+      MAPPING = YAML.safe_load(File.read(File.expand_path("./config/mapping.yml"))).freeze
       ARRAY_REGEX = /array<(?<type>.+)>/i.freeze
 
       class Error
@@ -93,11 +93,12 @@ module ESM
       # They will automatically be sanitized according to their data type as configured in the mapping.
       # NOTE: Invalid data/metadata attributes will be dropped!
       #
-      # @param type [String] The type of message this is
+      # @param type [Symbol, String] The type of message this is
       # @param args [Hash]
-      # @option args [String, Array<Integer>, nil] :server_id The ID of the server this messages should be sent to. Array<Integer> will be converted to string automatically
-      # @option args [String] :type The type of message. This gives context to the message
+      # @option args [Symbol, String, Array<Integer>, nil] :server_id The ID of the server this messages should be sent to. Array<Integer> will be converted to string automatically
+      # @option args [Symbol, String] :data_type The name of the type that gives the "data" its structure.
       # @option args [Hash] :data The primary data for this message. It's the good stuff.
+      # @option args [Symbol, String] :metadata_type The name of the type that gives the "metadata" its structure.
       # @option args [Hash] :metadata Any extra data that may be needed. For most command messages, this will contain the user's discord and steam data.
       # @option args [Array<Hash>] :errors Any errors that were caused by this message.
       #   Each hash has the following attributes:
@@ -105,27 +106,25 @@ module ESM
       #       "code" # Uses the message to look up a predefined message in the locales
       #       "message" # Treats the message like a string and sends it as is
       #     message [String] The content of this error.
-      # @option args [String] :data_type The name of the type that gives the "data" its structure.
-      # @option args [String] :metadata_type The name of the type that gives the "metadata" its structure.
       def initialize(type:, **args)
         @id = args[:id] || SecureRandom.uuid
-        @type = type
+        @type = type.to_s
 
         # The server provides the server_id as a UTF8 byte array. Convert it to a string
         @server_id =
           if args[:server_id].is_a?(Array)
             args[:server_id].pack("U*")
           else
-            args[:server_id]
+            args[:server_id].to_s
           end
 
         # If there is data and no data_type provided, default to the message's type. Otherwise, consider it "empty"
-        @metadata_type = args[:metadata_type] || "empty"
+        @metadata_type = args[:metadata_type].presence&.to_s || "empty"
         @data_type =
           if args[:data_type]
-            args[:data_type]
+            args[:data_type].to_s
           elsif args[:data].present?
-            type
+            @type
           else
             "empty"
           end
@@ -292,7 +291,7 @@ module ESM
       def wait_for_response
         # Waits 2 minutes. This is a backup in case message overseer doesn't time it out
         counter = 0
-        while @incoming_message.nil? || counter >= 240
+        while !delivered? || counter >= 240
           sleep(0.5)
           counter += 1
         end
@@ -313,7 +312,8 @@ module ESM
       # Sanitize also ensures the order of the data when exporting
       # @see config/mapping.yml for more information
       def sanitize(data, data_type)
-        mapping = MAPPING[data_type.to_sym]
+        data.stringify_keys!
+        mapping = MAPPING[data_type]
 
         # Catches if MAPPINGS does not have type defined
         raise ESM::Exception::InvalidMessage, "Failed to find type \"#{data_type}\" in \"config/mapping.yml\"" if mapping.nil?
@@ -321,7 +321,7 @@ module ESM
         output = {}
         mapping.each do |attribute_name, attribute_type|
           data_entry = data.delete(attribute_name)
-          raise ESM::Exception::InvalidMessage, "\"#{attribute_name}\" was not provided for \"#{data_type}\"" if data_entry.nil?
+          raise ESM::Exception::InvalidMessage, "\"#{attribute_name}\" is expected for message with data type of \"#{data_type}\"" if data_entry.nil?
 
           # Some classes are not valid ruby classes and need converted
           klass =
@@ -407,7 +407,8 @@ module ESM
       # @param _outgoing_message [ESM::Connection::Message] The outgoing message
       #
       def on_response_sync(incoming_message, _outgoing_message)
-        @mutex.synchronize { @incoming_message = incoming_message }
+        @incoming_message = incoming_message
+        self.delivered
       end
 
       #
@@ -417,10 +418,10 @@ module ESM
       # @param _outgoing_message [ESM::Connection::Message] The outgoing message
       #
       def on_error_sync(incoming_message, _outgoing_message)
-        @mutex.synchronize do
-          @incoming_message = incoming_message
-          @error = true
-        end
+        @incoming_message = incoming_message
+        @error = true
+
+        self.delivered
       end
     end
   end
