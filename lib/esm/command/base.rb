@@ -354,7 +354,7 @@ module ESM
         ESM.bot.deliver(message, to: current_channel)
       end
 
-      def edit(message, content)
+      def edit_message(message, content)
         if content.is_a?(ESM::Embed)
           embed = Discordrb::Webhooks::Embed.new
           content.transfer(embed)
