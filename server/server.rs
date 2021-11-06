@@ -327,7 +327,15 @@ impl Server {
                     self.bot_pong_received.store(true, Ordering::SeqCst);
                 },
 
-                Type::Disconnect => self.disconnect_all(),
+                Type::Disconnect => {
+                    match message.server_id {
+                        Some(server_id) => match self.connection_manager.read().find_by_server_id(&server_id) {
+                            Some(endpoint) => self.disconnect(*endpoint),
+                            None => return
+                        },
+                        None => self.disconnect_all(),
+                    }
+                },
 
                 // Everything else is sent to the client
                 _ => {
@@ -488,7 +496,6 @@ impl Server {
 
         let mut message = Message::new(Type::Disconnect);
         message.set_resource(resource_id);
-        // TODO: Set Server ID!
 
         self.send_to_bot(message);
     }

@@ -15,6 +15,8 @@ module ESM
       class << self
         attr_reader :instance if ESM.env.test?
 
+        delegate :disconnect_all!, to: :@instance, allow_nil: true
+
         def run!
           @instance = self.new
         end
@@ -78,7 +80,7 @@ module ESM
 
       def disconnect_all!
         message = ESM::Connection::Message.new(type: "disconnect")
-        self.__send_internal(message)
+        __send_internal(message)
       end
 
       def tcp_server_alive?
@@ -86,7 +88,7 @@ module ESM
       end
 
       #
-      # Sends a message to a client (a3 server). A homage to Exile.
+      # Sends a message to a client (a3 server)
       #
       # @param message [ESM::Connection::Message] The message to send
       # @param to [String] The ID of the server to send the message to
@@ -111,18 +113,27 @@ module ESM
           message.resource_id = @server_id_by_resource_id.key(to)
         end
 
-        ESM::Notifications.trigger("info", class: self.class, method: __method__, message: message.to_h)
+        ESM::Notifications.trigger("info", class: self.class, method: __method__, server_id: to, message: message.to_h.except(:server_id))
 
-        __send_internal(message)
+        if ESM.env.test? && ESM::Test.store_server_messages
+          ESM::Test.server_messages.store(message, to)
+        else
+          __send_internal(message)
+        end
+
         return message.wait_for_response if wait
 
         message
       end
 
-      def disconnect(server_id)
-        connection = @connections.delete(server_id)
+      def disconnect(server_id, reason: nil)
+        ESM::Notifications.trigger("info", class: self.class, method: __method__, server_id: server_id, reason: reason.to_s)
 
-        ESM::Notifications.trigger("info", class: self.class, method: __method__, server_id: server_id)
+        message = ESM::Connection::Message.new(type: :disconnect)
+        message.add_error(type: :message, content: reason) if reason.present?
+        fire(message, to: server_id)
+
+        connection = @connections.delete(server_id)
         return if connection.nil?
 
         connection.on_close
@@ -248,6 +259,7 @@ module ESM
         )
 
         connection = ESM::Connection.new(self, server_id)
+        return self.disconnect(server_id) if connection.server.nil?
         return connection.server.community.log_event(:error, message.errors.first.to_s) if message.errors?
 
         connection.on_open(message)
@@ -281,7 +293,10 @@ module ESM
 
       def on_disconnect(message)
         server_id = @server_id_by_resource_id.delete(message.resource_id)
-        self.disconnect(server_id)
+        connection = @connections.delete(server_id)
+        return if connection.nil?
+
+        connection.on_close
       end
 
       def on_ping(_message)

@@ -1,8 +1,14 @@
 # frozen_string_literal: true
 
-describe ESM::Connection::Server do
-  let!(:connection_server) { described_class.instance }
-  let(:message) { ESM::Connection::Message.new(type: "test", data: { foo: "bar" }, data_type: "test") }
+describe ESM::Connection::Server, requires_connection: true do
+  let(:connection_server) { described_class.instance }
+  let(:message) { ESM::Connection::Message.new(type: "test", data: { foo: "bar" }, data_type: "data_test") }
+
+  let(:server) { ESM::Test.server }
+
+  before :each do
+    ESM::Test.store_server_messages = true
+  end
 
   describe "#on_message" do
     it "triggers on_error if message contains errors" do
@@ -18,6 +24,38 @@ describe ESM::Connection::Server do
       connection_server.message_overseer.watch(outgoing_message)
 
       expect { connection_server.send(:on_message, message) }.not_to raise_error
+    end
+  end
+
+  # fire(message, to:, forget: false, wait: false)
+  describe "#fire" do
+    it "sends a message" do
+      expect { connection_server.fire(message, to: server.server_id) }.not_to raise_error
+
+      outgoing_message = ESM::Test.server_messages.first
+      expect(outgoing_message).not_to be_nil
+
+      expect(outgoing_message.destination).to eq(server.server_id)
+      expect(outgoing_message.content).to eq(message)
+    end
+
+    it "sends a message and waits for the reply" do
+      thread = Thread.new do
+        expect { connection_server.fire(message, to: server.server_id, wait: true) }.not_to raise_error
+      end
+
+      sleep(0.2)
+
+      expect(connection_server.message_overseer.size)
+      message.run_callback(:on_response, message, nil)
+
+      thread.join
+
+      outgoing_message = ESM::Test.server_messages.first
+      expect(outgoing_message).not_to be_nil
+
+      expect(outgoing_message.destination).to eq(server.server_id)
+      expect(outgoing_message.content).to eq(message)
     end
   end
 end

@@ -25,6 +25,10 @@ module ESM
         end
       end
 
+      def size
+        @mailbox.size
+      end
+
       #
       # Watches a message for a delivery response. If the message never receives one, the message's `on_error` callback will be triggered
       #
@@ -55,6 +59,7 @@ module ESM
       def remove_all_with_error
         @mailbox.each do |envelope|
           message = envelope.message
+
           message.add_error(type: "code", content: "message_undeliverable")
           message.run_callback(:on_error, message, nil)
 

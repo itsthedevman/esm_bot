@@ -5,11 +5,15 @@ module ESM
     class << self
       attr_reader :response
       attr_writer :messages
-      attr_accessor :skip_cooldown
+      attr_accessor :skip_cooldown, :store_server_messages
     end
 
     def self.messages
       @messages ||= Messages.new
+    end
+
+    def self.server_messages
+      @server_messages ||= Messages.new
     end
 
     def self.data
@@ -72,12 +76,14 @@ module ESM
 
     def self.reset!
       @response = nil
-      @messages = Messages.new
+      @messages = nil
+      @server_messages = nil
       @community = nil
       @server = nil
       @user = nil
       @second_user = nil
       @channel = nil
+      @store_server_messages = false
 
       @communities = %i[primary_community secondary_community]
       @community_type = @communities.sample
@@ -92,8 +98,6 @@ module ESM
 
       # Clear the test list in Redis
       self.redis.del("test")
-
-      ESM::Connection::Server.instance&.disconnect_all!
     end
 
     # I hate this code, it doesn't make me happy

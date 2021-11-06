@@ -84,6 +84,7 @@ RSpec.configure do |config|
       example.run
     end
 
+    ESM::Connection::Server.instance&.disconnect_all!
     ESM::Websocket.remove_all_connections!
   end
 end
