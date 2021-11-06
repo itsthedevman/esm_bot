@@ -133,7 +133,7 @@ module ESM
         parser = payload[:parser]
 
         ESM::JSON.pretty_generate(
-          argument: payload[:argument],
+          argument: payload[:argument].to_s,
           message: payload[:message],
           regex: payload[:regex],
           parser: {
