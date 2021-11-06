@@ -1,0 +1,54 @@
+---
+en:
+  commands:
+    help:
+      arguments:
+        category: The categories can be found by just using `%{prefix}help`
+      description: A helpful command. An unhelpful description
+      example: |-
+        **`%{prefix}help`**
+        Displays information about getting started with Exile Server Manager
+
+        **`%{prefix}help commands`**
+        Displays all commands
+
+        **`%{prefix}help set_id`**
+        Displays detailed information about the `set_id` command
+      categories:
+        name: Categories
+        value: |-
+          **`%{prefix}help commands`**
+          List all commands
+
+          **`%{prefix}help <command_name>`**
+          Get information about the provided command
+      getting_started:
+        title: Hi %{user}! My name is Exile Server Manager, or ESM for short!
+        description: I have a bunch of useful commands for both players and server
+          owners alike.
+      commands:
+        player:
+          title: Player Commands
+          description: |-
+            These commands are for players to interact with their character in game. They are primarily used in a Direct Message with me, but can be available to use in a community's Discord server or on your own with Player Mode Enabled.
+            Please note, communities have the ability to disable or whitelist commands for their servers, regardless of where the command is used.
+            More information about a particular command can be found by using the `%{prefix}help command_name` command. For example: `%{prefix}help servers`
+        admin:
+          title: Admin Commands
+          description: These commands are locked by default and may only be used by
+            a community's admins and the whitelisted roles.
+        development:
+          title: Development Commands
+          description: These commands are only available in development mode.
+      command:
+        title: "`%{prefix}%{name}` Documentation"
+        note: "**Note:**"
+        limited_to: This command is available only in a %{channel_type} channel with
+          me.
+        whitelist_enabled: This command may be available only to certain roles.
+        usage: "**__Usage__**"
+        aliases:
+          name: "**__Aliases__**"
+          value: 'This command can also be accessed by the following aliases: %{aliases}'
+        arguments: "**__Arguments__**"
+        examples: "**__Examples__**"
