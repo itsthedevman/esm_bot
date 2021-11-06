@@ -15,7 +15,10 @@ module ESM
     delegate :server_id, to: :@server
 
     # @param message [Hash, ESM::Connection::Message] This can be either a hash of arguments for ESM::Connection::Message, or an instance of it.
-    def send_message(message = {}, forget: false, wait: false)
+    def send_message(message = nil, opts = {})
+      forget = opts[:forget] || false
+      wait = opts[:wait] || false
+
       message = ESM::Connection::Message.new(**message) if message.is_a?(Hash)
 
       @tcp_server.fire(message, to: self.server_id, forget: forget, wait: wait)
