@@ -180,7 +180,7 @@ module ESM
       # @param message [String] The message or code for this error
       #
       def add_error(type:, content:)
-        @errors << Error.new(self, type: type, content: content)
+        @errors << Error.new(self, type: type.to_s, content: content)
       end
 
       #
