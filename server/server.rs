@@ -27,7 +27,8 @@ pub struct Server {
     bot_alive: Arc<AtomicBool>,
 
     // Used for tracking if there was a pong received. Use `bot_alive` for checking if the bot is still online
-    bot_pong_received: Arc<AtomicBool>
+    bot_pong_received: Arc<AtomicBool>,
+    allow_connections: Arc<AtomicBool>,
 }
 
 impl Server {
@@ -60,6 +61,7 @@ impl Server {
             outbound_receiver: Arc::new(RwLock::new(receiver)),
             bot_alive: Arc::new(AtomicBool::new(false)),
             bot_pong_received: Arc::new(AtomicBool::new(true)),
+            allow_connections: Arc::new(AtomicBool::new(true)),
             redis: Arc::new(SyncRwLock::new(redis)),
         }
     }
@@ -156,6 +158,7 @@ impl Server {
         }
 
         let disconnect_if_dead = |server: &Server, endpoint: &Endpoint| -> bool {
+            if !server.allow_connections.load(Ordering::SeqCst) { return false }
             if server.bot_alive.load(Ordering::SeqCst) { return false }
 
             server.handler.network().remove(endpoint.resource_id());
@@ -311,14 +314,23 @@ impl Server {
                 }
             };
 
-            if message.message_type != Type::Pong {
-                debug!("#process_inbound_messages - {:#?}", message);
+            match message.message_type {
+                Type::Disconnect | Type::Pong | Type::Pause | Type::Resume => trace!("#process_inbound_messages - {:#?}", message),
+                _ => debug!("#process_inbound_messages - {:#?}", message)
             }
 
             match message.message_type {
                 // For automated testing. Push the message into a different list so the test can check for it
                 Type::Test => {
                     let _: () = redis::cmd("RPUSH").arg("test").arg(json).query_async(&mut connection).await.unwrap();
+                },
+
+                Type::Resume => {
+                    self.allow_connections.store(true, Ordering::SeqCst);
+                },
+
+                Type::Pause => {
+                    self.allow_connections.store(false, Ordering::SeqCst);
                 },
 
                 // Received from the bot after a ping has been sent
@@ -388,8 +400,6 @@ impl Server {
 
                 // Disconnect all connections to simulate a disconnect
                 self.disconnect_all();
-
-                std::process::exit(1);
             }
         }
     }

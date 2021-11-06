@@ -74,18 +74,18 @@ RSpec.configure do |config|
 
   config.around(:each) do |example|
     DatabaseCleaner.cleaning do
+      ESM::Connection::Server.instance.disconnect_all!
+
       if example.metadata[:requires_connection]
-        ESM::Connection::Server.run! if ESM::Connection::Server.instance.nil?
-        ESM::Test.wait_until { ESM::Connection::Server.instance.tcp_server_alive? }
+        ESM::Connection::Server.resume
       else
-        ESM::Connection::Server.stop!
+        ESM::Connection::Server.pause
       end
 
       example.run
-    end
 
-    ESM::Connection::Server.instance&.disconnect_all!
-    ESM::Websocket.remove_all_connections!
+      ESM::Websocket.remove_all_connections!
+    end
   end
 end
 
@@ -153,3 +153,4 @@ end
 
 # Wait until the bot has fully connected
 ESM::Test.wait_until { ESM.bot.ready? }
+ESM::Test.wait_until { ESM::Connection::Server.instance.tcp_server_alive? }

@@ -114,7 +114,7 @@ module ESM
         @server_id =
           if args[:server_id].is_a?(Array)
             args[:server_id].pack("U*")
-          else
+          elsif args[:server_id]
             args[:server_id].to_s
           end
 

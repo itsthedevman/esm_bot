@@ -15,7 +15,7 @@ module ESM
       class << self
         attr_reader :instance if ESM.env.test?
 
-        delegate :disconnect_all!, to: :@instance, allow_nil: true
+        delegate :disconnect_all!, :pause, :resume, to: :@instance, allow_nil: true
 
         def run!
           @instance = self.new
@@ -78,8 +78,18 @@ module ESM
         true
       end
 
+      def resume
+        message = ESM::Connection::Message.new(type: :resume)
+        __send_internal(message)
+      end
+
+      def pause
+        message = ESM::Connection::Message.new(type: :pause)
+        __send_internal(message)
+      end
+
       def disconnect_all!
-        message = ESM::Connection::Message.new(type: "disconnect")
+        message = ESM::Connection::Message.new(type: :disconnect)
         __send_internal(message)
       end
 
@@ -305,7 +315,7 @@ module ESM
 
         self.health_check
 
-        message = ESM::Connection::Message.new(type: "pong", data_type: "empty")
+        message = ESM::Connection::Message.new(type: :pong)
         __send_internal(message)
       end
     end
