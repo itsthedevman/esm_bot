@@ -104,12 +104,10 @@ module ESM
       timeout *= 4
       counter = 0
 
-      while counter < timeout
+      sleep(0.25)
+      while self.response.blank? && counter < timeout
         sleep(0.25)
         counter += 1
-
-        # I don't have this in the conditional above because I want it to sleep at least once
-        break if self.response.present?
       end
 
       self.response
