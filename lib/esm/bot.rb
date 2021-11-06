@@ -22,6 +22,7 @@ module ESM
 
     def initialize
       @waiting_for = {}
+      @mutex = Mutex.new
 
       @prefixes = {}
       @prefixes.default = ESM.config.prefix
@@ -180,6 +181,7 @@ module ESM
       nil
     end
 
+    # Also see #wait_for_reply
     def await_response(responding_user, expected:, timeout: nil)
       counter = 0
       match = nil
@@ -272,7 +274,7 @@ module ESM
     end
 
     #
-    # Waits for an event from user_id and channel_id. Once the message event is received, it will execute the callback
+    # Successor to #await_response. Waits for an event from user_id and channel_id
     #
     # @param user_id [Integer/String] The ID of the user who sends the message
     # @param channel_id [Integer/String] The ID of the channel where the message is sent to. The bot must be a member of said channel
@@ -282,26 +284,37 @@ module ESM
     # @return [true]
     #
     def wait_for_reply(user_id:, channel_id:, expires_at: 5.minutes.from_now, &callback)
-      @waiting_for[user_id] ||= []
-      @waiting_for[user_id] << channel_id
-
-      event = self.add_await!(Discordrb::Events::MessageEvent, { from: user_id, in: channel_id, timeout: expires_at - Time.now })
-
-      @waiting_for[user_id]&.delete_if { |id| id == channel_id }
+      @mutex.synchronize do
+        @waiting_for[user_id] ||= []
+        @waiting_for[user_id] << channel_id
+      end
 
       # Event will be nil if it times out
-      if callback
-        yield(event)
-      else
-        event
+      timeout = expires_at - ::Time.now
+      event =
+        if ESM.env.test?
+          ESM::Test.await(timeout: timeout)
+        else
+          self.add_await!(Discordrb::Events::MessageEvent, { from: user_id, in: channel_id, timeout: timeout })
+        end
+
+      @mutex.synchronize do
+        @waiting_for[user_id]&.delete_if { |id| id == channel_id }
       end
+
+      return event unless callback
+
+      yield(event)
+      nil
     end
 
     def waiting_for_reply?(user_id:, channel_id:)
-      channel_ids = @waiting_for[user_id]
-      return false if channel_ids.blank?
+      @mutex.synchronize do
+        channel_ids = @waiting_for[user_id]
+        return false if channel_ids.blank?
 
-      channel_ids.include?(channel_id)
+        channel_ids.include?(channel_id)
+      end
     end
 
     private

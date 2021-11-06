@@ -50,7 +50,7 @@ describe ESM::Bot do
     end
 
     describe "Sending a Embed message" do
-      it "should send (Channel)" do
+      it "sends (Channel)" do
         embed =
           ESM::Embed.build do |e|
             e.title = Faker::Lorem.sentence
@@ -74,7 +74,7 @@ describe ESM::Bot do
         expect(message_array.second.description).to eq(embed.description)
       end
 
-      it "should send (User)" do
+      it "sends (User)" do
         ESM.bot.deliver("Hello!", to: user.discord_id)
         expect(ESM::Test.messages.size).to eq(1)
 
@@ -94,7 +94,7 @@ describe ESM::Bot do
   end
 
   describe "#await_response" do
-    it "should send and reply (Correct)" do
+    it "sends and replies (Correct)" do
       ESM::Test.response = "good"
       ESM.bot.deliver("Hello, how are you today?", to: user)
       ESM.bot.await_response(user.discord_id, expected: %w[good bad])
@@ -113,7 +113,7 @@ describe ESM::Bot do
       expect(message_array.second).to eq("Hello, how are you today?")
     end
 
-    it "sends and reply (Incorrect)" do
+    it "sends and replies (Incorrect)" do
       ESM.bot.deliver("Who wants to party?!?", to: channel)
 
       # Set the initial response
@@ -129,20 +129,20 @@ describe ESM::Bot do
       ESM.bot.await_response(user.discord_id, expected: ["i do", "i don't"])
 
       expect(ESM::Test.messages.size).to eq(2)
-      message_array = ESM::Test.messages.first
-      response = ESM::Test.messages.second[1]
 
       # Channel
-      expect(message_array.first).not_to be_nil
-      expect(message_array.first).to be_kind_of(Discordrb::Channel)
-      expect(message_array.first.text?).to be(true)
+      message_array = ESM::Test.messages.first
+      expect(message_array.destination).not_to be_nil
+      expect(message_array.destination).to be_kind_of(Discordrb::Channel)
+      expect(message_array.destination.text?).to be(true)
 
       # Message tests
-      expect(message_array.second).not_to be_nil
-      expect(message_array.second).to be_kind_of(String)
-      expect(message_array.second).to eq("Who wants to party?!?")
+      expect(message_array.content).not_to be_nil
+      expect(message_array.content).to be_kind_of(String)
+      expect(message_array.content).to eq("Who wants to party?!?")
 
       # Invalid response
+      response = ESM::Test.messages.second.content
       expect(response).not_to be_nil
       expect(response).to eq("I'm sorry, I don't know how to reply to your response.\nI was expecting `i do` or `i don't`")
     end
@@ -154,7 +154,42 @@ describe ESM::Bot do
     end
   end
 
-  it "does not have a Community created" do
-    expect(ESM::Community.where(guild_id: ESM::Community::ESM::ID).first).to be_nil
+  describe "#wait_for_reply" do
+    let(:message) { Faker::String.random }
+
+    it "waits for the reply" do
+      ESM::Test.response = message
+      event = ESM.bot.wait_for_reply(user_id: user.id, channel_id: channel.id)
+      expect(event).not_to be_nil
+      expect(event.message.content).to eq(message)
+    end
+
+    it "waits for the reply (With block)" do
+      ESM::Test.response = message
+      ESM.bot.wait_for_reply(user_id: user.id, channel_id: channel.id) do |event|
+        expect(event).not_to be_nil
+        expect(event.message.content).to eq(message)
+      end
+    end
+  end
+
+  describe "#waiting_for_reply?" do
+    let(:message) { Faker::String.random }
+
+    it "is waiting for a reply" do
+      thread = Thread.new do
+        expect(ESM::Test.response).to be_nil
+
+        event = ESM.bot.wait_for_reply(user_id: user.id, channel_id: channel.id)
+        expect(event).not_to be_nil
+        expect(event.message.content).to eq(message)
+      end
+
+      sleep(0.2)
+      expect(ESM.bot.waiting_for_reply?(user_id: user.id, channel_id: channel.id)).to be(true)
+
+      ESM::Test.response = message
+      thread.join
+    end
   end
 end
