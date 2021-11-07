@@ -320,11 +320,6 @@ impl Server {
             }
 
             match message.message_type {
-                // For automated testing. Push the message into a different list so the test can check for it
-                Type::Test => {
-                    let _: () = redis::cmd("RPUSH").arg("test").arg(json).query_async(&mut connection).await.unwrap();
-                },
-
                 Type::Resume => {
                     self.allow_connections.store(true, Ordering::SeqCst);
                 },

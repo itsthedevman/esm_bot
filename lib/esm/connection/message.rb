@@ -261,7 +261,7 @@ module ESM
       # @return [Boolean]
       #
       def delivered?
-        @delivered
+        @mutex.synchronize { @delivered }
       end
 
       #
@@ -271,7 +271,7 @@ module ESM
       # @return [true]
       #
       def delivered
-        @delivered = true
+        @mutex.synchronize { @delivered = true }
       end
 
       #
@@ -299,7 +299,7 @@ module ESM
         # This should never raise. It's for emergencies
         raise ESM::Exception::MessageSyncTimeout if counter >= 240
 
-        @incoming_message
+        @mutex.synchronize { @incoming_message }
       end
 
       def inspect
@@ -407,7 +407,7 @@ module ESM
       # @param _outgoing_message [ESM::Connection::Message] The outgoing message
       #
       def on_response_sync(incoming_message, _outgoing_message)
-        @incoming_message = incoming_message
+        @mutex.synchronize { @incoming_message = incoming_message }
         self.delivered
       end
 
@@ -418,7 +418,7 @@ module ESM
       # @param _outgoing_message [ESM::Connection::Message] The outgoing message
       #
       def on_error_sync(incoming_message, _outgoing_message)
-        @incoming_message = incoming_message
+        @mutex.synchronize { @incoming_message = incoming_message }
         @error = true
 
         self.delivered

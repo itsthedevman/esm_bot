@@ -3,11 +3,6 @@
 module ESM
   class Connection
     class Server
-      REDIS_OPTS = {
-        reconnect_attempts: 10,
-        reconnect_delay: 1.5,
-        reconnect_delay_max: 10.0
-      }.freeze
       ################################
       # Class methods
       ################################
@@ -45,7 +40,7 @@ module ESM
         @connections = {} # By server_id
         @server_id_by_resource_id = {}
         @mutex = Mutex.new
-        @redis = Redis.new(REDIS_OPTS)
+        @redis = Redis.new(ESM::REDIS_OPTS)
         @message_overseer = ESM::Connection::MessageOverseer.new
 
         @redis.del("connection_server_outbound")
@@ -67,7 +62,7 @@ module ESM
           @thread_health_check
         ].each { |id| Thread.kill(id) }
 
-        @message_overseer.remove_all_with_error
+        @message_overseer.remove_all!(with_error: true)
         self.disconnect_all!
 
         # Close the connection to redis
@@ -168,7 +163,7 @@ module ESM
       end
 
       def delegate_inbound_messages
-        @redis_delegate_inbound_messages = Redis.new(REDIS_OPTS)
+        @redis_delegate_inbound_messages = Redis.new(ESM::REDIS_OPTS)
 
         @thread_delegate_inbound_messages =
           Thread.new do
@@ -182,7 +177,7 @@ module ESM
       end
 
       def process_inbound_messages
-        @redis_process_inbound_messages = Redis.new(REDIS_OPTS)
+        @redis_process_inbound_messages = Redis.new(ESM::REDIS_OPTS)
 
         @thread_process_inbound_messages =
           Thread.new do

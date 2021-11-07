@@ -17,7 +17,12 @@ module ESM
     end
 
     def self.data
-      @data ||= YAML.load_file(File.expand_path("./spec/test_data.yml")).deep_symbolize_keys
+      @data ||= lambda do
+        data = YAML.load_file(File.expand_path("./spec/test_data.yml")).deep_symbolize_keys
+        redis.set("test_data", data.to_json)
+
+        data
+      end.call
     end
 
     # Attempt to simulate a random community for tests
@@ -61,7 +66,7 @@ module ESM
     end
 
     def self.redis
-      @redis ||= Redis.new(ESM::Connection::Server::REDIS_OPTS)
+      @redis ||= Redis.new(ESM::REDIS_OPTS)
     end
 
     def self.response=(value)

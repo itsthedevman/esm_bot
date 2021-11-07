@@ -34,6 +34,9 @@ Discordrb::LOGGER.debug = false
 # Ignore debug messages when running tests
 ActiveRecord::Base.logger.level = Logger::INFO
 
+`kill -9 $(pgrep -f esm_bot)`
+`kill -9 $(pgrep -f esm_server)`
+
 # Start the bot
 ESM.run!
 
@@ -74,7 +77,9 @@ RSpec.configure do |config|
 
   config.around(:each) do |example|
     DatabaseCleaner.cleaning do
-      ESM::Connection::Server.instance.disconnect_all!
+      server = ESM::Connection::Server.instance
+      server.disconnect_all!
+      server.message_overseer.remove_all!
 
       if example.metadata[:requires_connection]
         ESM::Connection::Server.resume

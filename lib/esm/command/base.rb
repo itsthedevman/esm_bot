@@ -368,6 +368,9 @@ module ESM
       # Raises an exception of the given class or ESM::Exception::CheckFailure.
       # If a block is given, the return of that block will be message to raise
       # Otherwise, it will build an error embed
+      #
+      # @deprecated
+      # @see #raise_error!
       def check_failed!(name = nil, **args, &block)
         message =
           if block_given?
@@ -380,6 +383,31 @@ module ESM
         ESM::Notifications.trigger("command_check_failed", command: self, reason: message)
 
         raise args[:exception_class] || ESM::Exception::CheckFailure, message
+      end
+
+      #
+      # Builds a message and raises a CheckFailure with that reason.
+      #
+      # @param error_name [String, Symbol, nil] The name of the error message located in the locales for "commands.<command_name>.errors". If nil, a block must be provided
+      # @param args [Hash] The args to be passed into the translation if an error_name is provided
+      # @param block [Proc] If provided, the block must return the error message to be used. This can be a string or an ESM::Embed.
+      #
+      # @replaces #check_failed!
+      #
+      def raise_error!(error_name = nil, **args, &block)
+        exception_class = args.delete(:exception_class)
+
+        reason =
+          if block
+            yield
+          else
+            ESM::Embed.build(:error, description: I18n.t("commands.#{self.name}.errors.#{error_name}", **args))
+          end
+
+        # Logging
+        ESM::Notifications.trigger("command_check_failed", command: self, reason: reason)
+
+        raise exception_class || ESM::Exception::CheckFailure, reason
       end
 
       private

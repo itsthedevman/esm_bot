@@ -1,14 +1,8 @@
 # frozen_string_literal: true
 
-describe ESM::Connection::Server, requires_connection: true do
+describe ESM::Connection::Server do
   let(:connection_server) { described_class.instance }
   let(:message) { ESM::Connection::Message.new(type: "test", data: { foo: "bar" }, data_type: "data_test") }
-
-  let(:server) { ESM::Test.server }
-
-  before :each do
-    ESM::Test.store_server_messages = true
-  end
 
   describe "#on_message" do
     it "triggers on_error if message contains errors" do
@@ -16,7 +10,7 @@ describe ESM::Connection::Server, requires_connection: true do
       outgoing_message.add_error(type: "code", content: "default")
 
       # Remove the default callback and set a new one
-      outgoing_message.add_callback(:on_error) do |_, outgoing|
+      outgoing_message.add_callback(:on_error) do |_incoming, outgoing|
         expect(outgoing.errors.first.to_h).to eql({ type: "code", content: "default" })
       end
 
@@ -28,7 +22,15 @@ describe ESM::Connection::Server, requires_connection: true do
   end
 
   # fire(message, to:, forget: false, wait: false)
-  describe "#fire" do
+  describe "#fire", requires_connection: true do
+    include_context "connection"
+
+    let(:server) { ESM::Test.server }
+
+    before :each do
+      ESM::Test.store_server_messages = true
+    end
+
     it "sends a message" do
       expect { connection_server.fire(message, to: server.server_id) }.not_to raise_error
 
@@ -40,14 +42,22 @@ describe ESM::Connection::Server, requires_connection: true do
     end
 
     it "sends a message and waits for the reply" do
+      message.server_id = server.server_id
+      outgoing_message = message.dup
+
       thread = Thread.new do
-        expect { connection_server.fire(message, to: server.server_id, wait: true) }.not_to raise_error
+        response = nil
+        expect { response = connection_server.fire(outgoing_message, to: server.server_id, wait: true) }.not_to raise_error
+
+        expect(response).not_to be_nil
+        expect(response.type).to eq("test")
       end
 
       sleep(0.2)
 
-      expect(connection_server.message_overseer.size)
-      message.run_callback(:on_response, message, nil)
+      expect(connection_server.message_overseer.size).to eq(1)
+      expect { connection_server.send(:on_message, message) }.not_to raise_error
+      expect(connection_server.message_overseer.size).to eq(0)
 
       thread.join
 
@@ -55,7 +65,7 @@ describe ESM::Connection::Server, requires_connection: true do
       expect(outgoing_message).not_to be_nil
 
       expect(outgoing_message.destination).to eq(server.server_id)
-      expect(outgoing_message.content).to eq(message)
+      expect(outgoing_message.content.to_h).to eq(message.to_h)
     end
   end
 end

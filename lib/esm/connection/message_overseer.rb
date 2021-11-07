@@ -13,8 +13,10 @@ module ESM
         end
       end
 
+      attr_reader :mailbox if ESM.env.test?
+
       def initialize
-        @mailbox = []
+        @mailbox = {}
 
         check_every = ESM.config.loops.connection_message_overseer.check_every
         @thread = Thread.new do
@@ -38,7 +40,7 @@ module ESM
       def watch(message, expires_at: 10.seconds.from_now)
         # I love Ruby
         envelope = Envelope.new(message, expires_at)
-        @mailbox << envelope
+        @mailbox[message.id] = envelope
       end
 
       #
@@ -49,21 +51,22 @@ module ESM
       # @return [ESM::Connection::Message, Nil] The message or nil
       #
       def retrieve(id)
-        @mailbox.find { |envelope| envelope.message.id == id }.try(:message)
+        envelope = @mailbox.delete(id)
+        return if envelope.nil?
+
+        envelope.message
       end
 
-      #
-      # Clears the mailbox and replies to each message with an error
-      #
-      #
-      def remove_all_with_error
-        @mailbox.each do |envelope|
+      def remove_all!(with_error: false)
+        @mailbox.each do |id, envelope|
           message = envelope.message
 
-          message.add_error(type: "code", content: "message_undeliverable")
-          message.run_callback(:on_error, message, nil)
+          if with_error
+            message.add_error(type: "code", content: "message_undeliverable")
+            message.run_callback(:on_error, message, nil)
+          end
 
-          @mailbox.delete(envelope)
+          @mailbox.delete(id)
         end
       end
 
@@ -71,19 +74,18 @@ module ESM
 
       def check_messages
         # Hey look, I'm the government
-        @mailbox.each do |envelope|
-          next @mailbox.delete(envelope) if envelope.delivered?
+        @mailbox.each do |id, envelope|
           next if !envelope.undeliverable?
 
           message = envelope.message
           message.add_error(type: "code", content: "message_undeliverable")
           message.run_callback(:on_error, message, nil)
 
-          @mailbox.delete(envelope)
+          @mailbox.delete(id)
         rescue StandardError => e
           ESM::Notifications.trigger("error", class: self.class, method: __method__, error: e)
 
-          @mailbox.delete(envelope)
+          @mailbox.delete(id)
         end
       end
     end

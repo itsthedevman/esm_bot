@@ -14,8 +14,8 @@ class CommandEvent
   # Can't use initializer because I want to return a different object. This is essentially a wrapper
   def self.create(content, user:, channel_type: :text)
     # This command is expensive in the terms of requests to Discord.
-    # Forces tests to run a little bit slower so Discord doesn't ratelimit me
-    sleep(rand + 0.5)
+    # The bot can only send 50 requests per second
+    sleep(0.05)
 
     data = {
       "id" => nil,

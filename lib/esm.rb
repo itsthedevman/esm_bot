@@ -48,6 +48,12 @@ Dotenv.load(".env.test") if ENV["ESM_ENV"] == "test"
 Dotenv.load(".env.prod") if ENV["ESM_ENV"] == "production"
 
 module ESM
+  REDIS_OPTS = {
+    reconnect_attempts: 10,
+    reconnect_delay: 1.5,
+    reconnect_delay_max: 10.0
+  }.freeze
+
   class << self
     attr_reader :bot, :config, :logger, :env, :redis
   end
@@ -137,7 +143,8 @@ module ESM
   end
 
   def self.initialize_redis
-    @redis = Redis.new(ESM::Connection::Server::REDIS_OPTS)
+    @redis = Redis.new(REDIS_OPTS)
+    @redis.keys.each { |key| @redis.del(key) } # rubocop:disable Style/HashEachMethods
   end
 
   # Borrowed from Rails, load the ENV

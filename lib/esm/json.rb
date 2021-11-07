@@ -17,7 +17,7 @@ module ESM
     # @return [String] The prettified data to print
     def self.pretty_generate(json)
       json = self.parse(json) if json.is_a?(String)
-      ::JSON.neat_generate(json, after_comma: 1, after_colon: 1, wrap: 115)
+      ::JSON.neat_generate(json, after_comma: 1, after_colon: 1, wrap: 95)
     end
 
     private_class_method def self.as_ostruct(input_hash)
