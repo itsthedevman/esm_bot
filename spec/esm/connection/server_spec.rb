@@ -42,8 +42,8 @@ describe ESM::Connection::Server do
     end
 
     it "sends a message and waits for the reply" do
+      outgoing_message = ESM::Connection::Message.new(id: message.id, type: "test")
       message.server_id = server.server_id
-      outgoing_message = message.dup
 
       thread = Thread.new do
         response = nil
@@ -51,6 +51,7 @@ describe ESM::Connection::Server do
 
         expect(response).not_to be_nil
         expect(response.type).to eq("test")
+        expect(response.data_type).to eq("data_test")
       end
 
       sleep(0.2)
@@ -61,11 +62,11 @@ describe ESM::Connection::Server do
 
       thread.join
 
-      outgoing_message = ESM::Test.server_messages.first
-      expect(outgoing_message).not_to be_nil
+      message = ESM::Test.server_messages.first
+      expect(message).not_to be_nil
 
-      expect(outgoing_message.destination).to eq(server.server_id)
-      expect(outgoing_message.content.to_h).to eq(message.to_h)
+      expect(message.destination).to eq(server.server_id)
+      expect(message.content.to_h).to eq(outgoing_message.to_h)
     end
   end
 end
