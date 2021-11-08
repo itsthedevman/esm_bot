@@ -6,12 +6,6 @@ export ESM_ENV='development'
 export RUST_LOG='info'
 export TCP_SERVER_PORT='3003'
 
-working_dir=$(pwd)
-cd $working_dir
-
-# Make sure it's not running
-killall -9 esm_server
-
 # Compile tcp_server
 cargo update --package esm_message
 cargo build --release
@@ -23,8 +17,7 @@ then
 fi
 
 # Start the tcp_server
-./target/release/esm_server &
-echo $$ > target/esm_server.pid
+bin/tcp_server &
 
 # Start the bot
 if [[ -z $1 ]]
@@ -34,5 +27,4 @@ else
   bundle exec ruby bin/start_dev.rb
 fi
 
-# Tell it to quit
-killall -9 esm_server
+kill -9 $(pgrep -f esm_server) > /dev/null 2>&1

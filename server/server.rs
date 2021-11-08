@@ -45,9 +45,14 @@ impl Server {
             Err(e) => panic!("Failed to connect to redis. Reason: {}", e)
         };
 
-        let redis = match redis_client.get_connection() {
+        let mut redis = match redis_client.get_connection() {
             Ok(con) => con,
             Err(e) => panic!("Failed to get sync connection. Reason: {}", e)
+        };
+
+        let _: () = match redis::cmd("DEL").arg("tcp_server_outbound").arg("tcp_server_inbound").query(&mut redis) {
+            Ok(r) => r,
+            Err(e) => error!("#delegate_outbound_messages - {}", e)
         };
 
         let (sender, receiver) = mpsc::unbounded_channel();
@@ -227,11 +232,6 @@ impl Server {
             Err(e) => panic!("#delegate_inbound_messages - {}", e)
         };
 
-        let _: () = match redis::cmd("DEL").arg("tcp_server_inbound").query_async(&mut connection).await {
-            Ok(r) => r,
-            Err(e) => error!("#delegate_inbound_messages - {}", e)
-        };
-
         loop {
             let _: () = match redis::cmd("BLMOVE")
                 .arg("connection_server_outbound")
@@ -255,11 +255,6 @@ impl Server {
             Err(e) => panic!("#delegate_outbound_messages - {}", e)
         };
 
-        let _: () = match redis::cmd("DEL").arg("tcp_server_outbound").query_async(&mut connection).await {
-            Ok(r) => r,
-            Err(e) => error!("#delegate_outbound_messages - {}", e)
-        };
-
         loop {
             let mut receiver = self.outbound_receiver.write().await;
 
@@ -275,6 +270,8 @@ impl Server {
                     continue;
                 }
             };
+
+            trace!("#delegate_outbound_messages - {}", message);
 
             let _: () = match redis::cmd("RPUSH")
                 .arg("tcp_server_outbound")

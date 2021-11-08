@@ -8,7 +8,7 @@ module ESM
       ################################
 
       class << self
-        attr_reader :instance if ESM.env.test?
+        attr_reader :instance
 
         delegate :disconnect_all!, :pause, :resume, to: :@instance, allow_nil: true
 
@@ -46,12 +46,14 @@ module ESM
         @redis.del("connection_server_outbound")
         @redis.del("connection_server_inbound")
 
-        self.tcp_server_alive = false
+        self.tcp_server_alive = true
         self.server_ping_received = true
         self.refresh_keys
         self.health_check
         self.delegate_inbound_messages
         self.process_inbound_messages
+
+        ESM::Notifications.trigger("info", class: self.class, method: __method__, status: "Started")
       end
 
       def stop

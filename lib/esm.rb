@@ -144,7 +144,6 @@ module ESM
 
   def self.initialize_redis
     @redis = Redis.new(REDIS_OPTS)
-    @redis.keys.each { |key| @redis.del(key) } # rubocop:disable Style/HashEachMethods
   end
 
   # Borrowed from Rails, load the ENV
