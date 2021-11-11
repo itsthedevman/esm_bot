@@ -2,7 +2,9 @@
 
 module ESM
   class Embed
-    TAB = "\u200B\u200B\u200B\u200B"
+    EMPTY_SPACE = "\u200B"
+    TAB = "#{EMPTY_SPACE}#{EMPTY_SPACE}#{EMPTY_SPACE}#{EMPTY_SPACE}"
+
     module Limit
       TITLE_LENGTH_MAX = 256
       DESCRIPTION_LENGTH_MAX = 2048
@@ -23,7 +25,7 @@ module ESM
     attr_reader :title, :description, :image, :thumbnail, :footer, :color
     attr_accessor :fields, :author, :url, :timestamp
 
-    def initialize(type = nil, attributes = {}, &_block)
+    def initialize(type = nil, attributes = {}, &block)
       @title = nil
       @description = nil
       @fields = []
@@ -35,7 +37,7 @@ module ESM
       @url = nil
       @timestamp = DateTime.now
 
-      if block_given?
+      if block
         yield(self)
       else
         self.build_from_template(type, **attributes)
@@ -51,12 +53,12 @@ module ESM
       @description = text.truncate(Limit::DESCRIPTION_LENGTH_MAX)
     end
 
-    def add_field(name: nil, value:, inline: false)
+    def add_field(value:, name: nil, inline: false)
       # This will make the name appear empty
-      name = "\u200B" if name.nil?
+      name = EMPTY_SPACE if name.nil?
 
       # Discord won't send messages that have an empty field. This forces the value to be appear empty, and Discord will accept it.
-      value = "\u200B" if value.blank?
+      value = EMPTY_SPACE if value.blank?
 
       return add_field_array(name: name, values: value, inline: inline) if value.is_a?(Array)
 
