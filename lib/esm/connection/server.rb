@@ -122,11 +122,8 @@ module ESM
 
         ESM::Notifications.trigger("info", class: self.class, method: __method__, server_id: to, message: message.to_h.except(:server_id))
 
-        if ESM.env.test? && ESM::Test.store_server_messages
-          ESM::Test.server_messages.store(message, to)
-        else
-          __send_internal(message)
-        end
+        ESM::Test.server_messages.store(message, to) if ESM.env.test?
+        __send_internal(message) unless ESM.env.test? && ESM::Test.block_outbound_messages
 
         return message.wait_for_response if wait
 
@@ -146,12 +143,6 @@ module ESM
         connection.on_close
       end
 
-      private
-
-      def __send_internal(message)
-        @redis.rpush("connection_server_outbound", message.to_s)
-      end
-
       # Store all of the server_ids and their keys in redis.
       # This will allow the TCPServer to quickly pull a key by a server_id to decrypt messages
       def refresh_keys
@@ -162,6 +153,13 @@ module ESM
 
         # Store the data in Redis
         @redis.hmset("server_keys", *server_keys)
+      end
+
+      private
+
+      def __send_internal(message)
+        ESM::Notifications.trigger("info", class: self.class, method: __method__, message: message.to_h.except(:server_id)) if message.type != "pong"
+        @redis.rpush("connection_server_outbound", message.to_s)
       end
 
       def delegate_inbound_messages

@@ -67,25 +67,20 @@ RSpec.configure do |config|
     TCP_SERVER.close
   end
 
-  config.before :example do
-    ESM::Test.reset!
-  end
-
-  config.after :example do
-    ESM::Test.skip_cooldown = false
-  end
-
   config.around(:each) do |example|
     DatabaseCleaner.cleaning do
       server = ESM::Connection::Server.instance
       server.disconnect_all!
       server.message_overseer.remove_all!
+      server.refresh_keys
 
       if example.metadata[:requires_connection]
         ESM::Connection::Server.resume
       else
         ESM::Connection::Server.pause
       end
+
+      ESM::Test.reset!
 
       example.run
 
@@ -96,7 +91,10 @@ end
 
 RSpec.shared_context("connection") do
   let(:connection) { server.connection }
-  before(:each) { wait_for { server.connected? }.to be(true) }
+  before(:each) do
+    wait_for { server.connected? }.to be(true)
+    ESM::Test.server_messages.clear
+  end
 end
 
 RSpec.shared_examples("command") do |described_class|

@@ -2,10 +2,11 @@
 
 module ESM
   class Test
+    # Don't forget to add new entries to .reset!
     class << self
       attr_reader :response
       attr_writer :messages
-      attr_accessor :skip_cooldown, :store_server_messages
+      attr_accessor :skip_cooldown, :block_outbound_messages
     end
 
     def self.messages
@@ -88,7 +89,9 @@ module ESM
       @user = nil
       @second_user = nil
       @channel = nil
-      @store_server_messages = false
+
+      @skip_cooldown = false
+      @block_outbound_messages = false
 
       @communities = %i[primary_community secondary_community]
       @community_type = @communities.sample

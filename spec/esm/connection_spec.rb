@@ -9,7 +9,7 @@ describe ESM::Connection, requires_connection: true do
 
   describe "#send_message" do
     before :each do
-      ESM::Test.store_server_messages = true
+      ESM::Test.block_outbound_messages = true
     end
 
     it "accepts a hash" do

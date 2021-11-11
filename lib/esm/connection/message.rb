@@ -303,7 +303,7 @@ module ESM
       end
 
       def inspect
-        "#<ESM::Message:0x#{object_id} #{JSON.pretty_generate(self.to_h)}>"
+        "#<ESM::Message #{JSON.pretty_generate(self.to_h)}>"
       end
 
       private

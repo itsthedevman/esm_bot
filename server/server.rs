@@ -163,8 +163,7 @@ impl Server {
         }
 
         let disconnect_if_dead = |server: &Server, endpoint: &Endpoint| -> bool {
-            if !server.allow_connections.load(Ordering::SeqCst) { return false }
-            if server.bot_alive.load(Ordering::SeqCst) { return false }
+            if server.bot_alive.load(Ordering::SeqCst) && server.allow_connections.load(Ordering::SeqCst) { return false }
 
             server.handler.network().remove(endpoint.resource_id());
 
@@ -312,7 +311,7 @@ impl Server {
             };
 
             match message.message_type {
-                Type::Disconnect | Type::Pong | Type::Pause | Type::Resume => trace!("#process_inbound_messages - {:#?}", message),
+                Type::Disconnect | Type::Pong => trace!("#process_inbound_messages - {:#?}", message),
                 _ => debug!("#process_inbound_messages - {:#?}", message)
             }
 
