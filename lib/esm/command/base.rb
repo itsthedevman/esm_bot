@@ -410,6 +410,13 @@ module ESM
         raise exception_class || ESM::Exception::CheckFailure, reason
       end
 
+      #
+      # Makes calls to I18n.t shorter
+      #
+      def t(translation_name, **args)
+        I18n.t("commands.#{self.name}.#{translation_name}", **args)
+      end
+
       private
 
       # @deprecated Use on_execute instead
