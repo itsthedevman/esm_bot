@@ -107,8 +107,6 @@ en:
 
     # reward
     no_reward_items: "I'm sorry %{user}, the selected reward package is not available at this time"
-    incorrect_reward_id: "I'm sorry %{user}, I was unable to find a reward with the ID of `%{reward_id}`"
-    territory_query: "I'm sorry %{user}, I ran into an issue syncing territory data. Please wait a moment before trying again"
 
     # info
     no_target: "Hey %{user}, you must provide either a territory ID, Discord ID, steam uid, or @user discord mention."
