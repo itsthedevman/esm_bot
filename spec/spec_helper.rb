@@ -154,6 +154,19 @@ def grant_command_access!(community, command)
   community.command_configurations.where(command_name: command).update(whitelist_enabled: false)
 end
 
+#
+# Mimics sending a discord message for a test.
+#
+# @param message [String, ESM::Embed] The message to "send"
+#
+def send_discord_message(message)
+  ESM::Test.response = message
+end
+
+def wait_until(timeout: 30, &block)
+  ESM::Test.wait_until(timeout: timeout, &block)
+end
+
 # Wait until the bot has fully connected
-ESM::Test.wait_until { ESM.bot.ready? }
-ESM::Test.wait_until { ESM::Connection::Server.instance.tcp_server_alive? }
+wait_until { ESM.bot.ready? }
+wait_until { ESM::Connection::Server.instance.tcp_server_alive? }
