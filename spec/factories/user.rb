@@ -62,7 +62,7 @@ FactoryBot.define do
 
           {
             id: user_id,
-            name: user.name,
+            name: user.username,
             discriminator: user.discriminator,
             steam_uid: ESM::Test.data[:steam_uids].sample
           }
@@ -74,6 +74,27 @@ FactoryBot.define do
       discord_discriminator { user[:discriminator] }
       steam_uid { user[:steam_uid] }
       guild_type { :primary }
+
+      trait :with_role do
+        transient do
+          user do
+            user_data = ESM::Test.data[:primary][:role_users].sample
+            user = ESM.bot.user(user_data[:id])
+
+            user_data.merge(
+              name: user.username,
+              discriminator: user.discriminator,
+              steam_uid: ESM::Test.data[:steam_uids].sample
+            )
+          end
+        end
+
+        discord_id { user[:id] }
+        discord_username { user[:name] }
+        discord_discriminator { user[:discriminator] }
+        steam_uid { user[:steam_uid] }
+        role_id { user[:role_id] }
+      end
     end
 
     factory :secondary_user do
@@ -84,7 +105,7 @@ FactoryBot.define do
 
           {
             id: user_id,
-            name: user.name,
+            name: user.username,
             discriminator: user.discriminator,
             steam_uid: ESM::Test.data[:steam_uids].sample
           }
@@ -96,19 +117,27 @@ FactoryBot.define do
       discord_discriminator { user[:discriminator] }
       steam_uid { user[:steam_uid] }
       guild_type { :secondary }
-    end
 
-    factory :user_with_role do
-      transient do
-        user { ESM::Test.data[:primary][:role_user] }
-        discord_user { ESM.bot.user(user[:id]) }
+      trait :with_role do
+        transient do
+          user do
+            user_data = ESM::Test.data[:secondary][:role_users].sample
+            user = ESM.bot.user(user_data[:id])
+
+            user_data.merge(
+              name: user.username,
+              discriminator: user.discriminator,
+              steam_uid: ESM::Test.data[:steam_uids].sample
+            )
+          end
+        end
+
+        discord_id { user[:id] }
+        discord_username { user[:name] }
+        discord_discriminator { user[:discriminator] }
+        steam_uid { user[:steam_uid] }
+        role_id { user[:role_id] }
       end
-
-      discord_id { user[:id] }
-      discord_username { discord_user.username }
-      discord_discriminator { discord_user.discriminator }
-      steam_uid { user[:steam_uid] }
-      guild_type { :primary }
     end
   end
 end

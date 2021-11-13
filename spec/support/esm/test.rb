@@ -42,8 +42,9 @@ module ESM
     #
     # @note The type of community controls what user type is selected
     # @see #reset!
-    def self.user(type: @user_type)
-      @user ||= FactoryBot.create(type)
+    def self.user(*args, type: @user_type)
+      args = [type] + args
+      @user ||= FactoryBot.create(*args)
     end
 
     # Creates a second user that isn't #user

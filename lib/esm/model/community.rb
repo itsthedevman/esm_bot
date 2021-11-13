@@ -70,6 +70,10 @@ module ESM
       find_by_community_id(community_id[1])
     end
 
+    def logging_channel
+      ::ESM.bot.channel(self.logging_channel_id)
+    end
+
     def discord_server
       ::ESM.bot.server(self.guild_id)
     end
@@ -93,12 +97,12 @@ module ESM
 
       # Check this first to avoid an infinite loop if the bot cannot send a message to this channel
       # since this method is called from the #deliver method for this exact reason.
-      channel = ESM.bot.channel(self.logging_channel_id)
-      member = self.profile.on(channel.server)
+      channel = self.logging_channel
+      member = ::ESM.bot.profile.on(channel.server)
       return ::ESM.bot.deliver(message, to: channel) if member.permission?(:send_messages, channel)
 
       # The bot did not have permission. Send the owner a message letting them know
-      embed = ESM::Embed.build(:error, description: I18n.t("exceptions.logging_channel_access_denied", community_name: self.community_name, channel_name: channel.name))
+      embed = ::ESM::Embed.build(:error, description: I18n.t("exceptions.logging_channel_access_denied", community_name: self.community_name, channel_name: channel.name))
 
       ::ESM.bot.deliver(embed, to: channel.server.owner)
     end

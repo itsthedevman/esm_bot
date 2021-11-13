@@ -30,12 +30,12 @@ FactoryBot.define do
 
     after :create do |server, _evaluator|
       # Remove the default
-      server.server_reward.delete
+      server.server_rewards.clear
 
-      create(:server_setting, server_id: server.id)
-      create(:server_reward, server_id: server.id)
+      server.server_setting = create(:server_setting, server_id: server.id)
+      server.server_rewards << create(:server_reward, server_id: server.id)
 
-      server.reload
+      server.save!
 
       # Store the server key so the build tool can pick it up and write it
       Redis.new.set("test_server_key", server.token.to_json)

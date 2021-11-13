@@ -3,7 +3,11 @@
 FactoryBot.define do
   factory :server_setting, class: "ESM::ServerSetting" do
     # server_id {}
-    extdb_path { Faker::File.dir }
+
+    # Do not randomize otherwise it'll break the client
+    # extdb_path { Faker::File.dir }
+    # logging_path { Faker::File.dir }
+
     gambling_payout { Faker::Number.between(from: 1, to: 100) }
     gambling_modifier { Faker::Number.between(from: 1, to: 3) }
     gambling_randomizer_min { 0 }
@@ -15,7 +19,6 @@ FactoryBot.define do
     end
 
     gambling_win_chance { Faker::Number.between(from: 1, to: 100) }
-    logging_path { Faker::File.dir }
     logging_add_player_to_territory { rand > 0.5 }
     logging_demote_player { rand > 0.5 }
     logging_exec { rand > 0.5 }

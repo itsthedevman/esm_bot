@@ -158,7 +158,6 @@ module ESM
       private
 
       def __send_internal(message)
-        ESM::Notifications.trigger("info", class: self.class, method: __method__, message: message.to_h.except(:server_id)) if message.type != "pong"
         @redis.rpush("connection_server_outbound", message.to_s)
       end
 

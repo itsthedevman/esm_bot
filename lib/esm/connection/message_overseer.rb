@@ -57,6 +57,10 @@ module ESM
         envelope.message
       end
 
+      def remove(id)
+        @mailbox.delete_if { |e| e.message.id == id }
+      end
+
       def remove_all!(with_error: false)
         @mailbox.each do |id, envelope|
           message = envelope.message
