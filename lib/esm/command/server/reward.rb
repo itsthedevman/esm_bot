@@ -5,6 +5,27 @@ module ESM
   module Command
     module Server
       class Reward < ESM::Command::Base
+        # TODO:
+        #   - Add cooldown support
+        #   - Skip collecting VG data if vg_enabled is false
+        #   - Improve embeds and user experience
+        #   - Change separator to space for vehicle spawn locations
+        #   - Add translations for all strings
+        #
+
+        # Command entry points
+        #   1. Command is executed (#on_execute)
+        #         Ask for vehicle spawn locations (#request_spawn_locations)
+        #         Ask for confirmation (#await_for_reply)
+        #
+        #   2. User replies back (#on_reply)
+        #         Accept word                   -> Send request to arma (#on_accept)
+        #         Cancel word                   -> Confirm cancellation (#on_cancel)
+        #         Territory and spawn location  -> Store data and repeat (#store_vehicle_location)
+        #
+        #   3. Server response back (#on_response)
+        #         TODO
+        #
         type :player
         requires :registration
 
@@ -15,9 +36,9 @@ module ESM
         define :cooldown_time, modifiable: false, default: 2.seconds # Don't allow adjusting this cooldown. Each reward has it's own cooldown
 
         argument :server_id
+        argument :reward_id, description: I18n.t("commands.reward.arguments.reward_id"), regex: ESM::Regex::REWARD_ID, default: nil
 
-        # Since it shares a similar structure to server_id, we can use server_id's before_store callback to allow auto-filling the community_id
-        argument :reward_id, regex: ESM::Regex::REWARD_ID_OPTIONAL_COMMUNITY, template: :server_id, default: nil
+        SPAWN_LOCATIONS = ["virtual_garage", "player_decides"].freeze
 
         # FOR DEV ONLY
         skip_check :cooldown
@@ -31,50 +52,57 @@ module ESM
 
           # Notify the user that we're sending them a direct message only if the command was from a text channel
           if current_channel.text?
-            embed = ESM::Embed.new(:success, description: I18n.t("commands.reward.check_pm", user: current_user.mention))
+            embed = ESM::Embed.new(:success, description: t("commands.reward.check_pm", user: current_user.mention))
             reply(embed)
           end
 
-          # TODO: Skip if vg_enabled == false
-          # Need some sort of method to register a command for waiting
-          # This will need to cause a block to keep from having two "waiting" events for the same user+channel
-          # Ideas:
-          #   - Nearby spawning in forests may be problematic. Either provide serious disclaimer or may want to create "!reward esm_malden restore" vehicle command to
-
           @nearby_vehicles = []
           @vehicles = selected_reward.vehicles.clone
-          need_spawn_locations = selected_reward.reward_vehicles.any? { |v| ["virtual_garage", "player_decides"].include?(v["spawn_location"]) }
+          @locations = selected_reward.reward_vehicles.group_by { |v| v["spawn_location"] }.transform_values(&:size)
+          need_spawn_locations = SPAWN_LOCATIONS.any? { |location| @locations.key?(location) }
 
           # Send the request description
           embed = ESM::Embed.new do |e|
             e.color = :green
-            e.description = I18n.t(
-              "commands.reward.reward_description",
+            e.description = t(
+              "information_embed.description",
               user: current_user.mention,
               server_id: target_server.server_id,
               reward_id: selected_reward.reward_id || "default"
             )
 
-            e.add_field(name: "Poptabs added to player", value: "```#{selected_reward.player_poptabs.to_poptab}```", inline: true) if selected_reward.player_poptabs.positive?
-            e.add_field(name: "Poptabs added to locker", value: "```#{selected_reward.locker_poptabs.to_poptab}```", inline: true) if selected_reward.locker_poptabs.positive?
-            e.add_field(name: "Respect added to player", value: "```#{selected_reward.respect}```", inline: true) if selected_reward.respect.positive?
-            e.add_field(value: "Once you are ready to receive the reward, just reply with `accept`") if !need_spawn_locations
-            e.footer = "You can always cancel this request by replying with `cancel`"
+            if selected_reward.player_poptabs.positive?
+              translation_name = "information_embed.fields.player_poptabs"
+              e.add_field(name: t("#{translation_name}.name"), value: t("#{translation_name}.value", poptabs: selected_reward.player_poptabs.to_poptab), inline: true)
+            end
+
+            if selected_reward.locker_poptabs.positive?
+              translation_name = "information_embed.fields.locker_poptabs"
+              e.add_field(name: t("#{translation_name}.name"), value: t("#{translation_name}.value", poptabs: selected_reward.locker_poptabs.to_poptab), inline: true)
+            end
+
+            if selected_reward.respect.positive?
+              translation_name = "information_embed.fields.respect"
+              e.add_field(name: t("#{translation_name}.name"), value: t("#{translation_name}.value", respect: selected_reward.respect), inline: true)
+            end
+
+            e.add_field(value: t("information_embed.fields.accept")) if !need_spawn_locations
+            e.footer = t("information_embed.footer")
           end
 
           reply(embed)
           return request_spawn_locations if need_spawn_locations
 
-          watch_for_reply
+          await_for_reply
         end
 
         def on_response(incoming_message)
-
+          binding.pry
         end
 
         def on_reply(event)
           if event.nil?
-            embed = ESM::Embed.new(:error, description: I18n.t("commands.reward.no_reply", user: current_user.mention))
+            embed = ESM::Embed.new(:error, description: t("commands.reward.no_reply", user: current_user.mention))
             return reply(embed)
           end
 
@@ -85,58 +113,12 @@ module ESM
 
           # The message is formatted correctly
           if !content.match?(/(\d+:\w+)+/i)
-            watch_for_reply
+            await_for_reply
             event.message.react("❌")
             return
           end
 
-          # Supports one at a time or multiple
-          location_data = event.message.content.split.map { |s| s.split(":") }
-
-          success = false
-          location_data.each do |index, location|
-            index = [index.to_i - 1, 0].max
-            vehicle = @vehicles[index]
-            next if vehicle.nil?
-
-            location = location.downcase
-            previous_choice = vehicle[:chosen_location]
-
-            # Check to make sure this territory is valid. The user can use a custom id or territory ID
-            territory = @territories.find do |t|
-              t.custom_id.downcase == location || t.territory_id.downcase == location
-            end
-
-            if territory && ["virtual_garage", "player_decides"].include?(vehicle[:spawn_location])
-              territory.vehicle_count += 1
-
-              vehicle[:chosen_location] = territory.custom_id || territory.territory_id
-              vehicle[:territory_id] = territory.id
-            elsif vehicle[:spawn_location] == "player_decides"
-              vehicle[:chosen_location] = "Nearby"
-              vehicle.delete(:territory_id)
-            else
-              next
-            end
-
-            # Increase the vehicle count because we're removing one
-            if (previous_territory = @territories.find { |t| t.custom_id.downcase == previous_choice || t.territory_id.downcase == previous_choice })
-              previous_territory.vehicle_count -= 1
-            end
-
-            success = true
-          end
-
-          if !success
-            watch_for_reply
-            event.message.react("❌")
-            return
-          end
-
-          event.message.react("✅")
-
-          watch_for_reply
-          edit(@vehicle_message, vehicle_embed)
+          store_vehicle_location(event)
         end
 
         private
@@ -150,19 +132,19 @@ module ESM
           if vehicles.present?
             # Check to see if all vehicles have the required information
             invalid_vehicle_numbers = vehicles.map.with_index do |vehicle, index|
-              next if vehicle[:territory_id].present? || (vehicle[:chosen_location] || vehicle[:spawn_location]).downcase == "nearby"
+              next if vehicle[:territory_id].present? || (vehicle[:chosen_location] || vehicle[:spawn_location]).casecmp?("nearby")
 
               index + 1
             end.compact
 
             if invalid_vehicle_numbers.present?
               reply("Yo, you forgot some. #{invalid_vehicle_numbers}")
-              watch_for_reply
+              await_for_reply
               return
             end
 
             vehicles = vehicles.map do |vehicle|
-              { class_name: vehicle[:class_name], spawn_location: vehicle[:territory_id] || "nearby" }
+              Arma::HashMap.new({ class_name: vehicle[:class_name], spawn_location: vehicle[:territory_id] || "nearby" })
             end
           end
 
@@ -170,7 +152,6 @@ module ESM
             type: "arma",
             data_type: "reward",
             data: {
-              target_uid: current_user.steam_uid,
               player_poptabs: selected_reward.player_poptabs,
               locker_poptabs: selected_reward.locker_poptabs,
               respect: selected_reward.respect,
@@ -188,9 +169,7 @@ module ESM
             @nearby_vehicles << vehicle if vehicle[:spawn_location] == "nearby"
           end
 
-          # This is not blocking
-          watch_for_reply
-
+          await_for_reply
           @vehicle_message = reply(vehicle_embed)
         end
 
@@ -199,15 +178,15 @@ module ESM
         end
 
         def check_for_in_progress!
-          return if !ESM.bot.reply_overseer.watching?(user_id: current_user.id, channel_id: current_channel.id)
+          return if !ESM.bot.waiting_for_reply?(user_id: current_user.id, channel_id: current_channel.id)
 
-          check_failed!(:waiting_for_reply, user: current_user.mention, command_name: self.name)
+          raise_error!(:waiting_for_reply, user: current_user.mention, command_name: self.name)
         end
 
         def check_for_valid_reward_id!
           return if selected_reward.present?
 
-          check_failed!(:incorrect_reward_id, user: current_user.mention, reward_id: @arguments.reward_id)
+          raise_error!(:incorrect_reward_id, user: current_user.mention, reward_id: @arguments.reward_id)
         end
 
         def check_for_reward_items!
@@ -217,11 +196,13 @@ module ESM
                     selected_reward.player_poptabs.positive? ||
                     selected_reward.respect.positive?
 
-          check_failed!(:no_reward_items, user: current_user.mention)
+          raise_error!(:no_reward_items, user: current_user.mention)
         end
 
-        def watch_for_reply
-          ESM.bot.watch(user_id: current_user.id, channel_id: current_channel.id) { |event| self.on_reply(event) }
+        def await_for_reply
+          Thread.new do
+            ESM.bot.wait_for_reply(user_id: current_user.id, channel_id: current_channel.id) { |event| self.on_reply(event) }
+          end
         end
 
         #
@@ -229,20 +210,25 @@ module ESM
         #
         def user_territories
           @user_territories ||= lambda do
-            response = target_server.connection.send_message_sync(
-              type: "query",
-              data: {
-                name: "reward_territories",
-                arguments: {
-                  uid: current_user.steam_uid
+            response = target_server.connection.send_message(
+              {
+                type: "query",
+                data: {
+                  name: "reward_territories",
+                  arguments: {
+                    uid: current_user.steam_uid
+                  }
                 }
-              }
+              },
+              wait: true
             )
 
             if response.errors?
               ESM::Notifications.trigger("error", class: self.class, method: __method__, id: response.id, errors: response.errors)
-              check_failed!(:territory_query, user: current_user.mention, server_id: target_server.server_id)
+              raise_error!(:territory_query, user: current_user.mention, server_id: target_server.server_id)
             end
+
+            return [] if response.data.results.blank?
 
             # {
             #   id: Integer,
@@ -284,7 +270,8 @@ module ESM
 
             max_size_lookup = target_server.metadata.vg_max_sizes.to_a
             @territories.each do |territory|
-              max_size = max_size_lookup[territory.level]
+              max_size = max_size_lookup[territory.level].to_i
+
               free_spots =
                 if territory.vehicle_count >= max_size
                   "full"
@@ -292,7 +279,7 @@ module ESM
                   max_size - territory.vehicle_count
                 end
 
-              t.add_row([territory.custom_id || territory.territory_id, territory.name, free_spots])
+              t.add_row([territory.custom_id || territory.territory_id, territory.name.truncate(60), free_spots])
             end
           end
         end
@@ -313,14 +300,62 @@ module ESM
             @vehicles.each_with_index do |vehicle, index|
               display_name =
                 if vehicle[:spawn_location] == "virtual_garage"
-                  "#{vehicle[:display_name]} (VG ONLY)"
+                  "#{vehicle[:display_name].truncate(60)} (VG ONLY)"
                 else
-                  vehicle[:display_name]
+                  vehicle[:display_name].truncate(80)
                 end
 
               t.add_row([index + 1, vehicle[:chosen_location] || "Choose...", display_name])
             end
           end
+        end
+
+        def store_vehicle_location(event)
+          # Supports one at a time or multiple
+          location_data = event.message.content.split.map { |s| s.split(":") }
+
+          success = false
+          location_data.each do |vehicle_index, location|
+            vehicle_index = [vehicle_index.to_i - 1, 0].max
+            vehicle = @vehicles[vehicle_index]
+            next if vehicle.nil?
+
+            # Check to make sure this territory is valid. The user can use a custom id or territory ID
+            location = location.downcase
+            territory = @territories.find { |t| location.casecmp?(t.custom_id) || location.casecmp?(t.territory_id) }
+
+            # Store the location on the vehicle
+            previous_choice = vehicle[:chosen_location]
+            if territory && SPAWN_LOCATIONS.include?(vehicle[:spawn_location])
+              territory.vehicle_count += 1
+
+              vehicle[:chosen_location] = territory.custom_id || territory.territory_id
+              vehicle[:territory_id] = territory.id
+            elsif vehicle[:spawn_location] == "player_decides"
+              vehicle[:chosen_location] = "Nearby"
+              vehicle.delete(:territory_id)
+            else
+              next # Territory is invalid
+            end
+
+            # Increase the vehicle count because we're removing one
+            if (previous_territory = @territories.find { |t| previous_choice.casecmp?(t.custom_id) || previous_choice.casecmp?(t.territory_id) })
+              previous_territory.vehicle_count -= 1
+            end
+
+            success = true
+          end
+
+          if !success
+            await_for_reply
+            event.message.react("❌")
+            return
+          end
+
+          event.message.react("✅")
+
+          await_for_reply
+          edit_message(@vehicle_message, vehicle_embed)
         end
       end
     end
