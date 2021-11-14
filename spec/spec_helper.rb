@@ -93,7 +93,7 @@ RSpec.shared_context("connection") do
   let(:connection) { server.connection }
   before(:each) do
     wait_for { server.connected? }.to be(true)
-    ESM::Test.server_messages.clear
+    ESM::Test.outbound_server_messages.clear
   end
 end
 
@@ -163,10 +163,28 @@ def send_discord_message(message)
   ESM::Test.response = message
 end
 
-def wait_until(timeout: 30, &block)
-  ESM::Test.wait_until(timeout: timeout, &block)
+#
+# Waits for a message to be sent from the bot to the server
+#
+# @return [ESM::Connection::Message]
+#
+def wait_for_outbound_message
+  message = nil
+  wait_for { message = ESM::Test.outbound_server_messages.shift }.to be_truthy
+  message.content
+end
+
+#
+# Waits for a message to be sent from the client to the bot
+#
+# @return [ESM::Connection::Message]
+#
+def wait_for_inbound_message
+  message = nil
+  wait_for { message = ESM::Test.inbound_server_messages.shift }.to be_truthy
+  message.content
 end
 
 # Wait until the bot has fully connected
-wait_until { ESM.bot.ready? }
-wait_until { ESM::Connection::Server.instance.tcp_server_alive? }
+ESM::Test.wait_until { ESM.bot.ready? }
+ESM::Test.wait_until { ESM::Connection::Server.instance.tcp_server_alive? }

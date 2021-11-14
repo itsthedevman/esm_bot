@@ -12,8 +12,12 @@ module ESM
         @messages ||= Messages.new
       end
 
-      def server_messages
-        @server_messages ||= Messages.new
+      def outbound_server_messages
+        @outbound_server_messages ||= Messages.new
+      end
+
+      def inbound_server_messages
+        @inbound_server_messages ||= Messages.new
       end
 
       def data
@@ -81,7 +85,8 @@ module ESM
       def reset!
         @response = nil
         @messages = nil
-        @server_messages = nil
+        @outbound_server_messages = nil
+        @inbound_server_messages = nil
         @community = nil
         @server = nil
         @user = nil

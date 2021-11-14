@@ -122,7 +122,7 @@ module ESM
 
         ESM::Notifications.trigger("info", class: self.class, method: __method__, server_id: to, message: message.to_h.except(:server_id))
 
-        ESM::Test.server_messages.store(message, to) if ESM.env.test?
+        ESM::Test.outbound_server_messages.store(message, to) if ESM.env.test?
         __send_internal(message) unless ESM.env.test? && ESM::Test.block_outbound_messages
 
         return message.wait_for_response if wait
@@ -284,6 +284,9 @@ module ESM
           outgoing_message: outgoing_message&.to_h&.without(:server_id, :resource_id),
           incoming_message: incoming_message.to_h.without(:server_id, :resource_id)
         )
+
+        # Skipping ack messages
+        ESM::Test.inbound_server_messages.store(incoming_message, incoming_message.server_id) if ESM.env.test? && incoming_message.data.present?
 
         # Handle any errors
         return outgoing_message.run_callback(:on_error, incoming_message, outgoing_message) if incoming_message.errors?

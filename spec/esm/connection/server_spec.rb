@@ -34,7 +34,7 @@ describe ESM::Connection::Server do
     it "sends a message" do
       expect { connection_server.fire(message, to: server.server_id) }.not_to raise_error
 
-      outgoing_message = ESM::Test.server_messages.first
+      outgoing_message = ESM::Test.outbound_server_messages.first
       expect(outgoing_message).not_to be_nil
 
       expect(outgoing_message.destination).to eq(server.server_id)
@@ -62,7 +62,7 @@ describe ESM::Connection::Server do
 
       thread.join
 
-      message = ESM::Test.server_messages.first
+      message = ESM::Test.outbound_server_messages.first
       expect(message).not_to be_nil
 
       expect(message.destination).to eq(server.server_id)

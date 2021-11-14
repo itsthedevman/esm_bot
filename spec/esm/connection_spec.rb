@@ -15,7 +15,7 @@ describe ESM::Connection, requires_connection: true do
     it "accepts a hash" do
       outgoing_message = connection.send_message(type: :test, data: { foo: "bar" }, data_type: :data_test)
 
-      message = ESM::Test.server_messages.first
+      message = ESM::Test.outbound_server_messages.first
       expect(message).not_to be_nil
 
       expect(message.content).to eq(outgoing_message)
@@ -24,7 +24,7 @@ describe ESM::Connection, requires_connection: true do
     it "accepts a message" do
       outgoing_message = connection.send_message(message)
 
-      server_message = ESM::Test.server_messages.first
+      server_message = ESM::Test.outbound_server_messages.first
       expect(server_message).not_to be_nil
 
       expect(server_message.content).to eq(outgoing_message)
