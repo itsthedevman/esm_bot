@@ -82,11 +82,11 @@ query_result:
   results: Array<Hash>
 
 reward:
-  items: String
+  items: Array<HashMap>
   locker_poptabs: Integer
   player_poptabs: Integer
   respect: Integer
-  vehicles: String
+  vehicles: Array<HashMap>
 
 send_to_channel:
   id: String

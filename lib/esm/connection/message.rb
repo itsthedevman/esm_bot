@@ -213,12 +213,10 @@ module ESM
       #   }
       #
       def to_h
-        data = self.data.to_h
-        metadata = self.metadata.to_h
-
         # Numbers have to be sent as Strings
-        data.transform_values! { |val| val.is_a?(Numeric) ? val.to_s : val }
-        metadata.transform_values! { |val| val.is_a?(Numeric) ? val.to_s : val }
+        stringify_values = ->(value) { value.is_a?(Numeric) ? value.to_s : value }
+        data = self.data.to_h.transform_values(&stringify_values)
+        metadata = self.metadata.to_h.transform_values(&stringify_values)
 
         {
           id: self.id,
