@@ -107,7 +107,8 @@ module ESM
       def initialize
         attributes = self.class.attributes
 
-        @name = attributes.name
+        # V1 support
+        @name = attributes.name.gsub("_v1", "")
         @category = attributes.category
         @aliases = attributes.aliases
         @arguments = ESM::Command::ArgumentContainer.new(attributes.arguments)

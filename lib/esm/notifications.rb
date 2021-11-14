@@ -146,7 +146,7 @@ module ESM
 
     def self.websocket_server_deliver(name, _start, _finish, _id, payload)
       ESM.logger.info(name) do
-        ESM::JSON.pretty_generate(payload[:request])
+        ESM::JSON.pretty_generate(payload[:request].to_h)
       end
     end
 

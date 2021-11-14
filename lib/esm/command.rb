@@ -33,6 +33,8 @@ module ESM
       path = File.expand_path("lib/esm/command")
       CATEGORIES.each do |category|
         Dir["#{path}/#{category}/*.rb"].each do |command_path|
+          next if command_path.include?("v1")
+
           process_command(command_path, category)
         end
       end
