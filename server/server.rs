@@ -448,7 +448,7 @@ impl Server {
         };
 
         let resource_id = endpoint.resource_id();
-        let message = match Message::from_bytes(data, &server_key) {
+        let mut message = match Message::from_bytes(data, &server_key) {
             Ok(mut message) => {
                 message.set_resource(resource_id);
                 message
@@ -483,6 +483,14 @@ impl Server {
                 // Route it through to the bot
                 self.send_to_bot(message);
             },
+
+            // Disallow system commands
+            Type::Connect | Type::Disconnect | Type::Ping | Type::Pong |
+            Type::Test | Type::Error | Type::Resume | Type::Pause => {
+                message.add_error(ErrorType::Message, "Error - Invalid message type provided");
+                self.send_to_client(&mut message);
+            },
+
             // Feed the message through to the bot
             _ => self.send_to_bot(message)
         };
