@@ -486,7 +486,7 @@ impl Server {
 
             // Disallow system commands
             Type::Connect | Type::Disconnect | Type::Ping | Type::Pong |
-            Type::Test | Type::Error | Type::Resume | Type::Pause => {
+            Type::Test | Type::Resume | Type::Pause => {
                 message.add_error(ErrorType::Message, "Error - Invalid message type provided");
                 self.send_to_client(&mut message);
             },

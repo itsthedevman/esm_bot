@@ -4,13 +4,28 @@ module ESM
   module Arma
     class ClassLookup
       Entry = Struct.new(:class_name, :display_name, :mod, :mod_name, :category, :category_name).freeze
-      
+
       CATEGORY_VEHICLES = %w[vehicle_static vehicle_car vehicle_tank vehicle_boat vehicle_helicopter vehicle_plan vehicle_misc].freeze
       CATEGORY_EXILE = %w[exile_medical exile_construction exile_consumables exile_misc].freeze
       CATEGORY_WEAPONS = %w[handguns items launchers machine_guns melee misc_weapons rifles sniper_rifles sub_machine_guns].freeze
       CATEGORY_MAGAZINES = %w[magazines_explosives magazines_grenades magazines_rockets magazines].freeze
       CATEGORY_CLOTHING = %w[clothing_backpacks clothing_headgear clothing_uniforms clothing_vests].freeze
       CATEGORY_ATTACHMENTS = %w[attachment_bipods attachment_sights attachments_muzzles attachments_pointers].freeze
+
+      def self.data_type(data)
+        case data.class.to_s
+        when "Array", "String"
+          data.class.upcase
+        when "TrueClass", "FalseClass"
+          "BOOL"
+        when "Numeric"
+          "SCALAR"
+        when "ESM::Arma::HashMap"
+          "HASHMAP"
+        else
+          "ANY"
+        end
+      end
 
       #
       # Returns the inner lookup Array

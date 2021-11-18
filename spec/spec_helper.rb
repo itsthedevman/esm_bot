@@ -82,8 +82,11 @@ RSpec.configure do |config|
 
       ESM::Test.reset!
 
+      # Run the test!
       example.run
 
+      # Ensure every message is either replied to or timed out
+      wait_for { ESM::Connection::Server.instance.message_overseer.size }.to eq(0) if example.metadata[:requires_connection]
       ESM::Websocket.remove_all_connections!
     end
   end
@@ -98,7 +101,7 @@ RSpec.shared_context("connection") do
 end
 
 RSpec.shared_examples("command") do |described_class|
-  def execute!(channel_type: :pm, **command_args)
+  def execute!(channel_type: :text, **command_args)
     command_statement = command.statement(command_args)
     event = CommandEvent.create(command_statement, user: user, channel_type: channel_type)
     expect { command.execute(event) }.not_to raise_error

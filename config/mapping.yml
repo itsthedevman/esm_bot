@@ -9,6 +9,7 @@
 #   c_attribute: Type
 
 # Supported Types:
+#   Any -> Only accepts a string, but will attempt to parse the value from it. Accepts any JSON type (stringify!)
 #   String
 #   Integer
 #   Hash
@@ -92,6 +93,12 @@ send_to_channel:
   id: String
   content: String
 
+sqf:
+  execute_on: String
+  code: String
+
+sqf_result:
+  result: Any
 
 ###########################
 ## METADATA

@@ -55,7 +55,7 @@ checksum = "e906254e445520903e7fc9da4f709886c84ae4bc4ddaf0e093188d66df4dc820"
 [[package]]
 name = "arma-rs"
 version = "0.3.0"
-source = "git+https://github.com/WolfkillArcadia/arma-rs.git#8004e8c3140ed3365c4f8b62180cc37d9717c780"
+source = "git+https://github.com/WolfkillArcadia/arma-rs.git#10723a0d71b27ba3eff9609f9f62820be907544f"
 dependencies = [
  "arma-rs-codegen",
  "chrono",
@@ -68,7 +68,7 @@ dependencies = [
 [[package]]
 name = "arma-rs-codegen"
 version = "0.2.0"
-source = "git+https://github.com/WolfkillArcadia/arma-rs.git#8004e8c3140ed3365c4f8b62180cc37d9717c780"
+source = "git+https://github.com/WolfkillArcadia/arma-rs.git#10723a0d71b27ba3eff9609f9f62820be907544f"
 dependencies = [
  "lazy_static",
  "log",
@@ -252,6 +252,7 @@ dependencies = [
 [[package]]
 name = "esm_message"
 version = "0.1.0"
+source = "git+https://github.com/WolfkillArcadia/esm_message?branch=main#6734486113d510eb41917273f54a677ba09689ad"
 dependencies = [
  "aes-gcm",
  "arma-rs",

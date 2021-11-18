@@ -20,6 +20,3 @@ parking_lot = "0.10"
 tokio = { version = "1.5.0", features = ["full", "parking_lot"] }
 redis = { version = "0.20.1", features = ["tokio-comp", "connection-manager"] }
 esm_message = { git = "https://github.com/WolfkillArcadia/esm_message", branch = "main" }
-
-[patch."https://github.com/WolfkillArcadia/esm_message"]
-esm_message = { path = "../esm_message" }
