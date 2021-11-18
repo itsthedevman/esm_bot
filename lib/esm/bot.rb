@@ -142,9 +142,10 @@ module ESM
       @esm_status == :ready
     end
 
-    def deliver(message, to:)
+    def deliver(message, to:, replying_to: nil)
       return if message.blank?
 
+      replying_to = nil if replying_to.present? && !replying_to.is_a?(Discordrb::Message)
       message = message.join("\n") if message.is_a?(Array)
 
       delivery_channel = determine_delivery_channel(to)
@@ -159,10 +160,10 @@ module ESM
           ESM::Test.messages.store(message, delivery_channel)
         elsif message.is_a?(ESM::Embed)
           # Send the embed
-          delivery_channel.send_embed { |embed| message.transfer(embed) }
+          delivery_channel.send_embed("", nil, nil, false, nil, replying_to) { |embed| message.transfer(embed) }
         else
           # Send the text message
-          delivery_channel.send_message(message)
+          delivery_channel.send_message(message, false, nil, nil, nil, replying_to)
         end
 
       # Dequeue the message if it was enqueued
