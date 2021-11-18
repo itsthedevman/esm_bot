@@ -328,20 +328,24 @@ module ESM
       end
 
       #
-      # Builds a ESM::Connection::Message from the provided data and sends it to `target_server`
+      # Sends a message to the target_server
+      #
+      # @param message [ESM::Connection::Message, nil] If a message is provided, this will be the message that is sent. The rest of the arguments for this method are ignored
+      # @param type [String/Symbol] The message type. If no message is provided, this will be used to build the message. See ESM::Connection::Message for more details
+      # @param data_type [String/Symbol] The messages's data type. If no message is provided, this will be used to build the message. See ESM::Connection::Message for more details
+      # @param **data [Hash] The rest of the attributes to pass into ESM::Connection::Message. If no message is provided, this will be used to build the message. See ESM::Connection::Message for more details
       #
       # @return [ESM::Connection::Message] The message that was sent
       #
-      def send_to_a3(type: self.name, **data)
-        raise ESM::Exception::CheckFailure, "#send_to_a3 was called on #{self.name} but this command does not require a server" if target_server.nil?
+      def send_to_arma(message = nil, type: :arma, data_type: self.name, **data)
+        raise ESM::Exception::CheckFailure, "#send_to_arma was called on #{self.name} but this command does not require a server" if target_server.nil?
 
         # Allows overwriting the outbound message. Otherwise, build a message from the data
-        message = data[:message]
         if message.nil?
-          message = ESM::Connection::Message.new(type: type, **data)
+          message = ESM::Connection::Message.new(type: type, data_type: data_type, **data)
           message.add_callback(:on_error, :on_error)
-          message.add_callback(:on_response) do |incoming_message, _outgoing_message|
-            self.on_response(incoming_message)
+          message.add_callback(:on_response) do |incoming_message, outgoing_message|
+            self.on_response(incoming_message, outgoing_message)
           end
         end
 
@@ -418,12 +422,23 @@ module ESM
         I18n.t("commands.#{self.name}.#{translation_name}", **args)
       end
 
+      #
+      # Returns the commands argument values
+      #
+      # @return [ESM::Command::ArgumentContainer] The commands arguments
+      #
+      def args
+        @arguments
+      end
+
       private
 
+      # V1
       # @deprecated Use on_execute instead
       def discord; end
 
-      # @deprecated Handled via ESM::Connection::Message
+      # V1
+      # @deprecated Use on_response instead
       def server; end
 
       def request_accepted; end
