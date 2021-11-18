@@ -326,7 +326,7 @@ module ESM
             case attribute_type
             when "HashMap"
               ESM::Arma::HashMap
-            when "Boolean", ARRAY_REGEX
+            when "Any", "Boolean", ARRAY_REGEX
               NilClass # Always convert theses
             when "Decimal"
               BigDecimal
@@ -356,6 +356,15 @@ module ESM
         return value if value.class.to_s == into_type
 
         case into_type
+        when "Any"
+          result = ESM::JSON.parse(value.to_s)
+          return if result.nil?
+
+          # Check to see if its a hashmap
+          possible_hashmap = ESM::Arma::HashMap.parse(result)
+          return result if possible_hashmap.nil?
+
+          result
         when ARRAY_REGEX
           match = into_type.match(ARRAY_REGEX)
           raise ESM::Exception::Error, "Failed to parse inner type from \"#{into_type}\"" if match.nil?
