@@ -9,7 +9,7 @@
 #   c_attribute: Type
 
 # Supported Types:
-#   Any -> Only accepts a string, but will attempt to parse the value from it. Accepts any JSON type (stringify!)
+#   Any -> Only accepts a string/nil, but will attempt to parse the value from it. Accepts any JSON type or nil (stringify!)
 #   String
 #   Integer
 #   Hash

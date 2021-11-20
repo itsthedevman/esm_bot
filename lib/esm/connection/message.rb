@@ -319,7 +319,7 @@ module ESM
         output = {}
         mapping.each do |attribute_name, attribute_type|
           data_entry = data.delete(attribute_name)
-          raise ESM::Exception::InvalidMessage, "\"#{attribute_name}\" is expected for message with data type of \"#{data_type}\"" if data_entry.nil?
+          raise ESM::Exception::InvalidMessage, "\"#{attribute_name}\" is expected for message with data type of \"#{data_type}\"" if data_entry.nil? && attribute_type != "Any"
 
           # Some classes are not valid ruby classes and need converted
           klass =
