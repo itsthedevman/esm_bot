@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-# New command? Make sure to create a migration to add the configuration to all communities
 module ESM
   module Command
     module Server
@@ -17,8 +16,10 @@ module ESM
         define :cooldown_time, modifiable: true, default: 2.seconds
 
         argument :server_id
-        argument :target, description: "commands.sqf.arguments.execution_target", default: nil, display_as: :execution_target
+        argument :target, regex: /#{ESM::Regex::TARGET.source}|server|all|everyone/i, description: "commands.sqf.arguments.execution_target", default: nil, display_as: :execution_target
         argument :code_to_execute, regex: /[\s\S]+/, description: "commands.sqf.arguments.code_to_execute", preserve: true, multiline: true
+
+        skip_check :nil_target_user
 
         def on_execute
           @checks.owned_server!
@@ -42,13 +43,14 @@ module ESM
           data = incoming_message.data
 
           translation_name = "responses.#{executed_on}"
-          translation_name += "_with_result" if data.result.present?
+          translation_name += "_with_result" if !data.result.nil?
 
           embed = ESM::Embed.build(
             :success,
             description: t(
               translation_name,
               user: current_user.mention,
+              target_uid: target_uid,
               result: data.result,
               result_type: ESM::Arma::ClassLookup.data_type(data.result),
               server_id: target_server.server_id
@@ -62,11 +64,11 @@ module ESM
 
         def minify_sqf(sqf)
           [
-            [/\s*\;\s*/, ";"], [/\s*\:\s*/, ":"], [/\s*\,\s*/, ","], [/\s*\[\s*/, "["],
-            [/\s*\]\s*/, "]"], [/\s*\(\s*/, "("], [/\s*\)\s*/, ")"], [/\s*\-\s*/, "-"],
-            [/\s*\+\s*/, "+"], [/\s*\/\s*/, "/"], [/\s*\*\s*/, "*"], [/\s*\%\s*/, "%"],
-            [/\s*\=\s*/, "="], [/\s*\!\s*/, "!"], [/\s*\>\s*/, ">"], [/\s*\<\s*/, "<"],
-            [/\s*>>\s*/, ">>"], [/\s*\&\&\s*/, "&&"], [/\s*\|\|\s*/, "||"], [/\s*\}\s*/, "}"],
+            [/\s*;\s*/, ";"], [/\s*:\s*/, ":"], [/\s*,\s*/, ","], [/\s*\[\s*/, "["],
+            [/\s*\]\s*/, "]"], [/\s*\(\s*/, "("], [/\s*\)\s*/, ")"], [/\s*-\s*/, "-"],
+            [/\s*\+\s*/, "+"], [%r{\s*/\s*}, "/"], [/\s*\*\s*/, "*"], [/\s*%\s*/, "%"],
+            [/\s*=\s*/, "="], [/\s*!\s*/, "!"], [/\s*>\s*/, ">"], [/\s*<\s*/, "<"],
+            [/\s*>>\s*/, ">>"], [/\s*&&\s*/, "&&"], [/\s*\|\|\s*/, "||"], [/\s*\}\s*/, "}"],
             [/\s*\{\s*/, "{"], [/\s+/, " "], [/\n+/, ""], [/\r+/, ""], [/\t+/, ""]
           ].each do |group|
             sqf = sqf.gsub(group.first, group.second)

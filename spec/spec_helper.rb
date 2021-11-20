@@ -68,12 +68,12 @@ RSpec.configure do |config|
   end
 
   config.around(:each) do |example|
-    DatabaseCleaner.cleaning do
-      server = ESM::Connection::Server.instance
-      server.disconnect_all!
-      server.message_overseer.remove_all!
-      server.refresh_keys
+    server = ESM::Connection::Server.instance
+    server.disconnect_all!
+    server.message_overseer&.remove_all!
+    server.refresh_keys
 
+    DatabaseCleaner.cleaning do
       if example.metadata[:requires_connection]
         ESM::Connection::Server.resume
       else
@@ -87,6 +87,7 @@ RSpec.configure do |config|
 
       # Ensure every message is either replied to or timed out
       wait_for { ESM::Connection::Server.instance.message_overseer.size }.to eq(0) if example.metadata[:requires_connection]
+
       ESM::Websocket.remove_all_connections!
     end
   end
@@ -96,6 +97,7 @@ RSpec.shared_context("connection") do
   let(:connection) { server.connection }
   before(:each) do
     wait_for { server.connected? }.to be(true)
+    
     ESM::Test.outbound_server_messages.clear
   end
 end
