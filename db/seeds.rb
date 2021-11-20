@@ -21,18 +21,18 @@ user = ESM::User.create!(
 
 community = ESM::Community.create!(
   community_id: "esm",
-  community_name: "Exile Server Manager",
-  guild_id: ESM::Community::ESM::ID,
-  logging_channel_id: "446353502038654987",
-  command_prefix: "pls ",
+  community_name: "ESM Test Server 1",
+  guild_id: "452568470765305866",
+  logging_channel_id: "901965726305382400",
+  command_prefix: "~",
   player_mode_enabled: false
 )
 
 ESM::Community.create!(
-  community_id: "test",
-  community_name: "Bryan's Test Server",
-  guild_id: ESM::Community::Secondary::ID,
-  command_prefix: "~"
+  community_id: "esm2",
+  community_name: "ESM Test Server 2",
+  guild_id: "901967248653189180",
+  command_prefix: "pls "
 )
 
 ESM::Community.create!(
