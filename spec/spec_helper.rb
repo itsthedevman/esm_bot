@@ -93,11 +93,40 @@ RSpec.configure do |config|
   end
 end
 
-RSpec.shared_context("connection") do
+RSpec.shared_examples("connection") do
+  let(:server) { ESM::Test.server }
+  let(:user) { ESM::Test.user }
+
+  def execute_sqf!(code)
+    message = ESM::Connection::Message.new(
+      type: "arma",
+      data_type: "sqf",
+      data: {
+        execute_on: "server",
+        code: ESM::Arma::Sqf.minify(code)
+      }
+    )
+
+    message.add_routing_data(
+      command: {
+        current_user: {
+          steam_uid: user.steam_uid,
+          id: "",
+          username: "",
+          mention: ""
+        }
+      }.to_ostruct
+    )
+    message.apply_command_metadata
+
+    connection.send_message(message, wait: true)
+  end
+
   let(:connection) { server.connection }
+
   before(:each) do
     wait_for { server.connected? }.to be(true)
-    
+
     ESM::Test.outbound_server_messages.clear
   end
 end

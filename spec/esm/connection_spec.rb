@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 describe ESM::Connection, requires_connection: true do
-  include_context "connection"
+  include_examples "connection"
 
   let!(:server) { ESM::Test.server }
   let!(:connection_server) { ESM::Connection::Server.instance }
