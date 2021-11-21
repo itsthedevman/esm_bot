@@ -39,7 +39,9 @@ describe "ESMs_util_hashmap_get", requires_connection: true do
   it "returns nil if the key is not found" do
     response = execute_sqf!(
       <<~SQF
-        [createHashMap, "this key doesn't exist"] call ESMs_util_hashmap_get
+        private _a = createHashMap;
+        _a set ["hello", nil];
+        [_a, "hello", "this key doesn't exist"] call ESMs_util_hashmap_get
       SQF
     )
 
