@@ -358,7 +358,7 @@ module ESM
         case into_type
         when "Any"
           result = ESM::JSON.parse(value.to_s)
-          return if result.nil?
+          return value if result.nil?
 
           # Check to see if its a hashmap
           possible_hashmap = ESM::Arma::HashMap.parse(result)

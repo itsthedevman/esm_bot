@@ -35,7 +35,7 @@ module ESM
               "server"
             end
 
-          send_to_arma(data: { execute_on: execute_on, code: minify_sqf(args.code_to_execute) })
+          send_to_arma(data: { execute_on: execute_on, code: ESM::Arma::Sqf.minify(args.code_to_execute) })
         end
 
         def on_response(incoming_message, outgoing_message)
@@ -58,23 +58,6 @@ module ESM
           )
 
           reply(embed)
-        end
-
-        private
-
-        def minify_sqf(sqf)
-          [
-            [/\s*;\s*/, ";"], [/\s*:\s*/, ":"], [/\s*,\s*/, ","], [/\s*\[\s*/, "["],
-            [/\s*\]\s*/, "]"], [/\s*\(\s*/, "("], [/\s*\)\s*/, ")"], [/\s*-\s*/, "-"],
-            [/\s*\+\s*/, "+"], [%r{\s*/\s*}, "/"], [/\s*\*\s*/, "*"], [/\s*%\s*/, "%"],
-            [/\s*=\s*/, "="], [/\s*!\s*/, "!"], [/\s*>\s*/, ">"], [/\s*<\s*/, "<"],
-            [/\s*>>\s*/, ">>"], [/\s*&&\s*/, "&&"], [/\s*\|\|\s*/, "||"], [/\s*\}\s*/, "}"],
-            [/\s*\{\s*/, "{"], [/\s+/, " "], [/\n+/, ""], [/\r+/, ""], [/\t+/, ""]
-          ].each do |group|
-            sqf = sqf.gsub(group.first, group.second)
-          end
-
-          sqf
         end
       end
     end

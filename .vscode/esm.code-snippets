@@ -117,7 +117,7 @@
 			"\t# Change \"requires_connection\" to true if this command requires the client to be connected",
 			"\tdescribe \"#on_execute/#on_response\", requires_connection: false do",
 			"\t\t# Uncomment if \"requires_connection\" is true",
-			"\t\t# include_context \"connection\"",
+			"\t\t# include_examples \"connection\"",
 			"",
 			"\t\tit \"!${2:command_name} ${3:arguments}\" do",
 			"\t\t\texecute!(${4:arguments})",
