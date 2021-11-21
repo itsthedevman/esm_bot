@@ -7,8 +7,8 @@ describe "ESMs_util_hashmap_get", requires_connection: true do
 
   (1..5).each do |level|
     it "extracts the value from the hashmap (#{level} levels deep)" do
-      keys = Array.new(level) { SecureRandom.uuid }
-      expected_value = SecureRandom.uuid
+      keys = Array.new(level) { Faker::Crypto.md5 }
+      expected_value = Faker::Crypto.md5
       expected_key = keys.delete_at(level - 1)
 
       # _hash3 set ["key_3", "value"];
@@ -34,5 +34,16 @@ describe "ESMs_util_hashmap_get", requires_connection: true do
       expect(response).not_to be_nil
       expect(response.data.result).to eq(expected_value)
     end
+  end
+
+  it "returns nil if the key is not found" do
+    response = execute_sqf!(
+      <<~SQF
+        [createHashMap, "this key doesn't exist"] call ESMs_util_hashmap_get
+      SQF
+    )
+
+    expect(response).not_to be_nil
+    expect(response.data.result).to eq(nil)
   end
 end
