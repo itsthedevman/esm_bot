@@ -12,21 +12,6 @@ module ESM
       CATEGORY_CLOTHING = %w[clothing_backpacks clothing_headgear clothing_uniforms clothing_vests].freeze
       CATEGORY_ATTACHMENTS = %w[attachment_bipods attachment_sights attachments_muzzles attachments_pointers].freeze
 
-      def self.data_type(data)
-        case data.class.to_s
-        when "Array", "String"
-          data.class.upcase
-        when "TrueClass", "FalseClass"
-          "BOOL"
-        when "Numeric"
-          "SCALAR"
-        when "ESM::Arma::HashMap"
-          "HASHMAP"
-        else
-          "ANY"
-        end
-      end
-
       #
       # Returns the inner lookup Array
       #

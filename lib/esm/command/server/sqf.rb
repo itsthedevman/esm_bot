@@ -52,7 +52,6 @@ module ESM
               user: current_user.mention,
               target_uid: target_uid,
               result: data.result,
-              result_type: ESM::Arma::ClassLookup.data_type(data.result),
               server_id: target_server.server_id
             )
           )
