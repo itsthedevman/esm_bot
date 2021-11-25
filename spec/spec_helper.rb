@@ -321,6 +321,10 @@ def spawn_test_user(user, **attrs)
   response = execute_sqf!(sqf)
   expect(response).not_to be_nil
 
+  # Remove the request and response
+  ESM::Test.outbound_server_messages.pop
+  ESM::Test.inbound_server_messages.pop
+
   net_id = response.data.result
   expect(net_id).not_to be_nil
 
