@@ -128,6 +128,20 @@ RSpec.shared_examples("connection") do
     wait_for { server.connected? }.to be(true)
 
     ESM::Test.outbound_server_messages.clear
+
+    # Creates a user on the server with the same steam_uid
+    allow(user).to receive(:log_on) { |**attrs| spawn_test_user(**attrs) }
+  end
+
+  after(:each) do
+    execute_sqf!(
+      <<~SQF
+        private _player = ESM_TestUser_#{user.steam_uid};
+        if (isNil "_player") exitWith {};
+
+        deleteVehicle _player;
+      SQF
+    )
   end
 end
 
@@ -222,3 +236,78 @@ end
 # Wait until the bot has fully connected
 ESM::Test.wait_until { ESM.bot.ready? }
 ESM::Test.wait_until { ESM::Connection::Server.instance.tcp_server_alive? }
+
+def spawn_test_user(**attrs)
+  attributes = {
+    damage: 0,
+    hunger: 100,
+    thirst: 100,
+    alcohol: 0,
+    oxygen_remaining: 1,
+    bleeding_remaining: 0,
+    hitpoints: [["face_hub", 0], ["neck", 0], ["head", 0], ["pelvis", 0], ["spine1", 0], ["spine2", 0], ["spine3", 0], ["body", 0], ["arms", 0], ["hands", 0], ["legs", 0], ["body", 0]],
+    direction: 0,
+    position_x: 0,
+    position_y: 0,
+    position_z: 0,
+    assigned_items: [],
+    backpack: "",
+    backpack_items: [],
+    backpack_magazines: [],
+    backpack_weapons: [],
+    current_weapon: "",
+    goggles: "",
+    handgun_items: ["", "", "", ""],
+    handgun_weapon: "",
+    headgear: "",
+    binocular: "",
+    loaded_magazines: [],
+    primary_weapon: "",
+    primary_weapon_items: ["", "", "", ""],
+    secondary_weapon: "",
+    secondary_weapon_items: [],
+    uniform: "",
+    uniform_items: [],
+    uniform_magazines: [],
+    uniform_weapons: [],
+    vest: "",
+    vest_items: [],
+    vest_magazines: [],
+    vest_weapons: [],
+    account_money: 0,
+    account_score: 0,
+    account_kills: 0,
+    account_deaths: 0,
+    clan_id: "",
+    clan_name: "",
+    temperature: 37,
+    wetness: 0,
+    account_locker: 0
+  }
+
+  attributes.each { |key, value| attributes[key] = attrs[key] || value }
+
+  # Offset the unused values
+  data = ["", "", ""] + attributes.values
+
+  response = execute_sqf!(
+    <<~SQF
+      [#{data}, objNull, "#{user.steam_uid}", 0] call ExileServer_object_player_database_load;
+      _createdPlayer = ([#{attributes[:position_x]}, #{attributes[:position_y]}, #{attributes[:position_z]}] nearEntities ["Exile_Unit_Player", 100]) select 0;
+      if (isNil "_createdPlayer") exitWith {};
+
+      ESM_TestUser_#{user.steam_uid} = _createdPlayer;
+      _createdPlayer allowDamage false;
+      _createdPlayer setDamage 0;
+
+      netId _createdPlayer
+    SQF
+  )
+
+  expect(response).not_to be_nil
+
+  net_id = response.data.result
+  expect(net_id).not_to be_nil
+
+  net_id
+end
