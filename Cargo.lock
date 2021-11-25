@@ -252,7 +252,7 @@ dependencies = [
 [[package]]
 name = "esm_message"
 version = "0.1.0"
-source = "git+https://github.com/WolfkillArcadia/esm_message?branch=main#6b90f99191e73c15ff1eeccb596504081b623675"
+source = "git+https://github.com/WolfkillArcadia/esm_message?branch=main#21a8318acab210a18b69675003b0d7c8fce31cb1"
 dependencies = [
  "aes-gcm",
  "arma-rs",

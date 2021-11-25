@@ -26,7 +26,8 @@ module ESM
           case @type
           when "code"
             replacements = {
-              user: @message.routing_data.try(:command).try(:current_user).try(:mention),
+              user: @message.routing_data&.command&.current_user&.mention,
+              target: @message.routing_data&.command&.target_user&.mention,
               message_id: @message.id,
               server_id: @message.server_id,
               type: @message.type,
@@ -165,12 +166,17 @@ module ESM
         target_user = @routing_data.try(:command).try(:target_user)
         return if target_user.nil?
 
-        @metadata.target = {
-          steam_uid: target_user.steam_uid,
-          discord_id: target_user.id.to_s,
-          discord_name: target_user.username,
-          discord_mention: target_user.mention
-        }
+        target = { steam_uid: target_user.steam_uid }
+
+        if !target_user.is_a?(ESM::TargetUser)
+          target.merge!(
+            discord_id: target_user.id.to_s,
+            discord_name: target_user.username,
+            discord_mention: target_user.mention
+          )
+        end
+
+        @metadata.target = target
       end
 
       #
