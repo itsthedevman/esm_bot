@@ -23,6 +23,9 @@ module ESM
 
     attr_accessor :guild_type, :role_id if ESM.env.test?
 
+    validates :discord_id, uniqueness: true, presence: true
+    validates :steam_uid, uniqueness: true
+
     #########################
     # Public Methods
     #########################

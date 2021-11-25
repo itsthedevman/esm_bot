@@ -51,8 +51,19 @@ module ESM
       end
 
       # Creates a second user that isn't #user
-      def second_user
-        @second_user ||= FactoryBot.create(@user_type, not_user: user)
+      def second_user(*args, type: @user_type)
+        args = [type] + args
+
+        @second_user ||= lambda do
+          counter = 0
+          loop do
+            counter += 1
+            user = FactoryBot.build(*args)
+
+            raise "Failed to create second user" if counter > 10
+            break user if user.valid? && user.save
+          end
+        end.call
       end
 
       def server
