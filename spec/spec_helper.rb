@@ -110,7 +110,7 @@ RSpec.shared_examples("connection") do
     message.add_routing_data(
       command: {
         current_user: {
-          steam_uid: user.steam_uid,
+          steam_uid: user.steam_uid || "",
           id: "",
           username: "",
           mention: ""
@@ -130,26 +130,37 @@ RSpec.shared_examples("connection") do
     ESM::Test.outbound_server_messages.clear
 
     # Creates a user on the server with the same steam_uid
-    allow(user).to receive(:log_on) { |**attrs| spawn_test_user(**attrs) }
+    allow(user).to receive(:connect) { |**attrs| spawn_test_user(user, on: connection, **attrs) } if respond_to?(:user) && user.steam_uid
+    allow(second_user).to receive(:connect) { |**attrs| spawn_test_user(second_user, on: connection, **attrs) } if respond_to?(:second_user) && second_user.steam_uid
   end
 
   after(:each) do
-    execute_sqf!(
-      <<~SQF
-        private _player = ESM_TestUser_#{user.steam_uid};
-        if (isNil "_player") exitWith {};
+    sqf = <<~SQF
+      private _deleteFunction = {
+        if (isNil "_this") exitWith {};
 
-        deleteVehicle _player;
-      SQF
-    )
+        deleteVehicle _this;
+      };
+
+    SQF
+
+    sqf += "ESM_TestUser_#{user.steam_uid} call _deleteFunction;" if respond_to?(:user) && user.steam_uid
+    sqf += "ESM_TestUser_#{second_user.steam_uid} call _deleteFunction;" if respond_to?(:second_user) && second_user.steam_uid
+
+    execute_sqf!(sqf)
   end
 end
 
 RSpec.shared_examples("command") do |described_class|
-  def execute!(channel_type: :text, **command_args)
+  def execute!(fail_on_raise: true, channel_type: :text, **command_args)
     command_statement = command.statement(command_args)
     event = CommandEvent.create(command_statement, user: user, channel_type: channel_type)
-    expect { command.execute(event) }.not_to raise_error
+
+    if fail_on_raise
+      expect { command.execute(event) }.not_to raise_error
+    else
+      command.execute(event)
+    end
   end
 
   let!(:command) { described_class.new }
@@ -237,7 +248,7 @@ end
 ESM::Test.wait_until { ESM.bot.ready? }
 ESM::Test.wait_until { ESM::Connection::Server.instance.tcp_server_alive? }
 
-def spawn_test_user(**attrs)
+def spawn_test_user(user, **attrs)
   attributes = {
     damage: 0,
     hunger: 100,
@@ -290,20 +301,19 @@ def spawn_test_user(**attrs)
   # Offset the unused values
   data = ["", "", ""] + attributes.values
 
-  response = execute_sqf!(
-    <<~SQF
-      [#{data}, objNull, "#{user.steam_uid}", 0] call ExileServer_object_player_database_load;
-      _createdPlayer = ([#{attributes[:position_x]}, #{attributes[:position_y]}, #{attributes[:position_z]}] nearEntities ["Exile_Unit_Player", 100]) select 0;
-      if (isNil "_createdPlayer") exitWith {};
+  sqf = <<~SQF
+    [#{data}, objNull, "#{user.steam_uid}", 0] call ExileServer_object_player_database_load;
+    _createdPlayer = ([#{attributes[:position_x]}, #{attributes[:position_y]}, #{attributes[:position_z]}] nearEntities ["Exile_Unit_Player", 100]) select 0;
+    if (isNil "_createdPlayer") exitWith {};
 
-      ESM_TestUser_#{user.steam_uid} = _createdPlayer;
-      _createdPlayer allowDamage false;
-      _createdPlayer setDamage 0;
+    ESM_TestUser_#{user.steam_uid} = _createdPlayer;
+    _createdPlayer allowDamage false;
+    _createdPlayer setDamage 0;
 
-      netId _createdPlayer
-    SQF
-  )
+    netId _createdPlayer
+  SQF
 
+  response = execute_sqf!(sqf)
   expect(response).not_to be_nil
 
   net_id = response.data.result
