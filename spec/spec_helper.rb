@@ -130,24 +130,29 @@ RSpec.shared_examples("connection") do
     ESM::Test.outbound_server_messages.clear
 
     # Creates a user on the server with the same steam_uid
-    allow(user).to receive(:connect) { |**attrs| spawn_test_user(user, on: connection, **attrs) } if respond_to?(:user) && user.steam_uid
-    allow(second_user).to receive(:connect) { |**attrs| spawn_test_user(second_user, on: connection, **attrs) } if respond_to?(:second_user) && second_user.steam_uid
+    allow(user).to receive(:connect) { |**attrs| spawn_test_user(user, on: connection, **attrs) } if respond_to?(:user)
+    allow(second_user).to receive(:connect) { |**attrs| spawn_test_user(second_user, on: connection, **attrs) } if respond_to?(:second_user)
+
+    allow(user).to receive("connected?") { user.connected ||= false } if respond_to?(:user)
+    allow(second_user).to receive("connected?") { second_user.connected ||= false } if respond_to?(:second_user)
   end
 
   after(:each) do
-    sqf = <<~SQF
-      private _deleteFunction = {
-        if (isNil "_this") exitWith {};
+    users = ""
+    users += "ESM_TestUser_#{user.steam_uid} call _deleteFunction;" if respond_to?(:user) && user.connected?
+    users += "ESM_TestUser_#{second_user.steam_uid} call _deleteFunction;" if respond_to?(:second_user) && second_user.connected?
+    next if users.blank?
 
-        deleteVehicle _this;
-      };
+    execute_sqf!(
+      <<~SQF
+        private _deleteFunction = {
+          if (isNil "_this") exitWith {};
 
-    SQF
-
-    sqf += "ESM_TestUser_#{user.steam_uid} call _deleteFunction;" if respond_to?(:user) && user.steam_uid
-    sqf += "ESM_TestUser_#{second_user.steam_uid} call _deleteFunction;" if respond_to?(:second_user) && second_user.steam_uid
-
-    execute_sqf!(sqf)
+          deleteVehicle _this;
+        };
+        #{users}
+      SQF
+    )
   end
 end
 
@@ -319,5 +324,6 @@ def spawn_test_user(user, **attrs)
   net_id = response.data.result
   expect(net_id).not_to be_nil
 
+  user.connected = true
   net_id
 end

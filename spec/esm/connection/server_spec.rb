@@ -28,7 +28,11 @@ describe ESM::Connection::Server do
     let(:server) { ESM::Test.server }
 
     before :each do
-      ESM::Test.store_server_messages = true
+      ESM::Test.block_outbound_messages = true
+    end
+
+    after :each do
+      ESM::Connection::Server.instance.message_overseer.remove_all!
     end
 
     it "sends a message" do
