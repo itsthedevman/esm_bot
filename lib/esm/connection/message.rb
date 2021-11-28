@@ -7,6 +7,7 @@ module ESM
 
       MAPPING = YAML.safe_load(File.read(File.expand_path("./config/mapping.yml"))).freeze
       ARRAY_REGEX = /array<(?<type>.+)>/i.freeze
+      NIL_REGEX = /^\?(?<type>.+)/.freeze
 
       class Error
         def initialize(message, type:, content:)
@@ -325,14 +326,16 @@ module ESM
         output = {}
         mapping.each do |attribute_name, attribute_type|
           data_entry = data.delete(attribute_name)
-          raise ESM::Exception::InvalidMessage, "\"#{attribute_name}\" is expected for message with data type of \"#{data_type}\"" if data_entry.nil? && attribute_type != "Any"
+
+          can_be_nil = attribute_type == "Any" || attribute_type.match?(NIL_REGEX)
+          raise ESM::Exception::InvalidMessage, "\"#{attribute_name}\" is expected for message with data type of \"#{data_type}\"" if data_entry.nil? && !can_be_nil
 
           # Some classes are not valid ruby classes and need converted
           klass =
             case attribute_type
             when "HashMap"
               ESM::Arma::HashMap
-            when "Any", "Boolean", ARRAY_REGEX
+            when "Any", "Boolean", ARRAY_REGEX, NIL_REGEX
               NilClass # Always convert theses
             when "Decimal"
               BigDecimal
@@ -377,6 +380,13 @@ module ESM
 
           # Convert the inner values to whatever type is configured
           value.to_a.map { |v| convert_type(v, into_type: match[:type]) }
+        when NIL_REGEX
+          return if value.nil?
+
+          match = into_type.match(NIL_REGEX)
+          raise ESM::Exception::Error, "Failed to parse inner type from \"#{into_type}\"" if match.nil?
+
+          convert_type(value, into_type: match[:type])
         when "Array"
           value.to_a
         when "String"

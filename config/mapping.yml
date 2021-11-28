@@ -20,6 +20,7 @@
 #   Date
 #   Decimal
 #   Boolean
+#   ?<type> -> Indicates that it can be nil
 
 # For quicker testing
 data_test:
@@ -83,11 +84,11 @@ query_result:
   results: Array<Hash>
 
 reward:
-  items: Array<HashMap>
-  locker_poptabs: Integer
-  player_poptabs: Integer
-  respect: Integer
-  vehicles: Array<HashMap>
+  items: ?Array<HashMap>
+  locker_poptabs: ?Integer
+  player_poptabs: ?Integer
+  respect: ?Integer
+  vehicles: ?Array<HashMap>
 
 send_to_channel:
   id: String
