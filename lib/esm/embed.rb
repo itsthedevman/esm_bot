@@ -33,7 +33,7 @@ module ESM
       @author = nil
       @image = nil
       @thumbnail = nil
-      @color = ESM::Color::Toast::BLUE
+      @color = ESM::Color.random
       @url = nil
       @timestamp = DateTime.now
 
