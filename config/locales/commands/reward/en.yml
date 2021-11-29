@@ -36,13 +36,32 @@ en:
           Reward `%{reward_id}` contains the following:
         fields:
           player_poptabs:
-            name: "Poptabs added to player"
+            name: "Poptabs given to you"
             value: "```%{poptabs}```"
           locker_poptabs:
             name: "Poptabs added to locker"
             value: "```%{poptabs}```"
           respect:
-            name: "Respect added to player"
+            name: "Respect given to you"
             value: "```%{respect}```"
           accept: "Once you are ready to receive the reward, just reply with `accept`"
         footer: "You can always cancel this request by replying with `cancel`"
+      receipt_embed:
+        title: "Reward get!"
+        description: "You may now return to your game and enjoy your gifts!"
+        fields:
+          player_poptabs:
+            name: "Current poptabs"
+            value: "```%{poptabs}```"
+          locker_poptabs:
+            name: "Current locker poptabs"
+            value: "```%{poptabs}```"
+          respect:
+            name: "Current respect"
+            value: "```%{respect}```"
+          vehicles:
+            name: "Vehicles"
+          cooldown:
+            name: "Can I receive this reward again?"
+            value_single_use: "Unfortunately no. `%{reward_id}` was a single use reward and cannot be used again"
+            value_cooldown: "Yes, however, you have **%{uses_left}** left before it can be used again"

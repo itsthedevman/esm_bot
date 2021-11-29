@@ -41,7 +41,7 @@ module ESM
         SPAWN_LOCATIONS = ["virtual_garage", "player_decides"].freeze
 
         # FOR DEV ONLY
-        skip_check :cooldown
+        skip_check :cooldown, :connected_server
 
         def on_execute
           check_for_in_progress!
@@ -52,7 +52,7 @@ module ESM
 
           # Notify the user that we're sending them a direct message only if the command was from a text channel
           if current_channel.text?
-            embed = ESM::Embed.new(:success, description: t("commands.reward.check_pm", user: current_user.mention))
+            embed = ESM::Embed.new(:success, description: t("errors.check_pm", user: current_user.mention))
             reply(embed)
           end
 
@@ -96,8 +96,22 @@ module ESM
           await_for_reply
         end
 
-        def on_response(incoming_message)
-          binding.pry
+        def on_response(incoming_message, _outgoing_message)
+          results = incoming_message.data
+
+          embed = ESM::Embed.build do |e|
+            e.title = t("receipt_embed.title")
+            e.description = t("receipt_embed.description")
+
+            e.add_field(name: t("receipt_embed.fields.player_poptabs.name"), value: t("receipt_embed.fields.player_poptabs.value", poptabs: results.player_poptabs.to_poptab), inline: true) if results.player_poptabs
+            e.add_field(name: t("receipt_embed.fields.locker_poptabs.name"), value: t("receipt_embed.fields.locker_poptabs.value", poptabs: results.locker_poptabs.to_poptab), inline: true) if results.locker_poptabs
+            e.add_field(name: t("receipt_embed.fields.respect.name"), value: t("receipt_embed.fields.respect.value", respect: results.respect), inline: true) if results.respect
+            e.add_field(name: t("receipt_embed.fields.vehicles.name"), value: "") if results.vehicles
+
+            # TODO - Add cooldowns
+          end
+
+          reply(embed)
         end
 
         def on_reply(event)
@@ -109,7 +123,7 @@ module ESM
           content = event.message.content.squish
           return on_cancel if %w[quit exit stop cancel reject].include?(content.downcase)
           return on_accept if %w[done finish accept].include?(content.downcase)
-          return if @vehicles.blank? # on_reply is called even if there are no vehicles
+          return await_for_reply if @vehicles.blank? # on_reply is called even if there are no vehicles
 
           # The message is formatted correctly
           if !content.match?(/(\d+:\w+)+/i)
@@ -148,17 +162,14 @@ module ESM
             end
           end
 
-          send_to_a3(
-            type: "arma",
-            data_type: "reward",
-            data: {
-              player_poptabs: selected_reward.player_poptabs,
-              locker_poptabs: selected_reward.locker_poptabs,
-              respect: selected_reward.respect,
-              items: selected_reward.reward_items.to_a.to_json,
-              vehicles: vehicles.to_json
-            }
-          )
+          data = {}
+          data[:player_poptabs] = selected_reward.player_poptabs if selected_reward.player_poptabs.positive?
+          data[:locker_poptabs] = selected_reward.locker_poptabs if selected_reward.locker_poptabs.positive?
+          data[:respect] = selected_reward.respect if selected_reward.respect.positive?
+          data[:items] = selected_reward.reward_items.to_a if selected_reward.reward_items.present?
+          data[:vehicles] = vehicles.to_json if vehicles.present?
+
+          send_to_arma(data: data)
         end
 
         def request_spawn_locations

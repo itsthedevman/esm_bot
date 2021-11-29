@@ -84,7 +84,7 @@ query_result:
   results: Array<Hash>
 
 reward:
-  items: ?Array<HashMap>
+  items: ?HashMap
   locker_poptabs: ?Integer
   player_poptabs: ?Integer
   respect: ?Integer
