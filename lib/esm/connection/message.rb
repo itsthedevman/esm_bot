@@ -131,8 +131,8 @@ module ESM
             "empty"
           end
 
-        @metadata = OpenStruct.new(self.sanitize(args[:metadata].to_h || {}, @metadata_type))
-        @data = OpenStruct.new(self.sanitize(args[:data].to_h || {}, @data_type))
+        @metadata = @metadata_type == "empty" ? nil : OpenStruct.new(self.sanitize(args[:metadata].to_h || {}, @metadata_type))
+        @data = @data_type == "empty" ? nil : OpenStruct.new(self.sanitize(args[:data].to_h || {}, @data_type))
         @errors = (args[:errors] || []).map { |e| Error.new(self, **e) }
         @routing_data = OpenStruct.new(command: nil)
         @delivered = false
@@ -156,6 +156,7 @@ module ESM
         user = @routing_data.try(:command).try(:current_user)
         return if user.nil?
 
+        @metadata ||= OpenStruct.new
         @metadata_type = "command"
         @metadata.player = {
           steam_uid: user.steam_uid,
@@ -221,7 +222,19 @@ module ESM
       #
       def to_h
         # Numbers have to be sent as Strings
-        stringify_values = ->(value) { value.is_a?(Numeric) ? value.to_s : value }
+        stringify_values = lambda do |value|
+          case value
+          when Numeric
+            value.to_s
+          when Hash, ESM::Arma::HashMap
+            value.transform_values(&stringify_values)
+          when Array
+            value.map(&stringify_values)
+          else
+            value
+          end
+        end
+
         data = self.data.to_h.transform_values(&stringify_values)
         metadata = self.metadata.to_h.transform_values(&stringify_values)
 
@@ -376,6 +389,7 @@ module ESM
           result
         when ARRAY_REGEX
           match = into_type.match(ARRAY_REGEX)
+          ESM::Notifications.trigger("debug", class: self.class, method: __method__, type: into_type, into_type: match[:type], value: value)
           raise ESM::Exception::Error, "Failed to parse inner type from \"#{into_type}\"" if match.nil?
 
           # Convert the inner values to whatever type is configured
@@ -384,6 +398,7 @@ module ESM
           return if value.nil?
 
           match = into_type.match(NIL_REGEX)
+          ESM::Notifications.trigger("debug", class: self.class, method: __method__, type: into_type, into_type: match[:type], value: value)
           raise ESM::Exception::Error, "Failed to parse inner type from \"#{into_type}\"" if match.nil?
 
           convert_type(value, into_type: match[:type])
@@ -400,6 +415,7 @@ module ESM
         when "Boolean"
           value.to_s == "true"
         when "HashMap"
+          ESM::Notifications.trigger("debug", class: self.class, method: __method__, value: value)
           ESM::Arma::HashMap.parse(value)
         when "DateTime"
           ::DateTime.parse(value)
