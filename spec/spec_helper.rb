@@ -307,8 +307,14 @@ def spawn_test_user(user, **attrs)
   data = ["", "", ""] + attributes.values
 
   sqf = <<~SQF
-    [#{data}, objNull, "#{user.steam_uid}", 0] call ExileServer_object_player_database_load;
-    _createdPlayer = ([#{attributes[:position_x]}, #{attributes[:position_y]}, #{attributes[:position_z]}] nearEntities ["Exile_Unit_Player", 100]) select 0;
+    private _data = #{data};
+    private _pos2D = (call ExileClient_util_world_getAllAirportPositions) select 0;
+
+    _data set [11, _pos2D select 0];
+    _data set [12, _pos2D select 1];
+
+    [_data, objNull, "#{user.steam_uid}", 0] call ExileServer_object_player_database_load;
+    _createdPlayer = ([_pos2D select 0, _pos2D select 1, 0] nearEntities ["Exile_Unit_Player", 100]) select 0;
     if (isNil "_createdPlayer") exitWith {};
 
     ESM_TestUser_#{user.steam_uid} = _createdPlayer;
