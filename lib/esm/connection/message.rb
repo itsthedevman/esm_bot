@@ -389,7 +389,6 @@ module ESM
           result
         when ARRAY_REGEX
           match = into_type.match(ARRAY_REGEX)
-          ESM::Notifications.trigger("debug", class: self.class, method: __method__, type: into_type, into_type: match[:type], value: value)
           raise ESM::Exception::Error, "Failed to parse inner type from \"#{into_type}\"" if match.nil?
 
           # Convert the inner values to whatever type is configured
@@ -398,7 +397,6 @@ module ESM
           return if value.nil?
 
           match = into_type.match(NIL_REGEX)
-          ESM::Notifications.trigger("debug", class: self.class, method: __method__, type: into_type, into_type: match[:type], value: value)
           raise ESM::Exception::Error, "Failed to parse inner type from \"#{into_type}\"" if match.nil?
 
           convert_type(value, into_type: match[:type])
@@ -415,7 +413,6 @@ module ESM
         when "Boolean"
           value.to_s == "true"
         when "HashMap"
-          ESM::Notifications.trigger("debug", class: self.class, method: __method__, value: value)
           ESM::Arma::HashMap.parse(value)
         when "DateTime"
           ::DateTime.parse(value)
