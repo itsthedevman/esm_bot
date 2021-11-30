@@ -1,11 +1,15 @@
 # frozen_string_literal: true
 
-describe ESM::Connection, requires_connection: true do
+describe ESM::Connection, v2: true, requires_connection: true do
   include_examples "connection"
 
   let!(:server) { ESM::Test.server }
   let!(:connection_server) { ESM::Connection::Server.instance }
   let(:message) { ESM::Connection::Message.new(type: :test, data: { foo: "bar" }, data_type: :data_test) }
+
+  after :each do
+    ESM::Connection::Server.instance.message_overseer.remove_all!
+  end
 
   describe "#send_message" do
     before :each do
