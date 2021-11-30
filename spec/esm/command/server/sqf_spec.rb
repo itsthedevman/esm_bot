@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-describe ESM::Command::Server::Sqf, category: "command" do
+describe ESM::Command::Server::Sqf, category: "command", v2: true do
   include_examples "command", described_class
 
   it "is an admin command" do

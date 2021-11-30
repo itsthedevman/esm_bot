@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-describe ESM::Command::Server::Reward, category: "command" do
+describe ESM::Command::Server::Reward, category: "command", v2: true do
   include_examples "command", described_class
 
   it "is a player command" do

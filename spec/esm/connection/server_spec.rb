@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-describe ESM::Connection::Server do
+describe ESM::Connection::Server, v2: true do
   let(:connection_server) { described_class.instance }
   let(:message) { ESM::Connection::Message.new(type: "test", data: { foo: "bar" }, data_type: "data_test") }
 
