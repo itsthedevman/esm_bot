@@ -152,8 +152,8 @@ describe ESM::Arma::HashMap, v2: true do
         key_4: [1, "two", ["three", 4, 5], ["six", 7], [["eight", false]]],
         key_5: [
           [
-            ["key_6", true],
-            ["key_7", false]
+            ["key_6", "key_7"],
+            [true, false]
           ],
           true
         ]
@@ -168,8 +168,8 @@ describe ESM::Arma::HashMap, v2: true do
           "key_5",
           [
             [
-              ["key_6", true],
-              ["key_7", false]
+              ["key_6", "key_7"],
+              [true, false]
             ],
             true
           ]
@@ -191,8 +191,8 @@ describe ESM::Arma::HashMap, v2: true do
         key_4: [1, "two", ["three", 4, 5], ["six", 7], [["eight", false]]],
         key_5: [
           [
-            ["key_6", true],
-            ["key_7", false]
+            ["key_6", "key_7"],
+            [true, false]
           ],
           true
         ]
@@ -207,8 +207,8 @@ describe ESM::Arma::HashMap, v2: true do
           "key_5",
           [
             [
-              ["key_6", true],
-              ["key_7", false]
+              ["key_6", "key_7"],
+              [true, false]
             ],
             true
           ]

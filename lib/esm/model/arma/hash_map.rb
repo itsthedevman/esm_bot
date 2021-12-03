@@ -34,10 +34,10 @@ module ESM
             when Array
               value.map { |v| convert_value.call(v) }
             when Hash
-              value.each { |k, v| value[k] = convert_value.call(v) }
-
-              # Convert the hash to array pairs
-              value.to_a
+              value.each_with_object([[], []]) do |(k, v), array|
+                array.first << convert_value.call(k)
+                array.second << convert_value.call(v)
+              end
             when Symbol
               value.to_s
             else
