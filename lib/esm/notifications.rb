@@ -116,10 +116,8 @@ module ESM
         ESM::JSON.pretty_generate(
           author: "#{command.current_user.distinct} (#{command.current_user.id})",
           channel: "#{Discordrb::Channel::TYPE_NAMES[command.event.channel.type]} (#{command.event.channel.id})",
-          command: command.name,
           message: command.event.message.content,
-          arguments: command.arguments.to_h,
-          cooldown: command.current_cooldown&.attributes
+          command: command.to_h
         )
       end
     end
@@ -135,10 +133,9 @@ module ESM
         ESM::JSON.pretty_generate(
           author: "#{command.current_user.distinct} (#{command.current_user.id})",
           channel: "#{Discordrb::Channel::TYPE_NAMES[command.event.channel.type]} (#{command.event.channel.id})",
-          command: command.name,
           message: command.event.message.content,
-          arguments: command.arguments.to_h,
-          reason: reason.is_a?(Embed) ? reason.description : reason
+          reason: reason.is_a?(Embed) ? reason.description : reason,
+          command: command.to_h
         )
       end
     end
@@ -154,11 +151,9 @@ module ESM
         JSON.pretty_generate(
           author: "#{command.current_user.distinct} (#{command.current_user.id})",
           channel: "#{Discordrb::Channel::TYPE_NAMES[command.event.channel.type]} (#{command.event.channel.id})",
-          command: command.name,
           message: command.event.message.content,
-          arguments: command.arguments.to_h,
-          cooldown: command.current_cooldown&.attributes,
-          response: payload[:response]
+          response: payload[:response],
+          command: command.to_h
         )
       end
     end
@@ -218,20 +213,20 @@ module ESM
       end
 
       # Send a notification to the owner, lots of guards in case the message isn't what we expect
-      channel = ESM.bot.channel(recipient_id)
-      return if channel.nil?
+      # channel = ESM.bot.channel(recipient_id)
+      # return if channel.nil?
 
-      server = channel.server
-      return if server.nil?
+      # server = channel.server
+      # return if server.nil?
 
-      owner = server.owner
-      return if owner.nil?
+      # owner = server.owner
+      # return if owner.nil?
 
-      embed = ESM::Embed.build(
-        :error,
-        description: I18n.t("exceptions.deliver_failure", message: payload[:message].to_s.gsub("`", ""), channel_name: channel.name, exception: exception)
-      )
-      ESM.bot.deliver(embed, to: owner)
+      # embed = ESM::Embed.build(
+      #   :error,
+      #   description: I18n.t("exceptions.deliver_failure", message: payload[:message].to_s.gsub("`", ""), channel_name: channel.name, exception: exception)
+      # )
+      # ESM.bot.deliver(embed, to: owner)
     end
 
     def self.xm8_notification_invalid_type(_name, _start, _finish, _id, payload)

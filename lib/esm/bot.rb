@@ -28,6 +28,7 @@ module ESM
       ESM::Database.connect!
 
       load_community_prefixes
+
       @resend_queue = ESM::Bot::ResendQueue.new(self)
 
       super(token: ESM.config.token, prefix: method(:determine_activation_prefix), help_command: false)
