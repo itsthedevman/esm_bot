@@ -38,16 +38,13 @@ module ESM
           dev_only!
           registered!
           player_mode!
-          text_only!
-          dm_only!
 
           nil_targets!
           different_community!
-          permissions!
           cooldown!
 
           # Check for skip outside of the method so it can be called later if need be
-          connected_server!
+          connected_server! unless @skipped_checks.include?(:connected_server)
         end
 
         def nil_targets!
@@ -68,11 +65,8 @@ module ESM
         end
 
         def permissions!
-          # Load the permissions AFTER we have checked for invalid communities.
-          @command.permissions.load
-
           if !@command.permissions.enabled?
-            # If the community doesn't to send a message, don't send a message.
+            # If the community doesn't want to send a message, don't send a message.
             # This only applies to text channels. The user needs to know why the bot is not replying to their message
             if @command.event.channel.text? && !@command.permissions.notify_when_disabled?
               check_failed!(exception_class: ESM::Exception::CheckFailureNoMessage)
@@ -134,7 +128,6 @@ module ESM
         end
 
         def connected_server!
-          return if @skipped_checks.include?(:connected_server)
           return if @command.arguments.server_id.nil?
 
           # Return if the server is not connected

@@ -431,6 +431,28 @@ module ESM
         @arguments
       end
 
+      def to_h
+        {
+          name: self.name,
+          current_community: self.current_community&.attributes,
+          current_channel: self.current_channel.inspect,
+          current_user: self.current_user.inspect,
+          current_cooldown: self.current_cooldown&.attributes,
+          target_community: self.target_community&.attributes,
+          target_server: self.target_server&.attributes,
+          target_user: self.target_user.respond_to?(:attributes) ? self.target_user.attributes : self.target_user,
+          target_uid: self.target_uid,
+          same_user: self.same_user?,
+          dm_only: self.dm_only?,
+          text_only: self.text_only?,
+          dev_only: self.dev_only?,
+          registration_required: self.registration_required?,
+          whitelist_enabled: self.whitelist_enabled?,
+          on_cooldown: self.on_cooldown?,
+          permissions: @permissions.to_h
+        }
+      end
+
       private
 
       # V1
@@ -449,15 +471,18 @@ module ESM
         @event = event
         @executed_at = DateTime.now
 
-        # Check permissions ahead of time so if the command is disabled, it doesn't try to correct argument errors
-        @checks.permissions! if event.channel.text?
+        @arguments.parse!(@event)
+        @permissions.load
 
-        # Check channel access due to argument parsing needing access to certain channels.
         @checks.text_only!
         @checks.dm_only!
 
-        # Parse arguments or raises FailedArgumentParse
-        @arguments.parse!(@event)
+        @checks.permissions!
+
+        # Start typing. The bot will automatically stop after 5 seconds or when the next message sends
+        # @event.channel.start_typing if !ESM.env.test? || !ESM.env.error_testing?
+
+        @arguments.validate!
 
         # Logging
         ESM::Notifications.trigger("command_from_discord", command: self)

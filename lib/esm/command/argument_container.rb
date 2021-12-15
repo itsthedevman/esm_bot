@@ -11,6 +11,10 @@ module ESM
         @matches = []
       end
 
+      def get(argument_name)
+        self.find { |argument| argument.name == argument_name.to_sym }
+      end
+
       def parse!(event)
         @event = event
 
@@ -24,6 +28,10 @@ module ESM
         self.each do |argument|
           parse_and_remove!(argument)
         end
+      end
+
+      def validate!
+        self.each { |argument| invalid_argument!(argument) if argument.invalid? }
       end
 
       def to_s
@@ -142,9 +150,6 @@ module ESM
       def parse_and_remove!(argument)
         argument.parse(self.command, @message)
 
-        # Nothing was parsed
-        invalid_argument!(argument) if argument.invalid?
-
         # Store the match
         @matches << argument.value
 
@@ -152,7 +157,7 @@ module ESM
         create_getter(argument)
 
         # Now we need to return the message without our match
-        @message.sub!(argument.parser.original, "").strip! if !argument.skip_removal?
+        @message.sub!(argument.parser.original, "").strip! unless argument.value.nil? || argument.skip_removal?
       end
 
       def create_getter(argument)

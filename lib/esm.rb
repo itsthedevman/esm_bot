@@ -42,10 +42,10 @@
 
 require "otr-activerecord" if ENV["ESM_ENV"] != "production"
 
-# Load Dotenv variables
-Dotenv.load
-Dotenv.load(".env.test") if ENV["ESM_ENV"] == "test"
-Dotenv.load(".env.prod") if ENV["ESM_ENV"] == "production"
+# Load Dotenv variables; overwriting any that already exist
+Dotenv.overload
+Dotenv.overload(".env.test") if ENV["ESM_ENV"] == "test"
+Dotenv.overload(".env.prod") if ENV["ESM_ENV"] == "production"
 
 module ESM
   REDIS_OPTS = {
@@ -102,7 +102,7 @@ module ESM
   end
 
   def self.initialize_logger
-    @logger = Logger.new("log/#{env}.log")
+    @logger = Logger.new("log/#{env}.log", "daily")
 
     @logger.formatter = proc do |severity, datetime, progname = "N/A", msg|
       header = "#{severity} [#{datetime.strftime("%F %H:%M:%S:%L")}] (#{progname})"
