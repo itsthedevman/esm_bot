@@ -1,17 +1,24 @@
-use crate::{connection::ConnectionManager};
+use crate::connection::ConnectionManager;
+use esm_message::{Data, ErrorType, Message, Type};
 use log::*;
-use message_io::{network::{Endpoint, ResourceId}, node::{NodeHandler}};
+use message_io::{
+    network::{Endpoint, ResourceId},
+    node::NodeHandler,
+};
 use message_io::{
     network::{NetEvent, Transport},
     node::NodeListener,
 };
-use esm_message::{Data, ErrorType, Message, Type};
-use tokio::{sync::{RwLock}, time::sleep};
-use redis::{AsyncCommands, Client, Commands, Connection, RedisError, aio::MultiplexedConnection};
-use std::{env, sync::atomic::{AtomicBool, Ordering}, time::Duration};
-use std::{sync::Arc};
+use parking_lot::RwLock as SyncRwLock;
+use redis::{aio::MultiplexedConnection, AsyncCommands, Client, Commands, Connection, RedisError};
+use std::sync::Arc;
+use std::{
+    env,
+    sync::atomic::{AtomicBool, Ordering},
+    time::Duration,
+};
 use tokio::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
-use parking_lot::{RwLock as SyncRwLock};
+use tokio::{sync::RwLock, time::sleep};
 
 #[derive(Clone)]
 pub struct Server {
@@ -20,7 +27,7 @@ pub struct Server {
     redis_client: Client,
     pub redis: Arc<SyncRwLock<Connection>>,
     outbound_sender: UnboundedSender<Message>,
-    outbound_receiver:  Arc<RwLock<UnboundedReceiver<Message>>>,
+    outbound_receiver: Arc<RwLock<UnboundedReceiver<Message>>>,
     address: String,
 
     // The master flag
@@ -37,22 +44,26 @@ impl Server {
             Ok(port) => {
                 format!("0.0.0.0:{}", port)
             }
-            Err(_e) => panic!("TCP_SERVER_PORT is not set!")
+            Err(_e) => panic!("TCP_SERVER_PORT is not set!"),
         };
 
         let redis_client = match redis::Client::open("redis://127.0.0.1/") {
             Ok(client) => client,
-            Err(e) => panic!("Failed to connect to redis. Reason: {}", e)
+            Err(e) => panic!("Failed to connect to redis. Reason: {}", e),
         };
 
         let mut redis = match redis_client.get_connection() {
             Ok(con) => con,
-            Err(e) => panic!("Failed to get sync connection. Reason: {}", e)
+            Err(e) => panic!("Failed to get sync connection. Reason: {}", e),
         };
 
-        let _: () = match redis::cmd("DEL").arg("tcp_server_outbound").arg("tcp_server_inbound").query(&mut redis) {
+        let _: () = match redis::cmd("DEL")
+            .arg("tcp_server_outbound")
+            .arg("tcp_server_inbound")
+            .query(&mut redis)
+        {
             Ok(r) => r,
-            Err(e) => error!("#delegate_outbound_messages - {}", e)
+            Err(e) => error!("#delegate_outbound_messages - {}", e),
         };
 
         let (sender, receiver) = mpsc::unbounded_channel();
@@ -78,7 +89,7 @@ impl Server {
     /// Send a Message to the bot.
     fn send_to_bot(&self, message: Message) {
         match self.outbound_sender.send(message) {
-            Ok(()) => {},
+            Ok(()) => {}
             Err(e) => {
                 error!("#send_to_bot - {}", e);
             }
@@ -89,7 +100,10 @@ impl Server {
         let server_id = match message.server_id.clone() {
             Some(id) => id,
             None => {
-                message.add_error(ErrorType::Message, "Cannot send message - Missing server_id");
+                message.add_error(
+                    ErrorType::Message,
+                    "Cannot send message - Missing server_id",
+                );
                 return false;
             }
         };
@@ -106,8 +120,14 @@ impl Server {
         let server_key = match self.server_key(&server_id) {
             Some(key) => key,
             None => {
-                error!("#send_to_client - Failed to find server key for message. \n{:?} ", message);
-                message.add_error(ErrorType::Message, "Cannot send message - Missing server key");
+                error!(
+                    "#send_to_client - Failed to find server key for message. \n{:?} ",
+                    message
+                );
+                message.add_error(
+                    ErrorType::Message,
+                    "Cannot send message - Missing server key",
+                );
                 return false;
             }
         };
@@ -118,14 +138,13 @@ impl Server {
 
                 self.handler.network().send(endpoint.to_owned(), &bytes);
                 true
-            },
+            }
             Err(error) => {
                 error!("#send_to_client - {}", error);
                 message.add_error(ErrorType::Code, "client_not_connected");
                 false
             }
         }
-
     }
 
     pub fn server_key(&self, server_id: &[u8]) -> Option<Vec<u8>> {
@@ -133,7 +152,7 @@ impl Server {
             Ok(id) => id,
             Err(e) => {
                 error!("#server_key - {}", e);
-                return None
+                return None;
             }
         };
 
@@ -142,7 +161,7 @@ impl Server {
             Err(e) => {
                 error!("#server_key - {}", e);
                 None
-            },
+            }
         }
     }
 
@@ -163,7 +182,11 @@ impl Server {
         }
 
         let disconnect_if_dead = |server: &Server, endpoint: &Endpoint| -> bool {
-            if server.bot_alive.load(Ordering::SeqCst) && server.allow_connections.load(Ordering::SeqCst) { return false }
+            if server.bot_alive.load(Ordering::SeqCst)
+                && server.allow_connections.load(Ordering::SeqCst)
+            {
+                return false;
+            }
 
             server.handler.network().remove(endpoint.resource_id());
 
@@ -173,20 +196,22 @@ impl Server {
         // Process the events
         let mut server = self.clone();
         listener.for_each(move |event| match event.network() {
-            NetEvent::Connected(_, _) => {},
+            NetEvent::Connected(_, _) => {}
             NetEvent::Message(endpoint, data) => {
-                if disconnect_if_dead(&server, &endpoint) { return }
+                if disconnect_if_dead(&server, &endpoint) {
+                    return;
+                }
 
                 server.on_message(endpoint, data.to_vec())
-            },
-            NetEvent::Disconnected(endpoint) => {
-                server.on_disconnect(endpoint)
-            },
+            }
+            NetEvent::Disconnected(endpoint) => server.on_disconnect(endpoint),
             NetEvent::Accepted(endpoint, resource_id) => {
-                if disconnect_if_dead(&server, &endpoint) { return }
+                if disconnect_if_dead(&server, &endpoint) {
+                    return;
+                }
 
                 server.on_connect(endpoint, resource_id)
-            },
+            }
         });
     }
 
@@ -194,32 +219,24 @@ impl Server {
     pub async fn start_workers(&self) {
         // Ping the bot
         let mut server = self.clone();
-        let _ = tokio::spawn(async move {
-            server.ping_bot().await
-        });
+        let _ = tokio::spawn(async move { server.ping_bot().await });
 
         // Delegate inbound messages
         for _ in 1..=2 {
             let server = self.clone();
-            let _ = tokio::spawn(async move {
-                server.delegate_inbound_messages().await
-            });
+            let _ = tokio::spawn(async move { server.delegate_inbound_messages().await });
         }
 
         // Process inbound messages
         for _ in 1..=2 {
             let mut server = self.clone();
-            let _ = tokio::spawn(async move {
-                server.process_inbound_messages().await
-            });
+            let _ = tokio::spawn(async move { server.process_inbound_messages().await });
         }
 
         // Delegate outbound messages
         for _ in 1..=2 {
             let server = self.clone();
-            let _ = tokio::spawn(async move {
-                server.delegate_outbound_messages().await
-            });
+            let _ = tokio::spawn(async move { server.delegate_outbound_messages().await });
         }
     }
 
@@ -228,7 +245,7 @@ impl Server {
     async fn delegate_inbound_messages(&self) {
         let mut connection = match self.get_redis_connection().await {
             Ok(connection) => connection,
-            Err(e) => panic!("#delegate_inbound_messages - {}", e)
+            Err(e) => panic!("#delegate_inbound_messages - {}", e),
         };
 
         loop {
@@ -242,7 +259,7 @@ impl Server {
                 .await
             {
                 Ok(r) => r,
-                Err(e) => error!("#delegate_inbound_messages - {}", e)
+                Err(e) => error!("#delegate_inbound_messages - {}", e),
             };
         }
     }
@@ -251,7 +268,7 @@ impl Server {
     async fn delegate_outbound_messages(&self) {
         let mut connection = match self.get_redis_connection().await {
             Ok(connection) => connection,
-            Err(e) => panic!("#delegate_outbound_messages - {}", e)
+            Err(e) => panic!("#delegate_outbound_messages - {}", e),
         };
 
         loop {
@@ -259,7 +276,7 @@ impl Server {
 
             let message = match receiver.recv().await {
                 Some(message) => message,
-                None => continue
+                None => continue,
             };
 
             let json: String = match serde_json::to_string(&message) {
@@ -279,7 +296,7 @@ impl Server {
                 .await
             {
                 Ok(r) => r,
-                Err(e) => error!("#delegate_outbound_messages - {}", e)
+                Err(e) => error!("#delegate_outbound_messages - {}", e),
             };
         }
     }
@@ -289,11 +306,12 @@ impl Server {
     async fn process_inbound_messages(&mut self) {
         let mut connection = match self.get_redis_connection().await {
             Ok(connection) => connection,
-            Err(e) => panic!("#process_inbound_messages - {}", e)
+            Err(e) => panic!("#process_inbound_messages - {}", e),
         };
 
         loop {
-            let (_, json): (String, String) = match connection.blpop("tcp_server_inbound", 0).await {
+            let (_, json): (String, String) = match connection.blpop("tcp_server_inbound", 0).await
+            {
                 Ok(json) => json,
                 Err(e) => {
                     error!("#process_inbound_messages - {:?}", e);
@@ -311,39 +329,43 @@ impl Server {
             };
 
             match message.message_type {
-                Type::Disconnect | Type::Pong => trace!("#process_inbound_messages - {:?}", message),
-                _ => debug!("#process_inbound_messages - {:?}", message)
+                Type::Disconnect | Type::Pong => {
+                    trace!("#process_inbound_messages - {:?}", message)
+                }
+                _ => debug!("#process_inbound_messages - {:?}", message),
             }
 
             match message.message_type {
                 Type::Resume => {
                     self.allow_connections.store(true, Ordering::SeqCst);
-                },
+                }
 
                 Type::Pause => {
                     self.allow_connections.store(false, Ordering::SeqCst);
-                },
+                }
 
                 // Received from the bot after a ping has been sent
                 Type::Pong => {
                     // Set the flag to true
                     self.bot_pong_received.store(true, Ordering::SeqCst);
-                },
+                }
 
-                Type::Disconnect => {
-                    match message.server_id {
-                        Some(server_id) => match self.connection_manager.read().find_by_server_id(&server_id) {
+                Type::Disconnect => match message.server_id {
+                    Some(server_id) => {
+                        match self.connection_manager.read().find_by_server_id(&server_id) {
                             Some(endpoint) => self.disconnect(*endpoint),
-                            None => return
-                        },
-                        None => self.disconnect_all(),
+                            None => return,
+                        }
                     }
+                    None => self.disconnect_all(),
                 },
 
                 // Everything else is sent to the client
                 _ => {
                     let success = self.send_to_client(&mut message);
-                    if success { continue; }
+                    if success {
+                        continue;
+                    }
 
                     // The message failed, send it back to the bot
                     message.message_type = Type::Error;
@@ -359,7 +381,9 @@ impl Server {
     async fn ping_bot(&mut self) {
         loop {
             sleep(Duration::from_millis(500)).await;
-            if !self.bot_pong_received.load(Ordering::SeqCst) { continue; }
+            if !self.bot_pong_received.load(Ordering::SeqCst) {
+                continue;
+            }
 
             // Set the flag back to false before sending the ping
             self.bot_pong_received.store(false, Ordering::SeqCst);
@@ -380,7 +404,9 @@ impl Server {
 
             // Only write and log if the status has changed
             let previously_alive = self.bot_alive.load(Ordering::SeqCst);
-            if currently_alive == previously_alive { continue; }
+            if currently_alive == previously_alive {
+                continue;
+            }
 
             self.bot_alive.store(currently_alive, Ordering::SeqCst);
 
@@ -435,11 +461,17 @@ impl Server {
             None => {
                 match std::str::from_utf8(&server_id) {
                     Ok(id) => {
-                        error!("[client#on_message] Disconnecting {:?}. Failed to find server key", id);
+                        error!(
+                            "[client#on_message] Disconnecting {:?}. Failed to find server key",
+                            id
+                        );
                     }
                     Err(_) => {
-                        error!("[client#on_message] Disconnecting {:?}. Failed to find server key", server_id);
-                    },
+                        error!(
+                            "[client#on_message] Disconnecting {:?}. Failed to find server key",
+                            server_id
+                        );
+                    }
                 }
 
                 self.disconnect(endpoint);
@@ -452,7 +484,7 @@ impl Server {
             Ok(mut message) => {
                 message.set_resource(resource_id);
                 message
-            },
+            }
             Err(e) => {
                 error!("#on_message - {}", e);
                 self.disconnect(endpoint);
@@ -460,21 +492,27 @@ impl Server {
             }
         };
 
-        info!("#on_message - {} - {}", resource_id, message.id);
+        let server_id = match message.server_id.clone() {
+            Some(id) => id,
+            None => {
+                error!("#on_message - Message has no server ID");
+                return;
+            }
+        };
+
+        info!(
+            "#on_message - {:?} ({}) - {}",
+            std::str::from_utf8(&server_id),
+            resource_id,
+            message.id
+        );
+
         debug!("#on_message - {:?}", message);
 
         match message.message_type {
             Type::Init => {
-                let server_id = match message.server_id.clone() {
-                    Some(id) => id,
-                    None => {
-                        error!("#on_message - Message has no server ID");
-                        return;
-                    }
-                };
-
                 match self.connection_manager.write().accept(server_id, endpoint) {
-                    Ok(_) => {},
+                    Ok(_) => {}
                     Err(e) => {
                         error!("#on_message - {}", e);
                         return;
@@ -483,17 +521,22 @@ impl Server {
 
                 // Route it through to the bot
                 self.send_to_bot(message);
-            },
+            }
 
             // Disallow system commands
-            Type::Connect | Type::Disconnect | Type::Ping | Type::Pong |
-            Type::Test | Type::Resume | Type::Pause => {
+            Type::Connect
+            | Type::Disconnect
+            | Type::Ping
+            | Type::Pong
+            | Type::Test
+            | Type::Resume
+            | Type::Pause => {
                 message.add_error(ErrorType::Message, "Error - Invalid message type provided");
                 self.send_to_client(&mut message);
-            },
+            }
 
             // Feed the message through to the bot
-            _ => self.send_to_bot(message)
+            _ => self.send_to_bot(message),
         };
     }
 
