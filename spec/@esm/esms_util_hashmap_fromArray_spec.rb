@@ -1,11 +1,43 @@
 # frozen_string_literal: true
 
-describe "ESMs_util_hashmap_fromArray", requires_connection: true do
+describe "ESMs_util_hashmap_fromArray", requires_connection: true, v2: true do
   let!(:server) { ESM::Test.server }
 
   include_examples "connection"
 
   it "converts the array to a hashmap" do
+    response = execute_sqf!(
+      <<~SQF
+        private _result = [
+          ["key_1", "key_2", "key_3"],
+          [
+            "value_1",
+            true,
+            [
+              ["key_4", "key_5"],
+              [
+                false,
+                [
+                  ["key_6", "key_7"],
+                  [6, nil]
+                ]
+              ]
+            ]
+          ]
+        ] call ESMs_util_hashmap_fromArray;
+
+        if (isNil "_result") exitWith {};
+        if !(_result isEqualType createHashMap) exitWith {};
+
+        _result
+      SQF
+    )
+
+    expect(response).not_to be_nil
+    expect(response.data.result).to eq('[["key_1","value_1"],["key_2",true],["key_3",[["key_4",false],["key_5",[["key_6",6],["key_7",<null>]]]]]]')
+  end
+
+  it "does not convert the array" do
     response = execute_sqf!(
       <<~SQF
         private _result = [
@@ -34,6 +66,6 @@ describe "ESMs_util_hashmap_fromArray", requires_connection: true do
     )
 
     expect(response).not_to be_nil
-    expect(response.data.result).to eq('[["key_1","value_1"],["key_2",true],["key_3",[["key_4",false],["key_5",[["key_6",6],["key_7",any]]]]]]')
+    expect(response.data.result).to be_nil
   end
 end
