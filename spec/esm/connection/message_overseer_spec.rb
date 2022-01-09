@@ -1,13 +1,13 @@
 # frozen_string_literal: true
 
-describe ESM::Connection::MessageOverseer do
+describe ESM::Connection::MessageOverseer, v2: true do
   let!(:overseer) { ESM::Connection::Server.instance.message_overseer }
   let!(:message) { ESM::Connection::Message.new(type: "test") }
 
   describe "#watch" do
     it "adds the message to the watch list" do
       expect { overseer.watch(message) }.not_to raise_error
-      expect(overseer.instance_variable_get("@mailbox").size).to eq(1)
+      expect(overseer.instance_variable_get(:@mailbox).size).to eq(1)
     end
 
     it "times out and calls on_error" do
@@ -17,7 +17,7 @@ describe ESM::Connection::MessageOverseer do
 
       expect { overseer.watch(message, expires_at: Time.now) }.not_to raise_error
 
-      sleep(0.4) # Minimum amount of time
+      sleep(0.5) # Minimum amount of time
       expect(message.errors?).to be(true)
       expect(message.errors.first.type).to eq("code")
       expect(message.errors.first.content).to eq("message_undeliverable")

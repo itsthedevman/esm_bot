@@ -10,6 +10,8 @@ module ESM
       NIL_REGEX = /^\?(?<type>.+)/.freeze
 
       class Error
+        attr_reader :type, :content
+
         def initialize(message, type:, content:)
           @message = message
           @type = type

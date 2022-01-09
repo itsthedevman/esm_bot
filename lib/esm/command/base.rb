@@ -440,7 +440,7 @@ module ESM
           current_cooldown: self.current_cooldown&.attributes,
           target_community: self.target_community&.attributes,
           target_server: self.target_server&.attributes,
-          target_user: self.target_user.respond_to?(:attributes) ? self.target_user.attributes : self.target_user,
+          target_user: self.target_user.respond_to?(:attributes) ? self.target_user.attributes : self.target_user.inspect,
           target_uid: self.target_uid,
           same_user: self.same_user?,
           dm_only: self.dm_only?,

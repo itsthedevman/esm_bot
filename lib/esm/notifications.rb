@@ -239,7 +239,7 @@ module ESM
 
       failed_to_send = payload[:undeliverable].map do |hash|
         user = hash[:user]
-        reason= hash[:reason]
+        reason = hash[:reason]
 
         "#{user.discord_username}##{user.discord_discriminator} (`#{user.steam_uid}`) - #{reason}"
       end

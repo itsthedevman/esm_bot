@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-describe ESM::Connection::Message do
+describe ESM::Connection::Message, v2: true do
   let(:community) { ESM::Test.community }
   let(:user) { ESM::Test.user }
   let(:server) { ESM::Test.server }
@@ -15,7 +15,7 @@ describe ESM::Connection::Message do
         type: "test_mapping",
         content: {
           # Order matters!
-          array: [false, true, "2", 3.0],
+          array: [false, true, "2", "3.0"],
           date_time: DateTime.current,
           date: Date.today,
           hash_map: ESM::Arma::HashMap.from(key_0: false, key_1: true),
