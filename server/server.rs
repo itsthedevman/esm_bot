@@ -501,10 +501,11 @@ impl Server {
         };
 
         info!(
-            "#on_message - {:?} ({}) - {}",
-            std::str::from_utf8(&server_id),
+            "{} #on_message - {} - {} - {:?}",
             resource_id,
-            message.id
+            message.id,
+            std::str::from_utf8(&server_id).unwrap_or("INVALID_SERVER_ID"),
+            message.message_type,
         );
 
         debug!("#on_message - {:?}", message);
