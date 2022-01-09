@@ -1,11 +1,40 @@
 # frozen_string_literal: true
 
-describe "ESMs_util_array_isValidHashmap", requires_connection: true do
+describe "ESMs_util_array_isValidHashmap", requires_connection: true, v2: true do
   let!(:server) { ESM::Test.server }
 
   include_examples "connection"
 
-  it "converts the array to a hashmap" do
+  it "is a valid hash map" do
+    response = execute_sqf!(
+      <<~SQF
+        private _result = [
+          ["key_1", "key_2", "key_3"],
+          [
+            "value_1",
+            true,
+            [
+              ["key_4", "key_5"],
+              [
+                false,
+                [
+                  ["key_6", "key_7"],
+                  [6, nil]
+                ]
+              ]
+            ]
+          ]
+        ] call ESMs_util_array_isValidHashmap;
+
+        _result
+      SQF
+    )
+
+    expect(response).not_to be_nil
+    expect(response.data.result).to eq(true)
+  end
+
+  it "is not a valid hash map" do
     response = execute_sqf!(
       <<~SQF
         private _result = [
@@ -31,6 +60,6 @@ describe "ESMs_util_array_isValidHashmap", requires_connection: true do
     )
 
     expect(response).not_to be_nil
-    expect(response.data.result).to eq(true)
+    expect(response.data.result).to eq(false)
   end
 end
