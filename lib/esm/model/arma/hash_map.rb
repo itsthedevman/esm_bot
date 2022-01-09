@@ -24,7 +24,7 @@ module ESM
         hash = normalize(input)
         merge!(hash)
 
-        hash
+        self
       end
 
       def to_a
@@ -68,16 +68,18 @@ module ESM
 
           input.transform_values { |v| normalize(v) }
         when Array, String
-          hash = input.to_a
-          if valid_hash_map?(hash)
-            keys = hash.first
-            values = hash.second
+          # This will attempt to parse a string for json
+          possible_hash_map = input.to_a
+
+          if valid_hash_map?(possible_hash_map)
+            keys = possible_hash_map.first
+            values = possible_hash_map.second
 
             keys.each_with_object({}).with_index do |(key, obj), index|
               obj[key] = normalize(values[index])
             end
-          elsif hash.is_a?(Array)
-            input.map { |i| normalize(i) }
+          elsif possible_hash_map.is_a?(Array)
+            possible_hash_map.map { |i| normalize(i) }
           else
             input
           end
