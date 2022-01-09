@@ -15,7 +15,7 @@ module ESM
         # If the content is a hashmap, the data is for an embed
         content = @message.data.content
         message =
-          if (embed = ESM::Arma::HashMap.parse(content))
+          if (embed = ESM::Arma::HashMap.from(content))
             build_embed(embed)
           else
             "*Sent from `#{@server.server_id}`*\n#{content}"

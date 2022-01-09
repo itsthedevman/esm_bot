@@ -18,7 +18,7 @@ describe ESM::Connection::Message do
           array: [false, true, "2", 3.0],
           date_time: DateTime.current,
           date: Date.today,
-          hash_map: ESM::Arma::HashMap.parse(key_0: false, key_1: true),
+          hash_map: ESM::Arma::HashMap.from(key_0: false, key_1: true),
           integer: "1",
           rhash: { foo: "bar" },
           string: "string"

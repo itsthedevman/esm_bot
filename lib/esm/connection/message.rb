@@ -383,7 +383,7 @@ module ESM
           return value if result.nil?
 
           # Check to see if its a hashmap
-          possible_hashmap = ESM::Arma::HashMap.parse(result)
+          possible_hashmap = ESM::Arma::HashMap.from(result)
           return result if possible_hashmap.nil?
 
           result
@@ -413,7 +413,7 @@ module ESM
         when "Boolean"
           value.to_s == "true"
         when "HashMap"
-          ESM::Arma::HashMap.parse(value)
+          ESM::Arma::HashMap.from(value)
         when "DateTime"
           ::DateTime.parse(value)
         when "Date"
