@@ -1,10 +1,13 @@
 # frozen_string_literal: true
 
-describe ESM::Event::SendToChannel do
-  let(:server) { ESM::Test.server }
-  let(:connection) { server.connection }
+describe ESM::Event::SendToChannel, requires_connection: true, v2: true do
+  include_examples "connection"
 
-  before(:each) { wait_for { server.connected? }.to be(true) }
+  let!(:server) { ESM::Test.server }
+
+  after :each do
+    ESM::Connection::Server.instance.message_overseer.remove_all!
+  end
 
   it "sends a message" do
     inbound_message = ESM::Connection::Message.new(
@@ -67,6 +70,6 @@ describe ESM::Event::SendToChannel do
     message = ESM::Test.messages.first
     expect(message).not_to be_nil
 
-    expect(message.content).to match(%r{hi there!\nyour server `#{server.server_id}` has encountered an error that requires your attention. please open `esm.log` located in \[`@esm\/logs\/`\]\(or the pre-configured log file path\) and search for `[\w-]{36}` for the full error.}i)
+    expect(message.content).to match(%r{hi there!\nyour server `#{server.server_id}` has encountered an error that requires your attention. please open `esm.log` located in \[`@esm/logs/`\]\(or the pre-configured log file path\) and search for `[\w-]{36}` for the full error.}i)
   end
 end
