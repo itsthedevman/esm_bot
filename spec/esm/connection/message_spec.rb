@@ -120,6 +120,7 @@ describe ESM::Connection::Message, v2: true do
       command = double("command")
       current_user = double("current_user")
       allow(command).to receive(:current_user).and_return(current_user)
+      allow(command).to receive(:target_user).and_return(nil)
       allow(current_user).to receive(:mention).and_return(user.mention)
 
       # Needed for mention
