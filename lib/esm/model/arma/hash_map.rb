@@ -33,7 +33,7 @@ module ESM
             case value
             when Array
               value.map { |v| convert_value.call(v) }
-            when Hash
+            when Hash, ActiveSupport::HashWithIndifferentAccess
               value.each_with_object([[], []]) do |(k, v), array|
                 array.first << convert_value.call(k)
                 array.second << convert_value.call(v)
@@ -45,9 +45,7 @@ module ESM
             end
           end
 
-        self.map do |key, value|
-          [key.to_s, convert_value.call(value)]
-        end
+        [self.keys, convert_value.call(self.values)]
       end
 
       def to_json(*args)
@@ -62,10 +60,11 @@ module ESM
       # Parameters can be of type:
       def normalize(input)
         case input
-        when OpenStruct, Struct, Hash
+        when OpenStruct, Struct, Hash, ActiveSupport::HashWithIndifferentAccess
           input = input.to_h
           return if input.nil?
 
+          input.transform_keys { |k| normalize(k) }
           input.transform_values { |v| normalize(v) }
         when Array, String
           # This will attempt to parse a string for json
@@ -76,7 +75,7 @@ module ESM
             values = possible_hash_map.second
 
             keys.each_with_object({}).with_index do |(key, obj), index|
-              obj[key] = normalize(values[index])
+              obj[normalize(key)] = normalize(values[index])
             end
           elsif possible_hash_map.is_a?(Array)
             possible_hash_map.map { |i| normalize(i) }

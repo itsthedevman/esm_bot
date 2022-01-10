@@ -149,7 +149,7 @@ describe ESM::Arma::HashMap, v2: true do
         key_1: "string value",
         key_2: 1,
         key_3: 2.5,
-        key_4: [1, "two", ["three", 4, 5], ["six", 7], [["eight", false]]],
+        key_4: [1, "two", ["three", 4, 5], ["six", 7], [["eight"], [false]]],
         key_5: [
           [
             ["key_6", "key_7"],
@@ -160,12 +160,18 @@ describe ESM::Arma::HashMap, v2: true do
       }
 
       expected = [
-        ["key_1", "string value"],
-        ["key_2", 1],
-        ["key_3", 2.5],
-        ["key_4", [1, "two", ["three", 4, 5], ["six", 7], [["eight", false]]]],
+        ["key_1", "key_2", "key_3", "key_4", "key_5"],
         [
-          "key_5",
+          "string value",
+          1,
+          2.5,
+          [
+            1,
+            "two",
+            ["three", 4, 5],
+            ["six", 7],
+            [["eight"], [false]]
+          ],
           [
             [
               ["key_6", "key_7"],
@@ -188,7 +194,7 @@ describe ESM::Arma::HashMap, v2: true do
         key_1: "string value",
         key_2: 1,
         key_3: 2.5,
-        key_4: [1, "two", ["three", 4, 5], ["six", 7], [["eight", false]]],
+        key_4: [1, "two", ["three", 4, 5], ["six", 7], [["eight"], [false]]],
         key_5: [
           [
             ["key_6", "key_7"],
@@ -199,12 +205,18 @@ describe ESM::Arma::HashMap, v2: true do
       }
 
       expected = [
-        ["key_1", "string value"],
-        ["key_2", 1],
-        ["key_3", 2.5],
-        ["key_4", [1, "two", ["three", 4, 5], ["six", 7], [["eight", false]]]],
+        ["key_1", "key_2", "key_3", "key_4", "key_5"],
         [
-          "key_5",
+          "string value",
+          1,
+          2.5,
+          [
+            1,
+            "two",
+            ["three", 4, 5],
+            ["six", 7],
+            [["eight"], [false]]
+          ],
           [
             [
               ["key_6", "key_7"],
