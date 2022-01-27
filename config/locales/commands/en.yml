@@ -45,8 +45,26 @@ en:
          **`%{prefix}help <command_name>`**
          Get information about the provided command
       getting_started:
-        title: "Hi %{user}! My name is Exile Server Manager, or ESM for short!"
-        description: "I have a bunch of useful commands for both players and server owners alike."
+        title: "Well, hello there %{user}!"
+        description: |-
+          It looks like you found my help command! One of %{command_count_player} player commands that I respond to, %{command_count_total} in total.
+          _Oh, where are my manners?_ My name is **Exile Server Manager**, or ESM for short. I am a command bot that allows you to interact with any Arma 3 server that is registered with me!
+
+          **First, this is important. Please read**
+          Your privacy is important and I want to make sure you are aware of our privacy policy - https://www.esmbot.com/wiki/privacy.
+          In short, when you use ESM, I have access to your public Discord information, public Steam information when you register on my website, and your message's content when you execute a command.
+          This information is used for the functionality and maintenance of ESM **ONLY**.
+        fields:
+          commands:
+            name: "**Looking for my commands?**"
+            value: |-
+              You can reply back with `%{prefix}help player commands` for all of my player commands, `%{prefix}help admin commands` for my admin commands _(for certain roles only!)_, or just `%{prefix}help commands` for them all.
+          command:
+            name: "**Want to see examples or more information about a command?**"
+            value: "Just send me `%{prefix}help <command_name>`, replacing `<command_name>` with the name of the command! For example: `%{prefix}help register`"
+          history:
+            name: "**Interested in my history?**"
+            value: "You can find out more by sending me `%{prefix}help esm history`"
       commands:
         player:
           title: "Player Commands"
@@ -68,6 +86,37 @@ en:
           value: "This command can also be accessed by the following aliases: %{aliases}"
         arguments: "**__Arguments__**"
         examples: "**__Examples__**"
+      esm_history:
+        title: "Exile Server Manager's History"
+        description: |-
+          Hi, Bryan here - I'm the developer of ESM.
+
+          First, I just want to say thank you. Thank you for using this bot and for being curious. ESM is a passion project of mine. It has taught me
+
+          I was originally created for a semester project during university in Dec 2017. Back then, I was a tiny website written in PHP (_yes, it was cringe_) and I only had the functionality of two my commands: `%{prefix}me` and `%{prefix}territories`.
+          Shortly after the semester was over, my author Bryan started expanding my functionality and soon I outgrew the website and took on a new shell as a Discord bot written in JavaScript with a C# Arma 3 server extension.
+
+          Released for public use on June 6th 2018, I launched with a **total of 13 player commands** and the `%{prefix}reward` command wasn't even one of them!
+          Fortunately, over the next year I would eventually reach version `1.0.0` and gain that glorious reward command. But that wasn't enough for my author, oh no, starting in Oct 2019, he started working another foundation, another home me.
+
+          _And this time, it was made out of Ruby._
+
+          On Jan 2nd 2021, version 2.0.0 was released. I was rewritten in MRI Ruby, but still using my original server extension. This update brought improvements to every one of my commands and features. But most importantly, it laid a foundation for new features in the future.
+
+        fields:
+          what_next:
+            name: "**What's next?**"
+            value: |-
+              I'm still running strong and my author is still working on me. As I mentioned above, I am still using my original Arma 3 server extension. This piece of me is old, outdated, and unfortunately is blocking my author from adding a lot of new and exciting features.
+              Good news though, my author is currently working on completely rewriting the Arma 3 server extension from the ground up. New commands, improvements to the reward command (_among others_), speed improvements, possible linux support (_waaaaat?_), and more!
+          when_done:
+            name: "**So when will it be done?**"
+            value: |-
+              My author is hoping sometime late 2022
+          why:
+            name: "**Why?**"
+            value: |-
+
     mode:
       arguments:
         mode: "Which mode ESM should be in. Valid options: `server` or `player`"
