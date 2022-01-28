@@ -89,15 +89,19 @@ en:
       esm_history:
         title: "Exile Server Manager's History"
         description: |-
-          Hi, Bryan here - I'm the developer of ESM.
+          Hi, Bryan here - I'm the sole developer of Exile Server Manager.
 
-          First, I just want to say thank you. Thank you for using this bot and for being curious. ESM is a passion project of mine. It has taught me
+          First, I just want to say thank you. Thank you for using this bot, and thank you for being curious.
 
-          I was originally created for a semester project during university in Dec 2017. Back then, I was a tiny website written in PHP (_yes, it was cringe_) and I only had the functionality of two my commands: `%{prefix}me` and `%{prefix}territories`.
-          Shortly after the semester was over, my author Bryan started expanding my functionality and soon I outgrew the website and took on a new shell as a Discord bot written in JavaScript with a C# Arma 3 server extension.
+          ESM is a passion project of mine. I originally created ESM for my end of semester project during university in Dec 2017. Back then it was just a tiny website written in PHP (_cringe_) and it had very little functionality. It list the server's territories and that was it. After the semester was over, I continued to expand its functionality and soon it outgrew the website and took on a new shell as a Discord bot written in JavaScript with a C# Arma 3 server extension.
 
-          Released for public use on June 6th 2018, I launched with a **total of 13 player commands** and the `%{prefix}reward` command wasn't even one of them!
-          Fortunately, over the next year I would eventually reach version `1.0.0` and gain that glorious reward command. But that wasn't enough for my author, oh no, starting in Oct 2019, he started working another foundation, another home me.
+          Released for public use on June 6th 2018, ESM launched with a **total of 13 player commands**. The `%{prefix}reward` command wasn't even one of them! Over the next year I continued to release updates to the bot, server extension, and website with more features, more commands, and even more bug fixes. _Oh so many bug fixes..._
+          Come March 2019, ESM would reach version `1.0.0` and would gain that glorious reward command.
+          _Oh, while I'm here, huge shout out to the Mafia Bosses on ESM's Discord. They supported ESM through thick and thin and I am so grateful for them._
+
+          Not much happened after 1.0.0 became "stable". At this point ESM was functioning, but it was slowly failing. The lack of knowledge and experience when I started this project meant that ESM had some design flaws within its core systems. It was working, but it had reached the point of diminishing returns.
+
+          By Oct 2019, I was working full time as a Ruby developer and had a year or so work experience under my belt. Armed with more knowledge, I set out to re-imagine ESM.
 
           _And this time, it was made out of Ruby._
 
@@ -116,7 +120,7 @@ en:
           why:
             name: "**Why?**"
             value: |-
-
+              Well, aren't you the curious one.
     mode:
       arguments:
         mode: "Which mode ESM should be in. Valid options: `server` or `player`"

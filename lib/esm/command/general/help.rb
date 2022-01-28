@@ -95,6 +95,13 @@ module ESM
                 "commands.help.esm_history.description",
                 prefix: prefix
               )
+
+              %w[what_next when_done why].each do |field_type|
+                e.add_field(
+                  name: I18n.t("commands.help.esm_history.fields.#{field_type}.name"),
+                  value: I18n.t("commands.help.esm_history.fields.#{field_type}.value", prefix: prefix)
+                )
+              end
             end
 
           reply(embed)
