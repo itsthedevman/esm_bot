@@ -23,8 +23,8 @@ module ESM
             commands(types: [:player], include_development: false)
           when "admin commands"
             commands(types: [:admin], include_development: false)
-          when "esm history"
-            esm_history
+          # when "esm history"
+          #   esm_history
           when ->(category) { ESM::Command.include?(category) }
             command
           else
@@ -48,7 +48,8 @@ module ESM
                 prefix: prefix
               )
 
-              %w[commands command history].each do |field_type|
+              # history
+              %w[commands command privacy].each do |field_type|
                 e.add_field(
                   name: I18n.t("commands.help.getting_started.fields.#{field_type}.name"),
                   value: I18n.t("commands.help.getting_started.fields.#{field_type}.value", prefix: prefix)

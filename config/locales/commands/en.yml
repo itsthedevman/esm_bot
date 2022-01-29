@@ -31,6 +31,12 @@ en:
         **`%{prefix}help`**
         Displays information about getting started with Exile Server Manager
 
+        **`%{prefix}help player commands`**
+        Displays all player commands
+
+        **`%{prefix}help admin commands`**
+        Displays all admin commands
+
         **`%{prefix}help commands`**
         Displays all commands
 
@@ -49,22 +55,37 @@ en:
         description: |-
           It looks like you found my help command! One of %{command_count_player} player commands that I respond to, %{command_count_total} in total.
           _Oh, where are my manners?_ My name is **Exile Server Manager**, or ESM for short. I am a command bot that allows you to interact with any Arma 3 server that is registered with me!
-
-          **First, this is important. Please read**
-          Your privacy is important and I want to make sure you are aware of our privacy policy - https://www.esmbot.com/wiki/privacy.
-          In short, when you use ESM, I have access to your public Discord information, public Steam information when you register on my website, and your message's content when you execute a command.
-          This information is used for the functionality and maintenance of ESM **ONLY**.
         fields:
           commands:
             name: "**Looking for my commands?**"
             value: |-
-              You can reply back with `%{prefix}help player commands` for all of my player commands, `%{prefix}help admin commands` for my admin commands _(for certain roles only!)_, or just `%{prefix}help commands` for them all.
+              `%{prefix}help player commands` for my player commands
+              `%{prefix}help admin commands` for my admin commands _(commands available to certain roles only!)_,
+              `%{prefix}help commands` for all commands
+
+              Commands and details about them are also available on my website: https://esmbot.com/wiki/commands
           command:
             name: "**Want to see examples or more information about a command?**"
             value: "Just send me `%{prefix}help <command_name>`, replacing `<command_name>` with the name of the command! For example: `%{prefix}help register`"
           history:
             name: "**Interested in my history?**"
             value: "You can find out more by sending me `%{prefix}help esm history`"
+          privacy:
+            name: "**Privacy Policy**"
+            value: |-
+              Hi, ESM's developer here.
+
+              Your privacy is important and I want to make sure you are aware of what information ESM has access to.
+              In short, when you use ESM, I have access to the following information:
+
+                - Your public Discord information
+                - Your public Steam information when you register on my website
+                - Your Discord message's content when you execute a command
+                - Your game data stored on an Arma 3 Exile server
+                - Any information inputted on my website
+
+              **This information is used for the functionality and maintenance of ESM only**.
+              Please read the full privacy policy for more details: https://www.esmbot.com/wiki/privacy
       commands:
         player:
           title: "Player Commands"
