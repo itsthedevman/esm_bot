@@ -2,15 +2,15 @@
 # of editing this file, please use the migrations feature of Active Record to
 # incrementally modify your database, and then regenerate this schema definition.
 #
-# This file is the source Rails uses to define your schema when running `rails
-# db:schema:load`. When creating a new database, `rails db:schema:load` tends to
+# This file is the source Rails uses to define your schema when running `bin/rails
+# db:schema:load`. When creating a new database, `bin/rails db:schema:load` tends to
 # be faster and is potentially less error prone than running all of your
 # migrations from scratch. Old migrations may fail to apply correctly if those
 # migrations use external dependencies or application code.
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_09_19_022121) do
+ActiveRecord::Schema.define(version: 2022_02_03_031859) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -80,6 +80,7 @@ ActiveRecord::Schema.define(version: 2019_09_19_022121) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.datetime "deleted_at"
+    t.json "dashboard_access_role_ids", default: []
     t.index ["community_id"], name: "index_communities_on_community_id", unique: true
     t.index ["deleted_at"], name: "index_communities_on_deleted_at"
     t.index ["guild_id"], name: "index_communities_on_guild_id", unique: true
@@ -182,7 +183,12 @@ ActiveRecord::Schema.define(version: 2019_09_19_022121) do
     t.bigint "locker_poptabs", default: 0
     t.bigint "respect", default: 0
     t.datetime "deleted_at"
+    t.string "reward_id"
+    t.json "reward_vehicles"
+    t.integer "cooldown_quantity"
+    t.string "cooldown_type"
     t.index ["deleted_at"], name: "index_server_rewards_on_deleted_at"
+    t.index ["server_id", "reward_id"], name: "index_server_rewards_on_server_id_and_reward_id", unique: true
     t.index ["server_id"], name: "index_server_rewards_on_server_id"
   end
 
@@ -233,6 +239,7 @@ ActiveRecord::Schema.define(version: 2019_09_19_022121) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.datetime "deleted_at"
+    t.string "server_version"
     t.index ["community_id"], name: "index_servers_on_community_id"
     t.index ["deleted_at"], name: "index_servers_on_deleted_at"
     t.index ["server_id"], name: "index_servers_on_server_id", unique: true
@@ -299,6 +306,16 @@ ActiveRecord::Schema.define(version: 2019_09_19_022121) do
     t.index ["user_id"], name: "index_user_notification_preferences_on_user_id"
   end
 
+  create_table "user_notification_routes", force: :cascade do |t|
+    t.integer "user_id"
+    t.integer "community_id"
+    t.integer "server_id"
+    t.string "notification_type"
+    t.boolean "enabled", default: true
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+  end
+
   create_table "user_steam_data", force: :cascade do |t|
     t.integer "user_id"
     t.string "username"
@@ -342,5 +359,8 @@ ActiveRecord::Schema.define(version: 2019_09_19_022121) do
   add_foreign_key "user_gamble_stats", "users"
   add_foreign_key "user_notification_preferences", "servers"
   add_foreign_key "user_notification_preferences", "users"
+  add_foreign_key "user_notification_routes", "communities"
+  add_foreign_key "user_notification_routes", "servers"
+  add_foreign_key "user_notification_routes", "users"
   add_foreign_key "user_steam_data", "users"
 end

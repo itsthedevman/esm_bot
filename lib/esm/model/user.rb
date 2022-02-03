@@ -17,6 +17,7 @@ module ESM
     has_one :user_steam_data, dependent: :destroy
     has_many :user_gamble_stats, dependent: :destroy
     has_many :user_notification_preferences, dependent: :destroy
+    has_many :user_notification_routes, dependent: :destroy
     has_many :cooldowns
     has_many :my_requests, foreign_key: :requestor_user_id, class_name: "Request"
     has_many :pending_requests, foreign_key: :requestee_user_id, class_name: "Request"
