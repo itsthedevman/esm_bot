@@ -25,6 +25,11 @@ Are you a server owner or player looking to use Exile Server Manager? If so, ple
 ## Getting Started
 ESM is written in MRI Ruby 2.7.2 with DiscordRB 3.4 and PostgreSQL 12. I, personally, use <a href="https://rvm.io/">RVM</a> to manage Ruby, but ESM is not dependent on it. This README is still work in progress and will expand over time.
 
+## License
+<a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /></a><br />Exile Server Manager work is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License</a>.
+
+# Beyond here lies wips
+
 ## ESM's life cycle
 TODO DESCRIPTION
 
@@ -117,13 +122,6 @@ Method: .define
 File: lib/esm/command/base.rb
 Method: #execute
 - 
-
-
-
-## License
-<a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /></a><br />Exile Server Manager work is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License</a>.
-
-# Beyond here lies wips
 
 ## Setting up the bot
 This guide expects that you have knowledge and experience working with the following:
