@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "esm"
+require_relative "../lib/esm"
 
 ESM.console!
 ESM.run!

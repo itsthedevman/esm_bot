@@ -80,7 +80,6 @@ ActiveRecord::Schema.define(version: 2022_02_03_031859) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.datetime "deleted_at"
-    t.json "dashboard_access_role_ids", default: []
     t.index ["community_id"], name: "index_communities_on_community_id", unique: true
     t.index ["deleted_at"], name: "index_communities_on_deleted_at"
     t.index ["guild_id"], name: "index_communities_on_guild_id", unique: true
@@ -183,12 +182,7 @@ ActiveRecord::Schema.define(version: 2022_02_03_031859) do
     t.bigint "locker_poptabs", default: 0
     t.bigint "respect", default: 0
     t.datetime "deleted_at"
-    t.string "reward_id"
-    t.json "reward_vehicles"
-    t.integer "cooldown_quantity"
-    t.string "cooldown_type"
     t.index ["deleted_at"], name: "index_server_rewards_on_deleted_at"
-    t.index ["server_id", "reward_id"], name: "index_server_rewards_on_server_id_and_reward_id", unique: true
     t.index ["server_id"], name: "index_server_rewards_on_server_id"
   end
 
@@ -239,7 +233,6 @@ ActiveRecord::Schema.define(version: 2022_02_03_031859) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.datetime "deleted_at"
-    t.string "server_version"
     t.index ["community_id"], name: "index_servers_on_community_id"
     t.index ["deleted_at"], name: "index_servers_on_deleted_at"
     t.index ["server_id"], name: "index_servers_on_server_id", unique: true
@@ -310,8 +303,10 @@ ActiveRecord::Schema.define(version: 2022_02_03_031859) do
     t.integer "user_id"
     t.integer "community_id"
     t.integer "server_id"
+    t.string "channel_id"
     t.string "notification_type"
-    t.boolean "enabled", default: true
+    t.boolean "user_accepted", default: false
+    t.boolean "community_accepted", default: false
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
   end
