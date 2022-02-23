@@ -1,20 +1,6 @@
 module ESM
   module Event
     class Xm8Notification
-      TYPES = %w[
-        custom
-        base-raid
-        flag-stolen
-        flag-restored
-        flag-steal-started
-        protection-money-due
-        protection-money-paid
-        grind-started
-        hack-started
-        charge-plant-started
-        marxet-item-sold
-      ].freeze
-
       # @param parameters [OpenStruct] The message from the server
       # @option id [String] The territory ID. Not available in `marxet-item-sold`, or `custom`
       # @option message [String, JSON] The name of the territory, not available in `marxet-item-sold`, or `custom`.
@@ -130,7 +116,7 @@ module ESM
       private
 
       def check_for_valid_type!
-        return if TYPES.include?(@xm8_type)
+        return if UserNotificationRoute::TYPES.include?(@xm8_type)
 
         raise ESM::Exception::CheckFailure, "xm8_notification_invalid_type"
       end

@@ -1,6 +1,7 @@
 class UserNotificationRoutes < ActiveRecord::Migration[6.1]
   def change
     create_table :user_notification_routes do |t|
+      t.uuid :uuid, index: true
       t.integer :user_id
       t.integer :community_id
       t.integer :server_id

@@ -82,7 +82,7 @@ ESM::ServerMod.create!(
 ESM::ServerReward.create!(
   server_id: server.id,
   reward_items: {
-    "Exile_Item_EMRE": 1
+    Exile_Item_EMRE: 1
   },
   player_poptabs: 500,
   locker_poptabs: 1000,

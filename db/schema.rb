@@ -300,6 +300,7 @@ ActiveRecord::Schema.define(version: 2022_02_03_031859) do
   end
 
   create_table "user_notification_routes", force: :cascade do |t|
+    t.uuid "uuid"
     t.integer "user_id"
     t.integer "community_id"
     t.integer "server_id"
@@ -309,6 +310,7 @@ ActiveRecord::Schema.define(version: 2022_02_03_031859) do
     t.boolean "community_accepted", default: false
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
+    t.index ["uuid"], name: "index_user_notification_routes_on_uuid"
   end
 
   create_table "user_steam_data", force: :cascade do |t|
