@@ -5,7 +5,7 @@ module ESM
     attribute :uuid, :string
     attribute :user_id, :integer
     attribute :community_id, :integer
-    attribute :server_id, :integer
+    attribute :server_id, :integer # nil means "any server"
     attribute :channel_id, :string
     attribute :notification_type, :string
     attribute :user_accepted, :boolean, default: false
@@ -17,7 +17,8 @@ module ESM
     belongs_to :community
     belongs_to :server
 
-    validates :user_id, :community_id, :server_id, :channel_id, :notification_type, presence: true
+    validates :uuid, :user_id, :community_id, :channel_id, presence: true
+    validates :notification_type, presence: true, uniqueness: { scope: %i[user_id community_id server_id channel_id] }
 
     TYPES = %w[
       custom
