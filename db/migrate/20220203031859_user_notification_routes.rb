@@ -7,6 +7,7 @@ class UserNotificationRoutes < ActiveRecord::Migration[6.1]
       t.integer :server_id, null: true
       t.string :channel_id
       t.string :notification_type
+      t.boolean :enabled, default: true
       t.boolean :user_accepted, default: false
       t.boolean :community_accepted, default: false
       t.timestamps

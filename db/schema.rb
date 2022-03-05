@@ -306,6 +306,7 @@ ActiveRecord::Schema.define(version: 2022_02_03_031859) do
     t.integer "server_id"
     t.string "channel_id"
     t.string "notification_type"
+    t.boolean "enabled", default: true
     t.boolean "user_accepted", default: false
     t.boolean "community_accepted", default: false
     t.datetime "created_at", precision: 6, null: false

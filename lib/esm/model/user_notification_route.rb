@@ -8,6 +8,7 @@ module ESM
     attribute :server_id, :integer # nil means "any server"
     attribute :channel_id, :string
     attribute :notification_type, :string
+    attribute :enabled, :boolean, default: true
     attribute :user_accepted, :boolean, default: false
     attribute :community_accepted, :boolean, default: false
     attribute :created_at, :datetime
