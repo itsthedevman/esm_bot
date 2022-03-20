@@ -32,8 +32,7 @@ module ESM
         }
 
         # For the log
-        @delivered = []
-        @undeliverable = []
+        @statuses = []
       end
 
       def run!
@@ -75,32 +74,46 @@ module ESM
         preferences.default = true
 
         @users.each do |user|
+          status = { user: user, direct_message: :ignored, custom_routes: { sent: 0, expected: 0 } }
+
           # Check to see if the user allows this notification type
           allowed = preferences[user.id]
-          next @undeliverable << { user: user, reason: "Denied via preferences" } if !allowed
-
-          message = ESM.bot.deliver(embed, to: user.discord_user)
-
-          if message.nil?
-            @undeliverable << { user: user, reason: "Direct message blocked, ESM blocked, or Discord Error" }
-          else
-            @delivered << user
+          if allowed
+            message = ESM.bot.deliver(embed, to: user.discord_user)
+            status[:direct_message] = message.nil? ? :failure : :success
           end
 
-          # Anti-ratelimit
-          sleep(0.5)
+          # Grab all routes for this type from this server or "any server"
+          routes = user.user_notification_routes.accepted.where(notification_type: @xm8_type).and(
+            UserNotificationRoute.where(source_server_id: nil).or(
+              UserNotificationRoute.where(source_server_id: @server.id)
+            )
+          ).select(:channel_id).uniq
+
+          if routes.present?
+            status[:custom_routes][:expected] = routes.size
+
+            routes.each do |route|
+              # Anti-ratelimit
+              sleep(0.5)
+
+              message = ESM.bot.deliver(embed, to: route.channel_id)
+              status[:custom_routes][:sent] += 1 if message
+            end
+          end
+
+          @statuses << status
         end
 
         # Trigger a notification event
-        ESM::Notifications.trigger(
-          "xm8_notification_on_send",
-          type: @xm8_type,
-          server: @server,
-          embed: embed,
-          delivered: @delivered,
-          undeliverable: @undeliverable,
-          unregistered_steam_uids: unregistered_steam_uids
-        )
+        # ESM::Notifications.trigger(
+        #   "xm8_notification_on_send",
+        #   type: @xm8_type,
+        #   server: @server,
+        #   embed: embed,
+        #   statuses: @statuses,
+        #   unregistered_steam_uids: unregistered_steam_uids
+        # )
       rescue ESM::Exception::CheckFailure => e
         ESM::Notifications.trigger(e.data, server: @server, recipients: @recipients, message: @message, type: @xm8_type)
         raise ESM::Exception::Error if ESM.env.test?

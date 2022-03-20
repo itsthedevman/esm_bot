@@ -300,15 +300,15 @@ ActiveRecord::Schema.define(version: 2022_02_03_031859) do
   end
 
   create_table "user_notification_routes", force: :cascade do |t|
-    t.uuid "uuid"
-    t.integer "user_id"
-    t.integer "community_id"
-    t.integer "server_id"
-    t.string "channel_id"
-    t.string "notification_type"
-    t.boolean "enabled", default: true
-    t.boolean "user_accepted", default: false
-    t.boolean "community_accepted", default: false
+    t.uuid "uuid", null: false
+    t.integer "user_id", null: false
+    t.integer "source_server_id"
+    t.integer "destination_community_id", null: false
+    t.string "channel_id", null: false
+    t.string "notification_type", null: false
+    t.boolean "enabled", default: true, null: false
+    t.boolean "user_accepted", default: false, null: false
+    t.boolean "community_accepted", default: false, null: false
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
     t.index ["uuid"], name: "index_user_notification_routes_on_uuid"
@@ -357,8 +357,8 @@ ActiveRecord::Schema.define(version: 2022_02_03_031859) do
   add_foreign_key "user_gamble_stats", "users"
   add_foreign_key "user_notification_preferences", "servers"
   add_foreign_key "user_notification_preferences", "users"
-  add_foreign_key "user_notification_routes", "communities"
-  add_foreign_key "user_notification_routes", "servers"
+  add_foreign_key "user_notification_routes", "communities", column: "destination_community_id"
+  add_foreign_key "user_notification_routes", "servers", column: "source_server_id"
   add_foreign_key "user_notification_routes", "users"
   add_foreign_key "user_steam_data", "users"
 end

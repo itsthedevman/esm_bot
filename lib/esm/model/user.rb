@@ -91,9 +91,7 @@ module ESM
         return if discord_user.nil?
 
         # Keep the user up-to-date
-        if needs_refresh?
-          self.update(discord_username: discord_user.username, discord_discriminator: discord_user.discriminator, discord_avatar: discord_user.avatar_url)
-        end
+        self.update(discord_username: discord_user.username, discord_discriminator: discord_user.discriminator, discord_avatar: discord_user.avatar_url) if needs_refresh?
 
         # Save some data for later consumption
         discord_user.steam_uid = self.steam_uid
@@ -107,7 +105,7 @@ module ESM
 
     # Checks if the user's discord data needs refreshed. This happens every 5 minutes.
     def needs_refresh?
-      ((::Time.now - self.updated_at ) / 1.minute) >= 5
+      ((::Time.now - self.updated_at) / 1.minute) >= 5
     end
   end
 end

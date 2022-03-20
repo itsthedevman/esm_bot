@@ -9,6 +9,8 @@ module ESM
 
         # Remove the message set from the queue
         ESM.bot.resend_queue.dequeue(message, to: to)
+
+        message
       end
     end
   end
