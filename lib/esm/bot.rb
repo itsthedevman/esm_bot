@@ -154,29 +154,27 @@ module ESM
       @esm_status == :ready
     end
 
-    def deliver(message, to:)
+    def deliver(message, to:, replying_to: nil)
       return if message.blank?
 
-      delivery_channel = determine_delivery_channel(to)
-
-      raise ESM::Exception::ChannelNotFound.new(message, to) if delivery_channel.nil?
-
-      # Format the message if it's an array
+      replying_to = nil if replying_to.present? && !replying_to.is_a?(Discordrb::Message)
       message = message.join("\n") if message.is_a?(Array)
+
+      delivery_channel = determine_delivery_channel(to)
+      raise ESM::Exception::ChannelNotFound.new(message, to) if delivery_channel.nil?
 
       ESM::Notifications.trigger("bot_deliver", message: message, channel: delivery_channel)
 
       # So we can test if it's working
       # env.error_testing? is to allow testing of errors without sending messages
-      return ESM::Test.messages.store(message, to, delivery_channel) if ESM.env.test? || ESM.env.error_testing?
-
-      # Return the Discordrb::Message
-      if message.is_a?(ESM::Embed)
+      if ESM.env.test? || ESM.env.error_testing?
+        ESM::Test.messages.store(message, delivery_channel)
+      elsif message.is_a?(ESM::Embed)
         # Send the embed
-        delivery_channel.send_embed { |embed| message.transfer(embed) }
+        delivery_channel.send_embed("", nil, nil, false, nil, replying_to) { |embed| message.transfer(embed) }
       else
         # Send the text message
-        delivery_channel.send_message(message)
+        delivery_channel.send_message(message, false, nil, nil, nil, replying_to)
       end
     rescue StandardError => e
       ESM.logger.warn("#{self.class}##{__method__}") { "Send failed!\n#{e.message}" }
