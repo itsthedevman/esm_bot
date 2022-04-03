@@ -88,6 +88,7 @@ module ESM
         #   To get around this, routes need to be grouped by channel. From here, an initial message can be sent tagging each user with this channel (and type)
         users_by_channel_id = ESM::UserNotificationRoute.select(:user_id, :channel_id)
                                                         .includes(:user)
+                                                        .enabled
                                                         .accepted
                                                         .where(notification_type: @xm8_type)
                                                         .where("source_server_id IS NULL OR source_server_id = ?", @server.id)

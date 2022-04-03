@@ -23,6 +23,7 @@ module ESM
 
     before_create :create_uuid
 
+    scope :enabled, -> { where(enabled: true) }
     scope :accepted, -> { where(user_accepted: true, community_accepted: true) }
     scope :pending_community_acceptance, -> { where(user_accepted: true, community_accepted: false) }
     scope :pending_user_acceptance, -> { where(user_accepted: false, community_accepted: true) }
@@ -64,5 +65,3 @@ module ESM
     end
   end
 end
-
-

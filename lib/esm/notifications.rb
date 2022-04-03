@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # 2022-04-02 This should be phased out and just use other logic to perform these tasks
 
 module ESM
@@ -191,9 +192,8 @@ module ESM
       type = payload[:type]
       unregistered_steam_uids = payload[:unregistered_steam_uids]
 
-      message_statuses = payload[:statuses].map do |hash|
-        # { user: user, direct_message: :ignored, custom_routes: { sent: 0, expected: 0 } }
-        user = hash[:user]
+      message_statuses = payload[:statuses].map do |user, hash|
+        # { direct_message: :ignored, custom_routes: { sent: 0, expected: 0 } }
         direct_message = hash[:direct_message]
         custom_routes =
           case hash[:custom_routes]
@@ -201,8 +201,6 @@ module ESM
             :none
           when ->(v) { v[:expected].positive? && v[:sent] == v[:expected] }
             :success
-          when ->(v) { v[:sent].positive? && v[:sent] < v[:expected] && direct_message != :success }
-            :partial
           else
             :failure
           end
@@ -219,7 +217,7 @@ module ESM
           number_expected: hash[:custom_routes][:expected]
         )
 
-        direct_message_status + custom_route_status
+        "**#{user.distinct}**\n **-** #{direct_message_status}\n **-** #{custom_route_status}"
       end
 
       # For debugging
@@ -243,7 +241,7 @@ module ESM
           if message_statuses.present?
             e.add_field(
               name: I18n.t("xm8_notifications.log.message_statuses.name"),
-              value: message_statuses.join("\n")
+              value: message_statuses.join("\n\n")
             )
           end
 

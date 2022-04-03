@@ -19,13 +19,10 @@ describe ESM::Event::Xm8Notification do
     wsc.disconnect!
   end
 
-  def send_notification
-    expect { wsc.send_xm8_notification(attributes) }.not_to raise_error
-  end
-
   def run_test(log_xm8_event: false, expected_messages: [])
     community.update(log_xm8_event: log_xm8_event)
-    send_notification
+
+    expect { wsc.send_xm8_notification(attributes) }.not_to raise_error
     wait_for { ESM::Test.messages.size }.to eql(expected_messages.size)
 
     # To ensure all messages have been sent
@@ -43,6 +40,121 @@ describe ESM::Event::Xm8Notification do
   describe "Bad Data" do
     it "logs invalid type"
     it "logs invalid attributes"
+  end
+
+  describe "Custom routes" do
+    let!(:event_service) { ESM::Event::Xm8Notification.new(server: server, parameters: parameters) }
+    let(:parameters) do
+      OpenStruct.new(
+        type: "base-raid",
+        recipients: { r: recipients }.to_json,
+        message: territory.territory_name,
+        id: territory.esm_custom_id || territory.id
+      )
+    end
+
+    it "does not send (no routes)" do
+      results = nil
+      expect { results = event_service.run! }.not_to raise_error
+
+      expect(results.size).to eq(2)
+      expect(results.all? { |_user, status| status[:custom_routes][:expected] == 0 }).to eq(true)
+    end
+
+    it "does not send (disabled)" do
+      create(
+        :user_notification_route,
+        enabled: false,
+        user: user,
+        destination_community: community,
+        channel_id: ESM::Community::ESM::SPAM_CHANNEL
+      )
+
+      results = nil
+      expect { results = event_service.run! }.not_to raise_error
+
+      expect(results.size).to eq(2)
+      expect(results.all? { |_user, status| status[:custom_routes][:expected] == 0 }).to eq(true)
+    end
+
+    it "does not send (not accepted)" do
+      create(
+        :user_notification_route,
+        user: user,
+        destination_community: community,
+        channel_id: ESM::Community::ESM::SPAM_CHANNEL,
+        user_accepted: false
+      )
+
+      create(
+        :user_notification_route,
+        user: second_user,
+        destination_community: community,
+        channel_id: ESM::Community::ESM::SPAM_CHANNEL,
+        community_accepted: false
+      )
+
+      results = nil
+      expect { results = event_service.run! }.not_to raise_error
+
+      expect(results.size).to eq(2)
+      expect(results.all? { |_user, status| status[:custom_routes][:expected] == 0 }).to eq(true)
+    end
+
+    it "sends (Any server)" do
+      create(
+        :user_notification_route,
+        user: user,
+        destination_community: community,
+        channel_id: ESM::Community::ESM::SPAM_CHANNEL
+      )
+
+      create(
+        :user_notification_route,
+        user: second_user,
+        destination_community: community,
+        channel_id: ESM::Community::ESM::SPAM_CHANNEL
+      )
+
+      results = nil
+      expect { results = event_service.run! }.not_to raise_error
+
+      expect(results.size).to eq(2)
+
+      all_expected = results.all? { |_user, status| status[:custom_routes][:expected] == 1 && status[:custom_routes][:sent] == 1 }
+      expect(all_expected).to eq(true)
+    end
+
+    it "sends (specific server)" do
+      create(
+        :user_notification_route,
+        user: user,
+        destination_community: community,
+        source_server_id: server.id,
+        channel_id: ESM::Community::ESM::SPAM_CHANNEL
+      )
+
+      create(
+        :user_notification_route,
+        user: second_user,
+        destination_community: community,
+        source_server_id: ESM::Test.second_server.id,
+        channel_id: ESM::Community::ESM::SPAM_CHANNEL
+      )
+
+      results = nil
+      expect { results = event_service.run! }.not_to raise_error
+
+      expect(results.size).to eq(2)
+
+      status = results[user]
+      expect(status[:custom_routes][:expected]).to eq(1)
+      expect(status[:custom_routes][:sent]).to eq(1)
+
+      status = results[second_user]
+      expect(status[:custom_routes][:expected]).to eq(0)
+      expect(status[:custom_routes][:sent]).to eq(0)
+    end
   end
 
   # <OpenStruct type="base-raid", recipients="{ \"r\": [\"76561198037177305\",\"76561198025434405\"] }", message="ESM Test", id="awesome">
