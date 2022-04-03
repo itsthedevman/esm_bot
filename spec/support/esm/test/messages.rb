@@ -6,7 +6,7 @@ module ESM
       # By default, ESM returns `nil` from #deliver if the message fails to send.
       attr_accessor :simulate_message_failure
 
-      def store(message, _to, channel)
+      def store(message, channel)
         # Don't break tests
         self << [channel, message]
 

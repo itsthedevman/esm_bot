@@ -33,7 +33,7 @@ module ESM
     alias_attribute :name, :community_name
 
     module ESM
-      ID = "414643176947843073"
+      ID = "452568470765305866"
       SPAM_CHANNEL = ENV["SPAM_CHANNEL"]
     end
 
