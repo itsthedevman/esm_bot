@@ -36,8 +36,6 @@ module ESM
 
     attr_reader :config, :prefix
 
-    attr_reader :resend_queue if ESM.env.test?
-
     def initialize
       @prefixes = {}
       @prefixes.default = ESM.config.prefix
@@ -46,8 +44,6 @@ module ESM
       ESM::Database.connect!
 
       load_community_prefixes
-
-      @resend_queue = ESM::Bot::ResendQueue.new(self)
 
       super(
         token: ESM.config.token,
@@ -74,7 +70,6 @@ module ESM
       @esm_status = :stopping
       ESM::Websocket::Server.stop
       ESM::Request::Overseer.die
-      @resend_queue.die
 
       super
     end
@@ -175,24 +170,16 @@ module ESM
       # env.error_testing? is to allow testing of errors without sending messages
       return ESM::Test.messages.store(message, to, delivery_channel) if ESM.env.test? || ESM.env.error_testing?
 
-      discord_message =
-        if message.is_a?(ESM::Embed)
-          # Send the embed
-          delivery_channel.send_embed { |embed| message.transfer(embed) }
-        else
-          # Send the text message
-          delivery_channel.send_message(message)
-        end
-
-      # Dequeue the message if it was enqueued
-      @resend_queue.dequeue(message, to: to)
-
       # Return the Discordrb::Message
-      discord_message
+      if message.is_a?(ESM::Embed)
+        # Send the embed
+        delivery_channel.send_embed { |embed| message.transfer(embed) }
+      else
+        # Send the text message
+        delivery_channel.send_message(message)
+      end
     rescue StandardError => e
       ESM.logger.warn("#{self.class}##{__method__}") { "Send failed!\n#{e.message}" }
-      @resend_queue.enqueue(message, to: to, exception: e)
-
       nil
     end
 
