@@ -177,7 +177,7 @@ module ESM
         delivery_channel.send_message(message, false, nil, nil, nil, replying_to)
       end
     rescue StandardError => e
-      ESM.logger.warn("#{self.class}##{__method__}") { "Send failed!\n#{e.message}" }
+      ESM.logger.warn("#{self.class}##{__method__}") { "Send failed!\n#{e.message}\n#{e.backtrace[0..5].join("\n\t")}" }
       nil
     end
 

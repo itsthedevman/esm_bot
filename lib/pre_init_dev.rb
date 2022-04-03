@@ -10,7 +10,7 @@ ActiveRecordQueryTrace.level = :custom
 ActiveRecordQueryTrace.backtrace_cleaner = lambda do |trace|
   trace.select { |line| line.match?("esm") }
 end
-ActiveRecordQueryTrace.enabled = false
+ActiveRecordQueryTrace.enabled = ENV["TRACE"] == "true"
 
 # ActiveRecordQueryTrace requires Rails.root to be defined
 module Rails
