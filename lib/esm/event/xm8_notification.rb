@@ -63,48 +63,11 @@ module ESM
 
         # Convert the steam_uids in @recipients to users and send the notification
         @users = ESM::User.where(steam_uid: @recipients)
+        @statuses_by_user = {}
 
-        # Get the preferences for all the users we're supposed to send to
-        dm_preferences_by_user_id = ESM::UserNotificationPreference.where(user_id: @users.pluck(:id)).pluck(:user_id, @xm8_type.underscore).to_h
-
-        # Default the preference to allow. This is used for if the user hasn't ran the preference command before
-        dm_preferences_by_user_id.default = true
-
-        statuses_by_user = {}
-        @users.each do |user|
-          # For the logs later on
-          status = { direct_message: :ignored, custom_routes: { sent: 0, expected: 0 } }
-          statuses_by_user[user] = status
-
-          dm_allowed = dm_preferences_by_user_id[user.id]
-          next unless dm_allowed
-
-          message = ESM.bot.deliver(embed, to: user.discord_user)
-          status[:direct_message] = message.nil? ? :failure : :success
-        end
-
-        # Custom routes are a little different.
-        #   Using a mention in an embed does not cause a "notification" on discord. This does not work since these are often urgent.
-        #   To get around this, routes need to be grouped by channel. From here, an initial message can be sent tagging each user with this channel (and type)
-        users_by_channel_id = ESM::UserNotificationRoute.select(:user_id, :channel_id)
-                                                        .includes(:user)
-                                                        .enabled
-                                                        .accepted
-                                                        .where(notification_type: @xm8_type)
-                                                        .where("source_server_id IS NULL OR source_server_id = ?", @server.id)
-                                                        .group_by(&:channel_id)
-                                                        .transform_values! { |r| r.map(&:user) }
-
-        users_by_channel_id.each do |channel_id, users|
-          mention_message = ESM.bot.deliver(users.map(&:mention).join(" "), to: channel_id)
-          notification_message = ESM.bot.deliver(embed, to: channel_id, replying_to: mention_message)
-
-          users.each do |user|
-            status = statuses_by_user[user][:custom_routes]
-            status[:sent] += 1 if mention_message && notification_message
-            status[:expected] += 1
-          end
-        end
+        # Send the messages
+        send_to_users(embed)
+        send_to_custom_routes(embed)
 
         # Trigger a notification event
         ESM::Notifications.trigger(
@@ -112,11 +75,11 @@ module ESM
           type: @xm8_type,
           server: @server,
           embed: embed,
-          statuses: statuses_by_user,
+          statuses: @statuses_by_user,
           unregistered_steam_uids: unregistered_steam_uids
         )
 
-        statuses_by_user
+        @statuses_by_user
       rescue ESM::Exception::CheckFailure => e
         ESM::Notifications.trigger(e.data, server: @server, recipients: @recipients, message: @message, type: @xm8_type)
         raise ESM::Exception::Error if ESM.env.test?
@@ -163,6 +126,50 @@ module ESM
         embed = ESM::Notification.build_random(@attributes.merge(community_id: @community.id, type: @xm8_type, category: "xm8"))
         embed.footer = "[#{@server.server_id}] #{@server.server_name}"
         embed
+      end
+
+      def send_to_users(embed)
+        # Get the preferences for all the users we're supposed to send to
+        dm_preferences_by_user_id = ESM::UserNotificationPreference.where(user_id: @users.pluck(:id)).pluck(:user_id, @xm8_type.underscore).to_h
+
+        # Default the preference to allow. This is used for if the user hasn't ran the preference command before
+        dm_preferences_by_user_id.default = true
+
+        @users.each do |user|
+          # For the logs later on
+          @statuses_by_user[user] = status = { direct_message: :ignored, custom_routes: { sent: 0, expected: 0 } }
+
+          dm_allowed = dm_preferences_by_user_id[user.id]
+          next unless dm_allowed
+
+          message = ESM.bot.deliver(embed, to: user.discord_user)
+          status[:direct_message] = message.nil? ? :failure : :success
+        end
+      end
+
+      def send_to_custom_routes(embed)
+        # Custom routes are a little different.
+        #   Using a mention in an embed does not cause a "notification" on discord. This does not work since these are often urgent.
+        #   To get around this, routes need to be grouped by channel. From here, an initial message can be sent tagging each user with this channel (and type)
+        users_by_channel_id = ESM::UserNotificationRoute.select(:user_id, :channel_id)
+                                                        .includes(:user)
+                                                        .enabled
+                                                        .accepted
+                                                        .where(notification_type: @xm8_type)
+                                                        .where("source_server_id IS NULL OR source_server_id = ?", @server.id)
+                                                        .group_by(&:channel_id)
+                                                        .transform_values! { |r| r.map(&:user) }
+
+        binding.pry
+        users_by_channel_id.each do |channel_id, users|
+          notification_message = ESM.bot.deliver(embed, to: channel_id, embed_message: users.map(&:mention).join(" "))
+
+          users.each do |user|
+            status = @statuses_by_user[user][:custom_routes]
+            status[:sent] += 1 if notification_message
+            status[:expected] += 1
+          end
+        end
       end
     end
   end

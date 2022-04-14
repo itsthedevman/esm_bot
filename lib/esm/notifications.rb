@@ -217,7 +217,9 @@ module ESM
           number_expected: hash[:custom_routes][:expected]
         )
 
-        "**#{user.distinct}**\n **-** #{direct_message_status}\n **-** #{custom_route_status}"
+        status = "**#{user.distinct}** (`#{user.steam_uid}`)\n **-** #{direct_message_status}"
+        status += "\n **-** #{custom_route_status}" if custom_route_status.present?
+        status
       end
 
       # For debugging
