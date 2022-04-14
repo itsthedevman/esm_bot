@@ -164,7 +164,6 @@ module ESM
     #
     # @return [Discordrb::Message, nil] The message response or nil if it failed
     #
-
     def deliver(message, to:, embed_message: "", replying_to: nil)
       return if message.blank?
 
