@@ -160,7 +160,6 @@ module ESM
                                                         .group_by(&:channel_id)
                                                         .transform_values! { |r| r.map(&:user) }
 
-        binding.pry
         users_by_channel_id.each do |channel_id, users|
           notification_message = ESM.bot.deliver(embed, to: channel_id, embed_message: users.map(&:mention).join(" "))
 
