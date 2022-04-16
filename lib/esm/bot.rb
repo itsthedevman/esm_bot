@@ -16,9 +16,25 @@ module ESM
       WATCHING: 3
     }.freeze
 
-    attr_reader :config, :prefix
+    INTENTS = Discordrb::INTENTS.slice(
+      :servers,
+      :server_members,
+      # :server_bans,
+      # :server_emojis,
+      # :server_integrations,
+      # :server_webhooks,
+      # :server_invites,
+      # :server_voice_states,
+      # :server_presences,
+      :server_messages,
+      # :server_message_reactions,
+      :server_message_typing,
+      :direct_messages,
+      # :direct_message_reactions,
+      :direct_message_typing
+    ).keys.freeze
 
-    attr_reader :resend_queue if ESM.env.test?
+    attr_reader :config, :prefix
 
     def initialize
       @waiting_for = {}
@@ -32,9 +48,12 @@ module ESM
 
       load_community_prefixes
 
-      @resend_queue = ESM::Bot::ResendQueue.new(self)
-
-      super(token: ESM.config.token, prefix: method(:determine_activation_prefix), help_command: false)
+      super(
+        token: ESM.config.token,
+        prefix: method(:determine_activation_prefix),
+        help_command: false,
+        intents: INTENTS
+      )
     end
 
     def run
@@ -55,7 +74,6 @@ module ESM
       ESM::Websocket::Server.stop
       ESM::Connection::Server.stop!
       ESM::Request::Overseer.die
-      @resend_queue.die
 
       super
     end
@@ -143,7 +161,17 @@ module ESM
       @esm_status == :ready
     end
 
-    def deliver(message, to:, replying_to: nil)
+    #
+    # Sends a message via the bot to a channel
+    #
+    # @param message [String, ESM::Embed] A message or embed to send
+    # @param to [String, Discordrb::Commands::CommandEvent, Discordrb::Channel, Discordrb::Member, Discordrb::User] Where should the message be sent? This ultimately will end up as a channel
+    # @param embed_message [String] An optional message to attach with an embed. Only works if `message` is an embed
+    # @param replying_to [Discordrb::Message] A message to "reply" to. Discord will reference the previous message
+    #
+    # @return [Discordrb::Message, nil] The message response or nil if it failed
+    #
+    def deliver(message, to:, embed_message: "", replying_to: nil)
       return if message.blank?
 
       replying_to = nil if replying_to.present? && !replying_to.is_a?(Discordrb::Message)
@@ -156,29 +184,21 @@ module ESM
 
       # So we can test if it's working
       # env.error_testing? is to allow testing of errors without sending messages
-      discord_message =
-        if ESM.env.test? || ESM.env.error_testing?
-          ESM::Test.messages.store(message, delivery_channel)
-        elsif message.is_a?(ESM::Embed)
-          # Send the embed
-          delivery_channel.send_embed("", nil, nil, false, nil, replying_to) { |embed| message.transfer(embed) }
-        else
-          # Send the text message
-          delivery_channel.send_message(message, false, nil, nil, nil, replying_to)
-        end
-
-      # Dequeue the message if it was enqueued
-      @resend_queue.dequeue(message, to: to)
-
-      # Return the Discordrb::Message
-      discord_message
+      if ESM.env.test? || ESM.env.error_testing?
+        ESM::Test.messages.store(message, delivery_channel)
+      elsif message.is_a?(ESM::Embed)
+        # Send the embed
+        delivery_channel.send_embed(embed_message, nil, nil, false, nil, replying_to) { |embed| message.transfer(embed)
+      else
+        # Send the text message
+        delivery_channel.send_message(message, false, nil, nil, nil, replying_to)
+      end
     rescue ESM::Exception::ChannelAccessDenied
       community = ESM::Community.find_by_guild_id(delivery_channel.server.id)
       embed = ESM::Embed.build(:error, description: I18n.t("exceptions.deliver_failure", channel_name: delivery_channel.name, message: message))
       community.log_event(:error, embed)
     rescue StandardError => e
       ESM::Notifications.trigger("warn", class: self.class, method: __method__, error: e)
-      @resend_queue.enqueue(message, to: to, exception: e)
 
       nil
     end

@@ -28,13 +28,14 @@ module ESM
     has_many :cooldowns
     has_many :notifications
     has_many :servers
+    has_many :user_notification_routes, dependent: :destroy, foreign_key: :destination_community_id
 
     alias_attribute :name, :community_name
 
     attr_accessor :guild_type if ESM.env.test?
 
     module ESM
-      ID = "414643176947843073"
+      ID = "452568470765305866"
       SPAM_CHANNEL = ENV["SPAM_CHANNEL"]
     end
 
@@ -53,7 +54,7 @@ module ESM
     end
 
     def self.find_by_community_id(id)
-      default_scoped.includes(:servers).order(:community_id).where(community_id: id).first
+      default_scoped.includes(:servers).order(:community_id).where("community_id ilike ?", id).first
     end
 
     def self.find_by_guild_id(id)

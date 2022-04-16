@@ -160,4 +160,4 @@ ESM::Database.connect!
 
 # Run pre_init (Throwback to Exile)
 require_relative "pre_init"
-require_relative "pre_init_dev"
+require_relative "pre_init_dev" if ESM.env.development?

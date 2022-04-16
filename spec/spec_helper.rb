@@ -32,7 +32,7 @@ loader.eager_load
 Discordrb::LOGGER.debug = false
 
 # Ignore debug messages when running tests
-ActiveRecord::Base.logger.level = Logger::INFO
+ActiveRecord::Base.logger.level = Logger::INFO if ActiveRecord::Base.logger.present?
 
 `kill -9 $(pgrep -f esm_bot)`
 `kill -9 $(pgrep -f esm_server)`
@@ -215,7 +215,7 @@ end
 
 # Disables the whitelist on admin commands so the tests can use them
 def grant_command_access!(community, command)
-  community.command_configurations.where(command_name: command).update(whitelist_enabled: false)
+  community.command_configurations.where(command_name: command).update_all(whitelist_enabled: false)
 end
 
 #

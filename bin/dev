@@ -22,9 +22,9 @@ bin/tcp_server &
 # Start the bot
 if [[ -z $1 ]]
 then
-  rerun --dir lib bin/start_dev.rb
+  rerun --dir lib bin/esm.rb
 else
-  bundle exec ruby bin/start_dev.rb
+  bundle exec ruby bin/esm.rb
 fi
 
 kill -9 $(pgrep -f esm_server) > /dev/null 2>&1

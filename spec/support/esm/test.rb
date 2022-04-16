@@ -146,7 +146,7 @@ module ESM
         end
       end
 
-      def wait_until(timeout: 30, &block)
+      def wait_until(timeout: 30)
         # Offset the fact that we check every 0.25s
         timeout *= 4
         counter = 0

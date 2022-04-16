@@ -63,3 +63,7 @@ Style/Alias:
 
 Style/SymbolArray:
   Enabled: false
+
+# ESM relies heavily on OpenStruct for its more dynamic nature. I will look into moving away from that
+Style/OpenStructUse:
+  Enabled: false
