@@ -112,12 +112,6 @@ module ESM
         @user_type = @community_type == :primary_community ? :primary_user : :secondary_user
         @second_community_type = @communities.find { |type| type != @community_type }
 
-        # Reset the bot's resend_queue
-        ESM.bot.resend_queue.reset
-
-        # Auto resume in case if was paused
-        ESM.bot.resend_queue.resume
-
         # Clear the test list in Redis
         redis.del("test")
       end

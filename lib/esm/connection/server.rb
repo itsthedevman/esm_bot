@@ -167,10 +167,7 @@ module ESM
         @thread_delegate_inbound_messages =
           Thread.new do
             loop do
-              # Redis gem does not support BLMOVE as a method :(
-              @redis_delegate_inbound_messages.synchronize do |client|
-                client.call_with_timeout([:blmove, "tcp_server_outbound", "connection_server_inbound", "LEFT", "RIGHT", 0], 0)
-              end
+              @redis_delegate_inbound_messages.blmove("tcp_server_outbound", "connection_server_inbound", "LEFT", "RIGHT")
             end
           end
       end
