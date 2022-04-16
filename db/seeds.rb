@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 require_relative "../lib/esm"
+require_relative "../spec/support/esm/test"
 
-ESM::Database.connect!
 ESM::Command.load_commands
 
 ESM::BotAttribute.create!(
@@ -127,8 +127,8 @@ ESM::Server.create!(
 
 [
   { discord_id: "137709767954137088", discord_username: "Bryan", discord_discriminator: "9876", steam_uid: "76561198037177305" },
-  { discord_id: "477847544521687040", discord_username: "Bryan V2", discord_discriminator: "2145", steam_uid: "76561198037177305" },
-  { discord_id: "683476391664156700", discord_username: "Bryan V3", discord_discriminator: "2369", steam_uid: "76561198037177305" }
+  { discord_id: "477847544521687040", discord_username: "Bryan V2", discord_discriminator: "2145", steam_uid: ESM::Test.data[:steam_uids].sample },
+  { discord_id: "683476391664156700", discord_username: "Bryan V3", discord_discriminator: "2369", steam_uid: ESM::Test.data[:steam_uids].sample }
 ].each do |user_info|
   user = ESM::User.create!(**user_info)
   ESM::UserNotificationPreference.create!(user_id: user.id, server_id: server.id)

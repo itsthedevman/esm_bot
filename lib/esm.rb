@@ -155,7 +155,7 @@ module ESM
   @config = JSON.parse(config.to_json, object_class: OpenStruct)
 end
 
-require "esm/database"
+require_relative "esm/database"
 ESM::Database.connect!
 
 # Run pre_init (Throwback to Exile)

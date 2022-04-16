@@ -188,7 +188,7 @@ module ESM
         ESM::Test.messages.store(message, delivery_channel)
       elsif message.is_a?(ESM::Embed)
         # Send the embed
-        delivery_channel.send_embed(embed_message, nil, nil, false, nil, replying_to) { |embed| message.transfer(embed)
+        delivery_channel.send_embed(embed_message, nil, nil, false, nil, replying_to) { |embed| message.transfer(embed) }
       else
         # Send the text message
         delivery_channel.send_message(message, false, nil, nil, nil, replying_to)

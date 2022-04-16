@@ -13,7 +13,7 @@ if ENV["ESM_ENV"] == "test"
   OTR::ActiveRecord.configure_from_file!("config/database.yml")
   RSpec::Core::RakeTask.new(:spec)
 
-  task :default => :spec
+  task default: :spec
 end
 
 Rake.add_rakelib('tasks/migrations')
