@@ -37,10 +37,8 @@ ActiveRecord::Base.logger.level = Logger::INFO if ActiveRecord::Base.logger.pres
 `kill -9 $(pgrep -f esm_bot)`
 `kill -9 $(pgrep -f esm_server)`
 
-# Start the bot
-ESM.run!
-
 # Start the tcp_server
+system("cargo build", "--release")
 TCP_SERVER = IO.popen("bin/tcp_server")
 
 RSpec.configure do |config|
@@ -249,10 +247,6 @@ def wait_for_inbound_message
   message.content
 end
 
-# Wait until the bot has fully connected
-ESM::Test.wait_until { ESM.bot.ready? }
-ESM::Test.wait_until { ESM::Connection::Server.instance.tcp_server_alive? }
-
 def spawn_test_user(user, **attrs)
   attributes = {
     damage: 0,
@@ -337,3 +331,9 @@ def spawn_test_user(user, **attrs)
   user.connected = true
   net_id
 end
+
+# Wait until everything is ready
+# HEY! LISTEN! The following lines must be the last code to execute in this file
+ESM.run!
+ESM::Test.wait_until { ESM.bot.ready? }
+ESM::Test.wait_until { ESM::Connection::Server.instance.tcp_server_alive? }

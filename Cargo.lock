@@ -54,27 +54,30 @@ checksum = "e906254e445520903e7fc9da4f709886c84ae4bc4ddaf0e093188d66df4dc820"
 
 [[package]]
 name = "arma-rs"
-version = "0.3.0"
-source = "git+https://github.com/WolfkillArcadia/arma-rs.git#75ab2cecb5677085fb70e0358f60b137a1259a21"
+version = "1.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "66c5ab75134ef3d421766e9707aa0f991bd73a9e3f90110be060924f00cd6d68"
 dependencies = [
- "arma-rs-codegen",
+ "arma-rs-proc",
  "chrono",
+ "crossbeam-queue",
+ "lazy_static",
  "libc",
- "serde",
+ "link_args",
+ "log",
+ "regex",
  "serde_json",
  "uuid",
 ]
 
 [[package]]
-name = "arma-rs-codegen"
-version = "0.2.0"
-source = "git+https://github.com/WolfkillArcadia/arma-rs.git#75ab2cecb5677085fb70e0358f60b137a1259a21"
+name = "arma-rs-proc"
+version = "1.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4d5449b8086ffe5d32aa55c0a4fbf30bd474d8ea81125425e69da303b341380b"
 dependencies = [
- "lazy_static",
- "log",
  "proc-macro2",
  "quote",
- "regex",
  "syn",
 ]
 
@@ -195,6 +198,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "crossbeam-queue"
+version = "0.3.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1f25d8400f4a7a5778f0e4e52384a48cbd9b5c495d110786187fc750075277a2"
+dependencies = [
+ "cfg-if 1.0.0",
+ "crossbeam-utils",
+]
+
+[[package]]
 name = "crossbeam-utils"
 version = "0.8.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -251,13 +264,14 @@ dependencies = [
 
 [[package]]
 name = "esm_message"
-version = "0.1.0"
-source = "git+https://github.com/WolfkillArcadia/esm_message?branch=main#78e62107aa97663c46f31cd86a40e2ab1f01e11b"
+version = "1.0.0"
+source = "git+https://github.com/WolfkillArcadia/esm_message?branch=main#a2bb77c3318bc745355e7dc8d4789bda37f8237f"
 dependencies = [
  "aes-gcm",
  "arma-rs",
  "chrono",
  "message-io",
+ "message_proc",
  "rand",
  "serde",
  "serde_derive",
@@ -469,6 +483,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "320cfe77175da3a483efed4bc0adc1968ca050b098ce4f2f1c13a56626128790"
 
 [[package]]
+name = "link_args"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2c7721e472624c9aaad27a5eb6b7c9c6045c7a396f2efb6dabaec1b640d5e89b"
+
+[[package]]
 name = "lock_api"
 version = "0.3.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -521,6 +541,16 @@ dependencies = [
  "mio",
  "serde",
  "strum",
+]
+
+[[package]]
+name = "message_proc"
+version = "1.0.0"
+source = "git+https://github.com/WolfkillArcadia/esm_message?branch=main#a2bb77c3318bc745355e7dc8d4789bda37f8237f"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
