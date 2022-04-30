@@ -94,6 +94,7 @@ end
 RSpec.shared_examples("connection") do
   let(:server) { ESM::Test.server }
   let(:user) { ESM::Test.user }
+  let(:connection) { server.connection }
 
   #
   # Sends the provided SQF code to the linked connection.
@@ -129,8 +130,6 @@ RSpec.shared_examples("connection") do
     connection.send_message(message, wait: true)
   end
 
-  let(:connection) { server.connection }
-
   before(:each) do
     wait_for { server.connected? }.to be(true)
 
@@ -164,6 +163,11 @@ RSpec.shared_examples("connection") do
 end
 
 RSpec.shared_examples("command") do |described_class|
+  let!(:command) { described_class.new }
+  let(:community) { ESM::Test.community }
+  let(:server) { ESM::Test.server }
+  let(:user) { ESM::Test.user }
+
   def execute!(fail_on_raise: true, channel_type: :text, **command_args)
     command_statement = command.statement(command_args)
     event = CommandEvent.create(command_statement, user: user, channel_type: channel_type)
@@ -174,11 +178,6 @@ RSpec.shared_examples("command") do |described_class|
       command.execute(event)
     end
   end
-
-  let!(:command) { described_class.new }
-  let(:community) { ESM::Test.community }
-  let(:server) { ESM::Test.server }
-  let(:user) { ESM::Test.user }
 
   it "has a valid description text" do
     expect(command.description).not_to be_blank
