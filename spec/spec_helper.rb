@@ -92,6 +92,7 @@ RSpec.configure do |config|
 end
 
 RSpec.shared_examples("connection") do
+  let(:community) { ESM::Test.community }
   let(:server) { ESM::Test.server }
   let(:user) { ESM::Test.user }
   let(:connection) { server.connection }
@@ -199,11 +200,14 @@ RSpec.shared_examples("command") do |described_class|
   end
 
   it "has valid description text for every argument" do
-    descriptions = command.arguments.map { |a| a.opts[:description] }
-    expect(descriptions.any?(&:nil?)).to be(false)
+    command.arguments.each do |argument|
+      name = argument.name
+      description = argument.opts[:description]
 
-    result = descriptions.any? { |description| description.match?(/^translation missing/i) || description.match?(/todo/i) }
-    expect(result).to be(false)
+      expect(description).not_to be_nil, "Argument \"#{name}\" has a nil description"
+      expect(description.match?(/^translation missing/i)).to be(false), "Argument \"#{name}\" is missing an entry in the translations"
+      expect(description.match?(/todo/i)).to be(false), "Argument \"#{name}\" has a TODO description"
+    end
   end
 end
 

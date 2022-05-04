@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
 describe "ESMs_util_array_map", requires_connection: true, v2: true do
-  let!(:server) { ESM::Test.server }
-
   include_examples "connection"
 
   it "returns a new array" do
@@ -16,6 +14,6 @@ describe "ESMs_util_array_map", requires_connection: true, v2: true do
     )
 
     expect(response).not_to be_nil
-    expect(response.data.result).to eq([2,4,6,8])
+    expect(response.data.result).to eq([2, 4, 6, 8])
   end
 end

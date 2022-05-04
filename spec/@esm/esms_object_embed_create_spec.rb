@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
 describe "ESMs_object_embed_create", requires_connection: true, v2: true do
-  let!(:server) { ESM::Test.server }
-
   include_examples "connection"
 
   it "returns the embed" do

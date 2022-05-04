@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
 describe "ESMs_util_hashmap_fromArray", requires_connection: true, v2: true do
-  let!(:server) { ESM::Test.server }
-
   include_examples "connection"
 
   it "converts the array to a hashmap" do

@@ -27,3 +27,4 @@ module ESM
     LOG_TIMESTAMP = /\[(?<time>\d{2}:\d{2}:\d{2}):\d{6} (?<zone>[-+]?\d{2}:\d{2})\] \[thread \d+\] /i.freeze
   end
 end
+
