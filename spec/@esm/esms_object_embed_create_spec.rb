@@ -6,7 +6,7 @@ describe "ESMs_object_embed_create", requires_connection: true, v2: true do
   it "returns the embed" do
     response = execute_sqf!(
       <<~SQF
-        [["title", "description"], ["This is the title", "This is a description"]] call ESMs_object_embed_create
+        [["title", "This is the title"], ["description", "This is a description"]] call ESMs_object_embed_create
       SQF
     )
 
@@ -17,7 +17,7 @@ describe "ESMs_object_embed_create", requires_connection: true, v2: true do
   it "skips invalid keys" do
     response = execute_sqf!(
       <<~SQF
-        [["title", "descrition"], ["This is the title", "This is a description"]] call ESMs_object_embed_create
+        [["title", "This is the title"], ["descrtion", "This is a description"]] call ESMs_object_embed_create
       SQF
     )
 
@@ -28,7 +28,7 @@ describe "ESMs_object_embed_create", requires_connection: true, v2: true do
   it "skips invalid values" do
     response = execute_sqf!(
       <<~SQF
-        [["title", "description"], [nil, "This is a description"]] call ESMs_object_embed_create
+        [["title", nil], ["description", "This is a description"]] call ESMs_object_embed_create
       SQF
     )
 
