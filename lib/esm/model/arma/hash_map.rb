@@ -75,7 +75,7 @@ module ESM
               input
             end
 
-          if valid_hash_map?(possible_hash_map)
+          if valid_hash_structure?(possible_hash_map)
             keys = possible_hash_map.first
             values = possible_hash_map.second
 
@@ -96,8 +96,13 @@ module ESM
 
       # Checks if the array is set up to be able to be converted to a hash
       # The input must be an array and in the format of [[keys], [values]]
-      def valid_hash_map?(input)
-        input.is_a?(Array) && input.size == 2 && input.all?(Array) && input.first.size >= input.second.size
+      # Bug: Cannot tell the difference between [["k1", "v1"], ["k2", "v2"]] and [["k1", "k2"], ["v1", "v2"]]
+      def valid_hash_structure?(input)
+        input.is_a?(Array) &&
+          input.size == 2 &&
+          input.all?(Array) &&
+          input.first.all?(String) && # Ignore arrays containing hashmaps
+          input.first.size >= input.second.size
       end
     end
   end

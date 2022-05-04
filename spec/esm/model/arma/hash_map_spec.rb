@@ -232,4 +232,23 @@ describe ESM::Arma::HashMap, v2: true do
       expect(hash_map.to_json).to eq(expected)
     end
   end
+
+  describe "#valid_hash_structure?" do
+    let!(:hash) { described_class.new }
+
+    it "is valid (Keys and values)" do
+      input = [["key_1", "key_2", "key_3"], ["value_1", "value_2", "value_3"]]
+      expect(hash.send(:valid_hash_structure?, input)).to be(true)
+    end
+
+    it "is not valid (Key value pairs)" do
+      input = [["key_1", "value_1"], ["key_2", "value_2"], ["key_3", "value_3"]]
+      expect(hash.send(:valid_hash_structure?, input)).to be(false)
+    end
+
+    it "is not valid (Array of hash structures)" do
+      input = [[["key_1", "key_2", "key_3"], ["value_1", "value_2", "value_3"]], [["key_1", "key_2", "key_3"], ["value_1", "value_2", "value_3"]]]
+      expect(hash.send(:valid_hash_structure?, input)).to be(false)
+    end
+  end
 end
