@@ -30,8 +30,10 @@ module ESM
       private
 
       def check_for_access!
+        @message.data.id.delete_prefix!("#") if @message.data.id.starts_with?("#")
+
         discord_server = @server.community.discord_server
-        @channel = discord_server.channels.find { |channel| channel.id.to_s == @message.data.id }
+        @channel = discord_server.channels.find { |channel| channel.id.to_s == @message.data.id || channel.name.match?(/#{@message.data.id}/i) }
 
         raise ESM::Exception::CheckFailure, I18n.t("exceptions.extension.invalid_send_to_channel", channel_id: @message.data.id) if @channel.nil?
       end
