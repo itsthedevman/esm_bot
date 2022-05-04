@@ -68,7 +68,12 @@ module ESM
           input.transform_values { |v| normalize(v) }
         when Array, String
           # This will attempt to parse a string for json
-          possible_hash_map = input.to_a
+          possible_hash_map =
+            if input.is_a?(String)
+              input.gsub("\"\"", "\"").to_a
+            else
+              input
+            end
 
           if valid_hash_map?(possible_hash_map)
             keys = possible_hash_map.first
