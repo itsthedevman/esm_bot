@@ -205,7 +205,7 @@ RSpec.shared_examples("command") do |described_class|
       description = argument.opts[:description]
 
       expect(description).not_to be_nil, "Argument \"#{name}\" has a nil description"
-      expect(description.match?(/^translation missing/i)).to be(false), "Argument \"#{name}\" is missing an entry in the translations"
+      expect(description.match?(/^translation missing/i)).to be(false), "Argument \"#{name}\" does not have a valid entry. Ensure `commands.#{command.name}.arguments.#{name}` exists in `config/locales/commands/#{name}/en.yml`"
       expect(description.match?(/todo/i)).to be(false), "Argument \"#{name}\" has a TODO description"
     end
   end

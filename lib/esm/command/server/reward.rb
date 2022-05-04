@@ -36,7 +36,7 @@ module ESM
         define :cooldown_time, modifiable: false, default: 2.seconds # Don't allow adjusting this cooldown. Each reward has it's own cooldown
 
         argument :server_id
-        argument :reward_id, description: I18n.t("commands.reward.arguments.reward_id"), regex: ESM::Regex::REWARD_ID, default: nil
+        argument :reward_id, description: "commands.reward.arguments.reward_id", regex: ESM::Regex::REWARD_ID, default: nil
 
         SPAWN_LOCATIONS = ["virtual_garage", "player_decides"].freeze
 
