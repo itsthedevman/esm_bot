@@ -34,9 +34,8 @@ module ESM
             when Array
               value.map { |v| convert_value.call(v) }
             when Hash, ActiveSupport::HashWithIndifferentAccess
-              value.each_with_object([[], []]) do |(k, v), array|
-                array.first << convert_value.call(k)
-                array.second << convert_value.call(v)
+              value.map do |key, value|
+                [convert_value.call(key), convert_value.call(value)]
               end
             when Symbol
               value.to_s
@@ -45,7 +44,7 @@ module ESM
             end
           end
 
-        [self.keys, convert_value.call(self.values)]
+        self.map { |key, value| [key, convert_value.call(value)] }
       end
 
       def to_json(*args)
@@ -76,11 +75,8 @@ module ESM
             end
 
           if valid_hash_structure?(possible_hash_map)
-            keys = possible_hash_map.first
-            values = possible_hash_map.second
-
-            keys.each_with_object({}).with_index do |(key, obj), index|
-              obj[normalize(key)] = normalize(values[index])
+            possible_hash_map.each_with_object({}) do |(key, value), obj|
+              obj[normalize(key)] = normalize(value)
             end
           elsif possible_hash_map.is_a?(Array)
             possible_hash_map.map { |i| normalize(i) }
@@ -95,14 +91,14 @@ module ESM
       end
 
       # Checks if the array is set up to be able to be converted to a hash
-      # The input must be an array and in the format of [[keys], [values]]
-      # Bug: Cannot tell the difference between [["k1", "v1"], ["k2", "v2"]] and [["k1", "k2"], ["v1", "v2"]]
+      # The input must be an array and in the format of [[key, value], [key, value]]
       def valid_hash_structure?(input)
         input.is_a?(Array) &&
-          input.size == 2 &&
-          input.all?(Array) &&
-          input.first.all?(String) && # Ignore arrays containing hashmaps
-          input.first.size >= input.second.size
+          input.all? do |i|
+            i.is_a?(Array) &&
+              i.size == 2 &&
+              i.first.is_a?(String)
+          end
       end
     end
   end
