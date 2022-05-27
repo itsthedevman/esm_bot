@@ -5,6 +5,8 @@ module ESM
   module Command
     module Server
       class Reward < ESM::Command::Base
+        SPAWN_LOCATIONS = ["virtual_garage", "player_decides"].freeze
+
         # TODO:
         #   - Add cooldown support
         #   - Skip collecting VG data if vg_enabled is false
@@ -38,11 +40,12 @@ module ESM
         argument :server_id
         argument :reward_id, description: "commands.reward.arguments.reward_id", regex: ESM::Regex::REWARD_ID, default: nil
 
-        SPAWN_LOCATIONS = ["virtual_garage", "player_decides"].freeze
-
         # FOR DEV ONLY
-        skip_check :cooldown, :connected_server
+        # skip_check :cooldown, :connected_server
 
+        #
+        # The entry point for when the bot first receives a command
+        #
         def on_execute
           check_for_in_progress!
 
@@ -59,9 +62,100 @@ module ESM
           @nearby_vehicles = []
           @vehicles = selected_reward.vehicles.clone
           @locations = selected_reward.reward_vehicles.group_by { |v| v["spawn_location"] }.transform_values(&:size)
-          need_spawn_locations = SPAWN_LOCATIONS.any? { |location| @locations.key?(location) }
 
-          # Send the request description
+          send_request_description
+          request_spawn_locations if spawn_locations_needed?
+
+          await_for_reply
+        end
+
+        #
+        # Called when an Arma 3 server is responding to a message sent from this command
+        #
+        # @param incoming_message [ESM::Connection::Message] The incoming message from the server
+        # @param _outgoing_message [ESM::Connection::Message] The outgoing message from the command
+        #
+        def on_response(incoming_message, _outgoing_message)
+          results = incoming_message.data
+
+          embed = ESM::Embed.build do |e|
+            e.title = t("receipt_embed.title")
+            e.description = t("receipt_embed.description")
+
+            e.add_field(name: t("receipt_embed.fields.player_poptabs.name"), value: t("receipt_embed.fields.player_poptabs.value", poptabs: results.player_poptabs.to_poptab), inline: true) if results.player_poptabs
+            e.add_field(name: t("receipt_embed.fields.locker_poptabs.name"), value: t("receipt_embed.fields.locker_poptabs.value", poptabs: results.locker_poptabs.to_poptab), inline: true) if results.locker_poptabs
+            e.add_field(name: t("receipt_embed.fields.respect.name"), value: t("receipt_embed.fields.respect.value", respect: results.respect), inline: true) if results.respect
+            e.add_field(name: t("receipt_embed.fields.items.name"), value: "") if results.items
+            e.add_field(name: t("receipt_embed.fields.vehicles.name"), value: "") if results.vehicles
+
+            # TODO: - Add cooldowns
+          end
+
+          reply(embed)
+        end
+
+        private
+
+        def on_reply(event)
+          if event.nil?
+            embed = ESM::Embed.new(:error, description: t("commands.reward.no_reply", user: current_user.mention))
+            return reply(embed)
+          end
+
+          content = event.message.content.squish
+          return on_cancel if %w[quit exit stop cancel reject].include?(content.downcase)
+          return on_accept if %w[done finish accept].include?(content.downcase)
+          return await_for_reply if @vehicles.blank? # on_reply is called even if there are no vehicles
+
+          # The message is formatted correctly
+          if !content.match?(/(\d+:\w+)+/i)
+            await_for_reply
+            event.message.react("❌")
+            return
+          end
+
+          store_vehicle_location(event)
+        end
+
+        def on_cancel
+          embed = ESM::Embed.build(:success, title: "Cancelled", description: "You may re-run the command to start over")
+          reply(embed)
+        end
+
+        def on_accept
+          vehicles = @vehicles + @nearby_vehicles
+          if vehicles.present?
+            # Check to see if all vehicles have the required information
+            invalid_vehicle_numbers = vehicles.map.with_index do |vehicle, index|
+              next if vehicle[:territory_id].present? || (vehicle[:chosen_location] || vehicle[:spawn_location]).casecmp?("nearby")
+
+              index + 1
+            end.compact
+
+            if invalid_vehicle_numbers.present?
+              reply("Yo, you forgot some. #{invalid_vehicle_numbers}")
+              await_for_reply
+              return
+            end
+
+            vehicles = vehicles.map do |vehicle|
+              { class_name: vehicle[:class_name], spawn_location: vehicle[:territory_id] || "nearby" }
+            end
+          end
+
+          data = {}
+          data[:player_poptabs] = selected_reward.player_poptabs if selected_reward.player_poptabs.positive?
+          data[:locker_poptabs] = selected_reward.locker_poptabs if selected_reward.locker_poptabs.positive?
+          data[:respect] = selected_reward.respect if selected_reward.respect.positive?
+          data[:vehicles] = vehicles.to_json if vehicles.present?
+          data[:items] = selected_reward.reward_items if selected_reward.reward_items.present?
+
+          binding.pry
+
+          send_to_arma(data: data)
+        end
+
+        def send_request_description
           embed = ESM::Embed.new do |e|
             e.color = :green
             e.description = t(
@@ -86,90 +180,33 @@ module ESM
               e.add_field(name: t("#{translation_name}.name"), value: t("#{translation_name}.value", respect: selected_reward.respect), inline: true)
             end
 
-            e.add_field(value: t("information_embed.fields.accept")) if !need_spawn_locations
+            if selected_reward.reward_items.present?
+              items = selected_reward.items.sort_by { |v| v[:display_name].downcase }.format(join_with: "\n") do |item|
+                "#{item[:quantity]}x #{item[:display_name]}"
+              end
+
+              translation_name = "information_embed.fields.items"
+              e.add_field(name: t("#{translation_name}.name"), value: t("#{translation_name}.value", items: items))
+            end
+
+            if selected_reward.reward_vehicles.present?
+              vehicles = selected_reward.vehicles.sort_by { |v| v[:display_name].downcase }.format(join_with: "\n") do |vehicle|
+                vehicle[:display_name].to_s
+              end
+
+              translation_name = "information_embed.fields.vehicles"
+              e.add_field(name: t("#{translation_name}.name"), value: t("#{translation_name}.value", vehicles: vehicles))
+            end
+
+            e.add_field(value: t("information_embed.fields.accept")) if !spawn_locations_needed?
             e.footer = t("information_embed.footer")
           end
 
           reply(embed)
-          return request_spawn_locations if need_spawn_locations
-
-          await_for_reply
         end
 
-        def on_response(incoming_message, _outgoing_message)
-          results = incoming_message.data
-
-          embed = ESM::Embed.build do |e|
-            e.title = t("receipt_embed.title")
-            e.description = t("receipt_embed.description")
-
-            e.add_field(name: t("receipt_embed.fields.player_poptabs.name"), value: t("receipt_embed.fields.player_poptabs.value", poptabs: results.player_poptabs.to_poptab), inline: true) if results.player_poptabs
-            e.add_field(name: t("receipt_embed.fields.locker_poptabs.name"), value: t("receipt_embed.fields.locker_poptabs.value", poptabs: results.locker_poptabs.to_poptab), inline: true) if results.locker_poptabs
-            e.add_field(name: t("receipt_embed.fields.respect.name"), value: t("receipt_embed.fields.respect.value", respect: results.respect), inline: true) if results.respect
-            e.add_field(name: t("receipt_embed.fields.vehicles.name"), value: "") if results.vehicles
-
-            # TODO - Add cooldowns
-          end
-
-          reply(embed)
-        end
-
-        def on_reply(event)
-          if event.nil?
-            embed = ESM::Embed.new(:error, description: t("commands.reward.no_reply", user: current_user.mention))
-            return reply(embed)
-          end
-
-          content = event.message.content.squish
-          return on_cancel if %w[quit exit stop cancel reject].include?(content.downcase)
-          return on_accept if %w[done finish accept].include?(content.downcase)
-          return await_for_reply if @vehicles.blank? # on_reply is called even if there are no vehicles
-
-          # The message is formatted correctly
-          if !content.match?(/(\d+:\w+)+/i)
-            await_for_reply
-            event.message.react("❌")
-            return
-          end
-
-          store_vehicle_location(event)
-        end
-
-        private
-
-        def on_cancel
-          reply("Oh, I see how it is")
-        end
-
-        def on_accept
-          vehicles = @vehicles + @nearby_vehicles
-          if vehicles.present?
-            # Check to see if all vehicles have the required information
-            invalid_vehicle_numbers = vehicles.map.with_index do |vehicle, index|
-              next if vehicle[:territory_id].present? || (vehicle[:chosen_location] || vehicle[:spawn_location]).casecmp?("nearby")
-
-              index + 1
-            end.compact
-
-            if invalid_vehicle_numbers.present?
-              reply("Yo, you forgot some. #{invalid_vehicle_numbers}")
-              await_for_reply
-              return
-            end
-
-            vehicles = vehicles.map do |vehicle|
-              Arma::HashMap.new({ class_name: vehicle[:class_name], spawn_location: vehicle[:territory_id] || "nearby" })
-            end
-          end
-
-          data = {}
-          data[:player_poptabs] = selected_reward.player_poptabs if selected_reward.player_poptabs.positive?
-          data[:locker_poptabs] = selected_reward.locker_poptabs if selected_reward.locker_poptabs.positive?
-          data[:respect] = selected_reward.respect if selected_reward.respect.positive?
-          data[:items] = selected_reward.reward_items.to_a if selected_reward.reward_items.present?
-          data[:vehicles] = vehicles.to_json if vehicles.present?
-
-          send_to_arma(data: data)
+        def spawn_locations_needed?
+          @spawn_locations_needed ||= SPAWN_LOCATIONS.any? { |location| @locations.key?(location) }
         end
 
         def request_spawn_locations
@@ -180,7 +217,6 @@ module ESM
             @nearby_vehicles << vehicle if vehicle[:spawn_location] == "nearby"
           end
 
-          await_for_reply
           @vehicle_message = reply(vehicle_embed)
         end
 
@@ -259,7 +295,7 @@ module ESM
           ESM::Embed.new do |e|
             e.title = "Vehicle Configuration"
             e.description = ""
-            e.add_field(name: "Spawn Locations", value: "```#{spawn_locations_table}```")
+            e.add_field(name: "", value: "```#{spawn_locations_table}```")
             e.add_field(name: "Vehicles", value: "```#{vehicles_table}```")
           end
         end
@@ -267,7 +303,7 @@ module ESM
         def spawn_locations_table
           Terminal::Table.new do |t|
             t.style = {
-              width: 63,
+              # width: 63,
               border: :unicode,
               border_top: false,
               border_right: false,
@@ -276,7 +312,6 @@ module ESM
             }
 
             t.headings = ["Territory ID", "Name", "Free Spots"]
-
             t.add_row(["Nearby", "Spawn near player", "∞"])
 
             max_size_lookup = target_server.metadata.vg_max_sizes.to_a
@@ -299,7 +334,7 @@ module ESM
           Terminal::Table.new do |t|
             t.style = {
               border: :unicode,
-              width: 63,
+              # width: 63,
               border_top: false,
               border_right: false,
               border_bottom: false,
@@ -365,8 +400,9 @@ module ESM
 
           event.message.react("✅")
 
-          await_for_reply
           edit_message(@vehicle_message, vehicle_embed)
+
+          await_for_reply
         end
       end
     end

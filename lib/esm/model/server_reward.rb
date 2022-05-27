@@ -36,5 +36,13 @@ module ESM
         { class_name: class_name, display_name: display_name, spawn_location: spawn_location }
       end
     end
+
+    def items
+      @items ||= self.reward_items.map do |class_name, quantity|
+        display_name = ESM::Arma::ClassLookup.find(class_name).try(:display_name) || class_name
+
+        { class_name: class_name, display_name: display_name, quantity: quantity }
+      end
+    end
   end
 end

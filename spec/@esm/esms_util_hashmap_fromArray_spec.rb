@@ -3,7 +3,7 @@
 describe "ESMs_util_hashmap_fromArray", requires_connection: true, v2: true do
   include_examples "connection"
 
-  it "converts the array to a hashmap" do
+  it "does not convert the array" do
     response = execute_sqf!(
       <<~SQF
         private _result = [
@@ -32,10 +32,10 @@ describe "ESMs_util_hashmap_fromArray", requires_connection: true, v2: true do
     )
 
     expect(response).not_to be_nil
-    expect(response.data.result).to eq('[["key_1","value_1"],["key_2",true],["key_3",[["key_4",false],["key_5",[["key_6",6],["key_7",any]]]]]]')
+    expect(response.data.result).to be_nil
   end
 
-  it "does not convert the array" do
+  it "converts the array to a hashmap" do
     response = execute_sqf!(
       <<~SQF
         private _result = [
@@ -64,15 +64,17 @@ describe "ESMs_util_hashmap_fromArray", requires_connection: true, v2: true do
     )
 
     expect(response).not_to be_nil
-    expect(response.data.result).to be_nil
+    expect(response.data.result).to eq('[["key_1","value_1"],["key_2",true],["key_3",[["key_4",false],["key_5",[["key_6",6],["key_7",any]]]]]]')
   end
 
   it "handles nils" do
     response = execute_sqf!(
       <<~SQF
         [
-          ["key_1", "key_2", "key_3", "key_4"],
-          [nil, 2, nil, 4]
+          ["key_1", nil],
+          ["key_2", 2],
+          ["key_3", nil],
+          ["key_4", 4]
         ] call ESMs_util_hashmap_fromArray
       SQF
     )

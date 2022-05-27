@@ -3,7 +3,7 @@
 describe "ESMs_util_array_isValidHashmap", requires_connection: true, v2: true do
   include_examples "connection"
 
-  it "is a valid hash map" do
+  it "is not a valid hash map" do
     response = execute_sqf!(
       <<~SQF
         private _result = [
@@ -29,10 +29,10 @@ describe "ESMs_util_array_isValidHashmap", requires_connection: true, v2: true d
     )
 
     expect(response).not_to be_nil
-    expect(response.data.result).to eq(true)
+    expect(response.data.result).to eq(false)
   end
 
-  it "is not a valid hash map" do
+  it "is a valid hash map" do
     response = execute_sqf!(
       <<~SQF
         private _result = [
@@ -58,6 +58,6 @@ describe "ESMs_util_array_isValidHashmap", requires_connection: true, v2: true d
     )
 
     expect(response).not_to be_nil
-    expect(response.data.result).to eq(false)
+    expect(response.data.result).to eq(true)
   end
 end

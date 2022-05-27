@@ -340,7 +340,7 @@ module ESM
 
         output = {}
         mapping.each do |attribute_name, attribute_type|
-          data_entry = data.delete(attribute_name)
+          data_entry = data[attribute_name]
 
           can_be_nil = attribute_type == "Any" || attribute_type.match?(NIL_REGEX)
           raise ESM::Exception::InvalidMessage, "\"#{attribute_name}\" is expected for message with data type of \"#{data_type}\"" if data_entry.nil? && !can_be_nil

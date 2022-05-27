@@ -44,8 +44,14 @@ en:
           respect:
             name: "Respect given to you"
             value: "```%{respect}```"
+          items:
+            name: "Items given to you"
+            value: "%{items}"
+          vehicles:
+            name: "Vehicles given to you"
+            value: "%{vehicles}"
           accept: "Once you are ready to receive the reward, just reply with `accept`"
-        footer: "You can always cancel this request by replying with `cancel`"
+        footer: "You can cancel this request by replying with `cancel` at any time"
       receipt_embed:
         title: "Reward get!"
         description: "You may now return to your game and enjoy your gifts!"
