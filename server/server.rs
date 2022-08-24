@@ -57,7 +57,7 @@ impl Server {
             Err(e) => panic!("Failed to get sync connection. Reason: {}", e),
         };
 
-        let _: () = match redis::cmd("DEL")
+        match redis::cmd("DEL")
             .arg("tcp_server_outbound")
             .arg("tcp_server_inbound")
             .query(&mut redis)
@@ -249,7 +249,7 @@ impl Server {
         };
 
         loop {
-            let _: () = match redis::cmd("BLMOVE")
+            match redis::cmd("BLMOVE")
                 .arg("connection_server_outbound")
                 .arg("tcp_server_inbound")
                 .arg("LEFT")
