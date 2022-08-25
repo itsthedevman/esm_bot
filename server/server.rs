@@ -289,7 +289,7 @@ impl Server {
 
             trace!("#delegate_outbound_messages - {}", message);
 
-            let _: () = match redis::cmd("RPUSH")
+            match redis::cmd("RPUSH")
                 .arg("tcp_server_outbound")
                 .arg(json)
                 .query_async(&mut connection)
