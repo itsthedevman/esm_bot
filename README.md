@@ -154,9 +154,14 @@ This guide expects that you have knowledge and experience working with the follo
 
 Steps:
 
-- install postgres
-- Install ruby
-- Install bundler gem
-- configure .env
-- configure spec/test_users.yml
+- Windows host
+- Install Multipass
+- Create VM: `multipass launch --cpus 4 --mem 8G --disk 75G --name esm`
+- Install Ruby
+- Install Rust
+- Install Docker and Docker Compose
+- Clone repo
+- Start the docker images `sudo docker compose up -d`
+- Configure .env
+- Configure spec/test_users.yml
 - bin/setup
