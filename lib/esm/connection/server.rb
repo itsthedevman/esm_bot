@@ -298,6 +298,8 @@ module ESM
       def on_disconnect(message)
         server_id = @server_id_by_resource_id.delete(message.resource_id)
         connection = @connections.delete(server_id)
+
+        ESM::Notifications.trigger("info", class: self.class, method: __method__, server_id: server_id)
         return if connection.nil?
 
         connection.on_close
