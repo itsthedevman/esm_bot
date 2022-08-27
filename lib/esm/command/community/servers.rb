@@ -25,7 +25,6 @@ module ESM
           end
         end
 
-
         #########################
         # Command Methods
         #########################

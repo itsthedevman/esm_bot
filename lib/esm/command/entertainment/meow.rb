@@ -34,7 +34,7 @@ module ESM
             5.times do
               response = HTTParty.get(
                 "https://api.thecatapi.com/v1/images/search?size=full&mime_types=jpg&format=json&order=RANDOM&page=0&limit=1",
-                headers: { 'User-agent': "ESM 2.0" }
+                headers: {"User-agent": "ESM 2.0"}
               )
               next sleep(1) if !response.ok?
 

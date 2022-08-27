@@ -27,7 +27,7 @@ module ESM
         ESM.bot.deliver(message, to: @channel_id)
       rescue ESM::Exception::CheckFailure => e
         @server.community.log_event(:discord_log, e.data)
-      rescue StandardError
+      rescue
         @server.community.log_event(:discord_log, I18n.t("exceptions.malformed_message", message: @message))
       end
 

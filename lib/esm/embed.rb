@@ -40,7 +40,7 @@ module ESM
       if block
         yield(self)
       else
-        self.build_from_template(type, **attributes)
+        build_from_template(type, **attributes)
       end
     end
 
@@ -100,28 +100,28 @@ module ESM
 
     def transfer(embed)
       # And you can't do `embed = new_embed`
-      embed.title = self.title if self.title
-      embed.description = self.description if self.description
-      embed.url = self.url if self.url
-      embed.timestamp = self.timestamp if self.timestamp
-      embed.color = self.color if self.color
-      embed.footer = self.footer if self.footer
-      embed.image = self.image if self.image
-      embed.thumbnail = self.thumbnail if self.thumbnail
-      embed.author = self.author if self.author
-      embed.fields = self.fields if self.fields
+      embed.title = title if title
+      embed.description = description if description
+      embed.url = url if url
+      embed.timestamp = timestamp if timestamp
+      embed.color = color if color
+      embed.footer = footer if footer
+      embed.image = image if image
+      embed.thumbnail = thumbnail if thumbnail
+      embed.author = author if author
+      embed.fields = fields if fields
 
       embed
     end
 
     def to_s
       output = ""
-      output += "Title (#{self.title.size}): #{self.title}\n" if self.title
-      output += "Description (#{self.description.size}): #{self.description}\n" if self.description
+      output += "Title (#{title.size}): #{title}\n" if title
+      output += "Description (#{description.size}): #{description}\n" if description
 
-      if self.fields
+      if fields
         output += "Fields:\n"
-        self.fields.each_with_index do |field, index|
+        fields.each_with_index do |field, index|
           output += "\t##{index + 1}"
           output += " <inline>" if field.inline
 
@@ -133,12 +133,12 @@ module ESM
       # Add the metadata
       if metadata?
         output += "Metadata:\n"
-        output += "\tTimestamp: #{self.timestamp}\n" if self.timestamp
-        output += "\tColor: #{self.color}\n" if self.color
-        output += "\tImage: #{self.image.url}\n" if self.image
-        output += "\tThumbnail: #{self.thumbnail.url}\n" if self.thumbnail
-        output += "\tURL: #{self.url}\n" if self.url
-        output += "\tFooter: #{self.footer.text}" if self.footer
+        output += "\tTimestamp: #{timestamp}\n" if timestamp
+        output += "\tColor: #{color}\n" if color
+        output += "\tImage: #{image.url}\n" if image
+        output += "\tThumbnail: #{thumbnail.url}\n" if thumbnail
+        output += "\tURL: #{url}\n" if url
+        output += "\tFooter: #{footer.text}" if footer
       end
 
       output
@@ -146,16 +146,16 @@ module ESM
 
     def to_h
       {
-        title: self.title,
-        description: self.description,
-        timestamp: self.timestamp,
-        color: self.color,
-        footer: self.footer&.text,
-        fields: self.fields.map { |f| { name: f.name, value: f.value } },
-        author: self.author,
-        thumbnail: self.thumbnail,
-        image: self.image,
-        url: self.url
+        title: title,
+        description: description,
+        timestamp: timestamp,
+        color: color,
+        footer: footer&.text,
+        fields: fields.map { |f| {name: f.name, value: f.value} },
+        author: author,
+        thumbnail: thumbnail,
+        image: image,
+        url: url
       }
     end
 
@@ -170,25 +170,25 @@ module ESM
       end
 
       attributes.each do |attr_name, attr_value|
-        self.send("#{attr_name}=", attr_value)
+        send("#{attr_name}=", attr_value)
       end
     end
 
     private
 
     def metadata?
-      self.timestamp.present? || self.color.present? || self.image.present? || self.thumbnail.present? || self.url.present?
+      timestamp.present? || color.present? || image.present? || thumbnail.present? || url.present?
     end
 
     def add_field_array(name:, values:, inline:)
-      field = { name: name, value: "", inline: inline }
+      field = {name: name, value: "", inline: inline}
 
       values.each do |value|
         value += "\n"
 
         if field[:value].size + value.size >= Limit::FIELD_VALUE_LENGTH_MAX
           store_field(field)
-          field = { name: "#{name} #{I18n.t(:continued)}", value: "", inline: inline }
+          field = {name: "#{name} #{I18n.t(:continued)}", value: "", inline: inline}
         end
 
         field[:value] += value

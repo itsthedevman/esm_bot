@@ -43,7 +43,7 @@ module ESM
             else
               value
             end
-          rescue StandardError
+          rescue
             value
           end
         end

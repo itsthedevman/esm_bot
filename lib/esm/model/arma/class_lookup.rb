@@ -18,7 +18,7 @@ module ESM
       # @return [Array<Entry>]
       #
       def self.lookup
-        self.cache if @lookup.nil?
+        cache if @lookup.nil?
 
         @lookup
       end
@@ -31,12 +31,12 @@ module ESM
       # @return [Struct, nil] The class name data if found. nil if not found
       #
       def self.find(class_name)
-        self.cache if @lookup.nil?
+        cache if @lookup.nil?
         @lookup.find { |entry| entry.class_name == class_name.to_s }
       end
 
       def self.where(**query)
-        self.cache if @lookup.nil?
+        cache if @lookup.nil?
         raise ESM::Exception::Error, "Invalid key or value is not a string" if !query.all? { |k, _v| Entry.members.include?(k.to_sym) }
 
         @lookup.select do |entry|

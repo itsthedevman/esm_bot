@@ -91,12 +91,12 @@ module ESM
     # These all have to have unique-to-ESM names since we are inheriting
     ###########################
     def bind_events!
-      self.mention { |event| esm_mention(event) }
-      self.ready { |event| esm_ready(event) }
-      self.server_create { |event| esm_server_create(event) }
-      self.user_ban { |event| esm_user_ban(event) }
-      self.user_unban { |event| esm_user_unban(event) }
-      self.member_join { |event| esm_member_join(event) }
+      mention { |event| esm_mention(event) }
+      ready { |event| esm_ready(event) }
+      server_create { |event| esm_server_create(event) }
+      user_ban { |event| esm_user_ban(event) }
+      user_unban { |event| esm_user_unban(event) }
+      member_join { |event| esm_member_join(event) }
     end
 
     def esm_mention(_event)
@@ -113,7 +113,7 @@ module ESM
 
       # Sometimes the bot loses connection with Discord. Upon reconnect, the ready event will be triggered again.
       # Don't restart the websocket server again.
-      return if self.ready?
+      return if ready?
 
       # Wait until the bot has connected before starting the websocket.
       # This is to avoid servers connecting before the bot is ready
@@ -197,7 +197,7 @@ module ESM
       community = ESM::Community.find_by_guild_id(delivery_channel.server.id)
       embed = ESM::Embed.build(:error, description: I18n.t("exceptions.deliver_failure", channel_name: delivery_channel.name, message: message))
       community.log_event(:error, embed)
-    rescue StandardError => e
+    rescue => e
       ESM::Notifications.trigger("warn", class: self.class, method: __method__, error: e)
 
       nil
@@ -208,7 +208,7 @@ module ESM
       counter = 0
       match = nil
       invalid_response = format_invalid_response(expected)
-      responding_user = self.user(responding_user)
+      responding_user = user(responding_user)
 
       while match.nil? && counter < 99
         response =
@@ -229,7 +229,7 @@ module ESM
         break if !match.nil?
 
         # Let the user know that was not quite what we were looking for
-        self.deliver(invalid_response, to: responding_user)
+        deliver(invalid_response, to: responding_user)
 
         counter += 1
       end
@@ -264,7 +264,7 @@ module ESM
 
           # Okay, it might be a PM channel, just go with it regardless (it returns nil)
           if temp_channel.nil?
-            self.pm_channel(channel)
+            pm_channel(channel)
           else
             temp_channel
           end
@@ -273,8 +273,8 @@ module ESM
       return if channel.nil?
       return channel if channel.pm?
 
-      raise ESM::Exception::ChannelAccessDenied if !self.channel_permission?(channel, :read_messages)
-      raise ESM::Exception::ChannelAccessDenied if !self.channel_permission?(channel, :send_messages)
+      raise ESM::Exception::ChannelAccessDenied if !channel_permission?(channel, :read_messages)
+      raise ESM::Exception::ChannelAccessDenied if !channel_permission?(channel, :send_messages)
 
       channel
     end
@@ -291,7 +291,7 @@ module ESM
     # @return [Boolean]
     #
     def channel_permission?(channel, permission)
-      member = self.profile.on(channel.server)
+      member = profile.on(channel.server)
       member.permission?(permission, channel)
     end
 
@@ -317,7 +317,7 @@ module ESM
         if ESM.env.test?
           ESM::Test.await(timeout: timeout)
         else
-          self.add_await!(Discordrb::Events::MessageEvent, { from: user_id, in: channel_id, timeout: timeout })
+          add_await!(Discordrb::Events::MessageEvent, {from: user_id, in: channel_id, timeout: timeout})
         end
 
       @mutex.synchronize do

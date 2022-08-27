@@ -20,7 +20,7 @@ describe ESM::Connection::Message, v2: true do
           date: Date.today,
           hash_map: ESM::Arma::HashMap.from(key_0: false, key_1: true),
           integer: "1",
-          rhash: { foo: "bar" },
+          rhash: {foo: "bar"},
           string: "string"
         }
       },
@@ -79,7 +79,7 @@ describe ESM::Connection::Message, v2: true do
     end
 
     it "defaults the data_type to the message type if data is provided" do
-      message = described_class.new(type: "data_test", data: { foo: "bar" })
+      message = described_class.new(type: "data_test", data: {foo: "bar"})
       expect(message.data_type).to eq("data_test")
     end
 
@@ -110,9 +110,9 @@ describe ESM::Connection::Message, v2: true do
         server_id: Faker::ESM.server_id,
         type: "testing",
         data_type: "data_test",
-        data: { foo: "bar" },
+        data: {foo: "bar"},
         metadata_type: "metadata_test",
-        metadata: { bar: "baz" }
+        metadata: {bar: "baz"}
       )
     end
 

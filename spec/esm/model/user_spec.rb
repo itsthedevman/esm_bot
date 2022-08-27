@@ -15,8 +15,8 @@ describe ESM::User do
       discord_user = user.discord_user
 
       expect(discord_user).not_to be_nil
-      expect(discord_user.instance_variable_get("@esm_user")).to eq(user)
-      expect(discord_user.instance_variable_get("@steam_uid")).to eq(user.steam_uid)
+      expect(discord_user.instance_variable_get(:@esm_user)).to eq(user)
+      expect(discord_user.instance_variable_get(:@steam_uid)).to eq(user.steam_uid)
     end
   end
 

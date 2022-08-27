@@ -18,7 +18,8 @@ module ESM
           deliver!
         end
 
-        def server; end
+        def server
+        end
       end
     end
   end

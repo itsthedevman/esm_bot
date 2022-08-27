@@ -139,7 +139,7 @@ module ESM
             end
 
             vehicles = vehicles.map do |vehicle|
-              { class_name: vehicle[:class_name], spawn_location: vehicle[:territory_id] || "nearby" }
+              {class_name: vehicle[:class_name], spawn_location: vehicle[:territory_id] || "nearby"}
             end
           end
 
@@ -227,7 +227,7 @@ module ESM
         def check_for_in_progress!
           return if !ESM.bot.waiting_for_reply?(user_id: current_user.id, channel_id: current_channel.id)
 
-          raise_error!(:waiting_for_reply, user: current_user.mention, command_name: self.name)
+          raise_error!(:waiting_for_reply, user: current_user.mention, command_name: name)
         end
 
         def check_for_valid_reward_id!
@@ -238,17 +238,17 @@ module ESM
 
         def check_for_reward_items!
           return if selected_reward.reward_items.present? ||
-                    selected_reward.reward_vehicles.present? ||
-                    selected_reward.locker_poptabs.positive? ||
-                    selected_reward.player_poptabs.positive? ||
-                    selected_reward.respect.positive?
+            selected_reward.reward_vehicles.present? ||
+            selected_reward.locker_poptabs.positive? ||
+            selected_reward.player_poptabs.positive? ||
+            selected_reward.respect.positive?
 
           raise_error!(:no_reward_items, user: current_user.mention)
         end
 
         def await_for_reply
           Thread.new do
-            ESM.bot.wait_for_reply(user_id: current_user.id, channel_id: current_channel.id) { |event| self.on_reply(event) }
+            ESM.bot.wait_for_reply(user_id: current_user.id, channel_id: current_channel.id) { |event| on_reply(event) }
           end
         end
 

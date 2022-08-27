@@ -57,8 +57,8 @@ describe "ESMs_object_message_respond_to", requires_connection: true, v2: true d
       expect(outbound.errors).to eq([])
 
       errors = inbound.errors.map(&:to_h)
-      expect(errors).to include({ type: "code", content: "ERROR_CODE" })
-      expect(errors).to include({ type: "message", content: "An error message" })
+      expect(errors).to include({type: "code", content: "ERROR_CODE"})
+      expect(errors).to include({type: "message", content: "An error message"})
 
       success = true
     end

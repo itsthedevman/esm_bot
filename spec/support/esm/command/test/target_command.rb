@@ -14,9 +14,11 @@ module ESM
 
         argument :target
 
-        def discord; end
+        def discord
+        end
 
-        def server; end
+        def server
+        end
       end
     end
   end

@@ -12,7 +12,7 @@ describe ESM::Event::SendToChannel, requires_connection: true, v2: true do
   it "sends a message" do
     inbound_message = ESM::Connection::Message.new(
       type: "event", data_type: "send_to_channel",
-      data: { id: ESM::Test.channel.id.to_s, content: Faker::String.random }
+      data: {id: ESM::Test.channel.id.to_s, content: Faker::String.random}
     )
 
     described_class.new(connection, inbound_message).run!
@@ -28,13 +28,13 @@ describe ESM::Event::SendToChannel, requires_connection: true, v2: true do
       description: Faker::String.random,
       color: ESM::Color.random,
       fields: [
-        { name: Faker::String.random, value: Faker::String.random, inline: true }
+        {name: Faker::String.random, value: Faker::String.random, inline: true}
       ]
     )
 
     inbound_message = ESM::Connection::Message.new(
       type: "event", data_type: "send_to_channel",
-      data: { id: ESM::Test.channel.id.to_s, content: embed_hash.to_json }
+      data: {id: ESM::Test.channel.id.to_s, content: embed_hash.to_json}
     )
 
     described_class.new(connection, inbound_message).run!
@@ -62,7 +62,7 @@ describe ESM::Event::SendToChannel, requires_connection: true, v2: true do
   it "only allows sending messages to that community's discord channels" do
     inbound_message = ESM::Connection::Message.new(
       type: "event", data_type: "send_to_channel",
-      data: { id: "1", content: "" }
+      data: {id: "1", content: ""}
     )
 
     described_class.new(connection, inbound_message).run!

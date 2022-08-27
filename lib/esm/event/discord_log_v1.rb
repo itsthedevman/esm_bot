@@ -56,7 +56,7 @@ module ESM
               ESM::Color.random
             end
         end
-      rescue StandardError => e
+      rescue => e
         ESM.logger.error("#{self.class}##{__method__}") do
           ESM::JSON.pretty_generate(
             exception: e.message,

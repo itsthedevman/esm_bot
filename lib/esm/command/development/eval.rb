@@ -19,7 +19,7 @@ module ESM
         def on_execute
           response = eval @arguments.code # rubocop:disable Security/Eval
           reply("Input:\n```ruby\n#{@arguments.code}\n```\nOutput:\n```ruby\n#{response}\n```")
-        rescue StandardError => e
+        rescue => e
           reply("An error occurred: ```#{e.message}```Backtrace: ```#{e.backtrace[0..2].join("\n")}```")
         end
       end

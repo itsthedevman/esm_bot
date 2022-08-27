@@ -4,7 +4,7 @@ class OpenStruct
   attr_reader :table
 
   def blank?
-    self.to_h.blank?
+    to_h.blank?
   end
 
   def each(&block)
@@ -12,7 +12,7 @@ class OpenStruct
 
     # Loop over each key and call the passed block with the key and the original value
     # This means nested OpenStructs stay as OpenStructs
-    self.to_h.each_key do |key|
+    to_h.each_key do |key|
       yield(key.to_s, self[key])
     end
 
@@ -24,7 +24,7 @@ class OpenStruct
 
     # Loop over each key and call the passed block with the key and the original value
     # This means nested OpenStructs stay as OpenStructs
-    self.to_h.keys.map do |key|
+    to_h.keys.map do |key|
       yield(key.to_s, self[key])
     end
   end

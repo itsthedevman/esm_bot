@@ -47,9 +47,10 @@ group :development do
   gem "rerun"
   gem "rspec"
   gem "rspec-wait"
-  gem "rubocop"
   gem "ruby-prof"
   gem "simplecov"
   gem "solargraph"
   gem "yard"
 end
+
+gem "standard", group: [:development, :test]

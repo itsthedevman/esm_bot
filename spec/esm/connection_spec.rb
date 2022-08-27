@@ -5,7 +5,7 @@ describe ESM::Connection, v2: true, requires_connection: true do
 
   let!(:server) { ESM::Test.server }
   let!(:connection_server) { ESM::Connection::Server.instance }
-  let(:message) { ESM::Connection::Message.new(type: :test, data: { foo: "bar" }, data_type: :data_test) }
+  let(:message) { ESM::Connection::Message.new(type: :test, data: {foo: "bar"}, data_type: :data_test) }
 
   after :each do
     ESM::Connection::Server.instance.message_overseer.remove_all!
@@ -17,7 +17,7 @@ describe ESM::Connection, v2: true, requires_connection: true do
     end
 
     it "accepts a hash" do
-      outgoing_message = connection.send_message(type: :test, data: { foo: "bar" }, data_type: :data_test)
+      outgoing_message = connection.send_message(type: :test, data: {foo: "bar"}, data_type: :data_test)
 
       message = ESM::Test.outbound_server_messages.first
       expect(message).not_to be_nil

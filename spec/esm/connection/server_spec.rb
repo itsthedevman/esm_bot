@@ -2,7 +2,7 @@
 
 describe ESM::Connection::Server, v2: true do
   let(:connection_server) { described_class.instance }
-  let(:message) { ESM::Connection::Message.new(type: "test", data: { foo: "bar" }, data_type: "data_test") }
+  let(:message) { ESM::Connection::Message.new(type: "test", data: {foo: "bar"}, data_type: "data_test") }
 
   describe "#on_message" do
     it "triggers on_error if message contains errors" do
@@ -11,7 +11,7 @@ describe ESM::Connection::Server, v2: true do
 
       # Remove the default callback and set a new one
       outgoing_message.add_callback(:on_error) do |_incoming, outgoing|
-        expect(outgoing.errors.first.to_h).to eql({ type: "code", content: "default" })
+        expect(outgoing.errors.first.to_h).to eql({type: "code", content: "default"})
       end
 
       # The overseer needs to know about this message

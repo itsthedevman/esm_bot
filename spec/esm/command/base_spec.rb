@@ -507,12 +507,12 @@ describe ESM::Command::Base do
     describe "Handle Error" do
       before :all do
         # Change the ENV for ESM so the error won't be raised
-        ESM.instance_variable_set("@env", ActiveSupport::StringInquirer.new("error_testing"))
+        ESM.instance_variable_set(:@env, ActiveSupport::StringInquirer.new("error_testing"))
       end
 
       after :all do
         # Reset!
-        ESM.instance_variable_set("@env", ActiveSupport::StringInquirer.new("test"))
+        ESM.instance_variable_set(:@env, ActiveSupport::StringInquirer.new("test"))
       end
 
       it "should send error (CheckFailure)" do

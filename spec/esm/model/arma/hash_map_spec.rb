@@ -17,8 +17,8 @@ describe ESM::Arma::HashMap, v2: true do
         key_1: "string value",
         key_2: 1,
         key_3: 2.5,
-        key_4: [1, "two", ["three", 4, 5], ["six", 7], { eight: false }],
-        key_5: { key_6: true, key_7: false }
+        key_4: [1, "two", ["three", 4, 5], ["six", 7], {eight: false}],
+        key_5: {key_6: true, key_7: false}
       }.with_indifferent_access
 
       hash_map = described_class.new(input)
@@ -31,15 +31,15 @@ describe ESM::Arma::HashMap, v2: true do
         ["key_2", 1],
         ["key_3", 2.5],
         ["key_4", [1, "two", ["three", 4, 5], ["six", 7], [["eight", false]]]],
-        ["key_5", { key_6: true, key_7: false }]
+        ["key_5", {key_6: true, key_7: false}]
       ]
 
       conversion_result = {
         key_1: "string value",
         key_2: 1,
         key_3: 2.5,
-        key_4: [1, "two", ["three", 4, 5], ["six", 7], { eight: false }],
-        key_5: { key_6: true, key_7: false }
+        key_4: [1, "two", ["three", 4, 5], ["six", 7], {eight: false}],
+        key_5: {key_6: true, key_7: false}
       }.with_indifferent_access
 
       hash_map = described_class.new(input)
@@ -52,15 +52,15 @@ describe ESM::Arma::HashMap, v2: true do
         key_2: 1,
         key_3: 2.5,
         key_4: [1, "two", ["three", 4, 5], ["six", 7], [["eight", false]]],
-        key_5: { key_6: true, key_7: false }
+        key_5: {key_6: true, key_7: false}
       )
 
       conversion_result = {
         key_1: "string value",
         key_2: 1,
         key_3: 2.5,
-        key_4: [1, "two", ["three", 4, 5], ["six", 7], { eight: false }],
-        key_5: { key_6: true, key_7: false }
+        key_4: [1, "two", ["three", 4, 5], ["six", 7], {eight: false}],
+        key_5: {key_6: true, key_7: false}
       }.with_indifferent_access
 
       hash_map = described_class.new(input)
@@ -73,7 +73,7 @@ describe ESM::Arma::HashMap, v2: true do
         key_2: 1,
         key_3: 2.5,
         key_4: [1, "two", ["three", 4, 5], ["six", 7], [["eight", false]]],
-        key_5: [{ key_6: true, key_7: false }, true],
+        key_5: [{key_6: true, key_7: false}, true],
         key_6: :symbol
       }
 
@@ -81,8 +81,8 @@ describe ESM::Arma::HashMap, v2: true do
         key_1: "string value",
         key_2: 1,
         key_3: 2.5,
-        key_4: [1, "two", ["three", 4, 5], ["six", 7], { eight: false }],
-        key_5: [{ key_6: true, key_7: false }, true],
+        key_4: [1, "two", ["three", 4, 5], ["six", 7], {eight: false}],
+        key_5: [{key_6: true, key_7: false}, true],
         key_6: "symbol"
       }.with_indifferent_access
 
@@ -97,8 +97,8 @@ describe ESM::Arma::HashMap, v2: true do
         key_1: "string value",
         key_2: 1,
         key_3: 2.5,
-        key_4: [1, "two", ["three", 4, 5], ["six", 7], { eight: false }],
-        key_5: [{ key_6: true, key_7: false }, true]
+        key_4: [1, "two", ["three", 4, 5], ["six", 7], {eight: false}],
+        key_5: [{key_6: true, key_7: false}, true]
       }
 
       expected = [
@@ -121,8 +121,8 @@ describe ESM::Arma::HashMap, v2: true do
         key_1: "string value",
         key_2: 1,
         key_3: 2.5,
-        key_4: [1, "two", ["three", 4, 5], ["six", 7], { eight: false }],
-        key_5: [{ key_6: true, key_7: false }, true]
+        key_4: [1, "two", ["three", 4, 5], ["six", 7], {eight: false}],
+        key_5: [{key_6: true, key_7: false}, true]
       }
 
       expected = [

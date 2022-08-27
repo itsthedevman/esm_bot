@@ -28,7 +28,7 @@ module ESM
       raise ESM::Exception::Error, "#{name} is not a whitelisted notification event" if !EVENTS.include?(name)
 
       ActiveSupport::Notifications.instrument("#{name}.esm", args)
-    rescue StandardError => e
+    rescue => e
       ESM.logger.error("#{self.class}##{__method__}") { ESM::JSON.pretty_generate(uuid: SecureRandom.uuid, message: e.message, backtrace: e.backtrace) }
     end
 

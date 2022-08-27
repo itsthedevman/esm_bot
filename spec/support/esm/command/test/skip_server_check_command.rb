@@ -20,7 +20,8 @@ module ESM
           "Hello"
         end
 
-        def server; end
+        def server
+        end
       end
     end
   end

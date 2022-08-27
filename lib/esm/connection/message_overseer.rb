@@ -5,11 +5,11 @@ module ESM
     class MessageOverseer
       Envelope = Struct.new(:message, :expires_at) do
         def undeliverable?
-          self.expires_at <= ::Time.now
+          expires_at <= ::Time.now
         end
 
         def delivered?
-          self.message.delivered?
+          message.delivered?
         end
       end
 
@@ -86,7 +86,7 @@ module ESM
           message.run_callback(:on_error, message, nil)
 
           @mailbox.delete(id)
-        rescue StandardError => e
+        rescue => e
           ESM::Notifications.trigger("error", class: self.class, method: __method__, error: e)
 
           @mailbox.delete(id)

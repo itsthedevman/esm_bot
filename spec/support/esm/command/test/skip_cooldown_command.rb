@@ -16,7 +16,8 @@ module ESM
           skip(:cooldown)
         end
 
-        def server; end
+        def server
+        end
       end
     end
   end

@@ -7,7 +7,7 @@ FactoryBot.define do
 
       vehicles = ESM::Arma::ClassLookup.where(category: ESM::Arma::ClassLookup::CATEGORY_VEHICLES)
       Faker::Number.between(from: 1, to: 5).times do
-        reward_vehicles << { class_name: vehicles.sample.class_name, spawn_location: ["nearby", "virtual_garage", "player_decides"].sample }
+        reward_vehicles << {class_name: vehicles.sample.class_name, spawn_location: ["nearby", "virtual_garage", "player_decides"].sample}
       end
 
       reward_vehicles

@@ -15,16 +15,16 @@ describe ESM::Event::ServerInitializationV1 do
       server_restart: [3, 30],
       server_start_time: DateTime.now.strftime("%Y-%m-%dT%H:%M:%S"),
       server_version: "2.0.0",
-      territory_level_1: { level: 1, purchase_price: 5000, radius: 15, object_count: 30 },
-      territory_level_2: { level: 2, purchase_price: 10_000, radius: 30, object_count: 60 },
-      territory_level_3: { level: 3, purchase_price: 15_000, radius: 45, object_count: 90 },
-      territory_level_4: { level: 4, purchase_price: 20_000, radius: 60, object_count: 120 },
-      territory_level_5: { level: 5, purchase_price: 25_000, radius: 75, object_count: 150 },
-      territory_level_6: { level: 6, purchase_price: 30_000, radius: 90, object_count: 180 },
-      territory_level_7: { level: 7, purchase_price: 35_000, radius: 105, object_count: 210 },
-      territory_level_8: { level: 8, purchase_price: 40_000, radius: 120, object_count: 240 },
-      territory_level_9: { level: 9, purchase_price: 45_000, radius: 135, object_count: 270 },
-      territory_level_10: { level: 10, purchase_price: 50_000, radius: 150, object_count: 300 }
+      territory_level_1: {level: 1, purchase_price: 5000, radius: 15, object_count: 30},
+      territory_level_2: {level: 2, purchase_price: 10_000, radius: 30, object_count: 60},
+      territory_level_3: {level: 3, purchase_price: 15_000, radius: 45, object_count: 90},
+      territory_level_4: {level: 4, purchase_price: 20_000, radius: 60, object_count: 120},
+      territory_level_5: {level: 5, purchase_price: 25_000, radius: 75, object_count: 150},
+      territory_level_6: {level: 6, purchase_price: 30_000, radius: 90, object_count: 180},
+      territory_level_7: {level: 7, purchase_price: 35_000, radius: 105, object_count: 210},
+      territory_level_8: {level: 8, purchase_price: 40_000, radius: 120, object_count: 240},
+      territory_level_9: {level: 9, purchase_price: 45_000, radius: 135, object_count: 270},
+      territory_level_10: {level: 10, purchase_price: 50_000, radius: 150, object_count: 300}
     )
   end
 

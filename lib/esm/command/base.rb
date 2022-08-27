@@ -33,10 +33,10 @@ module ESM
         @skipped_checks = Set.new
 
         # ESM::Command::System::Accept => system
-        @category = self.module_parent.name.demodulize.downcase
+        @category = module_parent.name.demodulize.downcase
 
         # ESM::Command::Server::SetId => set_id
-        @command_name = self.name.demodulize.underscore.downcase
+        @command_name = name.demodulize.underscore.downcase
       end
 
       def self.argument(name, opts = {})
@@ -97,8 +97,8 @@ module ESM
       # Public Instance Methods
       #########################
       attr_reader :name, :category, :type, :aliases, :limit_to,
-                  :requires, :executed_at, :response, :cooldown_time,
-                  :defines, :permissions, :checks
+        :requires, :executed_at, :response, :cooldown_time,
+        :defines, :permissions, :checks
 
       attr_writer :current_community
 
@@ -136,7 +136,7 @@ module ESM
         else
           from_server(event)
         end
-      rescue StandardError => e
+      rescue => e
         handle_error(e)
       end
 
@@ -180,7 +180,7 @@ module ESM
 
         # Save some cycles
         discord_user = user.discord_user
-        discord_user.instance_variable_set("@esm_user", user)
+        discord_user.instance_variable_set(:@esm_user, user)
 
         # Return back the modified discord user
         @current_user = discord_user
@@ -254,7 +254,7 @@ module ESM
         user.update(discord_username: discord_user.name, discord_discriminator: discord_user.discriminator)
 
         # Save some cycles
-        discord_user.instance_variable_set("@esm_user", user)
+        discord_user.instance_variable_set(:@esm_user, user)
 
         # Return back the modified discord user
         @target_user = discord_user
@@ -337,15 +337,15 @@ module ESM
       #
       # @return [ESM::Connection::Message] The message that was sent
       #
-      def send_to_arma(message = nil, type: :arma, data_type: self.name, **data)
-        raise ESM::Exception::CheckFailure, "#send_to_arma was called on #{self.name} but this command does not require a server" if target_server.nil?
+      def send_to_arma(message = nil, type: :arma, data_type: name, **data)
+        raise ESM::Exception::CheckFailure, "#send_to_arma was called on #{name} but this command does not require a server" if target_server.nil?
 
         # Allows overwriting the outbound message. Otherwise, build a message from the data
         if message.nil?
           message = ESM::Connection::Message.new(type: type, data_type: data_type, **data)
           message.add_callback(:on_error, :on_error)
           message.add_callback(:on_response) do |incoming_message, outgoing_message|
-            self.on_response(incoming_message, outgoing_message)
+            on_response(incoming_message, outgoing_message)
           end
         end
 
@@ -378,7 +378,7 @@ module ESM
       # @see #raise_error!
       def check_failed!(name = nil, **args, &block)
         message =
-          if block_given?
+          if block
             yield
           elsif name.present?
             ESM::Embed.build(:error, description: I18n.t("command_errors.#{name}", **args.except(:exception_class)))
@@ -406,7 +406,7 @@ module ESM
           if block
             yield
           else
-            ESM::Embed.build(:error, description: I18n.t("commands.#{self.name}.errors.#{error_name}", **args))
+            ESM::Embed.build(:error, description: I18n.t("commands.#{name}.errors.#{error_name}", **args))
           end
 
         # Logging
@@ -419,7 +419,7 @@ module ESM
       # Makes calls to I18n.t shorter
       #
       def t(translation_name, **args)
-        I18n.t("commands.#{self.name}.#{translation_name}", **args)
+        I18n.t("commands.#{name}.#{translation_name}", **args)
       end
 
       #
@@ -433,22 +433,22 @@ module ESM
 
       def to_h
         {
-          name: self.name,
-          current_community: self.current_community&.attributes,
-          current_channel: self.current_channel.inspect,
-          current_user: self.current_user.inspect,
-          current_cooldown: self.current_cooldown&.attributes,
-          target_community: self.target_community&.attributes,
-          target_server: self.target_server&.attributes,
-          target_user: self.target_user.respond_to?(:attributes) ? self.target_user.attributes : self.target_user.inspect,
-          target_uid: self.target_uid,
-          same_user: self.same_user?,
-          dm_only: self.dm_only?,
-          text_only: self.text_only?,
-          dev_only: self.dev_only?,
-          registration_required: self.registration_required?,
-          whitelist_enabled: self.whitelist_enabled?,
-          on_cooldown: self.on_cooldown?,
+          name: name,
+          current_community: current_community&.attributes,
+          current_channel: current_channel.inspect,
+          current_user: current_user.inspect,
+          current_cooldown: current_cooldown&.attributes,
+          target_community: target_community&.attributes,
+          target_server: target_server&.attributes,
+          target_user: target_user.respond_to?(:attributes) ? target_user.attributes : target_user.inspect,
+          target_uid: target_uid,
+          same_user: same_user?,
+          dm_only: dm_only?,
+          text_only: text_only?,
+          dev_only: dev_only?,
+          registration_required: registration_required?,
+          whitelist_enabled: whitelist_enabled?,
+          on_cooldown: on_cooldown?,
           permissions: @permissions.to_h
         }
       end
@@ -457,15 +457,19 @@ module ESM
 
       # V1
       # @deprecated Use on_execute instead
-      def discord; end
+      def discord
+      end
 
       # V1
       # @deprecated Use on_response instead
-      def server; end
+      def server
+      end
 
-      def request_accepted; end
+      def request_accepted
+      end
 
-      def request_declined; end
+      def request_declined
+      end
 
       def from_discord(event)
         @event = event
@@ -515,7 +519,7 @@ module ESM
         create_or_update_cooldown if !@skip_flags.include?(:cooldown)
 
         # Increment the counter
-        ESM::CommandCount.increment_execution_counter(self.name)
+        ESM::CommandCount.increment_execution_counter(name)
       end
 
       #

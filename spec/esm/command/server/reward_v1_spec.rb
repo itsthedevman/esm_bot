@@ -88,7 +88,7 @@ describe ESM::Command::Server::RewardV1, category: "command" do
         requestee_user_id: user.id,
         requested_from_channel_id: event.channel.id,
         command_name: command.name,
-        command_arguments: { server_id: server.server_id }
+        command_arguments: {server_id: server.server_id}
       )
 
       expect { command.execute(event) }.to raise_error do |error|

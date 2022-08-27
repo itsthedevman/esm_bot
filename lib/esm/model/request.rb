@@ -22,27 +22,27 @@ module ESM
     before_validation :set_uuid, on: :create
     before_validation :set_expiration_date, on: :create
 
-    validates :uuid_short, format: { with: /[0-9a-fA-F]{4}/ }
+    validates :uuid_short, format: {with: /[0-9a-fA-F]{4}/}
     scope :expired, -> { where("expires_at <= ?", DateTime.current) }
 
     def respond(accepted)
       @accepted = accepted
 
       # Build the command
-      command = ESM::Command[self.command_name].new
+      command = ESM::Command[command_name].new
 
       # Respond
       command.from_request(self)
 
       # Remove the request
-      self.destroy
+      destroy
     end
 
     private
 
     def set_uuid
       self.uuid = SecureRandom.uuid
-      self.uuid_short = self.uuid[9..12]
+      self.uuid_short = uuid[9..12]
     end
 
     def set_expiration_date

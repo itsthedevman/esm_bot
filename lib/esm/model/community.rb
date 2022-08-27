@@ -45,7 +45,7 @@ module ESM
     end
 
     def self.community_ids
-      @community_ids ||= self.all.pluck(:community_id)
+      @community_ids ||= all.pluck(:community_id)
     end
 
     def self.correct(id)
@@ -72,38 +72,38 @@ module ESM
     end
 
     def logging_channel
-      ::ESM.bot.channel(self.logging_channel_id)
+      ::ESM.bot.channel(logging_channel_id)
     end
 
     def discord_server
-      ::ESM.bot.server(self.guild_id)
+      ::ESM.bot.server(guild_id)
     end
 
     def log_event(event, message)
-      return if self.logging_channel_id.blank?
+      return if logging_channel_id.blank?
 
       # Only allow logging events to logging channel if permission has been given
       case event
       when :xm8
-        return if !self.log_xm8_event
+        return if !log_xm8_event
       when :discord_log
-        return if !self.log_discord_log_event
+        return if !log_discord_log_event
       when :reconnect
-        return if !self.log_reconnect_event
+        return if !log_reconnect_event
       when :error
-        return if !self.log_error_event
+        return if !log_error_event
       else
-        raise ::ESM::Exception::Error, "Attempted to log :#{event} to #{self.guild_id} without explicit permission.\nMessage:\n#{message}"
+        raise ::ESM::Exception::Error, "Attempted to log :#{event} to #{guild_id} without explicit permission.\nMessage:\n#{message}"
       end
 
       # Check this first to avoid an infinite loop if the bot cannot send a message to this channel
       # since this method is called from the #deliver method for this exact reason.
-      channel = self.logging_channel
+      channel = logging_channel
       member = ::ESM.bot.profile.on(channel.server)
       return ::ESM.bot.deliver(message, to: channel) if member.permission?(:send_messages, channel)
 
       # The bot did not have permission. Send the owner a message letting them know
-      embed = ::ESM::Embed.build(:error, description: I18n.t("exceptions.logging_channel_access_denied", community_name: self.community_name, channel_name: channel.name))
+      embed = ::ESM::Embed.build(:error, description: I18n.t("exceptions.logging_channel_access_denied", community_name: community_name, channel_name: channel.name))
 
       ::ESM.bot.deliver(embed, to: channel.server.owner)
     end
@@ -115,14 +115,14 @@ module ESM
     end
 
     def generate_community_id
-      return if self.community_id.present?
+      return if community_id.present?
 
       count = 0
       new_id = nil
 
       loop do
         # Attempt to generate an id. Top rated comment from this answer: https://stackoverflow.com/a/88341
-        new_id = ('a'..'z').to_a.sample(4).join
+        new_id = ("a".."z").to_a.sample(4).join
         count += 1
 
         # Our only saviors
@@ -136,7 +136,7 @@ module ESM
     end
 
     def create_command_configurations
-      configurations = ::ESM::Command.configurations.map { |c| c.merge(community_id: self.id) }
+      configurations = ::ESM::Command.configurations.map { |c| c.merge(community_id: id) }
       ::ESM::CommandConfiguration.import(configurations)
     end
 
@@ -145,7 +145,7 @@ module ESM
         notifications =
           notifications.map do |notification|
             {
-              community_id: self.id,
+              community_id: id,
               notification_type: notification["type"],
               notification_title: notification["title"],
               notification_description: notification["description"],

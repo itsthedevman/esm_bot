@@ -2,12 +2,12 @@
 
 class Array
   def format(join_with: "", &block)
-    self.map(&block).join(join_with)
+    map(&block).join(join_with)
   end
 
   # Adds up all the sizes of every element inside the array
   def total_size
-    self.reduce(0) do |total, i|
+    reduce(0) do |total, i|
       size =
         case i
         when Array

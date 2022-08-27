@@ -1,6 +1,7 @@
 require "bundler/setup"
 # require "bundler/gem_tasks"
-require 'standalone_migrations'
+require "standalone_migrations"
+require "standard/rake"
 
 StandaloneMigrations::Tasks.load_tasks
 
@@ -16,7 +17,9 @@ if ENV["ESM_ENV"] == "test"
   task default: :spec
 end
 
-Rake.add_rakelib('tasks/migrations')
+Rake.add_rakelib("tasks/migrations")
+
+task default: [:test, "standard:fix"]
 
 # Some db tasks require your app code to be loaded; they'll expect to find it here
 task :environment do

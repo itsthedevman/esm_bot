@@ -68,7 +68,7 @@ describe ESM::Websocket::Request do
         "commandID" => request.id,
         "authorInfo" => [user.mention, user.id],
         "parameters" => params
-    }.to_json
+      }.to_json
 
       expect(request.to_s).to eq(valid_hash_string)
     end

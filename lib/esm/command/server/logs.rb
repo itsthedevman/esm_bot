@@ -110,7 +110,7 @@ module ESM
           log_entry = ESM::LogEntry.new(log_id: @log.id, log_date: log_date, file_name: file_name)
 
           logs.each do |log|
-            parsed_entry = { timestamp: "", line_number: log.line, entry: "" }
+            parsed_entry = {timestamp: "", line_number: log.line, entry: ""}
 
             # Pull timestamp from file and remove metadata
             if match = log.entry.match(ESM::Regex::LOG_TIMESTAMP)

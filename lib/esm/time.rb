@@ -11,8 +11,8 @@ module ESM
     end
 
     def self.distance_of_time_in_words(to_time, from_time: DateTime.current, precise: true)
-      distance = self.new.distance_of_time_in_words(from_time.utc, to_time.utc, precise)
-      self.singularize(distance)
+      distance = new.distance_of_time_in_words(from_time.utc, to_time.utc, precise)
+      singularize(distance)
     end
 
     def self.singularize(distance)

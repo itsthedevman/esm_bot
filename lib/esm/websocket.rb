@@ -49,7 +49,7 @@ module ESM
 
     # Removes all connections
     def self.remove_all_connections!
-      @connections.each { |_server_id, connection| self.remove_connection(connection) }
+      @connections.each { |_server_id, connection| remove_connection(connection) }
     end
 
     # Checks to see if there are any corrections and provides them for the server id
@@ -59,7 +59,7 @@ module ESM
     end
 
     def self.connected?(server_id)
-      self.connection(server_id).present?
+      connection(server_id).present?
     end
 
     # Retrieves the WS connection based on a server_id
@@ -165,7 +165,7 @@ module ESM
     rescue ESM::Exception::FailedAuthentication => e
       # Application code may only use codes from 1000, 3000-4999
       @connection.close(1002, e.message)
-    rescue StandardError => e
+    rescue => e
       ESM.logger.fatal("#{self.class}##{__method__}") { "Message:\n#{e.message}\n\nBacktrace:\n#{e.backtrace}" }
     end
 
@@ -188,10 +188,10 @@ module ESM
       # Process the request
       Thread.new do
         server_request.process
-      rescue StandardError => e
+      rescue => e
         ESM.logger.error("#{self.class}##{__method__}") { "Exception: #{e.message}\n#{e.backtrace[0..5].join("\n")}" }
       end
-    rescue StandardError => e
+    rescue => e
       ESM.logger.error("#{self.class}##{__method__}") { "Exception: #{e.message}\n#{e.backtrace[0..5].join("\n")}" }
       raise e if ESM.env.test?
     end

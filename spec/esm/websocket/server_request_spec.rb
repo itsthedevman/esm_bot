@@ -82,7 +82,7 @@ describe ESM::Websocket::ServerRequest do
     end
 
     it "should send the error (server command error)" do
-      message = { commandID: request.id, error: "", parameters: [{ error: "This is an error" }] }.to_ostruct
+      message = {commandID: request.id, error: "", parameters: [{error: "This is an error"}]}.to_ostruct
 
       expect { ESM::Websocket::ServerRequest.new(connection: connection, message: message).process }.not_to raise_error
       expect(ESM::Test.messages.size).to eq(1)
@@ -92,7 +92,7 @@ describe ESM::Websocket::ServerRequest do
     end
 
     it "should send the error (command error)" do
-      message = { commandID: request.id, parameters: [] }.to_ostruct
+      message = {commandID: request.id, parameters: []}.to_ostruct
 
       # Set a flag so our command raises an error
       command.defines.FLAG_RAISE_ERROR = true

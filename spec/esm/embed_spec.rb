@@ -24,10 +24,10 @@ describe ESM::Embed do
         embed.url = "https://www.esmbot.com"
         embed.timestamp = time
         embed.color = "#3ED3FB"
-        embed.set_footer(text: "hello", icon_url: 'https://i.imgur.com/j69wMDu.jpg')
-        embed.image = 'https://i.imgur.com/PcMltU7.jpg'
-        embed.thumbnail = 'https://i.imgur.com/xTG3a1I.jpg'
-        embed.set_author(name: 'meew0', url: 'https://github.com/meew0', icon_url: 'https://avatars2.githubusercontent.com/u/3662915?v=3&s=466')
+        embed.set_footer(text: "hello", icon_url: "https://i.imgur.com/j69wMDu.jpg")
+        embed.image = "https://i.imgur.com/PcMltU7.jpg"
+        embed.thumbnail = "https://i.imgur.com/xTG3a1I.jpg"
+        embed.set_author(name: "meew0", url: "https://github.com/meew0", icon_url: "https://avatars2.githubusercontent.com/u/3662915?v=3&s=466")
         embed.add_field(name: "name", value: "value", inline: true)
       end
 
@@ -40,12 +40,12 @@ describe ESM::Embed do
     expect(esm_embed.timestamp).to eq(time)
     expect(esm_embed.color).to eq("#3ED3FB")
     expect(esm_embed.footer.text).to eq("hello")
-    expect(esm_embed.footer.icon_url).to eq('https://i.imgur.com/j69wMDu.jpg')
-    expect(esm_embed.image.url).to be('https://i.imgur.com/PcMltU7.jpg')
-    expect(esm_embed.thumbnail.url).to be('https://i.imgur.com/xTG3a1I.jpg')
-    expect(esm_embed.author.name).to eq('meew0')
-    expect(esm_embed.author.url).to eq('https://github.com/meew0')
-    expect(esm_embed.author.icon_url).to eq('https://avatars2.githubusercontent.com/u/3662915?v=3&s=466')
+    expect(esm_embed.footer.icon_url).to eq("https://i.imgur.com/j69wMDu.jpg")
+    expect(esm_embed.image.url).to be("https://i.imgur.com/PcMltU7.jpg")
+    expect(esm_embed.thumbnail.url).to be("https://i.imgur.com/xTG3a1I.jpg")
+    expect(esm_embed.author.name).to eq("meew0")
+    expect(esm_embed.author.url).to eq("https://github.com/meew0")
+    expect(esm_embed.author.icon_url).to eq("https://avatars2.githubusercontent.com/u/3662915?v=3&s=466")
     expect(esm_embed.fields.size).to eq(1)
     expect(esm_embed.fields.first.name).to eq("name")
     expect(esm_embed.fields.first.value).to eq("value")
@@ -62,10 +62,10 @@ describe ESM::Embed do
         embed.url = "https://www.esmbot.com"
         embed.timestamp = time
         embed.color = "#3ED3FB"
-        embed.set_footer(text: "hello", icon_url: 'https://i.imgur.com/j69wMDu.jpg')
-        embed.image = 'https://i.imgur.com/PcMltU7.jpg'
-        embed.thumbnail = 'https://i.imgur.com/xTG3a1I.jpg'
-        embed.set_author(name: 'meew0', url: 'https://github.com/meew0', icon_url: 'https://avatars2.githubusercontent.com/u/3662915?v=3&s=466')
+        embed.set_footer(text: "hello", icon_url: "https://i.imgur.com/j69wMDu.jpg")
+        embed.image = "https://i.imgur.com/PcMltU7.jpg"
+        embed.thumbnail = "https://i.imgur.com/xTG3a1I.jpg"
+        embed.set_author(name: "meew0", url: "https://github.com/meew0", icon_url: "https://avatars2.githubusercontent.com/u/3662915?v=3&s=466")
         embed.add_field(name: "name", value: "value", inline: true)
       end
 
@@ -78,12 +78,12 @@ describe ESM::Embed do
     expect(discord_embed.timestamp).to eq(time)
     expect(discord_embed.color).to eq(4_117_499)
     expect(discord_embed.footer.text).to eq("hello")
-    expect(discord_embed.footer.icon_url).to eq('https://i.imgur.com/j69wMDu.jpg')
-    expect(discord_embed.image.url).to be('https://i.imgur.com/PcMltU7.jpg')
-    expect(discord_embed.thumbnail.url).to be('https://i.imgur.com/xTG3a1I.jpg')
-    expect(discord_embed.author.name).to eq('meew0')
-    expect(discord_embed.author.url).to eq('https://github.com/meew0')
-    expect(discord_embed.author.icon_url).to eq('https://avatars2.githubusercontent.com/u/3662915?v=3&s=466')
+    expect(discord_embed.footer.icon_url).to eq("https://i.imgur.com/j69wMDu.jpg")
+    expect(discord_embed.image.url).to be("https://i.imgur.com/PcMltU7.jpg")
+    expect(discord_embed.thumbnail.url).to be("https://i.imgur.com/xTG3a1I.jpg")
+    expect(discord_embed.author.name).to eq("meew0")
+    expect(discord_embed.author.url).to eq("https://github.com/meew0")
+    expect(discord_embed.author.icon_url).to eq("https://avatars2.githubusercontent.com/u/3662915?v=3&s=466")
     expect(discord_embed.fields.size).to eq(1)
     expect(discord_embed.fields.first.name).to eq("name")
     expect(discord_embed.fields.first.value).to eq("value")
@@ -194,10 +194,10 @@ describe ESM::Embed do
           embed.url = "https://www.esmbot.com"
           embed.timestamp = time
           embed.color = "#3ED3FB"
-          embed.set_footer(text: "hello", icon_url: 'https://i.imgur.com/j69wMDu.jpg')
-          embed.image = 'https://i.imgur.com/PcMltU7.jpg'
-          embed.thumbnail = 'https://i.imgur.com/xTG3a1I.jpg'
-          embed.set_author(name: 'meew0', url: 'https://github.com/meew0', icon_url: 'https://avatars2.githubusercontent.com/u/3662915?v=3&s=466')
+          embed.set_footer(text: "hello", icon_url: "https://i.imgur.com/j69wMDu.jpg")
+          embed.image = "https://i.imgur.com/PcMltU7.jpg"
+          embed.thumbnail = "https://i.imgur.com/xTG3a1I.jpg"
+          embed.set_author(name: "meew0", url: "https://github.com/meew0", icon_url: "https://avatars2.githubusercontent.com/u/3662915?v=3&s=466")
           embed.add_field(name: "name", value: "value", inline: true)
         end
 

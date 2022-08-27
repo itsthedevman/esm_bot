@@ -40,7 +40,7 @@ module ESM
         def birb_link
           @birb_link ||= lambda do
             5.times do
-              response = HTTParty.get("http://www.reddit.com/r/birb/random.json", headers: { 'User-agent': "ESM 2.0" })
+              response = HTTParty.get("http://www.reddit.com/r/birb/random.json", headers: {"User-agent": "ESM 2.0"})
               next sleep(1) if !response.ok?
 
               url = response.parsed_response[0]["data"]["children"][0]["data"]["url"]

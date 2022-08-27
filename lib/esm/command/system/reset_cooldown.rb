@@ -21,7 +21,7 @@ module ESM
 
         argument :target, default: nil
         argument :command_name,
-          regex: /[\w]+/,
+          regex: /\w+/,
           description: "commands.reset_cooldown.arguments.command_name",
           default: nil,
           before_store: lambda { |parser|

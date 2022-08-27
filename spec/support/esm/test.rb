@@ -125,7 +125,7 @@ module ESM
         counter = 0
 
         sleep(0.25)
-        while self.response.blank? && counter < timeout
+        while response.blank? && counter < timeout
           sleep(0.25)
           counter += 1
         end

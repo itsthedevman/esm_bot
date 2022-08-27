@@ -43,7 +43,7 @@ module ESM
           # 1: The width of each row had to be less than 67 (10 characters per line reserved for spacing/separating)
           # 2: The overall size of the table (including spaces and separators) HAS to be under 1992 characters due to Discord's message limit
           @response.in_groups_of(20, false).each do |territories|
-            table = Terminal::Table.new(headings: ["ID", "Name", "Owner UID"], style: { width: 67 })
+            table = Terminal::Table.new(headings: ["ID", "Name", "Owner UID"], style: {width: 67})
 
             territories.each do |territory|
               table << [

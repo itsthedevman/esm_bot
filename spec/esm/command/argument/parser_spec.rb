@@ -5,14 +5,14 @@ describe ESM::Command::Argument::Parser do
 
   describe "Parsing" do
     it "1" do
-      container = container_klass.new([[:test, { regex: /test/, description: "d" }]])
+      container = container_klass.new([[:test, {regex: /test/, description: "d"}]])
       argument = container.first
       parser = described_class.new(argument, "test").parse!
       expect(parser.value).to eq("test")
     end
 
     it "2" do
-      container = container_klass.new([[:test, { regex: /.*/, description: "d" }]])
+      container = container_klass.new([[:test, {regex: /.*/, description: "d"}]])
       argument = container.first
 
       parser = described_class.new(argument, "12345").parse!
@@ -21,7 +21,7 @@ describe ESM::Command::Argument::Parser do
   end
 
   it "should default" do
-    container = container_klass.new([[:test, { regex: /.*/, description: "d", default: "testing" }]])
+    container = container_klass.new([[:test, {regex: /.*/, description: "d", default: "testing"}]])
     argument = container.first
 
     parser = described_class.new(argument, "").parse!
@@ -30,7 +30,7 @@ describe ESM::Command::Argument::Parser do
 
   describe "Type-casting" do
     it "should be string" do
-      container = container_klass.new([[:test, { regex: /.*/, description: "d" }]])
+      container = container_klass.new([[:test, {regex: /.*/, description: "d"}]])
       argument = container.first
 
       parser = described_class.new(argument, "testing").parse!
@@ -38,7 +38,7 @@ describe ESM::Command::Argument::Parser do
     end
 
     it "should be integer" do
-      container = container_klass.new([[:test, { regex: /.*/, description: "d", type: :integer }]])
+      container = container_klass.new([[:test, {regex: /.*/, description: "d", type: :integer}]])
       argument = container.first
 
       parser = described_class.new(argument, "1").parse!
@@ -46,7 +46,7 @@ describe ESM::Command::Argument::Parser do
     end
 
     it "should be float" do
-      container = container_klass.new([[:test, { regex: /.*/, description: "d", type: :float }]])
+      container = container_klass.new([[:test, {regex: /.*/, description: "d", type: :float}]])
       argument = container.first
 
       parser = described_class.new(argument, "2.5").parse!
@@ -54,7 +54,7 @@ describe ESM::Command::Argument::Parser do
     end
 
     it "should be json" do
-      container = container_klass.new([[:test, { regex: /.*/, description: "d", type: :json }]])
+      container = container_klass.new([[:test, {regex: /.*/, description: "d", type: :json}]])
       argument = container.first
 
       parser = described_class.new(argument, '{ "foo": "bar" }').parse!
@@ -63,7 +63,7 @@ describe ESM::Command::Argument::Parser do
     end
 
     it "should be symbol" do
-      container = container_klass.new([[:test, { regex: /.*/, description: "d", type: :symbol }]])
+      container = container_klass.new([[:test, {regex: /.*/, description: "d", type: :symbol}]])
       argument = container.first
 
       parser = described_class.new(argument, "testing").parse!

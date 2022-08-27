@@ -50,7 +50,7 @@ module ESM
             end
 
           # Converts the array of types to { custom: true }, or { "base-raid": false, "flag-stolen": false, "flag-restored": false, etc... }
-          query = Hash[types.map { |type| [type.underscore, allowed?] }]
+          query = types.map { |type| [type.underscore, allowed?] }.to_h
 
           # Update the preference
           preference.update(query)

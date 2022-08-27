@@ -38,7 +38,7 @@ class String
   # Extending active support classify to allow leaving the s on the end
   def classify(keep_plural: false)
     if keep_plural
-      self.sub(/.*\./, "").camelize
+      sub(/.*\./, "").camelize
     else
       ActiveSupport::Inflector.classify(self)
     end

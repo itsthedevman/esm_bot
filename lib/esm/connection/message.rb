@@ -89,7 +89,7 @@ module ESM
         data_hash[:metadata_type] = data_hash.dig(:metadata, :type) || "empty"
         data_hash[:metadata] = data_hash.dig(:metadata, :content)
 
-        self.new(**data_hash)
+        new(**data_hash)
       end
 
       # The driver of communication between the bot, server, and client. Rust is strict so this has to be too.
@@ -133,8 +133,8 @@ module ESM
             "empty"
           end
 
-        @metadata = @metadata_type == "empty" ? nil : OpenStruct.new(self.sanitize(args[:metadata].to_h || {}, @metadata_type))
-        @data = @data_type == "empty" ? nil : OpenStruct.new(self.sanitize(args[:data].to_h || {}, @data_type))
+        @metadata = @metadata_type == "empty" ? nil : OpenStruct.new(sanitize(args[:metadata].to_h || {}, @metadata_type))
+        @data = @data_type == "empty" ? nil : OpenStruct.new(sanitize(args[:data].to_h || {}, @data_type))
         @errors = (args[:errors] || []).map { |e| Error.new(self, **e) }
         @routing_data = OpenStruct.new(command: nil)
         @delivered = false
@@ -170,7 +170,7 @@ module ESM
         target_user = @routing_data.try(:command).try(:target_user)
         return if target_user.nil?
 
-        target = { steam_uid: target_user.steam_uid }
+        target = {steam_uid: target_user.steam_uid}
 
         if !target_user.is_a?(ESM::TargetUser)
           target.merge!(
@@ -241,10 +241,10 @@ module ESM
         metadata = self.metadata.to_h.transform_values(&stringify_values)
 
         {
-          id: self.id,
-          server_id: self.server_id&.bytes,
-          resource_id: self.resource_id,
-          type: self.type,
+          id: id,
+          server_id: server_id&.bytes,
+          resource_id: resource_id,
+          type: type,
           data: {
             type: @data_type,
             content: data.present? ? data : nil
@@ -253,7 +253,7 @@ module ESM
             type: @metadata_type,
             content: metadata.present? ? metadata : nil
           },
-          errors: self.errors.map(&:to_h)
+          errors: errors.map(&:to_h)
         }
       end
 
@@ -263,7 +263,7 @@ module ESM
       # @return [Boolean]
       #
       def data?
-        self.data.to_h.present?
+        data.to_h.present?
       end
 
       #
@@ -272,7 +272,7 @@ module ESM
       # @return [Boolean]
       #
       def errors?
-        self.errors.any?
+        errors.any?
       end
 
       #
@@ -299,8 +299,8 @@ module ESM
       # This sets the message's callbacks and forces `ESM::Connection::Server#send_message` to become blocking
       #
       def synchronous
-        self.add_callback(:on_response, :on_response_sync)
-        self.add_callback(:on_error, :on_error_sync)
+        add_callback(:on_response, :on_response_sync)
+        add_callback(:on_error, :on_error_sync)
       end
 
       #
@@ -323,7 +323,7 @@ module ESM
       end
 
       def inspect
-        "#<ESM::Message #{JSON.pretty_generate(self.to_h)}>"
+        "#<ESM::Message #{JSON.pretty_generate(to_h)}>"
       end
 
       private
@@ -365,7 +365,7 @@ module ESM
               # Perform the conversion and replace the value
               convert_type(data_entry, into_type: attribute_type)
             end
-        rescue StandardError => e
+        rescue => e
           ESM::Notifications.trigger(
             "error",
             class: self.class, method: __method__, error: e,
@@ -446,7 +446,7 @@ module ESM
       #
       def on_response_sync(incoming_message, _outgoing_message)
         @mutex.synchronize { @incoming_message = incoming_message }
-        self.delivered
+        delivered
       end
 
       #
@@ -459,7 +459,7 @@ module ESM
         @mutex.synchronize { @incoming_message = incoming_message }
         @error = true
 
-        self.delivered
+        delivered
       end
     end
   end

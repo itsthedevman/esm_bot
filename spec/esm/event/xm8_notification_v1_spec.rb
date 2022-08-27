@@ -47,7 +47,7 @@ describe ESM::Event::Xm8NotificationV1 do
     let(:parameters) do
       OpenStruct.new(
         type: "base-raid",
-        recipients: { r: recipients }.to_json,
+        recipients: {r: recipients}.to_json,
         message: territory.territory_name,
         id: territory.esm_custom_id || territory.id
       )
@@ -171,8 +171,8 @@ describe ESM::Event::Xm8NotificationV1 do
     it "sends to all" do
       run_test(
         expected_messages: [
-          { title: "Oh noes! #{attributes[:message]} is being raided!", description: "Hop on quick, **#{attributes[:message]}** (`#{attributes[:id]}`) is being raided" },
-          { title: "Oh noes! #{attributes[:message]} is being raided!", description: "Hop on quick, **#{attributes[:message]}** (`#{attributes[:id]}`) is being raided" }
+          {title: "Oh noes! #{attributes[:message]} is being raided!", description: "Hop on quick, **#{attributes[:message]}** (`#{attributes[:id]}`) is being raided"},
+          {title: "Oh noes! #{attributes[:message]} is being raided!", description: "Hop on quick, **#{attributes[:message]}** (`#{attributes[:id]}`) is being raided"}
         ]
       )
     end
@@ -181,8 +181,8 @@ describe ESM::Event::Xm8NotificationV1 do
       run_test(
         log_xm8_event: true,
         expected_messages: [
-          { title: "Oh noes! #{attributes[:message]} is being raided!", description: "Hop on quick, **#{attributes[:message]}** (`#{attributes[:id]}`) is being raided" },
-          { title: "Oh noes! #{attributes[:message]} is being raided!", description: "Hop on quick, **#{attributes[:message]}** (`#{attributes[:id]}`) is being raided" },
+          {title: "Oh noes! #{attributes[:message]} is being raided!", description: "Hop on quick, **#{attributes[:message]}** (`#{attributes[:id]}`) is being raided"},
+          {title: "Oh noes! #{attributes[:message]} is being raided!", description: "Hop on quick, **#{attributes[:message]}** (`#{attributes[:id]}`) is being raided"},
           {
             title: "(Delivered) `#{attributes[:type]}` XM8 Notification for `#{server.server_id}`",
             description: "**Title:**\nOh noes! #{attributes[:message]} is being raided!\n**Description:**\nHop on quick, **#{attributes[:message]}** (`#{attributes[:id]}`) is being raided"
@@ -206,8 +206,8 @@ describe ESM::Event::Xm8NotificationV1 do
     it "sends to all" do
       run_test(
         expected_messages: [
-          { title: "Flag Restored `(#{attributes[:id]})`", description: "**#{attributes[:message]}'s** flag has been restored! Good job getting it back!" },
-          { title: "Flag Restored `(#{attributes[:id]})`", description: "**#{attributes[:message]}'s** flag has been restored! Good job getting it back!" }
+          {title: "Flag Restored `(#{attributes[:id]})`", description: "**#{attributes[:message]}'s** flag has been restored! Good job getting it back!"},
+          {title: "Flag Restored `(#{attributes[:id]})`", description: "**#{attributes[:message]}'s** flag has been restored! Good job getting it back!"}
         ]
       )
     end
@@ -216,8 +216,8 @@ describe ESM::Event::Xm8NotificationV1 do
       run_test(
         log_xm8_event: true,
         expected_messages: [
-          { title: "Flag Restored `(#{attributes[:id]})`", description: "**#{attributes[:message]}'s** flag has been restored! Good job getting it back!" },
-          { title: "Flag Restored `(#{attributes[:id]})`", description: "**#{attributes[:message]}'s** flag has been restored! Good job getting it back!" },
+          {title: "Flag Restored `(#{attributes[:id]})`", description: "**#{attributes[:message]}'s** flag has been restored! Good job getting it back!"},
+          {title: "Flag Restored `(#{attributes[:id]})`", description: "**#{attributes[:message]}'s** flag has been restored! Good job getting it back!"},
           {
             title: "(Delivered) `#{attributes[:type]}` XM8 Notification for `#{server.server_id}`",
             description: "**Title:**\nFlag Restored `(#{attributes[:id]})`\n**Description:**\n**#{attributes[:message]}'s** flag has been restored! Good job getting it back!"
@@ -241,8 +241,8 @@ describe ESM::Event::Xm8NotificationV1 do
     it "sends to all" do
       run_test(
         expected_messages: [
-          { title: "Flag Steal Started `(#{attributes[:id]})`", description: "Someone is trying to steal **#{attributes[:message]}'s** flag!" },
-          { title: "Flag Steal Started `(#{attributes[:id]})`", description: "Someone is trying to steal **#{attributes[:message]}'s** flag!" }
+          {title: "Flag Steal Started `(#{attributes[:id]})`", description: "Someone is trying to steal **#{attributes[:message]}'s** flag!"},
+          {title: "Flag Steal Started `(#{attributes[:id]})`", description: "Someone is trying to steal **#{attributes[:message]}'s** flag!"}
         ]
       )
     end
@@ -251,8 +251,8 @@ describe ESM::Event::Xm8NotificationV1 do
       run_test(
         log_xm8_event: true,
         expected_messages: [
-          { title: "Flag Steal Started `(#{attributes[:id]})`", description: "Someone is trying to steal **#{attributes[:message]}'s** flag!" },
-          { title: "Flag Steal Started `(#{attributes[:id]})`", description: "Someone is trying to steal **#{attributes[:message]}'s** flag!" },
+          {title: "Flag Steal Started `(#{attributes[:id]})`", description: "Someone is trying to steal **#{attributes[:message]}'s** flag!"},
+          {title: "Flag Steal Started `(#{attributes[:id]})`", description: "Someone is trying to steal **#{attributes[:message]}'s** flag!"},
           {
             title: "(Delivered) `#{attributes[:type]}` XM8 Notification for `#{server.server_id}`",
             description: "**Title:**\nFlag Steal Started `(#{attributes[:id]})`\n**Description:**\nSomeone is trying to steal **#{attributes[:message]}'s** flag!"
@@ -276,8 +276,8 @@ describe ESM::Event::Xm8NotificationV1 do
     it "sends to all" do
       run_test(
         expected_messages: [
-          { title: "Flag Stolen `(#{attributes[:id]})`", description: "**#{attributes[:message]}'s** flag has been stolen! Go get it back!" },
-          { title: "Flag Stolen `(#{attributes[:id]})`", description: "**#{attributes[:message]}'s** flag has been stolen! Go get it back!" }
+          {title: "Flag Stolen `(#{attributes[:id]})`", description: "**#{attributes[:message]}'s** flag has been stolen! Go get it back!"},
+          {title: "Flag Stolen `(#{attributes[:id]})`", description: "**#{attributes[:message]}'s** flag has been stolen! Go get it back!"}
         ]
       )
     end
@@ -286,8 +286,8 @@ describe ESM::Event::Xm8NotificationV1 do
       run_test(
         log_xm8_event: true,
         expected_messages: [
-          { title: "Flag Stolen `(#{attributes[:id]})`", description: "**#{attributes[:message]}'s** flag has been stolen! Go get it back!" },
-          { title: "Flag Stolen `(#{attributes[:id]})`", description: "**#{attributes[:message]}'s** flag has been stolen! Go get it back!" },
+          {title: "Flag Stolen `(#{attributes[:id]})`", description: "**#{attributes[:message]}'s** flag has been stolen! Go get it back!"},
+          {title: "Flag Stolen `(#{attributes[:id]})`", description: "**#{attributes[:message]}'s** flag has been stolen! Go get it back!"},
           {
             title: "(Delivered) `#{attributes[:type]}` XM8 Notification for `#{server.server_id}`",
             description: "**Title:**\nFlag Stolen `(#{attributes[:id]})`\n**Description:**\n**#{attributes[:message]}'s** flag has been stolen! Go get it back!"
@@ -311,8 +311,8 @@ describe ESM::Event::Xm8NotificationV1 do
     it "sends to all" do
       run_test(
         expected_messages: [
-          { title: "Grinding Started `(#{attributes[:id]})`", description: "Some scalliwag is tryna grind yer locks! **#{attributes[:message]}** is being raided!" },
-          { title: "Grinding Started `(#{attributes[:id]})`", description: "Some scalliwag is tryna grind yer locks! **#{attributes[:message]}** is being raided!" }
+          {title: "Grinding Started `(#{attributes[:id]})`", description: "Some scalliwag is tryna grind yer locks! **#{attributes[:message]}** is being raided!"},
+          {title: "Grinding Started `(#{attributes[:id]})`", description: "Some scalliwag is tryna grind yer locks! **#{attributes[:message]}** is being raided!"}
         ]
       )
     end
@@ -321,8 +321,8 @@ describe ESM::Event::Xm8NotificationV1 do
       run_test(
         log_xm8_event: true,
         expected_messages: [
-          { title: "Grinding Started `(#{attributes[:id]})`", description: "Some scalliwag is tryna grind yer locks! **#{attributes[:message]}** is being raided!" },
-          { title: "Grinding Started `(#{attributes[:id]})`", description: "Some scalliwag is tryna grind yer locks! **#{attributes[:message]}** is being raided!" },
+          {title: "Grinding Started `(#{attributes[:id]})`", description: "Some scalliwag is tryna grind yer locks! **#{attributes[:message]}** is being raided!"},
+          {title: "Grinding Started `(#{attributes[:id]})`", description: "Some scalliwag is tryna grind yer locks! **#{attributes[:message]}** is being raided!"},
           {
             title: "(Delivered) `#{attributes[:type]}` XM8 Notification for `#{server.server_id}`",
             description: "**Title:**\nGrinding Started `(#{attributes[:id]})`\n**Description:**\nSome scalliwag is tryna grind yer locks! **#{attributes[:message]}** is being raided!"
@@ -346,8 +346,8 @@ describe ESM::Event::Xm8NotificationV1 do
     it "sends to all" do
       run_test(
         expected_messages: [
-          { title: "Hacking Started `(#{attributes[:id]})`", description: "H4x0rs are trying to get into your stuff! **#{attributes[:message]}** is being robbed! " },
-          { title: "Hacking Started `(#{attributes[:id]})`", description: "H4x0rs are trying to get into your stuff! **#{attributes[:message]}** is being robbed! " }
+          {title: "Hacking Started `(#{attributes[:id]})`", description: "H4x0rs are trying to get into your stuff! **#{attributes[:message]}** is being robbed! "},
+          {title: "Hacking Started `(#{attributes[:id]})`", description: "H4x0rs are trying to get into your stuff! **#{attributes[:message]}** is being robbed! "}
         ]
       )
     end
@@ -356,8 +356,8 @@ describe ESM::Event::Xm8NotificationV1 do
       run_test(
         log_xm8_event: true,
         expected_messages: [
-          { title: "Hacking Started `(#{attributes[:id]})`", description: "H4x0rs are trying to get into your stuff! **#{attributes[:message]}** is being robbed! " },
-          { title: "Hacking Started `(#{attributes[:id]})`", description: "H4x0rs are trying to get into your stuff! **#{attributes[:message]}** is being robbed! " },
+          {title: "Hacking Started `(#{attributes[:id]})`", description: "H4x0rs are trying to get into your stuff! **#{attributes[:message]}** is being robbed! "},
+          {title: "Hacking Started `(#{attributes[:id]})`", description: "H4x0rs are trying to get into your stuff! **#{attributes[:message]}** is being robbed! "},
           {
             title: "(Delivered) `#{attributes[:type]}` XM8 Notification for `#{server.server_id}`",
             description: "**Title:**\nHacking Started `(#{attributes[:id]})`\n**Description:**\nH4x0rs are trying to get into your stuff! **#{attributes[:message]}** is being robbed! "
@@ -381,8 +381,8 @@ describe ESM::Event::Xm8NotificationV1 do
     it "sends to all" do
       run_test(
         expected_messages: [
-          { title: "Protection Money Paid `(#{attributes[:id]})`", description: "**#{attributes[:message]}'s** protection money has been paid" },
-          { title: "Protection Money Paid `(#{attributes[:id]})`", description: "**#{attributes[:message]}'s** protection money has been paid" }
+          {title: "Protection Money Paid `(#{attributes[:id]})`", description: "**#{attributes[:message]}'s** protection money has been paid"},
+          {title: "Protection Money Paid `(#{attributes[:id]})`", description: "**#{attributes[:message]}'s** protection money has been paid"}
         ]
       )
     end
@@ -391,8 +391,8 @@ describe ESM::Event::Xm8NotificationV1 do
       run_test(
         log_xm8_event: true,
         expected_messages: [
-          { title: "Protection Money Paid `(#{attributes[:id]})`", description: "**#{attributes[:message]}'s** protection money has been paid" },
-          { title: "Protection Money Paid `(#{attributes[:id]})`", description: "**#{attributes[:message]}'s** protection money has been paid" },
+          {title: "Protection Money Paid `(#{attributes[:id]})`", description: "**#{attributes[:message]}'s** protection money has been paid"},
+          {title: "Protection Money Paid `(#{attributes[:id]})`", description: "**#{attributes[:message]}'s** protection money has been paid"},
           {
             title: "(Delivered) `#{attributes[:type]}` XM8 Notification for `#{server.server_id}`",
             description: "**Title:**\nProtection Money Paid `(#{attributes[:id]})`\n**Description:**\n**#{attributes[:message]}'s** protection money has been paid"
@@ -408,7 +408,7 @@ describe ESM::Event::Xm8NotificationV1 do
       {
         type: "marxet-item-sold",
         recipients: recipients,
-        message: { item: Faker::Book.title, amount: Faker::Number.between(from: 1, to: 10_000_000) }.to_json,
+        message: {item: Faker::Book.title, amount: Faker::Number.between(from: 1, to: 10_000_000)}.to_json,
         id: territory.esm_custom_id || territory.id
       }
     end
@@ -418,8 +418,8 @@ describe ESM::Event::Xm8NotificationV1 do
 
       run_test(
         expected_messages: [
-          { title: "Item sold on MarXet", description: "You just sold **#{values.item}** for **#{values.amount}** poptabs" },
-          { title: "Item sold on MarXet", description: "You just sold **#{values.item}** for **#{values.amount}** poptabs" }
+          {title: "Item sold on MarXet", description: "You just sold **#{values.item}** for **#{values.amount}** poptabs"},
+          {title: "Item sold on MarXet", description: "You just sold **#{values.item}** for **#{values.amount}** poptabs"}
         ]
       )
     end
@@ -430,8 +430,8 @@ describe ESM::Event::Xm8NotificationV1 do
       run_test(
         log_xm8_event: true,
         expected_messages: [
-          { title: "Item sold on MarXet", description: "You just sold **#{values.item}** for **#{values.amount}** poptabs" },
-          { title: "Item sold on MarXet", description: "You just sold **#{values.item}** for **#{values.amount}** poptabs" },
+          {title: "Item sold on MarXet", description: "You just sold **#{values.item}** for **#{values.amount}** poptabs"},
+          {title: "Item sold on MarXet", description: "You just sold **#{values.item}** for **#{values.amount}** poptabs"},
           {
             title: "(Delivered) `#{attributes[:type]}` XM8 Notification for `#{server.server_id}`",
             description: "**Title:**\nItem sold on MarXet\n**Description:**\nYou just sold **#{values.item}** for **#{values.amount}** poptabs"
@@ -447,7 +447,7 @@ describe ESM::Event::Xm8NotificationV1 do
       {
         type: "custom",
         recipients: recipients,
-        message: { title: Faker::Beer.name, body: Faker::Artist.name },
+        message: {title: Faker::Beer.name, body: Faker::Artist.name},
         id: territory.esm_custom_id || territory.id
       }
     end
@@ -457,8 +457,8 @@ describe ESM::Event::Xm8NotificationV1 do
 
       run_test(
         expected_messages: [
-          { title: values[:title], description: values[:body] },
-          { title: values[:title], description: values[:body] }
+          {title: values[:title], description: values[:body]},
+          {title: values[:title], description: values[:body]}
         ]
       )
     end
@@ -469,8 +469,8 @@ describe ESM::Event::Xm8NotificationV1 do
       run_test(
         log_xm8_event: true,
         expected_messages: [
-          { title: values[:title], description: values[:body] },
-          { title: values[:title], description: values[:body] },
+          {title: values[:title], description: values[:body]},
+          {title: values[:title], description: values[:body]},
           {
             title: "(Delivered) `#{attributes[:type]}` XM8 Notification for `#{server.server_id}`",
             description: "**Title:**\n#{values[:title]}\n**Description:**\n#{values[:body]}"

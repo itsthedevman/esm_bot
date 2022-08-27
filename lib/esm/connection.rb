@@ -21,11 +21,11 @@ module ESM
 
       message = ESM::Connection::Message.new(**message) if message.is_a?(Hash)
 
-      @tcp_server.fire(message, to: self.server_id, forget: forget, wait: wait)
+      @tcp_server.fire(message, to: server_id, forget: forget, wait: wait)
     end
 
     def disconnect
-      @tcp_server.disconnect(self.server_id)
+      @tcp_server.disconnect(server_id)
     end
 
     def on_open(message)
@@ -39,13 +39,14 @@ module ESM
 
       case incoming_message.type
       when ->(type) { type == "event" && incoming_message.data_type != "empty" }
-        self.on_event(incoming_message, outgoing_message)
+        on_event(incoming_message, outgoing_message)
       else
         outgoing_message.run_callback(:on_response, incoming_message, outgoing_message)
       end
     end
 
-    def on_close; end
+    def on_close
+    end
 
     def on_event(incoming_message, _outgoing_message)
       case incoming_message.data_type

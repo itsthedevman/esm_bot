@@ -5,11 +5,11 @@ module ESM
     class HashMap < ActiveSupport::HashWithIndifferentAccess
       # @param input [String, Array, Hash, OpenStruct] The data to be converted. If a String, data must be array pairs
       def self.from(input)
-        hash_map = self.new
+        hash_map = new
         return hash_map if input.blank?
 
         hash_map.from(input)
-      rescue StandardError
+      rescue
         nil
       end
 
@@ -44,11 +44,11 @@ module ESM
             end
           end
 
-        self.map { |key, value| [key, convert_value.call(value)] }
+        map { |key, value| [key, convert_value.call(value)] }
       end
 
       def to_json(*args)
-        ::JSON.generate(self.to_a, *args)
+        ::JSON.generate(to_a, *args)
       end
 
       alias_method :to_s, :to_json

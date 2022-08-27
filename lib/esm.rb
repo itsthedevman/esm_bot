@@ -151,7 +151,7 @@ module ESM
   @env ||= ActiveSupport::StringInquirer.new(ENV["ESM_ENV"].presence || "development")
 
   # Load the config
-  config = YAML.safe_load(ERB.new(File.read(File.expand_path("config/config.yml"))).result, aliases: true)[self.env]
+  config = YAML.safe_load(ERB.new(File.read(File.expand_path("config/config.yml"))).result, aliases: true)[env]
   @config = JSON.parse(config.to_json, object_class: OpenStruct)
 end
 

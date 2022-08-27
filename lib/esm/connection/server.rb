@@ -13,7 +13,7 @@ module ESM
         delegate :disconnect_all!, :pause, :resume, to: :@instance, allow_nil: true
 
         def run!
-          @instance = self.new
+          @instance = new
         end
 
         def stop!
@@ -48,10 +48,10 @@ module ESM
 
         self.tcp_server_alive = true
         self.server_ping_received = true
-        self.refresh_keys
-        self.health_check
-        self.delegate_inbound_messages
-        self.process_inbound_messages
+        refresh_keys
+        health_check
+        delegate_inbound_messages
+        process_inbound_messages
 
         ESM::Notifications.trigger("info", class: self.class, method: __method__, status: "Started")
       end
@@ -65,7 +65,7 @@ module ESM
         ].each { |id| Thread.kill(id) }
 
         @message_overseer.remove_all!(with_error: true)
-        self.disconnect_all!
+        disconnect_all!
 
         # Close the connection to redis
         @redis.close
@@ -105,7 +105,7 @@ module ESM
       # @return [ESM::Connection::Message] If wait is true, this will be the incoming message containing the response. If wait is false, this is the message that was sent
       #
       def fire(message, to:, forget: false, wait: false)
-        raise ESM::Exception::ServerNotConnected if !self.tcp_server_alive?
+        raise ESM::Exception::ServerNotConnected if !tcp_server_alive?
         raise ESM::Exception::CheckFailureNoMessage if !message.is_a?(ESM::Connection::Message)
 
         # Watch the message to see if it's been acknowledged or responded to.
@@ -191,18 +191,18 @@ module ESM
 
             currently_alive = false
             100.times do
-              break currently_alive = true if self.server_ping_received?
+              break currently_alive = true if server_ping_received?
 
               sleep(0.01)
             end
 
             # Only set the value if it differs
-            previously_alive = self.tcp_server_alive?
+            previously_alive = tcp_server_alive?
             next if currently_alive == previously_alive
 
             self.tcp_server_alive = currently_alive
 
-            if self.tcp_server_alive?
+            if tcp_server_alive?
               ESM::Notifications.trigger("info", class: self.class, method: __method__, server_status: "Connected")
             else
               ESM::Notifications.trigger("error", class: self.class, method: __method__, server_status: "Disconnected")
@@ -227,25 +227,25 @@ module ESM
 
         case message.type
         when "init"
-          self.on_connect(message)
+          on_connect(message)
         when "disconnect"
-          self.on_disconnect(message)
+          on_disconnect(message)
         when "ping"
-          self.on_ping(message)
+          on_ping(message)
         when "error"
           outgoing_message = @message_overseer.retrieve(message.id)
           outgoing_message.run_callback(:on_error, message, outgoing_message)
         else
-          self.on_message(message)
+          on_message(message)
         end
-      rescue StandardError => e
+      rescue => e
         uuid = SecureRandom.uuid
         ESM::Notifications.trigger("error", class: self.class, method: __method__, error: e, id: uuid, message_id: message&.id)
 
         # Reply back to the message
         message.add_error(type: "message", content: I18n.t("exceptions.system", error_code: uuid))
 
-        self.fire(message, to: message.server_id)
+        fire(message, to: message.server_id)
       end
 
       def on_connect(message)
@@ -255,12 +255,12 @@ module ESM
           "info",
           class: self.class,
           method: __method__,
-          server_id: { incoming: message.server_id },
+          server_id: {incoming: message.server_id},
           incoming_message: message.to_h.without(:server_id, :resource_id)
         )
 
         connection = ESM::Connection.new(self, server_id)
-        return self.disconnect(server_id) if connection.server.nil?
+        return disconnect(server_id) if connection.server.nil?
         return connection.server.community.log_event(:error, message.errors.first.to_s) if message.errors?
 
         connection.on_open(message)
@@ -277,7 +277,7 @@ module ESM
           "info",
           class: self.class,
           method: __method__,
-          server_id: { incoming: incoming_message.server_id, outgoing: outgoing_message&.server_id },
+          server_id: {incoming: incoming_message.server_id, outgoing: outgoing_message&.server_id},
           outgoing_message: outgoing_message&.to_h&.without(:server_id, :resource_id),
           incoming_message: incoming_message.to_h.without(:server_id, :resource_id)
         )
@@ -309,7 +309,7 @@ module ESM
         self.server_ping_received = true
         @thread_health_check.join
 
-        self.health_check
+        health_check
 
         message = ESM::Connection::Message.new(type: :pong)
         __send_internal(message)

@@ -7,7 +7,7 @@ module ESM
       return self.as_ostruct(output) if as_ostruct
 
       output
-    rescue StandardError
+    rescue
       nil
     end
 
@@ -16,7 +16,7 @@ module ESM
     # @param json [Hash, String] The data to format
     # @return [String] The prettified data to print
     def self.pretty_generate(json)
-      json = self.parse(json) if json.is_a?(String)
+      json = parse(json) if json.is_a?(String)
       ::JSON.neat_generate(json, after_comma: 1, after_colon: 1, wrap: 95)
     end
 

@@ -62,7 +62,7 @@ module ESM
 
           # Let the user know
           request.command.reply(embed)
-        rescue StandardError => e
+        rescue => e
           ESM.logger.error("#{self.class}##{__method__}") do
             ESM::JSON.pretty_generate(
               server_id: @connection&.server&.server_id,
