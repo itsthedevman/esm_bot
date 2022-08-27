@@ -37,8 +37,10 @@ ActiveRecord::Base.logger.level = Logger::INFO if ActiveRecord::Base.logger.pres
 `kill -9 $(pgrep -f esm_bot)`
 `kill -9 $(pgrep -f esm_server)`
 
-# Start the tcp_server
-system("cargo build", "--release")
+# Build and start the server
+build_result = `cargo build --release; echo $?`.chomp
+raise "Failed to build tcp_server" if build_result != "0"
+
 TCP_SERVER = IO.popen("bin/tcp_server")
 
 RSpec.configure do |config|
