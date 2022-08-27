@@ -69,7 +69,7 @@ describe ESM::User do
     it "should fail parse and return nil" do
       create(:esm_dev)
       expect(ESM::User.parse("test")).to be_nil
-      expect(ESM::User.parse(TestUser::User1::STEAM_UID[1..-1])).to be_nil
+      expect(ESM::User.parse(TestUser::User1::STEAM_UID[1..])).to be_nil
     end
 
     it "should have no steam uid" do

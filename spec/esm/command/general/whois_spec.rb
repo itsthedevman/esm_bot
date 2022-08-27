@@ -34,7 +34,7 @@ describe ESM::Command::General::Whois, category: "command" do
     it "should run (mention)" do
       command_statement = command.statement(target: user.mention)
       event = CommandEvent.create(command_statement, user: user, channel_type: :text)
-      expect { response = command.execute(event) }.not_to raise_error
+      expect { command.execute(event) }.not_to raise_error
 
       response = ESM::Test.messages.first.second
       expect(response).not_to be_nil

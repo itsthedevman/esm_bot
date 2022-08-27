@@ -150,8 +150,6 @@ module ESM
           data[:vehicles] = vehicles.to_json if vehicles.present?
           data[:items] = selected_reward.reward_items if selected_reward.reward_items.present?
 
-          binding.pry
-
           send_to_arma(data: data)
         end
 

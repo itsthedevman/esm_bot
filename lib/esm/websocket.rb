@@ -128,12 +128,12 @@ module ESM
     # Authorizes the request from the DLL based on its server key
     def authorize!
       # authorization header is "basic BASE_64_STRING"
-      authorization = @connection.env["HTTP_AUTHORIZATION"][6..-1]
+      authorization = @connection.env["HTTP_AUTHORIZATION"][6..]
 
       raise ESM::Exception::FailedAuthentication, "Missing authorization key" if authorization.blank?
 
       # Once decoded, it becomes "arma_server:esm_key"
-      key = Base64.strict_decode64(authorization)[12..-1].strip
+      key = Base64.strict_decode64(authorization)[12..].strip
 
       @server = ESM::Server.where(server_key: key).first
       raise ESM::Exception::FailedAuthentication, "Invalid Key" if @server.nil?

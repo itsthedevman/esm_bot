@@ -60,10 +60,6 @@ module ESM
         @command_type = type
       end
 
-      def self.limit_to(channel_type)
-        @limit_to = channel_type
-      end
-
       def self.define(attribute, **opts)
         @defines[attribute] = OpenStruct.new(opts)
       end
@@ -349,7 +345,7 @@ module ESM
           end
         end
 
-        message.add_routing_data(command: self)
+        message.locals = {command: self}
         message.apply_command_metadata
         target_server.connection.send_message(message)
       end

@@ -113,7 +113,7 @@ module ESM
             parsed_entry = {timestamp: "", line_number: log.line, entry: ""}
 
             # Pull timestamp from file and remove metadata
-            if match = log.entry.match(ESM::Regex::LOG_TIMESTAMP)
+            if (match = log.entry.match(ESM::Regex::LOG_TIMESTAMP))
               parsed_entry[:timestamp] = DateTime.strptime("#{log.date} #{match["time"]} #{match["zone"]}", "%Y-%m-%d %H:%M:%S %Z")
               log.entry = log.entry.gsub(ESM::Regex::LOG_TIMESTAMP, "")
             end

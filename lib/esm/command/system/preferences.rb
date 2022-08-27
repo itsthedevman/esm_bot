@@ -44,7 +44,7 @@ module ESM
           types =
             if @arguments.type == "all"
               # Remove "all" from the list
-              TYPES.dup[1..-1]
+              TYPES.dup[1..]
             else
               [@arguments.type]
             end
