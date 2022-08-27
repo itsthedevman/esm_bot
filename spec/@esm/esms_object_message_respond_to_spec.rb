@@ -34,7 +34,7 @@ describe "ESMs_object_message_respond_to", requires_connection: true, v2: true d
       SQF
     )
 
-    expect(success).to be(true), "Asynchronous response callback experienced an issue - Check logs for \"terminated with exception\""
+    expect(success).to be(true)
   end
 
   it "on_error is triggered when errors" do
@@ -72,6 +72,6 @@ describe "ESMs_object_message_respond_to", requires_connection: true, v2: true d
       SQF
     )
 
-    expect(success).to be(true), "Asynchronous response callback experienced an issue - Check logs for \"terminated with exception\""
+    expect(success).to be(true)
   end
 end

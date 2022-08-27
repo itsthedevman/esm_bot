@@ -60,6 +60,10 @@ module ESM
         @command_type = type
       end
 
+      def self.limit_to(channel_type) # standard:disable Style/TrivialAccessors
+        @limit_to = channel_type
+      end
+
       def self.define(attribute, **opts)
         @defines[attribute] = OpenStruct.new(opts)
       end
