@@ -124,7 +124,7 @@ describe ESM::Connection::Message, v2: true do
       allow(current_user).to receive(:mention).and_return(user.mention)
 
       # Needed for mention
-      message.add_routing_data(command: command)
+      message.locals = {command: command}
       message.add_error(type: "code", content: "test")
 
       embed = message.send(:on_error, message, nil)

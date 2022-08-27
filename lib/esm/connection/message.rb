@@ -136,18 +136,17 @@ module ESM
         @metadata = @metadata_type == "empty" ? nil : OpenStruct.new(sanitize(args[:metadata].to_h || {}, @metadata_type))
         @data = @data_type == "empty" ? nil : OpenStruct.new(sanitize(args[:data].to_h || {}, @data_type))
         @errors = (args[:errors] || []).map { |e| Error.new(self, **e) }
-        @routing_data = OpenStruct.new(command: nil)
+        @locals = OpenStruct.new(command: nil)
         @delivered = false
         @mutex = Mutex.new
       end
 
-      # Sets the various config options used by the overseer when routes the message
+      # Sets the various values used internally by the overseer when routes the message
       #
       # @param opts [Hash]
       # @option opts [ESM::Command] :command The command that triggered this message. The overseer uses this hook back into the command
-      def add_routing_data(**opts)
-        opts.each { |key, value| @routing_data.send("#{key}=", value) }
-        self
+      def locals=(**opts)
+        opts.each { |key, value| @locals.send("#{key}=", value) }
       end
 
       #
@@ -155,7 +154,7 @@ module ESM
       # This only applies to messages that have a command in their routing data
       #
       def apply_command_metadata
-        user = @routing_data.try(:command).try(:current_user)
+        user = @locals.try(:command).try(:current_user)
         return if user.nil?
 
         @metadata ||= OpenStruct.new
@@ -167,7 +166,7 @@ module ESM
           discord_mention: user.mention
         }
 
-        target_user = @routing_data.try(:command).try(:target_user)
+        target_user = @locals.try(:command).try(:target_user)
         return if target_user.nil?
 
         target = {steam_uid: target_user.steam_uid}
@@ -431,7 +430,7 @@ module ESM
         embed = ESM::Embed.build(:error, description: error.to_s)
 
         # Attempt to send the embed through the command
-        @routing_data.try(:command).try(:reply, embed)
+        @locals.try(:command).try(:reply, embed)
 
         ESM::Notifications.trigger("error", class: self.class, method: __method__, error: error.to_h)
 

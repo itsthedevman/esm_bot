@@ -116,7 +116,7 @@ RSpec.shared_examples("connection") do
       }
     )
 
-    message.add_routing_data(
+    message.locals = {
       command: {
         current_user: {
           steam_uid: user.steam_uid || "",
@@ -125,7 +125,8 @@ RSpec.shared_examples("connection") do
           mention: ""
         }
       }.to_ostruct
-    )
+    }
+
     message.apply_command_metadata
 
     connection.send_message(message, wait: true)
