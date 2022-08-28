@@ -124,6 +124,7 @@ describe ESM::User do
 
     it "should be false" do
       user = build(:user)
+      user.discord_id = "foo"
       expect(user.developer?).to be(false)
     end
   end
