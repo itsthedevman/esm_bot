@@ -117,18 +117,19 @@ describe ESM::Connection::Message, v2: true do
     end
 
     it "handles codes" do
+      current_user = double("user")
+      allow(current_user).to receive(:mention).and_return(user.mention)
+
       command = double("command")
-      current_user = double("current_user")
       allow(command).to receive(:current_user).and_return(current_user)
       allow(command).to receive(:target_user).and_return(nil)
-      allow(current_user).to receive(:mention).and_return(user.mention)
 
       # Needed for mention
       message.locals = {command: command}
       message.add_error(type: "code", content: "test")
 
       embed = message.send(:on_error, message, nil)
-      expect(embed.description).to eq("#{user.mention} | #{message.id} | #{message.server_id} | #{message.type} | #{message.data_type} | #{message.metadata_type} | #{message.data.foo} | #{message.metadata.bar}")
+      expect(embed.description).to eq("#{current_user.mention} | #{message.id} | #{message.server_id} | #{message.type} | #{message.data_type} | #{message.metadata_type} | #{message.data.foo} | #{message.metadata.bar}")
     end
 
     it "handles messages" do

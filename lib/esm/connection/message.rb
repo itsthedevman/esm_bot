@@ -29,8 +29,8 @@ module ESM
           case @type
           when "code"
             replacements = {
-              user: @message.routing_data&.command&.current_user&.mention,
-              target: @message.routing_data&.command&.target_user&.mention,
+              user: @message.locals&.command&.current_user&.mention,
+              target: @message.locals&.command&.target_user&.mention,
               message_id: @message.id,
               server_id: @message.server_id,
               type: @message.type,
@@ -56,7 +56,7 @@ module ESM
         end
       end
 
-      attr_reader :id, :type, :data, :metadata, :errors, :data_type, :metadata_type, :routing_data
+      attr_reader :id, :type, :data, :metadata, :errors, :data_type, :metadata_type, :locals
       attr_accessor :resource_id, :server_id
 
       # All callbacks are provided with two arguments:
