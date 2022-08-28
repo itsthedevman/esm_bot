@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 describe ESM::Embed do
-  it "should modify a embed with a title" do
+  it "modifies a embed with a title" do
     discord_embed = Discordrb::Webhooks::Embed.new
 
     esm_embed =
@@ -14,7 +14,7 @@ describe ESM::Embed do
     expect(discord_embed.description).to be_nil
   end
 
-  it "should store the correct values" do
+  it "stores the correct values" do
     time = DateTime.now
 
     esm_embed =
@@ -90,7 +90,7 @@ describe ESM::Embed do
     expect(discord_embed.fields.first.inline).to be(true)
   end
 
-  it "should be valid with too much text" do
+  it "is valid with too much text" do
     a_very_large_text_block = "texttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttexttext"
 
     esm_embed =
@@ -109,7 +109,7 @@ describe ESM::Embed do
     expect(esm_embed.fields.first.value.size).to eq(ESM::Embed::Limit::FIELD_VALUE_LENGTH_MAX)
   end
 
-  it "should have a single field with an \"empty\" name" do
+  it "has a single field with an \"empty\" name" do
     esm_embed =
       ESM::Embed.build do |embed|
         embed.add_field(
@@ -120,7 +120,7 @@ describe ESM::Embed do
     expect(esm_embed.fields.first.name).to eq("\u200B")
   end
 
-  it "should accept an array as it's description" do
+  it "accepts an array as it's description" do
     embed =
       ESM::Embed.build do |e|
         e.description = [
@@ -132,7 +132,7 @@ describe ESM::Embed do
     expect(embed.description).to eq("First Line\nSecond Line")
   end
 
-  it "should have a footer" do
+  it "has a footer" do
     embed =
       ESM::Embed.build do |e|
         e.footer = "test"
@@ -141,7 +141,7 @@ describe ESM::Embed do
     expect(embed.footer.text).to eq("test")
   end
 
-  it "should have a valid color" do
+  it "has a valid color" do
     embed =
       ESM::Embed.build do |e|
         e.color = :blue
@@ -151,7 +151,7 @@ describe ESM::Embed do
   end
 
   describe "Build from Template" do
-    it "should build an error template (title)" do
+    it "builds an error template (title)" do
       embed = ESM::Embed.build(:error, title: "This is an error")
 
       expect(embed.color).to eq(ESM::Color::Toast::RED)
@@ -159,7 +159,7 @@ describe ESM::Embed do
       expect(embed.description).to be_blank
     end
 
-    it "should build an error template (description)" do
+    it "builds an error template (description)" do
       embed = ESM::Embed.build(:error, description: "This is an error")
 
       expect(embed.color).to eq(ESM::Color::Toast::RED)
@@ -169,7 +169,7 @@ describe ESM::Embed do
   end
 
   describe "#to_s" do
-    it "should return all available information" do
+    it "returns all available information" do
       time = DateTime.now
 
       embed =
@@ -179,12 +179,13 @@ describe ESM::Embed do
             name: "Field 1",
             value: "Field 1"
           )
+          e.color = :green
         end
 
-      expect(embed.to_s).to eq("Description (19): Testing Description\nFields:\n\t#1\n\t  Name (7): Field 1\n\t  Value (7): Field 1\nMetadata:\n\tTimestamp: #{time}\n\tColor: #3ED3FB\n")
+      expect(embed.to_s).to eq("Description (19): Testing Description\nFields:\n\t#1\n\t  Name (7): Field 1\n\t  Value (7): Field 1\nMetadata:\n\tTimestamp: #{time}\n\tColor: #9FDE3A\n")
     end
 
-    it "should return all information" do
+    it "returns all information" do
       time = DateTime.now
 
       embed =
@@ -206,7 +207,7 @@ describe ESM::Embed do
   end
 
   describe "#add_field" do
-    it "should support array when adding a field value" do
+    it "supports array when adding a field value" do
       embed =
         ESM::Embed.build do |e|
           expect { e.add_field(name: "Testing", value: ["Line one", "Line two"]) }.not_to raise_error
@@ -215,7 +216,7 @@ describe ESM::Embed do
       expect(embed.fields.first.value).to match(/line one\sline two/i)
     end
 
-    it "should support string when adding a field value" do
+    it "supports string when adding a field value" do
       embed =
         ESM::Embed.build do |e|
           expect { e.add_field(name: "Testing", value: "Line one") }.not_to raise_error
@@ -226,7 +227,7 @@ describe ESM::Embed do
   end
 
   describe "#store_field" do
-    it "should store the field" do
+    it "stores the field" do
       embed =
         ESM::Embed.build do |e|
           expect { e.add_field(name: "Testing", value: "Line one") }.not_to raise_error

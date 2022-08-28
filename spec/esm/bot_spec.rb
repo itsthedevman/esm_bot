@@ -119,11 +119,8 @@ describe ESM::Bot do
       # Set the initial response
       ESM::Test.response = "Me!"
 
-      # Reset the response
-      ESM::Test.await_and_reply(nil, wait: 0.5)
-
       # "Reply" to the message correctly after 1 second
-      ESM::Test.await_and_reply("I do", wait: 0.55)
+      ESM::Test.reply_in("I do", wait: 0.5)
 
       # Start the request (this is blocking)
       ESM.bot.await_response(user.discord_id, expected: ["i do", "i don't"])

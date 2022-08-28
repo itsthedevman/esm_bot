@@ -116,24 +116,25 @@ module ESM
         redis.del("test")
       end
 
-      # I hate this code, it doesn't make me happy
-      def await(timeout: nil)
+      def wait_for_response(timeout: nil)
         timeout ||= 5
 
         # Offset the fact that we check every 0.25s
         timeout *= 4
         counter = 0
 
-        sleep(0.25)
         while response.blank? && counter < timeout
           sleep(0.25)
           counter += 1
         end
 
-        response
+        output = response
+        @response = nil
+
+        output
       end
 
-      def await_and_reply(message, wait: 1)
+      def reply_in(message, wait: 1)
         Thread.new do
           sleep(wait)
           self.response = message

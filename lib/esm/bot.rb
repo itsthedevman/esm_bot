@@ -213,7 +213,7 @@ module ESM
       while match.nil? && counter < 99
         response =
           if ESM.env.test?
-            ESM::Test.await(timeout: timeout)
+            ESM::Test.wait_for_response(timeout: timeout)
           else
             # Add the await event
             responding_user.await!(timeout: timeout)
@@ -315,7 +315,7 @@ module ESM
       timeout = expires_at - ::Time.now
       event =
         if ESM.env.test?
-          ESM::Test.await(timeout: timeout)
+          ESM::Test.wait_for_response(timeout: timeout)
         else
           add_await!(Discordrb::Events::MessageEvent, {from: user_id, in: channel_id, timeout: timeout})
         end
