@@ -36,10 +36,10 @@ describe ESM::Event::DiscordMessageChannelV1 do
 
       expect { event(params).run! }.not_to raise_error
       expect(ESM::Test.messages.size).to eq(1)
-      channel, message = ESM::Test.messages.first
+      message = ESM::Test.messages.first
 
-      expect(channel.id.to_s).to eq(params.channelID)
-      expect(message).to eq("**Message from #{server.server_id}**\n#{params.message}")
+      expect(message.destination.id.to_s).to eq(params.channelID)
+      expect(message.content).to eq("**Message from #{server.server_id}**\n#{params.message}")
     end
   end
 
@@ -57,9 +57,11 @@ describe ESM::Event::DiscordMessageChannelV1 do
 
       expect { event(params).run! }.not_to raise_error
       expect(ESM::Test.messages.size).to eq(1)
-      channel, embed = ESM::Test.messages.first
+      message = ESM::Test.messages.first
 
-      expect(channel.id.to_s).to eq(params.channelID)
+      expect(message.destination.id.to_s).to eq(params.channelID)
+
+      embed = message.content
       expect(embed.title).to eq("Title")
       expect(embed.description).to eq("Description")
       expect(embed.fields.size).to eq(3)
@@ -82,9 +84,11 @@ describe ESM::Event::DiscordMessageChannelV1 do
 
       expect { event(params).run! }.not_to raise_error
       expect(ESM::Test.messages.size).to eq(1)
-      channel, embed = ESM::Test.messages.first
+      message = ESM::Test.messages.first
 
-      expect(channel.id.to_s).to eq(params.channelID)
+      expect(message.destination.id.to_s).to eq(params.channelID)
+
+      embed = message.content
       expect(embed.title).to eq("Title")
       expect(embed.description).to eq("Description")
       expect(embed.fields.size).to eq(3)
@@ -107,9 +111,11 @@ describe ESM::Event::DiscordMessageChannelV1 do
 
       expect { event(params).run! }.not_to raise_error
       expect(ESM::Test.messages.size).to eq(1)
-      channel, embed = ESM::Test.messages.first
+      message = ESM::Test.messages.first
 
-      expect(channel.id.to_s).to eq(params.channelID)
+      expect(message.destination.id.to_s).to eq(params.channelID)
+
+      embed = message.content
       expect(embed.title).to eq("Title")
       expect(embed.description).to eq("Description")
       expect(embed.fields.size).to eq(3)

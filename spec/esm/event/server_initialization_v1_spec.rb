@@ -89,9 +89,11 @@ describe ESM::Event::ServerInitializationV1 do
       end
 
       it "should be valid" do
+        member = user.discord_user.on(community.discord_server)
+        expect(event.packet.territory_admins).to eq("[\"#{user.steam_uid}\"]") if member && (member.owner? || community.territory_admin_ids.any? { |id| member.role?(id) })
+
         expect(event.packet.function_name).to eq("postServerInitialization")
         expect(event.packet.server_id).to eq(server.server_id)
-        expect(event.packet.territory_admins).to eq("[\"#{user.steam_uid}\"]")
         expect(event.packet.extdb_path).to eq(setting.extdb_path || "")
         expect(event.packet.gambling_modifier).to eq(setting.gambling_modifier)
         expect(event.packet.gambling_payout).to eq(setting.gambling_payout)
@@ -119,7 +121,7 @@ describe ESM::Event::ServerInitializationV1 do
         expect(event.packet.reward_player_poptabs).to eq(reward.player_poptabs)
         expect(event.packet.reward_locker_poptabs).to eq(reward.locker_poptabs)
         expect(event.packet.reward_respect).to eq(reward.respect)
-        expect(event.packet.reward_items).to eq("[[\"Exile_Item_EMRE\",2],[\"Chemlight_blue\",5]]")
+        expect(event.packet.reward_items).to eq(reward.reward_items.to_a.to_json)
       end
     end
   end

@@ -43,7 +43,7 @@ describe ESM::Event::Xm8NotificationV1 do
   end
 
   describe "Custom routes" do
-    let!(:event_service) { ESM::Event::Xm8Notification.new(server: server, parameters: parameters) }
+    let!(:event_service) { ESM::Event::Xm8NotificationV1.new(server: server, parameters: parameters) }
     let(:parameters) do
       OpenStruct.new(
         type: "base-raid",

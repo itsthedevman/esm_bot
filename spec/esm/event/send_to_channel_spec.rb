@@ -62,7 +62,7 @@ describe ESM::Event::SendToChannel, requires_connection: true, v2: true do
   it "only allows sending messages to that community's discord channels" do
     inbound_message = ESM::Connection::Message.new(
       type: "event", data_type: "send_to_channel",
-      data: {id: "1", content: ""}
+      data: {id: "THIS CHANNEL CANNOT EXIST", content: ""}
     )
 
     described_class.new(connection, inbound_message).run!
