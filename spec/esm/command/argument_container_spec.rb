@@ -2,7 +2,7 @@
 
 describe ESM::Command::ArgumentContainer do
   # Note: This requires ESM everything
-  let!(:command) { ESM::Command::Test::Base.new }
+  let!(:command) { ESM::Command::Test::BaseV1.new }
   let!(:community) { create(:esm_community) }
   let!(:server) { create(:server, community_id: community.id) }
   let!(:user) { create(:user) }
@@ -22,8 +22,8 @@ describe ESM::Command::ArgumentContainer do
     )
   end
 
-  it "should have #{ESM::Command::Test::Base::ARGUMENT_COUNT} arguments" do
-    expect(container.size).to eq(ESM::Command::Test::Base::ARGUMENT_COUNT)
+  it "should have #{ESM::Command::Test::BaseV1::ARGUMENT_COUNT} arguments" do
+    expect(container.size).to eq(ESM::Command::Test::BaseV1::ARGUMENT_COUNT)
   end
 
   describe "Valid Argument Container (Preserve)" do
@@ -32,8 +32,8 @@ describe ESM::Command::ArgumentContainer do
       expect { container.parse!(event) }.not_to raise_error
     end
 
-    it "should have #{ESM::Command::Test::Base::ARGUMENT_COUNT} matches" do
-      expect(container.matches.size).to eq(ESM::Command::Test::Base::ARGUMENT_COUNT)
+    it "should have #{ESM::Command::Test::BaseV1::ARGUMENT_COUNT} matches" do
+      expect(container.matches.size).to eq(ESM::Command::Test::BaseV1::ARGUMENT_COUNT)
     end
 
     it "should preserve the case" do
@@ -64,7 +64,7 @@ describe ESM::Command::ArgumentContainer do
         expect(embed.description).to match(/```.+base #{community.community_id} #{server.server_id} #{user.discord_id} 1 <_preserve> <sa_yalpsid> not_default <\?_multiline> ```/)
         expect(embed.fields.size).to eql(1)
         expect(embed.fields.first.name).to eql("Arguments:")
-        expect(embed.fields.first.value).to eql(ESM::Command::Test::Base::COMMAND_AS_STRING)
+        expect(embed.fields.first.value).to eql(ESM::Command::Test::BaseV1::COMMAND_AS_STRING)
         expect(embed.footer.text).to match(/for more information, send me `.+help base`/i)
       end
     end
@@ -87,8 +87,8 @@ describe ESM::Command::ArgumentContainer do
       expect { container.parse!(event) }.not_to raise_error
     end
 
-    it "should have #{ESM::Command::Test::Base::ARGUMENT_COUNT} matches" do
-      expect(container.matches.size).to eq(ESM::Command::Test::Base::ARGUMENT_COUNT)
+    it "should have #{ESM::Command::Test::BaseV1::ARGUMENT_COUNT} matches" do
+      expect(container.matches.size).to eq(ESM::Command::Test::BaseV1::ARGUMENT_COUNT)
     end
 
     it "should not preserve the case" do
@@ -115,8 +115,8 @@ describe ESM::Command::ArgumentContainer do
       expect { container.parse!(event) }.not_to raise_error
     end
 
-    it "should have #{ESM::Command::Test::Base::ARGUMENT_COUNT} matches" do
-      expect(container.matches.size).to eq(ESM::Command::Test::Base::ARGUMENT_COUNT)
+    it "should have #{ESM::Command::Test::BaseV1::ARGUMENT_COUNT} matches" do
+      expect(container.matches.size).to eq(ESM::Command::Test::BaseV1::ARGUMENT_COUNT)
     end
 
     it "should include the new lines and preserve case" do
@@ -143,8 +143,8 @@ describe ESM::Command::ArgumentContainer do
       expect { container.parse!(event) }.not_to raise_error
     end
 
-    it "should have #{ESM::Command::Test::Base::ARGUMENT_COUNT} matches" do
-      expect(container.matches.size).to eq(ESM::Command::Test::Base::ARGUMENT_COUNT)
+    it "should have #{ESM::Command::Test::BaseV1::ARGUMENT_COUNT} matches" do
+      expect(container.matches.size).to eq(ESM::Command::Test::BaseV1::ARGUMENT_COUNT)
     end
 
     it "should be of type int" do
@@ -175,8 +175,8 @@ describe ESM::Command::ArgumentContainer do
       expect { container.parse!(event) }.not_to raise_error
     end
 
-    it "should have #{ESM::Command::Test::Base::ARGUMENT_COUNT} matches" do
-      expect(container.matches.size).to eq(ESM::Command::Test::Base::ARGUMENT_COUNT)
+    it "should have #{ESM::Command::Test::BaseV1::ARGUMENT_COUNT} matches" do
+      expect(container.matches.size).to eq(ESM::Command::Test::BaseV1::ARGUMENT_COUNT)
     end
 
     it "should not use the default value" do
@@ -201,8 +201,8 @@ describe ESM::Command::ArgumentContainer do
       expect { container.parse!(event) }.not_to raise_error
     end
 
-    it "should have #{ESM::Command::Test::Base::ARGUMENT_COUNT} matches" do
-      expect(container.matches.size).to eq(ESM::Command::Test::Base::ARGUMENT_COUNT)
+    it "should have #{ESM::Command::Test::BaseV1::ARGUMENT_COUNT} matches" do
+      expect(container.matches.size).to eq(ESM::Command::Test::BaseV1::ARGUMENT_COUNT)
     end
 
     it "should not use the default value" do
@@ -211,7 +211,7 @@ describe ESM::Command::ArgumentContainer do
   end
 
   it "#to_s" do
-    expect(container.to_s).to eq(ESM::Command::Test::Base::COMMAND_AS_STRING)
+    expect(container.to_s).to eq(ESM::Command::Test::BaseV1::COMMAND_AS_STRING)
   end
 
   describe "#clear!" do

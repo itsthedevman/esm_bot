@@ -530,8 +530,8 @@ module ESM
         # This just makes typing a little easier when writing commands
         @response = parameters.size == 1 ? parameters.first : parameters
 
-        # Call the server method
-        server
+        # Trigger the callback
+        on_response
       end
 
       def create_or_update_cooldown

@@ -216,7 +216,7 @@ end
 
 def create_request(**params)
   user = ESM.bot.user(TestUser::User1::ID)
-  command = ESM::Command::Test::Base.new
+  command = ESM::Command::Test::BaseV1.new
 
   ESM::Websocket::Request.new(
     command: command,

@@ -3,7 +3,7 @@
 describe ESM::Command::Base do
   # NOTE: This command REQUIRES esm_community, an esm server, AND a user in ESM.
   # Bryan - You've tried 3 times to change that. Stop trying to make that work. :P
-  let!(:command) { ESM::Command::Test::Base.new }
+  let!(:command) { ESM::Command::Test::BaseV1.new }
   let!(:community) { create(:esm_community) }
   let!(:server) { create(:server, community_id: community.id) }
   let!(:user) { create(:user) }
@@ -23,8 +23,8 @@ describe ESM::Command::Base do
     expect(command.aliases.size).to eq(2)
   end
 
-  it "should have #{ESM::Command::Test::Base::ARGUMENT_COUNT} arguments" do
-    expect(command.arguments.size).to eq(ESM::Command::Test::Base::ARGUMENT_COUNT)
+  it "should have #{ESM::Command::Test::BaseV1::ARGUMENT_COUNT} arguments" do
+    expect(command.arguments.size).to eq(ESM::Command::Test::BaseV1::ARGUMENT_COUNT)
   end
 
   it "should have description" do

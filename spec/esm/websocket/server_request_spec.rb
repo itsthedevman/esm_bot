@@ -13,7 +13,7 @@ describe ESM::Websocket::ServerRequest do
   let(:connection) { ESM::Websocket.connections[server.server_id] }
 
   let(:command) do
-    command = ESM::Command::Test::Base.new
+    command = ESM::Command::Test::BaseV1.new
 
     command_statement = command.statement(
       community_id: community.community_id,
