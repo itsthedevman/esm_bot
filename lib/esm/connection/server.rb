@@ -42,6 +42,7 @@ module ESM
         @mutex = Mutex.new
         @redis = Redis.new(ESM::REDIS_OPTS)
         @message_overseer = ESM::Connection::MessageOverseer.new
+        @state = :resumed
 
         @redis.del("connection_server_outbound")
         @redis.del("connection_server_inbound")
@@ -76,13 +77,21 @@ module ESM
       end
 
       def resume
+        return if @state == :resumed
+
         message = ESM::Connection::Message.new(type: :resume)
         __send_internal(message)
+
+        @state = :resumed
       end
 
       def pause
+        return if @state == :paused
+
         message = ESM::Connection::Message.new(type: :pause)
         __send_internal(message)
+
+        @state = :paused
       end
 
       def disconnect_all!
