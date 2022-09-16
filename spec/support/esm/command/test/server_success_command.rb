@@ -14,6 +14,7 @@ module ESM
         define :cooldown_time, modifiable: true, default: 2.seconds
 
         argument :server_id
+        argument :nullable, regex: /.*/, description: "commands.server_success_command.arguments.nullable", default: nil
 
         def discord
           deliver!
@@ -21,6 +22,14 @@ module ESM
 
         def server
           reply("Yaay")
+        end
+
+        def on_execute
+          send_to_arma(type: :test, data_type: :empty)
+        end
+
+        def on_response
+          server
         end
       end
     end

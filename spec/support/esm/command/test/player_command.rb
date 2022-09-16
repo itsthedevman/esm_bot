@@ -13,9 +13,17 @@ module ESM
         define :cooldown_time, modifiable: true, default: 2.seconds
 
         def discord
+          "discord"
         end
 
         def server
+          "server"
+        end
+
+        def on_execute
+        end
+
+        def on_response
         end
       end
     end

@@ -3,9 +3,9 @@
 module ESM
   module Command
     module Test
-      class DirectMessageCommand < ESM::Command::Base
+      class ServerCommand < ESM::Command::Base
         type :player
-        limit_to :dm
+        requires :registration
 
         define :enabled, modifiable: true, default: true
         define :whitelist_enabled, modifiable: true, default: false
@@ -13,16 +13,18 @@ module ESM
         define :allowed_in_text_channels, modifiable: true, default: true
         define :cooldown_time, modifiable: true, default: 2.seconds
 
-        def discord
-        end
-
-        def server
-        end
+        argument :server_id
 
         def on_execute
         end
 
         def on_response
+        end
+
+        def on_accept
+        end
+
+        def on_decline
         end
       end
     end

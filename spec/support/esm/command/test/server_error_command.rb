@@ -20,6 +20,13 @@ module ESM
 
         def server
         end
+
+        def on_execute
+          discord
+        end
+
+        def on_response
+        end
       end
     end
   end
