@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 describe "ESMs_system_network_discord_send_to", requires_connection: true, v2: true do
-  include_examples "connection"
+  include_context "connection"
 
   it "sends to a channel (ID/message)" do
     channel = server.community.discord_server.channels.sample

@@ -1,7 +1,8 @@
 # frozen_string_literal: true
 
 describe ESM::Command::Server::Reward, category: "command", v2: true do
-  include_examples "command", described_class
+  include_context "command"
+  include_examples "validate_command"
 
   it "is a player command" do
     expect(command.type).to eql(:player)
@@ -12,7 +13,7 @@ describe ESM::Command::Server::Reward, category: "command", v2: true do
   end
 
   describe "Command workflows", requires_connection: true do
-    include_examples "connection"
+    include_context "connection"
 
     it "Executes - Player poptabs only" do
       reward = server.server_rewards.default

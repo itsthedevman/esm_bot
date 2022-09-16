@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 describe ESM::Event::ServerInitialization, v2: true, requires_connection: true do
-  include_examples "connection"
+  include_context "connection"
 
   let(:community) { ESM::Test.community }
   let(:server) { ESM::Test.server }

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 describe ESM::Event::SendToChannel, requires_connection: true, v2: true do
-  include_examples "connection"
+  include_context "connection"
 
   let!(:server) { ESM::Test.server }
 

@@ -1,7 +1,8 @@
 # frozen_string_literal: true
 
 describe ESM::Command::Server::Sqf, category: "command", v2: true do
-  include_examples "command", described_class
+  include_context "command"
+  include_examples "command"
 
   it "is an admin command" do
     expect(command.type).to eql(:admin)
@@ -13,7 +14,7 @@ describe ESM::Command::Server::Sqf, category: "command", v2: true do
 
   # Change "requires_connection" to true if this command requires the client to be connected
   describe "#on_execute/#on_response", requires_connection: true do
-    include_examples "connection"
+    include_context "connection"
 
     let(:second_user) { ESM::Test.second_user }
 

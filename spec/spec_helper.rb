@@ -50,7 +50,7 @@ RSpec.configure do |config|
   config.example_status_persistence_file_path = ".rspec_status"
 
   # Timeout for rspec/wait, default timeout for requests
-  config.wait_timeout = 10 # seconds
+  config.wait_timeout = 5 # seconds
 
   config.expect_with :rspec do |c|
     c.syntax = :expect
@@ -69,17 +69,11 @@ RSpec.configure do |config|
 
   config.around(:each) do |example|
     server = ESM::Connection::Server.instance
-    server.disconnect_all!
-    server.message_overseer&.remove_all!
-    server.refresh_keys
+    server&.disconnect_all!
+    server&.message_overseer&.remove_all!
+    server&.refresh_keys
 
     DatabaseCleaner.cleaning do
-      if example.metadata[:requires_connection]
-        ESM::Connection::Server.resume
-      else
-        ESM::Connection::Server.pause
-      end
-
       ESM::Test.reset!
 
       # Run the test!
@@ -93,7 +87,25 @@ RSpec.configure do |config|
   end
 end
 
-RSpec.shared_examples("connection") do
+RSpec.shared_context("command") do
+  let!(:command) { (respond_to?(:command_class) ? command_class : described_class).new }
+  let(:community) { ESM::Test.community }
+  let(:server) { ESM::Test.server }
+  let(:user) { ESM::Test.user }
+
+  def execute!(fail_on_raise: true, channel_type: :text, **command_args)
+    command_statement = command.statement(command_args)
+    event = CommandEvent.create(command_statement, user: user, channel_type: channel_type)
+
+    if fail_on_raise
+      expect { command.execute(event) }.not_to raise_error
+    else
+      command.execute(event)
+    end
+  end
+end
+
+RSpec.shared_context("connection") do
   let(:community) { ESM::Test.community }
   let(:server) { ESM::Test.server }
   let(:user) { ESM::Test.user }
@@ -135,54 +147,49 @@ RSpec.shared_examples("connection") do
   end
 
   before(:each) do
+    ESM::Connection::Server.resume
     wait_for { server.connected? }.to be(true)
 
     ESM::Test.outbound_server_messages.clear
 
-    # Creates a user on the server with the same steam_uid
-    allow(user).to receive(:connect) { |**attrs| spawn_test_user(user, on: connection, **attrs) } if respond_to?(:user)
-    allow(second_user).to receive(:connect) { |**attrs| spawn_test_user(second_user, on: connection, **attrs) } if respond_to?(:second_user)
-
-    allow(user).to receive("connected?") { user.connected ||= false } if respond_to?(:user)
-    allow(second_user).to receive("connected?") { second_user.connected ||= false } if respond_to?(:second_user)
-  end
-
-  after(:each) do
-    users = ""
-    users += "ESM_TestUser_#{user.steam_uid} call _deleteFunction;" if respond_to?(:user) && user.connected?
-    users += "ESM_TestUser_#{second_user.steam_uid} call _deleteFunction;" if respond_to?(:second_user) && second_user.connected?
+    users = []
+    users << user if respond_to?(:user)
+    users << second_user if respond_to?(:second_user)
     next if users.blank?
 
-    execute_sqf!(
-      <<~SQF
-        private _deleteFunction = {
-          if (isNil "_this") exitWith {};
-
-          deleteVehicle _this;
-        };
-        #{users}
-      SQF
-    )
-  end
-end
-
-RSpec.shared_examples("command") do |described_class|
-  let!(:command) { described_class.new }
-  let(:community) { ESM::Test.community }
-  let(:server) { ESM::Test.server }
-  let(:user) { ESM::Test.user }
-
-  def execute!(fail_on_raise: true, channel_type: :text, **command_args)
-    command_statement = command.statement(command_args)
-    event = CommandEvent.create(command_statement, user: user, channel_type: channel_type)
-
-    if fail_on_raise
-      expect { command.execute(event) }.not_to raise_error
-    else
-      command.execute(event)
+    users.each do |user|
+      # Creates a user on the server with the same steam_uid
+      allow(user).to receive(:connect) { |**attrs| spawn_test_user(user, on: connection, **attrs) }
     end
   end
 
+  after(:each) do
+    users = []
+    users << user if respond_to?(:user)
+    users << second_user if respond_to?(:second_user)
+
+    sqf = users.format(join_with: "\n") do |user|
+      "ESM_TestUser_#{user.steam_uid} call _deleteFunction;" if user.connected
+    end
+
+    if sqf.present?
+      execute_sqf!(
+        <<~SQF
+          private _deleteFunction = {
+            if (isNil "_this") exitWith {};
+
+            deleteVehicle _this;
+          };
+          #{sqf}
+        SQF
+      )
+    end
+
+    ESM::Connection::Server.pause
+  end
+end
+
+RSpec.shared_examples("validate_command") do
   it "has a valid description text" do
     expect(command.description).not_to be_blank
     expect(command.description).not_to match(/todo/i)

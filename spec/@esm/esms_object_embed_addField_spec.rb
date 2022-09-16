@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 describe "ESMs_object_embed_addField", requires_connection: true, v2: true do
-  include_examples "connection"
+  include_context "connection"
 
   it "returns adds a field to the embed" do
     response = execute_sqf!(

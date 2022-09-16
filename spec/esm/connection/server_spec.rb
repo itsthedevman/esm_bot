@@ -23,7 +23,7 @@ describe ESM::Connection::Server, v2: true do
 
   # fire(message, to:, forget: false, wait: false)
   describe "#fire", requires_connection: true do
-    include_examples "connection"
+    include_context "connection"
 
     let(:server) { ESM::Test.server }
 
