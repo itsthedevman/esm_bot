@@ -96,15 +96,14 @@ impl Server {
         }
     }
 
-    fn send_to_client(&self, message: &mut Message) -> bool {
+    fn send_to_client(&self, message: Message) -> Result<(), Message> {
         let server_id = match message.server_id.clone() {
             Some(id) => id,
             None => {
-                message.add_error(
+                return Err(message.add_error(
                     ErrorType::Message,
                     "Cannot send message - Missing server_id",
-                );
-                return false;
+                ));
             }
         };
 
@@ -112,8 +111,7 @@ impl Server {
         let endpoint = match connection_manager.find_by_server_id(&server_id) {
             Some(endpoint) => endpoint,
             None => {
-                message.add_error(ErrorType::Code, "client_not_connected");
-                return false;
+                return Err(message.add_error(ErrorType::Code, "client_not_connected"));
             }
         };
 
@@ -124,11 +122,11 @@ impl Server {
                     "#send_to_client - Failed to find server key for message. \n{:?} ",
                     message
                 );
-                message.add_error(
+
+                return Err(message.add_error(
                     ErrorType::Message,
                     "Cannot send message - Missing server key",
-                );
-                return false;
+                ));
             }
         };
 
@@ -137,12 +135,11 @@ impl Server {
                 info!("#send_to_client - {}", message.id);
 
                 self.handler.network().send(endpoint.to_owned(), &bytes);
-                true
+                Ok(())
             }
             Err(error) => {
                 error!("#send_to_client - {}", error);
-                message.add_error(ErrorType::Code, "client_not_connected");
-                false
+                Err(message.add_error(ErrorType::Code, "client_not_connected"))
             }
         }
     }
@@ -319,7 +316,7 @@ impl Server {
                 }
             };
 
-            let mut message: Message = match serde_json::from_str(&json) {
+            let message: Message = match serde_json::from_str(&json) {
                 Ok(message) => message,
                 Err(e) => {
                     error!("#process_inbound_messages - {}", e);
@@ -342,6 +339,7 @@ impl Server {
 
                 Type::Pause => {
                     self.allow_connections.store(false, Ordering::SeqCst);
+                    self.disconnect_all();
                 }
 
                 // Received from the bot after a ping has been sent
@@ -362,16 +360,10 @@ impl Server {
 
                 // Everything else is sent to the client
                 _ => {
-                    let success = self.send_to_client(&mut message);
-                    if success {
-                        continue;
+                    if let Err(message) = self.send_to_client(message) {
+                        // The message failed, send it back to the bot
+                        self.send_to_bot(message.set_type(Type::Error).set_data(Data::Empty))
                     }
-
-                    // The message failed, send it back to the bot
-                    message.message_type = Type::Error;
-                    message.data = Data::Empty;
-
-                    self.send_to_bot(message);
                 }
             }
         }
@@ -480,11 +472,8 @@ impl Server {
         };
 
         let resource_id = endpoint.resource_id();
-        let mut message = match Message::from_bytes(data, &server_key) {
-            Ok(mut message) => {
-                message.set_resource(resource_id);
-                message
-            }
+        let message = match Message::from_bytes(data, &server_key) {
+            Ok(message) => message.set_resource(resource_id),
             Err(e) => {
                 error!("#on_message - {}", e);
                 self.disconnect(endpoint);
@@ -532,8 +521,12 @@ impl Server {
             | Type::Test
             | Type::Resume
             | Type::Pause => {
-                message.add_error(ErrorType::Message, "Error - Invalid message type provided");
-                self.send_to_client(&mut message);
+                let message =
+                    message.add_error(ErrorType::Message, "Error - Invalid message type provided");
+                if let Err(message) = self.send_to_client(message) {
+                    // The message failed, send it back to the bot
+                    self.send_to_bot(message.set_type(Type::Error).set_data(Data::Empty));
+                }
             }
 
             // Feed the message through to the bot
@@ -548,9 +541,6 @@ impl Server {
         // Remove the resource from the connection_manager
         self.connection_manager.write().remove(endpoint);
 
-        let mut message = Message::new(Type::Disconnect);
-        message.set_resource(resource_id);
-
-        self.send_to_bot(message);
+        self.send_to_bot(Message::new(Type::Disconnect).set_resource(resource_id));
     }
 }
