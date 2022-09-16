@@ -22,7 +22,7 @@ describe ESM::Command::ArgumentContainer do
     )
   end
 
-  it "should have #{ESM::Command::Test::BaseV1::ARGUMENT_COUNT} arguments" do
+  it "has #{ESM::Command::Test::BaseV1::ARGUMENT_COUNT} arguments" do
     expect(container.size).to eq(ESM::Command::Test::BaseV1::ARGUMENT_COUNT)
   end
 
@@ -32,11 +32,11 @@ describe ESM::Command::ArgumentContainer do
       expect { container.parse!(event) }.not_to raise_error
     end
 
-    it "should have #{ESM::Command::Test::BaseV1::ARGUMENT_COUNT} matches" do
+    it "has #{ESM::Command::Test::BaseV1::ARGUMENT_COUNT} matches" do
       expect(container.matches.size).to eq(ESM::Command::Test::BaseV1::ARGUMENT_COUNT)
     end
 
-    it "should preserve the case" do
+    it "preserves the case" do
       expect(container._preserve).to eq("PRESERVE")
     end
   end
@@ -51,11 +51,11 @@ describe ESM::Command::ArgumentContainer do
       )
     end
 
-    it "should have a valid event" do
+    it "has a valid event" do
       expect(event).not_to be_nil
     end
 
-    it "should raise an error with a embed" do
+    it "raises an error with a embed" do
       expect { container.parse!(event) }.not_to raise_error
       expect { container.validate! }.to raise_error do |error|
         embed = error.data
@@ -87,11 +87,11 @@ describe ESM::Command::ArgumentContainer do
       expect { container.parse!(event) }.not_to raise_error
     end
 
-    it "should have #{ESM::Command::Test::BaseV1::ARGUMENT_COUNT} matches" do
+    it "has #{ESM::Command::Test::BaseV1::ARGUMENT_COUNT} matches" do
       expect(container.matches.size).to eq(ESM::Command::Test::BaseV1::ARGUMENT_COUNT)
     end
 
-    it "should not preserve the case" do
+    it "does not preserve the case" do
       expect(container._display_as).to eq("display_as")
     end
   end
@@ -115,11 +115,11 @@ describe ESM::Command::ArgumentContainer do
       expect { container.parse!(event) }.not_to raise_error
     end
 
-    it "should have #{ESM::Command::Test::BaseV1::ARGUMENT_COUNT} matches" do
+    it "has #{ESM::Command::Test::BaseV1::ARGUMENT_COUNT} matches" do
       expect(container.matches.size).to eq(ESM::Command::Test::BaseV1::ARGUMENT_COUNT)
     end
 
-    it "should include the new lines and preserve case" do
+    it "includes the new lines and preserve case" do
       expect(container._multiline).to eq("MULTI\nLINE")
     end
   end
@@ -143,15 +143,15 @@ describe ESM::Command::ArgumentContainer do
       expect { container.parse!(event) }.not_to raise_error
     end
 
-    it "should have #{ESM::Command::Test::BaseV1::ARGUMENT_COUNT} matches" do
+    it "has #{ESM::Command::Test::BaseV1::ARGUMENT_COUNT} matches" do
       expect(container.matches.size).to eq(ESM::Command::Test::BaseV1::ARGUMENT_COUNT)
     end
 
-    it "should be of type int" do
+    it "is type int" do
       expect(container._integer).to be_a(Integer)
     end
 
-    it "should equal 1" do
+    it "equals 1" do
       expect(container._integer).to eq(1)
     end
   end
@@ -175,11 +175,11 @@ describe ESM::Command::ArgumentContainer do
       expect { container.parse!(event) }.not_to raise_error
     end
 
-    it "should have #{ESM::Command::Test::BaseV1::ARGUMENT_COUNT} matches" do
+    it "has #{ESM::Command::Test::BaseV1::ARGUMENT_COUNT} matches" do
       expect(container.matches.size).to eq(ESM::Command::Test::BaseV1::ARGUMENT_COUNT)
     end
 
-    it "should not use the default value" do
+    it "does not use the default value" do
       expect(container._default).to eq("default")
     end
   end
@@ -201,11 +201,11 @@ describe ESM::Command::ArgumentContainer do
       expect { container.parse!(event) }.not_to raise_error
     end
 
-    it "should have #{ESM::Command::Test::BaseV1::ARGUMENT_COUNT} matches" do
+    it "has #{ESM::Command::Test::BaseV1::ARGUMENT_COUNT} matches" do
       expect(container.matches.size).to eq(ESM::Command::Test::BaseV1::ARGUMENT_COUNT)
     end
 
-    it "should not use the default value" do
+    it "does not use the default value" do
       expect(container._default).to eq("not_default")
     end
   end
@@ -220,7 +220,7 @@ describe ESM::Command::ArgumentContainer do
       expect { container.parse!(event) }.not_to raise_error
     end
 
-    it "should clear the values of all arguments" do
+    it "clear the values of all arguments" do
       expect(container.map(&:value).reject(&:nil?)).not_to be_empty
       container.clear!
       expect(container.map(&:value).reject(&:nil?)).to be_empty
@@ -233,7 +233,7 @@ describe ESM::Command::ArgumentContainer do
       expect { container.parse!(event) }.not_to raise_error
     end
 
-    it "should have all attributes and values" do
+    it "has all attributes and values" do
       hash = container.to_h
       expect(hash.keys).to match_array(container.map(&:name))
       expect(hash.values).to match_array(container.map(&:value))
@@ -253,7 +253,7 @@ describe ESM::Command::ArgumentContainer do
       )
     end
 
-    it "should properly slice out alias correctly" do
+    it "properly slices out alias correctly" do
       expect { container.parse!(event) }.not_to raise_error
     end
   end
