@@ -76,6 +76,8 @@ module ESM
       ESM::Request::Overseer.die
 
       super
+
+      exit
     end
 
     # Overriding DiscordRB's variant to allow commands to be case-insensitive
