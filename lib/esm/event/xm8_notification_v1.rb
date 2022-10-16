@@ -166,19 +166,21 @@ module ESM
         #   Using a mention in an embed does not cause a "notification" on discord. This does not work since these are often urgent.
         #   To get around this, routes need to be grouped by channel. From here, an initial message can be sent tagging each user with this channel (and type)
         users_by_channel_id = ESM::UserNotificationRoute.select(:user_id, :channel_id)
-          .includes(:user)
-          .enabled
-          .accepted
-          .where(notification_type: @xm8_type)
-          .where("source_server_id IS NULL OR source_server_id = ?", @server.id)
-          .group_by(&:channel_id)
-          .transform_values! { |r| r.map(&:user) }
+                                                        .includes(:user)
+                                                        .enabled
+                                                        .accepted
+                                                        .where(notification_type: @xm8_type, user_id: @users.pluck(:id))
+                                                        .where("source_server_id IS NULL OR source_server_id = ?", @server.id)
+                                                        .group_by(&:channel_id)
+                                                        .transform_values! { |r| r.map(&:user) }
 
         users_by_channel_id.each do |channel_id, users|
           notification_message = ESM.bot.deliver(embed, to: channel_id, embed_message: "#{@xm8_type.titleize} - #{users.map(&:mention).join(" ")}")
 
           users.each do |user|
-            status = @statuses_by_user[user][:custom_routes]
+            status = @statuses_by_user[user] ||= { direct_message: :ignored, custom_routes: { sent: 0, expected: 0 } }
+
+            status = status[:custom_routes]
             status[:sent] += 1 if notification_message
             status[:expected] += 1
           end

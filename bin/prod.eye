@@ -15,5 +15,6 @@ Eye.application "esm" do
     stdall "log/stdall.log"
     start_command "bundle exec ruby bin/esm.rb"
     stop_command "kill -9 {PID}"
+    env 'ESM_ENV' => 'production'
   end
 end
