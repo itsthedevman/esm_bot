@@ -1,20 +1,14 @@
-use std::collections::HashMap;
+use std::sync::atomic::Ordering;
 
-use crate::*;
+use crate::{bot::BotRequest, connection_manager::ConnectionManager, *};
 use message_io::{
-    network::{Endpoint, NetEvent, SendStatus},
+    network::{Endpoint, NetEvent},
     node::{self, NodeHandler, NodeListener},
 };
-use redis::Commands;
 use serde::{Deserialize, Serialize};
 use tokio::sync::mpsc::UnboundedReceiver;
 
-lazy_static! {
-    static ref CONNECTION_MANAGER: Arc<Mutex<ConnectionManager>> =
-        Arc::new(Mutex::new(ConnectionManager::new()));
-}
-
-type Handler = NodeHandler<()>;
+pub type Handler = NodeHandler<()>;
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(tag = "type", content = "content", rename_all = "snake_case")]
@@ -23,26 +17,52 @@ pub enum ServerRequest {
     Disconnect(Option<String>),
     Resume,
     Pause,
-    Send(Box<Message>),
+    Send(Vec<u8>, Box<Message>),
+
+    #[serde(skip)]
+    OnConnect(Endpoint),
+
+    #[serde(skip)]
+    OnMessage {
+        endpoint: Endpoint,
+        message_bytes: Vec<u8>,
+    },
 }
 
 pub async fn initialize(receiver: UnboundedReceiver<ServerRequest>) {
     let (handler, listener) = node::split::<()>();
-    command_thread(handler, receiver).await;
+    routing_thread(handler, receiver).await;
     server_thread(listener).await;
+    heartbeat_thread().await;
 
     info!("[server::initialize] Done");
 }
 
-async fn command_thread(handler: Handler, mut receiver: UnboundedReceiver<ServerRequest>) {
+async fn routing_thread(handler: Handler, mut receiver: UnboundedReceiver<ServerRequest>) {
     tokio::spawn(async move {
+        let mut connection_manager = ConnectionManager::new();
         while let Some(request) = receiver.recv().await {
             match request {
                 ServerRequest::Connect => todo!(), // I'm not sure if this is needed yet
-                ServerRequest::Disconnect(server_id) => todo!(), // If there is a server_id, drop that one client. Otherwise, drop all clients
-                ServerRequest::Resume => todo!(),                // Set flag
-                ServerRequest::Pause => todo!(), // Set flag and disconnect all clients
-                ServerRequest::Send(_) => todo!(), // Send message to client
+                ServerRequest::Disconnect(server_id) => match server_id {
+                    Some(id) => connection_manager.disconnect(&handler, id.as_bytes()),
+                    None => connection_manager.disconnect_all(&handler),
+                },
+                ServerRequest::Resume => crate::SERVER_READY.store(true, Ordering::SeqCst),
+                ServerRequest::Pause => {
+                    crate::SERVER_READY.store(false, Ordering::SeqCst);
+                    connection_manager.disconnect_all(&handler);
+                }
+                ServerRequest::Send(server_id, message) => {
+                    if let Err(e) = connection_manager.send(&handler, &server_id, *message) {
+                        error!("{e}")
+                    }
+                }
+                ServerRequest::OnConnect(endpoint) => on_connect(&mut connection_manager, endpoint),
+                ServerRequest::OnMessage {
+                    endpoint,
+                    message_bytes,
+                } => on_message(&handler, &mut connection_manager, endpoint, &message_bytes),
             }
         }
     });
@@ -52,135 +72,96 @@ async fn server_thread(listener: NodeListener<()>) {
     tokio::spawn(async move {
         listener.for_each(move |event| match event.network() {
             NetEvent::Connected(_, _) => {} // Unused
-            NetEvent::Message(endpoint, data) => {
-                // Check if the client is still connected
-                // Trigger on_message
+            NetEvent::Message(endpoint, message_bytes) => {
+                // TODO: Add check for BOT_CONNECTED and SERVER_READY
+
+                if let Err(e) =
+                    crate::ROUTER.route_to_server(ServerRequest::OnMessage { endpoint, message_bytes: message_bytes.to_vec() })
+                {
+                    error!("[server::server_thread] Failed to route endpoint to server on Message event. {e}")
+                }
             }
-            NetEvent::Disconnected(endpoint) => (), // On disconnect
+            NetEvent::Disconnected(endpoint) => todo!(), // TODO: On disconnect
             NetEvent::Accepted(endpoint, resource_id) => {
-                // Check if the client is still connected
-                // Trigger on_connect
+                // TODO: Add check for BOT_CONNECTED and SERVER_READY
+
+                debug!(
+                    "[server::server_thread] {} Incoming connection with address {}",
+                    resource_id,
+                    endpoint.addr()
+                );
+
+                if let Err(e) =
+                    crate::ROUTER.route_to_server(ServerRequest::OnConnect(endpoint))
+                {
+                    error!("[server::server_thread] Failed to route endpoint to server on Accepted event. {e}")
+                }
             }
         });
     });
 }
 
-async fn heartbeat_thread() {}
-
-struct ConnectionManager {
-    redis_client: redis::Client,
-    lobby: Vec<Endpoint>,
-
-    // TODO: Convert to storing Client (which stores the endpoint)
-    connections: HashMap<Vec<u8>, Endpoint>,
+async fn heartbeat_thread() {
+    todo!("heartbeat_thread and handle lobby");
 }
 
-impl ConnectionManager {
-    pub fn new() -> Self {
-        let redis_client = match redis::Client::open(crate::ARGS.lock().redis_uri.to_string()) {
-            Ok(c) => c,
-            Err(e) => panic!(
-                "[server::ConnectionManager::new] Failed to connect to redis. {}",
-                e
-            ),
-        };
+fn on_connect(connection_manager: &mut ConnectionManager, endpoint: Endpoint) {
+    connection_manager.add(endpoint)
+}
 
-        ConnectionManager {
-            redis_client,
-            lobby: Vec::new(),
-            connections: HashMap::new(),
+fn on_message(
+    handler: &Handler,
+    connection_manager: &mut ConnectionManager,
+    endpoint: Endpoint,
+    message_bytes: &[u8],
+) {
+    // Extract the server_id from the message
+    let server_id = &message_bytes[1..=(message_bytes[0] as usize)];
+
+    // Get the server key to perform the decryption
+    let server_key = match connection_manager.server_key(&server_id) {
+        Some(key) => key,
+        None => {
+            error!(
+                "[server#on_message] Failed to find server key for {}",
+                String::from_utf8_lossy(server_id)
+            );
+
+            connection_manager.disconnect_endpoint(handler, endpoint);
+            return;
         }
-    }
+    };
 
-    pub fn send(&mut self, handler: Handler, message: Message) -> ESMResult {
-        let server_id = match &message.server_id {
-            Some(id) => id,
-            None => return Err(format!("[server::ConnectionManager::send] Message with id:{} cannot be sent - server_id was not provided", message.id)),
-        };
+    let message = match Message::from_bytes(message_bytes, &server_key) {
+        Ok(message) => message,
+        Err(e) => {
+            error!(
+                "[server#on_message] {} - {e}",
+                String::from_utf8_lossy(server_id)
+            );
 
-        let endpoint = match self.connections.get(server_id) {
-            Some(endpoint) => endpoint.to_owned(),
-            None => return Err(format!("[server::ConnectionManager::send] Message with id:{} cannot be sent - Unable to find endpoint", message.id)),
-        };
-
-        let server_key = match self.server_key(server_id) {
-            Some(key) => key,
-            None => return Err(format!("[server::ConnectionManager::send] Message with id:{} cannot be sent - Unable to find server key", message.id)),
-        };
-
-        match message.as_bytes(&server_key) {
-            Ok(bytes) => match handler.network().send(endpoint, &bytes) {
-                SendStatus::Sent => {
-                    info!(
-                        "[server::ConnectionManager::send] Message with id:{} sent to \"{}\"",
-                        message.id,
-                        String::from_utf8_lossy(server_id)
-                    );
-
-                    Ok(())
-                }
-                SendStatus::MaxPacketSizeExceeded => Err(format!(
-                    "[server::ConnectionManager::send] Cannot send to \"{}\" - Message is too large. Size: {}. Message: {message:?}", String::from_utf8_lossy(server_id), bytes.len()
-                )),
-                s => Err(format!("[server::ConnectionManager::send] Cannot send to \"{}\" - {s:?}. Message: {message:?}", String::from_utf8_lossy(server_id)))
-            },
-            Err(error) => Err(error),
+            connection_manager.disconnect_endpoint(handler, endpoint);
+            return;
         }
-    }
+    };
 
-    pub fn connect(&mut self, endpoint: Endpoint) {
-        self.lobby.push(endpoint);
-    }
+    // The client has to encrypt the message with the same server key as the Id
+    // Which means that if it fails to decrypt above, the message was invalid and the endpoint is disconnect
+    // It's safe to assume this messages is from an authorized source
+    if let Type::Init = message.message_type {
+        connection_manager.authorize(server_id, &server_key, endpoint);
+    };
 
-    pub fn accept(&mut self, server_id: &[u8], endpoint: Endpoint) -> Option<()> {
-        let endpoint = self.lobby.iter().find(|e| **e == endpoint)?;
-        self.connections.insert(server_id.to_vec(), *endpoint);
-        Some(())
-    }
+    info!(
+        "[server#on_message] {server_id} - {message_id} - {message_type:?}",
+        message_id = message.id,
+        server_id = String::from_utf8_lossy(server_id),
+        message_type = message.message_type,
+    );
 
-    pub fn disconnect(&mut self, server_id: &[u8]) {
-        self.connections.remove(server_id);
-    }
+    debug!("[server#on_message] {message:?}");
 
-    pub fn disconnect_endpoint(&mut self, handler: Handler, endpoint: Endpoint) {
-        if let Some(index) = self.lobby.iter().position(|e| *e == endpoint) {
-            self.lobby.remove(index);
-        }
-
-        self.connections.retain(|_, e| *e != endpoint);
-
-        handler.network().remove(endpoint.resource_id());
-    }
-
-    pub fn disconnect_all(&mut self, handler: Handler) {
-        for endpoint in self.lobby.iter() {
-            handler.network().remove(endpoint.resource_id());
-        }
-
-        self.lobby.clear();
-
-        for endpoint in self.connections.values() {
-            handler.network().remove(endpoint.resource_id());
-        }
-
-        self.connections.clear();
-    }
-
-    pub fn server_key(&mut self, server_id: &[u8]) -> Option<Vec<u8>> {
-        let server_id = match String::from_utf8(server_id.to_owned()) {
-            Ok(id) => id,
-            Err(e) => {
-                error!("[server::ConnectionManager::server_key] Failed to convert server_id to string. {e}");
-                return None;
-            }
-        };
-
-        match self.redis_client.hget("server_keys", server_id) {
-            Ok(key) => key,
-            Err(e) => {
-                error!("[server::ConnectionManager::server_key] Experienced an error while calling HGET on server_keys. {e}");
-                None
-            }
-        }
+    if let Err(e) = crate::ROUTER.route_to_bot(BotRequest::Send(Box::new(message))) {
+        error!("[server#on_message] {e}")
     }
 }

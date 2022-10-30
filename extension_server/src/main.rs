@@ -1,4 +1,6 @@
 mod bot;
+mod client;
+mod connection_manager;
 mod router;
 mod server;
 
@@ -11,7 +13,7 @@ use lazy_static::lazy_static;
 use parking_lot::Mutex;
 use tokio::runtime::Runtime;
 
-pub use esm_message::Message;
+pub use esm_message::{Message, Type};
 pub use log::{debug, error, info, trace, warn};
 
 pub type ESMResult = Result<(), String>;
