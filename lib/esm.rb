@@ -49,9 +49,7 @@ Dotenv.overload(".env.prod") if ENV["ESM_ENV"] == "production"
 
 module ESM
   REDIS_OPTS = {
-    reconnect_attempts: 10,
-    reconnect_delay: 1.5,
-    reconnect_delay_max: 10.0
+    reconnect_attempts: 10
   }.freeze
 
   class << self
