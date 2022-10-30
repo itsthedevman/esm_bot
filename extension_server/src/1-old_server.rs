@@ -218,55 +218,6 @@ impl Server {
         });
     }
 
-    /// Spawn's workers to handle delegating and processing messages to/from the bot
-    pub async fn start_workers(&self) {
-        // Ping the bot
-        let mut server = self.clone();
-        let _ = tokio::spawn(async move { server.ping_bot().await });
-
-        // Delegate inbound messages
-        for _ in 1..=2 {
-            let server = self.clone();
-            let _ = tokio::spawn(async move { server.delegate_inbound_messages().await });
-        }
-
-        // Process inbound messages
-        for _ in 1..=2 {
-            let mut server = self.clone();
-            let _ = tokio::spawn(async move { server.process_inbound_messages().await });
-        }
-
-        // Delegate outbound messages
-        for _ in 1..=2 {
-            let server = self.clone();
-            let _ = tokio::spawn(async move { server.delegate_outbound_messages().await });
-        }
-    }
-
-    /// Moves messages from the connection server outbound queue to the tcp server inbound queue.
-    /// Processing of these messages occurs in #process_inbound_messages
-    async fn delegate_inbound_messages(&self) {
-        let mut connection = match self.get_redis_connection().await {
-            Ok(connection) => connection,
-            Err(e) => panic!("#delegate_inbound_messages - {}", e),
-        };
-
-        loop {
-            match redis::cmd("BLMOVE")
-                .arg("bot_outbound")
-                .arg("tcp_server_inbound")
-                .arg("LEFT")
-                .arg("RIGHT")
-                .arg(0)
-                .query_async(&mut connection)
-                .await
-            {
-                Ok(r) => r,
-                Err(e) => error!("#delegate_inbound_messages - {}", e),
-            };
-        }
-    }
-
     /// Moves messages from the internal outbound queue into the redis outbound queue so the bot may pick them up
     async fn delegate_outbound_messages(&self) {
         let mut connection = match self.get_redis_connection().await {

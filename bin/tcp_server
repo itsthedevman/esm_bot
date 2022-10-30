@@ -1,6 +1,0 @@
-#!/bin/bash
-
-kill -9 $(pgrep -f esm_server) > /dev/null 2>&1
-
-cargo update --package esm_message
-RUST_LOG='info' TCP_SERVER_PORT='3003' cargo run --release

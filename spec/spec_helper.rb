@@ -35,13 +35,13 @@ Discordrb::LOGGER.debug = false
 ActiveRecord::Base.logger.level = Logger::INFO if ActiveRecord::Base.logger.present?
 
 `kill -9 $(pgrep -f esm_bot)`
-`kill -9 $(pgrep -f esm_server)`
+`kill -9 $(pgrep -f extension_server)`
 
 # Build and start the server
 build_result = `cargo build --release; echo $?`.chomp
-raise "Failed to build tcp_server" if build_result != "0"
+raise "Failed to build extension_server" if build_result != "0"
 
-TCP_SERVER = IO.popen("bin/tcp_server")
+EXTENSION_SERVER = IO.popen("bin/extension_server")
 
 RSpec.configure do |config|
   config.include FactoryBot::Syntax::Methods
@@ -63,8 +63,8 @@ RSpec.configure do |config|
   end
 
   config.after :suite do
-    `kill -9 #{TCP_SERVER.pid}`
-    TCP_SERVER.close
+    `kill -9 #{EXTENSION_SERVER.pid}`
+    EXTENSION_SERVER.close
   end
 
   config.around(:each) do |example|

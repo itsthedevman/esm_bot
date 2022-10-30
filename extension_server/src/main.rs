@@ -56,6 +56,6 @@ fn main() {
 
     // heartbeat_thread is forever blocking
     crate::TOKIO_RUNTIME.block_on(async {
-        bot::heartbeat_thread().await;
+        bot::heartbeat().await;
     });
 }
