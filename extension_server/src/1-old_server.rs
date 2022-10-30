@@ -203,11 +203,17 @@ impl Server {
             }
             NetEvent::Disconnected(endpoint) => server.on_disconnect(endpoint),
             NetEvent::Accepted(endpoint, resource_id) => {
-                if disconnect_if_dead(&server, &endpoint) {
-                    return;
-                }
+                // if disconnect_if_dead(&server, &endpoenv_logger::init();
 
-                server.on_connect(endpoint, resource_id)
+                // let (handler, listener) = node::split::<()>();
+                // let server = Server::new(handler);
+
+                // server.start_workers().await;
+                // server.listen(listener).await;nt) {
+                //     return;
+                // }
+
+                // server.on_connect(endpoint, resource_id)
             }
         });
     }
@@ -247,7 +253,7 @@ impl Server {
 
         loop {
             match redis::cmd("BLMOVE")
-                .arg("connection_server_outbound")
+                .arg("bot_outbound")
                 .arg("tcp_server_inbound")
                 .arg("LEFT")
                 .arg("RIGHT")
@@ -295,121 +301,6 @@ impl Server {
                 Ok(r) => r,
                 Err(e) => error!("#delegate_outbound_messages - {}", e),
             };
-        }
-    }
-
-    /// Processes messages from the redis inbound queue based on their message_type.
-    /// These messages are moved into this queue by #delegate_inbound_messages
-    async fn process_inbound_messages(&mut self) {
-        let mut connection = match self.get_redis_connection().await {
-            Ok(connection) => connection,
-            Err(e) => panic!("#process_inbound_messages - {}", e),
-        };
-
-        loop {
-            let (_, json): (String, String) = match connection.blpop("tcp_server_inbound", 0).await
-            {
-                Ok(json) => json,
-                Err(e) => {
-                    error!("#process_inbound_messages - {:?}", e);
-                    continue;
-                }
-            };
-
-            let message: Message = match serde_json::from_str(&json) {
-                Ok(message) => message,
-                Err(e) => {
-                    error!("#process_inbound_messages - {}", e);
-                    error!("json: {:#?}", json);
-                    continue;
-                }
-            };
-
-            match message.message_type {
-                Type::Disconnect | Type::Pong => {
-                    trace!("#process_inbound_messages - {:?}", message)
-                }
-                _ => debug!("#process_inbound_messages - {:?}", message),
-            }
-
-            match message.message_type {
-                Type::Resume => {
-                    self.allow_connections.store(true, Ordering::SeqCst);
-                }
-
-                Type::Pause => {
-                    self.allow_connections.store(false, Ordering::SeqCst);
-                    self.disconnect_all();
-                }
-
-                // Received from the bot after a ping has been sent
-                Type::Pong => {
-                    // Set the flag to true
-                    self.bot_pong_received.store(true, Ordering::SeqCst);
-                }
-
-                Type::Disconnect => match message.server_id {
-                    Some(server_id) => {
-                        match self.connection_manager.read().find_by_server_id(&server_id) {
-                            Some(endpoint) => self.disconnect(*endpoint),
-                            None => return,
-                        }
-                    }
-                    None => self.disconnect_all(),
-                },
-
-                // Everything else is sent to the client
-                _ => {
-                    if let Err(message) = self.send_to_client(message) {
-                        // The message failed, send it back to the bot
-                        self.send_to_bot(message.set_type(Type::Error).set_data(Data::Empty))
-                    }
-                }
-            }
-        }
-    }
-
-    /// Pings the bot and tracks if it replies
-    async fn ping_bot(&mut self) {
-        loop {
-            sleep(Duration::from_millis(500)).await;
-            if !self.bot_pong_received.load(Ordering::SeqCst) {
-                continue;
-            }
-
-            // Set the flag back to false before sending the ping
-            self.bot_pong_received.store(false, Ordering::SeqCst);
-
-            let message = Message::new(Type::Ping);
-            self.send_to_bot(message);
-
-            // Give the bot up to 200ms to reply before considering it "offline"
-            let mut currently_alive = false;
-            for _ in 0..200 {
-                if self.bot_pong_received.load(Ordering::SeqCst) {
-                    currently_alive = true;
-                    break;
-                }
-
-                sleep(Duration::from_millis(1)).await;
-            }
-
-            // Only write and log if the status has changed
-            let previously_alive = self.bot_alive.load(Ordering::SeqCst);
-            if currently_alive == previously_alive {
-                continue;
-            }
-
-            self.bot_alive.store(currently_alive, Ordering::SeqCst);
-
-            if currently_alive {
-                info!("#ping_bot - Connected");
-            } else {
-                warn!("#ping_bot - Disconnected");
-
-                // Disconnect all connections to simulate a disconnect
-                self.disconnect_all();
-            }
         }
     }
 
