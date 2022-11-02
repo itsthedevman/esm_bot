@@ -39,6 +39,15 @@ impl ConnectionManager {
         self.lobby.push(Client::new(endpoint));
     }
 
+    pub fn remove(&mut self, endpoint: Endpoint) {
+        if let Some(index) = self.lobby.iter().position(|c| c.endpoint == endpoint) {
+            self.lobby.remove(index);
+            return;
+        }
+
+        self.connections.retain(|_, c| c.endpoint != endpoint);
+    }
+
     pub fn authorize(
         &mut self,
         server_id: &[u8],
@@ -62,12 +71,7 @@ impl ConnectionManager {
     }
 
     pub fn disconnect_endpoint(&mut self, handler: &Handler, endpoint: Endpoint) {
-        if let Some(index) = self.lobby.iter().position(|c| c.endpoint == endpoint) {
-            self.lobby.remove(index);
-        }
-
-        self.connections.retain(|_, c| c.endpoint != endpoint);
-
+        self.remove(endpoint);
         handler.network().remove(endpoint.resource_id());
     }
 
