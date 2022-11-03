@@ -35,7 +35,7 @@ impl Client {
         match handler.network().send(self.endpoint, &message_bytes) {
             SendStatus::Sent => {
                 info!(
-                    "[server::ConnectionManager::send] Message with id:{} sent to \"{}\"",
+                    "[send] Message with id:{} sent to \"{}\"",
                     message.id,
                     String::from_utf8_lossy(&self.server_id)
                 );
@@ -43,9 +43,9 @@ impl Client {
                 Ok(())
             }
             SendStatus::MaxPacketSizeExceeded => Err(format!(
-                "[server::ConnectionManager::send] Cannot send to \"{}\" - Message is too large. Size: {} bytes. Message: {message:?}", String::from_utf8_lossy(&self.server_id), message_bytes.len()
+                "[send] Cannot send to \"{}\" - Message is too large. Size: {} bytes. Message: {message:?}", String::from_utf8_lossy(&self.server_id), message_bytes.len()
             )),
-            s => Err(format!("[server::ConnectionManager::send] Cannot send to \"{}\" - {s:?}. Message: {message:?}", String::from_utf8_lossy(&self.server_id)))
+            s => Err(format!("[send] Cannot send to \"{}\" - {s:?}. Message: {message:?}", String::from_utf8_lossy(&self.server_id)))
         }
     }
     pub fn disconnect(&self, handler: &Handler) {

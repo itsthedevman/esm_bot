@@ -17,7 +17,10 @@ pub enum ServerRequest {
     Disconnect(Option<String>),
     Resume,
     Pause,
-    Send(Vec<u8>, Box<Message>),
+    Send {
+        server_id: Vec<u8>,
+        message: Box<Message>,
+    },
 
     #[serde(skip)]
     DisconnectEndpoint(Endpoint),
@@ -39,13 +42,13 @@ pub async fn initialize(receiver: UnboundedReceiver<ServerRequest>) {
     let (handler, listener) = node::split::<()>();
     routing_thread(handler, receiver).await;
     server_thread(listener).await;
-    heartbeat_thread().await;
-
-    info!("[server::initialize] Done");
+    // heartbeat_thread().await;
 }
 
 async fn routing_thread(handler: Handler, mut receiver: UnboundedReceiver<ServerRequest>) {
     tokio::spawn(async move {
+        info!("[routing_thread] ✅");
+
         let mut connection_manager = ConnectionManager::new();
         while let Some(request) = receiver.recv().await {
             match request {
@@ -67,7 +70,7 @@ async fn routing_thread(handler: Handler, mut receiver: UnboundedReceiver<Server
                     connection_manager.disconnect_all(&handler);
                 }
 
-                ServerRequest::Send(server_id, message) => {
+                ServerRequest::Send { server_id, message } => {
                     if let Err(e) = connection_manager.send(&handler, &server_id, *message) {
                         error!("{e}")
                     }
@@ -90,6 +93,8 @@ async fn routing_thread(handler: Handler, mut receiver: UnboundedReceiver<Server
 
 async fn server_thread(listener: NodeListener<()>) {
     tokio::spawn(async move {
+        info!("[server_thread] ✅");
+
         let not_ready = || {
             !crate::BOT_CONNECTED.load(Ordering::SeqCst)
                 || !crate::SERVER_READY.load(Ordering::SeqCst)
@@ -100,32 +105,32 @@ async fn server_thread(listener: NodeListener<()>) {
             NetEvent::Message(endpoint, message_bytes) => {
                 if not_ready() {
                     if let Err(e) = crate::ROUTER.route_to_server(ServerRequest::DisconnectEndpoint(endpoint)) {
-                        error!("[server::server_thread] Failed to route disconnect_endpoint to server on Message event. {e}")
+                        error!("[server_thread] Failed to route disconnect_endpoint to server on Message event. {e}")
                     }
                 }
 
                 if let Err(e) =
                     crate::ROUTER.route_to_server(ServerRequest::OnMessage { endpoint, message_bytes: message_bytes.to_vec() })
                 {
-                    error!("[server::server_thread] Failed to route on_message to server on Message event. {e}")
+                    error!("[server_thread] Failed to route on_message to server on Message event. {e}")
                 }
             }
             NetEvent::Disconnected(endpoint) => {
                 if let Err(e) = crate::ROUTER.route_to_server(ServerRequest::OnDisconnect(endpoint)) {
-                    error!("[server::server_thread] Failed to route endpoint to server on Accepted event. {e}")
+                    error!("[server_thread] Failed to route endpoint to server on Accepted event. {e}")
                 }
             },
             NetEvent::Accepted(endpoint, _resource_id) => {
                 if not_ready() {
                     if let Err(e) = crate::ROUTER.route_to_server(ServerRequest::DisconnectEndpoint(endpoint)) {
-                        error!("[server::server_thread] Failed to route disconnect_endpoint to server on Accepted event. {e}")
+                        error!("[server_thread] Failed to route disconnect_endpoint to server on Accepted event. {e}")
                     }
                 }
 
                 if let Err(e) =
                     crate::ROUTER.route_to_server(ServerRequest::OnConnect(endpoint))
                 {
-                    error!("[server::server_thread] Failed to route on_connect to server on Accepted event. {e}")
+                    error!("[server_thread] Failed to route on_connect to server on Accepted event. {e}")
                 }
             }
         });
@@ -138,7 +143,7 @@ async fn heartbeat_thread() {
 
 fn on_connect(connection_manager: &mut ConnectionManager, endpoint: Endpoint) {
     debug!(
-        "[server::on_connect] Accepting incoming connection with address \"{}\"",
+        "[on_connect] Accepting incoming connection with address \"{}\"",
         endpoint.addr()
     );
 
@@ -197,20 +202,17 @@ fn on_message(
 
     debug!("[server#on_message] \"{}\" - {message:?}", endpoint.addr());
 
-    if let Err(e) = crate::ROUTER.route_to_bot(BotRequest::Send(Box::new(message))) {
+    if let Err(e) = crate::ROUTER.route_to_bot(BotRequest::RouteToBot(Box::new(message))) {
         error!("[server#on_message] {e}")
     }
 }
 
 fn on_disconnect(connection_manager: &mut ConnectionManager, endpoint: Endpoint) {
-    debug!(
-        "[server::on_disconnect] \"{}\" - on_disconnect",
-        endpoint.addr()
-    );
+    debug!("[on_disconnect] \"{}\" - on_disconnect", endpoint.addr());
 
     connection_manager.remove(endpoint);
 
     if let Err(e) = crate::ROUTER.route_to_bot(BotRequest::Disconnected) {
-        error!("[server::on_disconnect] Failed to route disconnected event to bot. {e}")
+        error!("[on_disconnect] Failed to route disconnected event to bot. {e}")
     }
 }

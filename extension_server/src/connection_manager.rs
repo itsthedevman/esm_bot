@@ -15,10 +15,7 @@ impl ConnectionManager {
     pub fn new() -> Self {
         let redis_client = match redis::Client::open(crate::ARGS.lock().redis_uri.to_string()) {
             Ok(c) => c,
-            Err(e) => panic!(
-                "[server::ConnectionManager::new] Failed to connect to redis. {}",
-                e
-            ),
+            Err(e) => panic!("[new] Failed to connect to redis. {}", e),
         };
 
         ConnectionManager {
@@ -31,7 +28,11 @@ impl ConnectionManager {
     pub fn send(&mut self, handler: &Handler, server_id: &[u8], message: Message) -> ESMResult {
         match self.connections.get(server_id) {
             Some(client) => client.send(handler, message),
-            None => Err(format!("[server::ConnectionManager::send] Message with id:{} cannot be sent to \"{}\" - Unable to find client", message.id, String::from_utf8_lossy(server_id))),
+            None => Err(format!(
+                "[send] Message with id:{} cannot be sent to \"{}\" - Unable to find client",
+                message.id,
+                String::from_utf8_lossy(server_id)
+            )),
         }
     }
 
@@ -93,7 +94,7 @@ impl ConnectionManager {
         let server_id = match String::from_utf8(server_id.to_owned()) {
             Ok(id) => id,
             Err(e) => {
-                error!("[server::ConnectionManager::server_key] Failed to convert server_id to string. {e}");
+                error!("[server_key] Failed to convert server_id to string. {e}");
                 return None;
             }
         };
@@ -101,7 +102,7 @@ impl ConnectionManager {
         match self.redis_client.hget("server_keys", server_id) {
             Ok(key) => key,
             Err(e) => {
-                error!("[server::ConnectionManager::server_key] Experienced an error while calling HGET on server_keys. {e}");
+                error!("[server_key] Experienced an error while calling HGET on server_keys. {e}");
                 None
             }
         }

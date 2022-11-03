@@ -48,13 +48,12 @@ pub struct Args {
 
 fn main() {
     env_logger::init();
-    info!("[main] Initializing...");
+    info!("[main] Starting...");
 
     // Must be the first thing to happen
     *ARGS.lock() = Args::parse();
 
     lazy_static::initialize(&ROUTER);
-    info!("[main] Router Started");
 
     // heartbeat_thread is forever blocking
     crate::TOKIO_RUNTIME.block_on(async {
