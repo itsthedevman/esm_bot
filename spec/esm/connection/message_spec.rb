@@ -9,7 +9,6 @@ describe ESM::Connection::Message, v2: true do
     {
       id: SecureRandom.uuid,
       server_id: "esm_malden".bytes,
-      resource_id: nil,
       type: "test",
       data: {
         type: "test_mapping",
@@ -47,7 +46,6 @@ describe ESM::Connection::Message, v2: true do
 
       expect(message.id).to eq(input_message.id)
       expect(message.server_id).to eq(input_message.server_id)
-      expect(message.resource_id).to eq(input_message.resource_id)
       expect(message.type).to eq(input_message.type)
       expect(message.data_type).to eq(input_message.data_type)
       expect(message.metadata_type).to eq(input_message.metadata_type)

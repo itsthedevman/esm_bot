@@ -57,7 +57,7 @@ module ESM
       end
 
       attr_reader :id, :type, :data, :metadata, :errors, :data_type, :metadata_type, :locals
-      attr_accessor :resource_id, :server_id
+      attr_accessor :server_id
 
       # All callbacks are provided with two arguments:
       #   incoming_message [ESM::Connection::Message, nil]  The incoming message from the client, if applicable.
@@ -208,7 +208,6 @@ module ESM
       #   {
       #     id: The ID of this message as a UUID
       #     server_id: The server ID this message is being sent to or from as a byte array
-      #     resource_id: The internal resource ID used by tcp_server
       #     type: The context of this message
       #     data: {
       #       type: Describes the structure of content
@@ -242,7 +241,6 @@ module ESM
         {
           id: id,
           server_id: server_id&.bytes,
-          resource_id: resource_id,
           type: type,
           data: {
             type: @data_type,
