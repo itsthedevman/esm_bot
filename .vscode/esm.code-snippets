@@ -33,6 +33,17 @@
 		],
 		"description": "Inserts the magic ruby comment to freeze all string literals"
 	},
+	"ESM Log (Trace)": {
+		"scope": "ruby",
+		"prefix": [
+			"trace",
+			"ESM.logger.trace"
+		],
+		"body": [
+			"trace!(${0})"
+		],
+		"description": "Create an trace logger with ESM"
+	},
 	"ESM Log (Debug)": {
 		"scope": "ruby",
 		"prefix": [
@@ -40,7 +51,7 @@
 			"ESM.logger.debug"
 		],
 		"body": [
-			"ESM::Notifications.trigger(\"debug\", class: self.class, method: __method__, ${0})"
+			"debug!(${0})"
 		],
 		"description": "Create an debug logger with ESM"
 	},
@@ -51,7 +62,7 @@
 			"ESM.logger.info"
 		],
 		"body": [
-			"ESM::Notifications.trigger(\"info\", class: self.class, method: __method__, ${0})"
+			"info!(${0})"
 		],
 		"description": "Create an info logger with ESM"
 	},
@@ -62,7 +73,7 @@
 			"ESM.logger.warn"
 		],
 		"body": [
-			"ESM::Notifications.trigger(\"warn\", class: self.class, method: __method__, ${0})"
+			"warn!(${0})"
 		],
 		"description": "Create an warn logger with ESM"
 	},
@@ -73,7 +84,7 @@
 			"ESM.logger.error"
 		],
 		"body": [
-			"ESM::Notifications.trigger(\"error\", class: self.class, method: __method__, error: e, ${0})"
+			"error!(${0})"
 		],
 		"description": "Create an error logger with ESM"
 	},
@@ -84,7 +95,7 @@
 			"ESM.logger.fatal"
 		],
 		"body": [
-			"ESM.logger.fatal(\"#{self.class}##{__method__}\") { \"${1:message}\" }"
+			"fatal!(${0})"
 		],
 		"description": "Create an fatal logger with ESM"
 	},

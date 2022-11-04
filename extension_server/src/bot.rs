@@ -21,8 +21,10 @@ pub enum BotRequest {
         server_id: Vec<u8>,
         message: Box<Message>,
     },
-    RouteToBot(Box<Message>),
-    Disconnected,
+    Message(Box<Message>),
+
+    // Stores a server_id
+    Disconnected(Vec<u8>),
 }
 
 /// Initializes the various processes needed for the "bot" side of the server to run

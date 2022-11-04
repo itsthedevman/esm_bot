@@ -40,13 +40,19 @@ impl ConnectionManager {
         self.lobby.push(Client::new(endpoint));
     }
 
-    pub fn remove(&mut self, endpoint: Endpoint) {
+    pub fn remove(&mut self, endpoint: Endpoint) -> Option<Vec<u8>> {
         if let Some(index) = self.lobby.iter().position(|c| c.endpoint == endpoint) {
             self.lobby.remove(index);
-            return;
+            return None;
         }
 
-        self.connections.retain(|_, c| c.endpoint != endpoint);
+        self.connections.iter().find_map(|(server_id, client)| {
+            if client.endpoint == endpoint {
+                Some(server_id.to_owned())
+            } else {
+                None
+            }
+        })
     }
 
     pub fn authorize(

@@ -202,7 +202,7 @@ fn on_message(
 
     debug!("[server#on_message] \"{}\" - {message:?}", endpoint.addr());
 
-    if let Err(e) = crate::ROUTER.route_to_bot(BotRequest::RouteToBot(Box::new(message))) {
+    if let Err(e) = crate::ROUTER.route_to_bot(BotRequest::Message(Box::new(message))) {
         error!("[server#on_message] {e}")
     }
 }
@@ -210,9 +210,9 @@ fn on_message(
 fn on_disconnect(connection_manager: &mut ConnectionManager, endpoint: Endpoint) {
     debug!("[on_disconnect] \"{}\" - on_disconnect", endpoint.addr());
 
-    connection_manager.remove(endpoint);
-
-    if let Err(e) = crate::ROUTER.route_to_bot(BotRequest::Disconnected) {
-        error!("[on_disconnect] Failed to route disconnected event to bot. {e}")
+    if let Some(server_id) = connection_manager.remove(endpoint) {
+        if let Err(e) = crate::ROUTER.route_to_bot(BotRequest::Disconnected(server_id)) {
+            error!("[on_disconnect] Failed to route disconnected event to bot. {e}")
+        }
     }
 }
