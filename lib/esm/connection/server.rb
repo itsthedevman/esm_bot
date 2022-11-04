@@ -38,23 +38,22 @@ module ESM
 
       def initialize
         @connections = {} # By server_id
-        @server_id_by_resource_id = {}
         @mutex = Mutex.new
         @redis = Redis.new(ESM::REDIS_OPTS)
         @message_overseer = ESM::Connection::MessageOverseer.new
         @state = :resumed
 
-        @redis.del("connection_server_outbound")
-        @redis.del("connection_server_inbound")
+        @redis.del("bot_outbound")
+        @redis.del("bot_inbound")
 
-        self.tcp_server_alive = true
-        self.server_ping_received = true
+        self.tcp_server_alive = false
+        self.server_ping_received = false
         refresh_keys
         health_check
         delegate_inbound_messages
         process_inbound_messages
 
-        ESM::Notifications.trigger("info", class: self.class, method: __method__, status: "Started")
+        info!(status: "Started")
       end
 
       def stop
@@ -79,24 +78,20 @@ module ESM
       def resume
         return if @state == :resumed
 
-        message = ESM::Connection::Message.new(type: :resume)
-        __send_internal(message)
-
+        __send_internal({type: :server_request, content: {type: :resume}})
         @state = :resumed
       end
 
       def pause
         return if @state == :paused
 
-        message = ESM::Connection::Message.new(type: :pause)
-        __send_internal(message)
+        __send_internal({type: :server_request, content: {type: :pause}})
 
         @state = :paused
       end
 
       def disconnect_all!
-        message = ESM::Connection::Message.new(type: :disconnect)
-        __send_internal(message)
+        __send_internal({type: :server_request, content: {type: :disconnect}})
       end
 
       def tcp_server_alive?
@@ -124,15 +119,12 @@ module ESM
         message.synchronous if wait
 
         # Set some internal data for sending
-        if to
-          message.server_id = to
-          message.resource_id = @server_id_by_resource_id.key(to)
-        end
+        message.server_id = to if to
 
-        ESM::Notifications.trigger("info", class: self.class, method: __method__, server_id: to, message: message.to_h.except(:server_id))
+        error!(server_id: to, message: message.to_h.except(:server_id))
 
         ESM::Test.outbound_server_messages.store(message, to) if ESM.env.test?
-        __send_internal(message) unless ESM.env.test? && ESM::Test.block_outbound_messages
+        __send_internal({type: :route_to_client, content: {server_id: to.bytes, message: message}}) unless ESM.env.test? && ESM::Test.block_outbound_messages
 
         return message.wait_for_response if wait
 
@@ -140,7 +132,7 @@ module ESM
       end
 
       def disconnect(server_id, reason: nil)
-        ESM::Notifications.trigger("info", class: self.class, method: __method__, server_id: server_id, reason: reason.to_s)
+        info!(server_id: server_id, reason: reason.to_s)
 
         message = ESM::Connection::Message.new(type: :disconnect)
         message.add_error(type: :message, content: reason) if reason.present?
@@ -166,8 +158,8 @@ module ESM
 
       private
 
-      def __send_internal(message)
-        @redis.rpush("connection_server_outbound", message.to_s)
+      def __send_internal(request)
+        @redis.rpush("bot_outbound", request.to_json)
       end
 
       def delegate_inbound_messages
@@ -176,7 +168,7 @@ module ESM
         @thread_delegate_inbound_messages =
           Thread.new do
             loop do
-              @redis_delegate_inbound_messages.blmove("tcp_server_outbound", "connection_server_inbound", "LEFT", "RIGHT")
+              @redis_delegate_inbound_messages.blmove("server_outbound", "bot_inbound", "LEFT", "RIGHT")
             end
           end
       end
@@ -187,8 +179,8 @@ module ESM
         @thread_process_inbound_messages =
           Thread.new do
             loop do
-              _name, message = @redis_process_inbound_messages.blpop("connection_server_inbound")
-              Thread.new { process_inbound_message(message) }
+              _name, json = @redis_process_inbound_messages.blpop("bot_inbound")
+              Thread.new { process_inbound_request(json) }
             end
           end
       end
@@ -212,9 +204,9 @@ module ESM
             self.tcp_server_alive = currently_alive
 
             if tcp_server_alive?
-              ESM::Notifications.trigger("info", class: self.class, method: __method__, server_status: "Connected")
+              info!(server_status: "Connected")
             else
-              ESM::Notifications.trigger("error", class: self.class, method: __method__, server_status: "Disconnected")
+              error!(server_status: "Disconnected")
             end
           end
       end
@@ -231,25 +223,27 @@ module ESM
         @mutex.synchronize { @tcp_server_alive = value }
       end
 
-      def process_inbound_message(message)
-        message = ESM::Connection::Message.from_string(message)
-
-        case message.type
-        when "init"
-          on_connect(message)
-        when "disconnect"
-          on_disconnect(message)
+      def process_inbound_request(json)
+        request = ESM::JSON.parse(json)
+        case request[:type]
         when "ping"
-          on_ping(message)
-        when "error"
-          outgoing_message = @message_overseer.retrieve(message.id)
-          outgoing_message.run_callback(:on_error, message, outgoing_message)
-        else
-          on_message(message)
+          on_ping
+        when "disconnected"
+          on_disconnect(request)
+        when "message"
+          message = ESM::Connection::Message.from_string(request[:content])
+          case message.type
+          when "init"
+            on_connect(message)
+          when "error"
+            on_error(message)
+          else
+            on_message(message)
+          end
         end
       rescue => e
         uuid = SecureRandom.uuid
-        ESM::Notifications.trigger("error", class: self.class, method: __method__, error: e, id: uuid, message_id: message&.id)
+        error!(error: e, id: uuid, message_id: message&.id)
 
         # Reply back to the message
         message.add_error(type: "message", content: I18n.t("exceptions.system", error_code: uuid))
@@ -260,13 +254,7 @@ module ESM
       def on_connect(message)
         server_id = message.server_id
 
-        ESM::Notifications.trigger(
-          "info",
-          class: self.class,
-          method: __method__,
-          server_id: {incoming: message.server_id},
-          incoming_message: message.to_h.without(:server_id, :resource_id)
-        )
+        info!(server_id: {incoming: message.server_id}, incoming_message: message.to_h.without(:server_id))
 
         connection = ESM::Connection.new(self, server_id)
         return disconnect(server_id) if connection.server.nil?
@@ -275,20 +263,16 @@ module ESM
         connection.on_open(message)
 
         @connections[server_id] = connection
-        @server_id_by_resource_id[message.resource_id] = message.server_id
       end
 
       def on_message(incoming_message)
         # Retrieve the original message. If it's nil, the message originated from the client
         outgoing_message = @message_overseer.retrieve(incoming_message.id)
 
-        ESM::Notifications.trigger(
-          "info",
-          class: self.class,
-          method: __method__,
+        info!(
           server_id: {incoming: incoming_message.server_id, outgoing: outgoing_message&.server_id},
-          outgoing_message: outgoing_message&.to_h&.without(:server_id, :resource_id),
-          incoming_message: incoming_message.to_h.without(:server_id, :resource_id)
+          outgoing_message: outgoing_message&.to_h&.without(:server_id),
+          incoming_message: incoming_message.to_h.without(:server_id)
         )
 
         # Skipping ack messages
@@ -299,29 +283,33 @@ module ESM
 
         # The message is good, call the on_message for this connection
         connection = @connections[incoming_message.server_id]
-        return ESM::Notifications.trigger("warn", class: self.class, method: __method__, message: "Connection was nil?") if connection.nil?
+        return warn!(note: "Connection was nil?") if connection.nil?
 
         connection.on_message(incoming_message, outgoing_message)
       end
 
-      def on_disconnect(message)
-        server_id = @server_id_by_resource_id.delete(message.resource_id)
+      def on_disconnect(request)
+        server_id = request[:content]
         connection = @connections.delete(server_id)
 
-        ESM::Notifications.trigger("info", class: self.class, method: __method__, server_id: server_id)
+        info!(server_id: server_id)
         return if connection.nil?
 
         connection.on_close
       end
 
-      def on_ping(_message)
-        self.server_ping_received = true
-        @thread_health_check.join
+      def on_error(message)
+        outgoing_message = @message_overseer.retrieve(message.id)
+        outgoing_message.run_callback(:on_error, message, outgoing_message)
+      end
 
+      def on_ping
+        self.server_ping_received = true
+
+        @thread_health_check.join
         health_check
 
-        message = ESM::Connection::Message.new(type: :pong)
-        __send_internal(message)
+        __send_internal({type: "pong"})
       end
     end
   end
