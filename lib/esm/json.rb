@@ -6,7 +6,7 @@ module ESM
       output = FastJsonparser.parse(json)
       return self.as_ostruct(output) if as_ostruct
 
-      output.with_indifferent_access
+      output
     rescue
       nil
     end
