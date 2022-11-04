@@ -33,3 +33,10 @@ loader.ignore("#{__dir__}/esm/esm.rb")
 # Load everything right meow
 loader.setup
 loader.eager_load
+
+#############################
+# Configure Inflector
+#############################
+ActiveSupport::Inflector.inflections(:en) do |inflect|
+  inflect.acronym("ESM")
+end

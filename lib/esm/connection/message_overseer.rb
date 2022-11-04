@@ -87,7 +87,7 @@ module ESM
 
           @mailbox.delete(id)
         rescue => e
-          ESM::Notifications.trigger("error", class: self.class, method: __method__, error: e)
+          error!(error: e)
 
           @mailbox.delete(id)
         end

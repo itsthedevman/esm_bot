@@ -269,7 +269,7 @@ module ESM
             )
 
             if response.errors?
-              ESM::Notifications.trigger("error", class: self.class, method: __method__, id: response.id, errors: response.errors)
+              error!(id: response.id, errors: response.errors)
               raise_error!(:territory_query, user: current_user.mention, server_id: target_server.server_id)
             end
 

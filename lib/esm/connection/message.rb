@@ -365,11 +365,7 @@ module ESM
               convert_type(data_entry, into_type: attribute_type)
             end
         rescue => e
-          ESM::Notifications.trigger(
-            "error",
-            class: self.class, method: __method__, error: e,
-            attribute_name: attribute_name, attribute_type: attribute_type
-          )
+          error!(error: e, attribute_name: attribute_name, attribute_type: attribute_type)
         end
 
         output
@@ -432,7 +428,7 @@ module ESM
         # Attempt to send the embed through the command
         @locals.try(:command).try(:reply, embed)
 
-        ESM::Notifications.trigger("error", class: self.class, method: __method__, error: error.to_h)
+        error!(error: error.to_h)
 
         embed
       end

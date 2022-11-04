@@ -23,7 +23,7 @@ module ESM
 
         ESM.bot.deliver(message, to: @channel)
       rescue ESM::Exception::CheckFailure => e
-        ESM::Notifications.trigger("error", class: self.class, method: __method__, error: e, message_id: @message.id)
+        error!(error: e, message_id: @message.id)
         @server.log_error(e.message)
       end
 

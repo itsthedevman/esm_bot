@@ -200,7 +200,7 @@ module ESM
       embed = ESM::Embed.build(:error, description: I18n.t("exceptions.deliver_failure", channel_name: delivery_channel.name, message: message))
       community.log_event(:error, embed)
     rescue => e
-      ESM::Notifications.trigger("warn", class: self.class, method: __method__, error: e)
+      warn!(error: e)
 
       nil
     end

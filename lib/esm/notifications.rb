@@ -5,10 +5,6 @@
 module ESM
   class Notifications
     EVENTS = %w[
-      debug
-      info
-      warn
-      error
       ready
       argument_parse
       server_on_connect
@@ -35,30 +31,6 @@ module ESM
     def self.subscribe
       EVENTS.each do |event|
         ActiveSupport::Notifications.subscribe("#{event}.esm", &method(event))
-      end
-    end
-
-    ["debug", "info", "warn", "error"].each do |sev|
-      define_singleton_method(sev) do |name, _start, _finish, _id, payload|
-        if payload[:error].is_a?(StandardError)
-          e = payload[:error].dup
-
-          payload[:error] = {
-            message: e.message,
-            backtrace: e.backtrace[0..20]
-          }
-        end
-
-        if payload.key?(:class) && payload.key?(:method)
-          name = "#{payload[:class]}##{payload[:method]}"
-
-          payload.delete(:class)
-          payload.delete(:method)
-        end
-
-        ESM.logger.send(sev.to_sym, name) do
-          ESM::JSON.pretty_generate(payload)
-        end
       end
     end
 

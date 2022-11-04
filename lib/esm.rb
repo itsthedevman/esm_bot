@@ -45,7 +45,41 @@ require "otr-activerecord" if ENV["ESM_ENV"] != "production"
 # Load Dotenv variables; overwriting any that already exist
 Dotenv.overload
 Dotenv.overload(".env.test") if ENV["ESM_ENV"] == "test"
-Dotenv.overload(".env.prod") if ENV["ESM_ENV"] == "production"
+Dotenv.overload(".env.prod") if ENV["ESM_ENV"] == "prodution"
+
+#################################
+# Logging methods!
+#################################
+[:trace, :debug, :info, :warn, :error].each do |severity|
+  define_method("#{severity}!") do |**content|
+    __log(severity, caller_locations(1, 1).first, content)
+  end
+end
+
+# Used internally by logging methods. Do not call manually
+def __log(severity, caller_data, content)
+  if content[:error].is_a?(StandardError)
+    e = payload[:error]
+
+    content[:error] = {
+      message: e.message,
+      backtrace: e.backtrace[0..20]
+    }
+  end
+
+  caller_class = caller_data
+    .path
+    .sub("#{__dir__}/", "")
+    .sub(".rb", "")
+    .classify
+
+  caller_method = caller_data.label.gsub("block in ", "")
+
+  ESM.logger.send(severity, "#{caller_class}##{caller_method}:#{caller_data.lineno}") do
+    ESM::JSON.pretty_generate(content)
+  end
+end
+#################################
 
 module ESM
   REDIS_OPTS = {
@@ -109,6 +143,8 @@ module ESM
       if ENV["PRINT_LOG"] == "true"
         header =
           case severity
+          when "TRACE"
+            header.colorize(:orange)
           when "INFO"
             header.colorize(:light_blue)
           when "DEBUG"
@@ -123,6 +159,8 @@ module ESM
 
         body =
           case severity
+          when "TRACE"
+            body.colorize(:orange)
           when "INFO", "DEBUG"
             body.colorize(:light_black)
           when "WARN"
