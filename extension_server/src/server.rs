@@ -1,12 +1,16 @@
-use std::sync::atomic::Ordering;
+use std::{sync::atomic::Ordering, time::Duration};
 
 use crate::{bot::BotRequest, connection_manager::ConnectionManager, *};
 use message_io::{
-    network::{Endpoint, NetEvent},
-    node::{self, NodeHandler, NodeListener},
+    network::{Endpoint, NetEvent, Transport},
+    node::{self, NodeHandler, NodeListener, NodeTask},
 };
 use serde::{Deserialize, Serialize};
 use tokio::sync::mpsc::UnboundedReceiver;
+
+lazy_static! {
+    static ref LISTENER_TASK: Arc<Mutex<Option<NodeTask>>> = Arc::new(Mutex::new(None));
+}
 
 pub type Handler = NodeHandler<()>;
 
@@ -21,6 +25,9 @@ pub enum ServerRequest {
         server_id: Vec<u8>,
         message: Box<Message>,
     },
+
+    #[serde(skip)]
+    AliveCheck,
 
     #[serde(skip)]
     DisconnectEndpoint(Endpoint),
@@ -40,9 +47,22 @@ pub enum ServerRequest {
 
 pub async fn initialize(receiver: UnboundedReceiver<ServerRequest>) {
     let (handler, listener) = node::split::<()>();
+
+    // Start listening
+    match handler.network().listen(
+        Transport::FramedTcp,
+        format!("0.0.0.0:{}", crate::ARGS.lock().port),
+    ) {
+        Ok((_resource_id, real_addr)) => {
+            info!("[initialize] ✅ Listening on port {real_addr}");
+            crate::SERVER_READY.store(true, Ordering::SeqCst)
+        }
+        Err(e) => panic!("[initialize] Failed to start server. {}", e),
+    }
+
     routing_thread(handler, receiver).await;
-    server_thread(listener).await;
-    // heartbeat_thread().await;
+    listener_thread(listener).await;
+    heartbeat_thread().await;
 }
 
 async fn routing_thread(handler: Handler, mut receiver: UnboundedReceiver<ServerRequest>) {
@@ -51,6 +71,7 @@ async fn routing_thread(handler: Handler, mut receiver: UnboundedReceiver<Server
 
         let mut connection_manager = ConnectionManager::new();
         while let Some(request) = receiver.recv().await {
+            debug!("[routing_thread] Processing request: {request:?}");
             match request {
                 ServerRequest::Connect => todo!(), // I'm not sure if this is needed yet
 
@@ -76,78 +97,113 @@ async fn routing_thread(handler: Handler, mut receiver: UnboundedReceiver<Server
                     }
                 }
 
-                ServerRequest::OnConnect(endpoint) => on_connect(&mut connection_manager, endpoint),
+                ServerRequest::AliveCheck => connection_manager.alive_check(&handler),
+
+                ServerRequest::OnConnect(endpoint) => {
+                    if let Err(e) = on_connect(&mut connection_manager, endpoint) {
+                        error!("{e}");
+                    }
+                }
 
                 ServerRequest::OnMessage {
                     endpoint,
                     message_bytes,
-                } => on_message(&handler, &mut connection_manager, endpoint, &message_bytes),
-
-                ServerRequest::OnDisconnect(endpoint) => {
-                    on_disconnect(&mut connection_manager, endpoint)
+                } => {
+                    debug!("ON MESSAGE");
+                    if let Err(e) =
+                        on_message(&handler, &mut connection_manager, endpoint, &message_bytes)
+                    {
+                        error!("{e}");
+                    }
                 }
+                ServerRequest::OnDisconnect(endpoint) => {
+                    if let Err(e) = on_disconnect(&mut connection_manager, endpoint) {
+                        error!("{e}");
+                    }
+                }
+            }
+
+            debug!("[routing_thread] Done");
+        }
+    });
+}
+
+async fn listener_thread(listener: NodeListener<()>) {
+    tokio::spawn(async move {
+        let ready = || {
+            crate::BOT_CONNECTED.load(Ordering::SeqCst)
+                && crate::SERVER_READY.load(Ordering::SeqCst)
+        };
+
+        let task = listener.for_each_async(move |event| match event.network() {
+            NetEvent::Accepted(endpoint, _resource_id) => {
+                debug!("Accepted - Is ready? {}", ready());
+                if !ready() {
+                    if let Err(e) = crate::ROUTER.route_to_server(ServerRequest::DisconnectEndpoint(endpoint)) {
+                        error!("[listener_thread] Failed to route disconnect_endpoint to server on Accepted event. {e}")
+                    }
+                }
+
+                debug!("[accepted]  Before send");
+                if let Err(e) =
+                    crate::ROUTER.route_to_server(ServerRequest::OnConnect(endpoint))
+                {
+                    error!("[listener_thread] Failed to route on_connect to server on Accepted event. {e}")
+                }
+                debug!("[accepted] after send");
+            }
+            NetEvent::Connected(_, _) => unreachable!(), // Unused
+            NetEvent::Disconnected(endpoint) => {
+                if let Err(e) = crate::ROUTER.route_to_server(ServerRequest::OnDisconnect(endpoint)) {
+                    error!("[listener_thread] Failed to route endpoint to server on Accepted event. {e}")
+                }
+            },
+            NetEvent::Message(endpoint, message_bytes) => {
+                debug!("[message] BOT: {}, SERVER: {}", crate::BOT_CONNECTED.load(Ordering::SeqCst), crate::SERVER_READY.load(Ordering::SeqCst));
+                if !ready() {
+                    if let Err(e) = crate::ROUTER.route_to_server(ServerRequest::DisconnectEndpoint(endpoint)) {
+                        error!("[listener_thread] Failed to route disconnect_endpoint to server on Message event. {e}")
+                    }
+                }
+
+                debug!("[message] Before send");
+                if let Err(e) =
+                    crate::ROUTER.route_to_server(ServerRequest::OnMessage { endpoint, message_bytes: message_bytes.to_vec() })
+                {
+                    error!("[listener_thread] Failed to route on_message to server on Message event. {e}")
+                }
+                debug!("[message] after send");
+            }
+        });
+
+        *lock!(LISTENER_TASK) = Some(task);
+
+        info!("[listener_thread] ✅");
+    });
+}
+
+async fn heartbeat_thread() {
+    tokio::spawn(async {
+        info!("[heartbeat_thread] ✅");
+
+        loop {
+            tokio::time::sleep(Duration::from_millis(500)).await;
+            debug!("heartbeat - sending alive check");
+            if let Err(e) = crate::ROUTER.route_to_server(ServerRequest::AliveCheck) {
+                error!("[heartbeat_thread] Failed to route alive_check to server {e}")
             }
         }
     });
 }
 
-async fn server_thread(listener: NodeListener<()>) {
-    tokio::spawn(async move {
-        info!("[server_thread] ✅");
-
-        let not_ready = || {
-            !crate::BOT_CONNECTED.load(Ordering::SeqCst)
-                || !crate::SERVER_READY.load(Ordering::SeqCst)
-        };
-
-        listener.for_each(move |event| match event.network() {
-            NetEvent::Connected(_, _) => {} // Unused
-            NetEvent::Message(endpoint, message_bytes) => {
-                if not_ready() {
-                    if let Err(e) = crate::ROUTER.route_to_server(ServerRequest::DisconnectEndpoint(endpoint)) {
-                        error!("[server_thread] Failed to route disconnect_endpoint to server on Message event. {e}")
-                    }
-                }
-
-                if let Err(e) =
-                    crate::ROUTER.route_to_server(ServerRequest::OnMessage { endpoint, message_bytes: message_bytes.to_vec() })
-                {
-                    error!("[server_thread] Failed to route on_message to server on Message event. {e}")
-                }
-            }
-            NetEvent::Disconnected(endpoint) => {
-                if let Err(e) = crate::ROUTER.route_to_server(ServerRequest::OnDisconnect(endpoint)) {
-                    error!("[server_thread] Failed to route endpoint to server on Accepted event. {e}")
-                }
-            },
-            NetEvent::Accepted(endpoint, _resource_id) => {
-                if not_ready() {
-                    if let Err(e) = crate::ROUTER.route_to_server(ServerRequest::DisconnectEndpoint(endpoint)) {
-                        error!("[server_thread] Failed to route disconnect_endpoint to server on Accepted event. {e}")
-                    }
-                }
-
-                if let Err(e) =
-                    crate::ROUTER.route_to_server(ServerRequest::OnConnect(endpoint))
-                {
-                    error!("[server_thread] Failed to route on_connect to server on Accepted event. {e}")
-                }
-            }
-        });
-    });
-}
-
-async fn heartbeat_thread() {
-    todo!("heartbeat_thread and handle lobby");
-}
-
-fn on_connect(connection_manager: &mut ConnectionManager, endpoint: Endpoint) {
+fn on_connect(connection_manager: &mut ConnectionManager, endpoint: Endpoint) -> ESMResult {
     debug!(
         "[on_connect] Accepting incoming connection with address \"{}\"",
         endpoint.addr()
     );
 
-    connection_manager.add(endpoint)
+    connection_manager.add(endpoint);
+    Ok(())
 }
 
 fn on_message(
@@ -155,7 +211,7 @@ fn on_message(
     connection_manager: &mut ConnectionManager,
     endpoint: Endpoint,
     message_bytes: &[u8],
-) {
+) -> ESMResult {
     // Extract the server_id from the message
     let server_id = &message_bytes[1..=(message_bytes[0] as usize)];
 
@@ -163,56 +219,72 @@ fn on_message(
     let server_key = match connection_manager.server_key(server_id) {
         Some(key) => key,
         None => {
-            error!(
-                "[server#on_message] Failed to find server key for {}",
-                String::from_utf8_lossy(server_id)
-            );
-
             connection_manager.disconnect_endpoint(handler, endpoint);
-            return;
+
+            return Err(format!(
+                "[on_message] {} - Failed to find server key",
+                String::from_utf8_lossy(server_id)
+            ));
         }
     };
 
     let message = match Message::from_bytes(message_bytes, &server_key) {
         Ok(message) => message,
         Err(e) => {
-            error!(
-                "[server#on_message] {} - {e}",
-                String::from_utf8_lossy(server_id)
-            );
-
             connection_manager.disconnect_endpoint(handler, endpoint);
-            return;
+            return Err(format!(
+                "[on_message] {} - {e}",
+                String::from_utf8_lossy(server_id)
+            ));
         }
     };
 
     // The client has to encrypt the message with the same server key as the Id
-    // Which means that if it fails to decrypt above, the message was invalid and the endpoint is disconnect
-    // It's safe to assume this messages is from an authorized source
-    if let Type::Init = message.message_type {
-        connection_manager.authorize(server_id, &server_key, endpoint);
-    }
+    // Which means that if it fails to decrypt above, the message was invalid and the endpoint is disconnected
+    // It's safe to assume this endpoint is who they say they are
+    match message.message_type {
+        Type::Init => {
+            if connection_manager
+                .authorize(server_id, &server_key, endpoint)
+                .is_none()
+            {
+                return Err(format!(
+                    "[on_message] {} - Failed to authorize endpoint",
+                    String::from_utf8_lossy(server_id)
+                ));
+            }
+        }
+        Type::Pong => {
+            if connection_manager.on_pong(server_id).is_none() {
+                return Err(format!(
+                    "[on_message] {} - Failed to update on_pong",
+                    String::from_utf8_lossy(server_id)
+                ));
+            }
+
+            return Ok(());
+        }
+        _ => (),
+    };
 
     info!(
-        "[server#on_message] {server_id} - {message_id} - {message_type:?}",
+        "[on_message] {server_id} - {message_id} - {message_type:?}",
         message_id = message.id,
         server_id = String::from_utf8_lossy(server_id),
         message_type = message.message_type,
     );
 
-    debug!("[server#on_message] \"{}\" - {message:?}", endpoint.addr());
+    debug!("[on_message] \"{}\" - {message:?}", endpoint.addr());
 
-    if let Err(e) = crate::ROUTER.route_to_bot(BotRequest::Message(Box::new(message))) {
-        error!("[server#on_message] {e}")
-    }
+    crate::ROUTER.route_to_bot(BotRequest::Message(Box::new(message)))
 }
 
-fn on_disconnect(connection_manager: &mut ConnectionManager, endpoint: Endpoint) {
+fn on_disconnect(connection_manager: &mut ConnectionManager, endpoint: Endpoint) -> ESMResult {
     debug!("[on_disconnect] \"{}\" - on_disconnect", endpoint.addr());
 
-    if let Some(server_id) = connection_manager.remove(endpoint) {
-        if let Err(e) = crate::ROUTER.route_to_bot(BotRequest::Disconnected(server_id)) {
-            error!("[on_disconnect] Failed to route disconnected event to bot. {e}")
-        }
-    }
+    let Some(server_id) = connection_manager.remove(endpoint) else {
+        return Err(format!("[on_disconnect] {} - Failed to remove endpoint", endpoint.addr()));
+    };
+
+    crate::ROUTER.route_to_bot(BotRequest::Disconnected(server_id))
 }

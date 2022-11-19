@@ -1,3 +1,4 @@
+use chrono::{DateTime, Utc};
 use message_io::network::{Endpoint, ResourceId, SendStatus};
 
 use crate::server::Handler;
@@ -7,6 +8,7 @@ use crate::*;
 pub struct Client {
     pub endpoint: Endpoint,
     pub resource_id: ResourceId,
+    pub last_checked_at: DateTime<Utc>,
     server_id: Vec<u8>,
     server_key: Vec<u8>,
 }
@@ -18,6 +20,7 @@ impl Client {
             resource_id: endpoint.resource_id(),
             server_id: vec![],
             server_key: vec![],
+            last_checked_at: Utc::now(),
         }
     }
 
@@ -48,7 +51,16 @@ impl Client {
             s => Err(format!("[send] Cannot send to \"{}\" - {s:?}. Message: {message:?}", String::from_utf8_lossy(&self.server_id)))
         }
     }
+
     pub fn disconnect(&self, handler: &Handler) {
         handler.network().remove(self.resource_id);
+    }
+
+    pub fn ping(&self, handler: &Handler) -> ESMResult {
+        self.send(handler, Message::new(Type::Ping))
+    }
+
+    pub fn server_id(&self) -> String {
+        String::from_utf8_lossy(&self.server_id).to_string()
     }
 }

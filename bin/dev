@@ -3,7 +3,6 @@
 export RUBYOPT='-W:no-deprecated -W:no-experimental'
 export PRINT_LOG='true'
 export ESM_ENV='development'
-export RUST_LOG='info'
 
 kill -9 $(pgrep -f extension_server) > /dev/null 2>&1
 

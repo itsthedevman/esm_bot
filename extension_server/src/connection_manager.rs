@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use chrono::{Duration, Utc};
 use message_io::network::Endpoint;
 use redis::Commands;
 
@@ -112,5 +113,66 @@ impl ConnectionManager {
                 None
             }
         }
+    }
+
+    pub fn alive_check(&mut self, handler: &Handler) {
+        self.lobby.retain(|client| {
+            debug!(
+                "[alive_check] LOBBY - {} - Last checked: {} - Needs disconnected: {}",
+                client.server_id(),
+                client.last_checked_at,
+                (client.last_checked_at + Duration::seconds(2)) < Utc::now()
+            );
+
+            // Clients can only sit in the lobby for 2 seconds before being disconnected
+            if (client.last_checked_at + Duration::seconds(2)) > Utc::now() {
+                debug!(
+                    "[alive_check] LOBBY - {} - Disconnecting",
+                    client.server_id()
+                );
+
+                client.disconnect(handler);
+                return false;
+            }
+
+            true
+        });
+
+        self.connections.retain(|_, client| {
+            debug!(
+                "[alive_check] CONN - {} - Last checked: {} - Needs disconnected: {}",
+                client.server_id(),
+                client.last_checked_at,
+                (client.last_checked_at + Duration::seconds(2)) < Utc::now()
+            );
+
+            // Disconnect the client if it's been more than 5 seconds
+            if (client.last_checked_at + Duration::seconds(5)) > Utc::now() {
+                debug!(
+                    "[alive_check] CONN - {} - Disconnecting",
+                    client.server_id()
+                );
+
+                client.disconnect(handler);
+                return false;
+            }
+
+            // Ping every second
+            if (client.last_checked_at + Duration::seconds(1)) < Utc::now() {
+                debug!("[alive_check] CONN - {} - Pinging", client.server_id());
+
+                if let Err(e) = client.ping(handler) {
+                    error!("[alive_check] CONN - {e}");
+                }
+            }
+
+            true
+        });
+    }
+
+    pub fn on_pong(&mut self, server_id: &[u8]) -> Option<()> {
+        let client = self.connections.get_mut(server_id)?;
+        client.last_checked_at = Utc::now();
+        Some(())
     }
 }

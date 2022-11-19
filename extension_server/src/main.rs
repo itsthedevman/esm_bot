@@ -1,6 +1,7 @@
 mod bot;
 mod client;
 mod connection_manager;
+mod macros;
 mod router;
 mod server;
 
