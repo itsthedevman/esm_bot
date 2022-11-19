@@ -3,8 +3,8 @@ use crate::{bot::BotRequest, server::ServerRequest, *};
 use tokio::sync::mpsc::{unbounded_channel, UnboundedSender};
 
 pub struct Router {
-    server_channel: Mutex<UnboundedSender<ServerRequest>>,
-    bot_channel: Mutex<UnboundedSender<BotRequest>>,
+    server_channel: UnboundedSender<ServerRequest>,
+    bot_channel: UnboundedSender<BotRequest>,
 }
 
 impl Router {
@@ -21,21 +21,20 @@ impl Router {
         info!("[new] ✅");
 
         Router {
-            server_channel: Mutex::new(server_channel),
-            bot_channel: Mutex::new(bot_channel),
+            server_channel,
+            bot_channel,
         }
     }
 
     pub fn route_to_server(&self, request: ServerRequest) -> ESMResult {
-        debug!("routing request {request:?} to server");
-        match lock!(self.server_channel).send(request) {
+        match self.server_channel.send(request) {
             Ok(_) => Ok(()),
             Err(e) => Err(format!("Failed to route. Reason: {}", e)),
         }
     }
 
     pub fn route_to_bot(&self, request: BotRequest) -> ESMResult {
-        match lock!(self.bot_channel).send(request) {
+        match self.bot_channel.send(request) {
             Ok(_) => Ok(()),
             Err(e) => Err(format!("Failed to route. Reason: {}", e)),
         }

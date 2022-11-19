@@ -70,8 +70,13 @@ async fn routing_thread(handler: Handler, mut receiver: UnboundedReceiver<Server
         info!("[routing_thread] ✅");
 
         let mut connection_manager = ConnectionManager::new();
-        while let Some(request) = receiver.recv().await {
-            debug!("[routing_thread] Processing request: {request:?}");
+        loop {
+            let Some(request) = receiver.recv().await else {
+                continue;
+            };
+
+            trace!("[routing_thread] Processing request: {request:?}");
+
             match request {
                 ServerRequest::Connect => todo!(), // I'm not sure if this is needed yet
 
@@ -109,7 +114,6 @@ async fn routing_thread(handler: Handler, mut receiver: UnboundedReceiver<Server
                     endpoint,
                     message_bytes,
                 } => {
-                    debug!("ON MESSAGE");
                     if let Err(e) =
                         on_message(&handler, &mut connection_manager, endpoint, &message_bytes)
                     {
@@ -122,8 +126,6 @@ async fn routing_thread(handler: Handler, mut receiver: UnboundedReceiver<Server
                     }
                 }
             }
-
-            debug!("[routing_thread] Done");
         }
     });
 }
@@ -137,20 +139,19 @@ async fn listener_thread(listener: NodeListener<()>) {
 
         let task = listener.for_each_async(move |event| match event.network() {
             NetEvent::Accepted(endpoint, _resource_id) => {
-                debug!("Accepted - Is ready? {}", ready());
+                trace!("[listener_thread] Accepted - Ready: {}", ready());
+
                 if !ready() {
                     if let Err(e) = crate::ROUTER.route_to_server(ServerRequest::DisconnectEndpoint(endpoint)) {
                         error!("[listener_thread] Failed to route disconnect_endpoint to server on Accepted event. {e}")
                     }
                 }
 
-                debug!("[accepted]  Before send");
                 if let Err(e) =
                     crate::ROUTER.route_to_server(ServerRequest::OnConnect(endpoint))
                 {
                     error!("[listener_thread] Failed to route on_connect to server on Accepted event. {e}")
                 }
-                debug!("[accepted] after send");
             }
             NetEvent::Connected(_, _) => unreachable!(), // Unused
             NetEvent::Disconnected(endpoint) => {
@@ -172,7 +173,6 @@ async fn listener_thread(listener: NodeListener<()>) {
                 {
                     error!("[listener_thread] Failed to route on_message to server on Message event. {e}")
                 }
-                debug!("[message] after send");
             }
         });
 
@@ -188,7 +188,7 @@ async fn heartbeat_thread() {
 
         loop {
             tokio::time::sleep(Duration::from_millis(500)).await;
-            debug!("heartbeat - sending alive check");
+
             if let Err(e) = crate::ROUTER.route_to_server(ServerRequest::AliveCheck) {
                 error!("[heartbeat_thread] Failed to route alive_check to server {e}")
             }
