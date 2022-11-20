@@ -160,14 +160,12 @@ async fn listener_thread(listener: NodeListener<()>) {
                 }
             },
             NetEvent::Message(endpoint, message_bytes) => {
-                debug!("[message] BOT: {}, SERVER: {}", crate::BOT_CONNECTED.load(Ordering::SeqCst), crate::SERVER_READY.load(Ordering::SeqCst));
                 if !ready() {
                     if let Err(e) = crate::ROUTER.route_to_server(ServerRequest::DisconnectEndpoint(endpoint)) {
                         error!("[listener_thread] Failed to route disconnect_endpoint to server on Message event. {e}")
                     }
                 }
 
-                debug!("[message] Before send");
                 if let Err(e) =
                     crate::ROUTER.route_to_server(ServerRequest::OnMessage { endpoint, message_bytes: message_bytes.to_vec() })
                 {
@@ -197,10 +195,7 @@ async fn heartbeat_thread() {
 }
 
 fn on_connect(connection_manager: &mut ConnectionManager, endpoint: Endpoint) -> ESMResult {
-    debug!(
-        "[on_connect] Accepting incoming connection with address \"{}\"",
-        endpoint.addr()
-    );
+    debug!("[on_connect] \"{}\"", endpoint.addr());
 
     connection_manager.add(endpoint);
     Ok(())
@@ -268,23 +263,24 @@ fn on_message(
     };
 
     info!(
-        "[on_message] {server_id} - {message_id} - {message_type:?}",
+        "[on_message] \"{address}\" - {server_id} - {message_type:?} - {message_id}",
+        address = endpoint.addr(),
         message_id = message.id,
         server_id = String::from_utf8_lossy(server_id),
         message_type = message.message_type,
     );
 
-    debug!("[on_message] \"{}\" - {message:?}", endpoint.addr());
+    trace!("[on_message] \"{}\" - {message:?}", endpoint.addr());
 
     crate::ROUTER.route_to_bot(BotRequest::Message(Box::new(message)))
 }
 
 fn on_disconnect(connection_manager: &mut ConnectionManager, endpoint: Endpoint) -> ESMResult {
-    debug!("[on_disconnect] \"{}\" - on_disconnect", endpoint.addr());
+    info!("[on_disconnect] \"{}\"", endpoint.addr());
 
-    let Some(server_id) = connection_manager.remove(endpoint) else {
+    let Some(client) = connection_manager.on_disconnect(endpoint) else {
         return Err(format!("[on_disconnect] {} - Failed to remove endpoint", endpoint.addr()));
     };
 
-    crate::ROUTER.route_to_bot(BotRequest::Disconnected(server_id))
+    crate::ROUTER.route_to_bot(BotRequest::Disconnected(client.server_id))
 }

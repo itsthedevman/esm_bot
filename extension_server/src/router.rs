@@ -18,8 +18,6 @@ impl Router {
             crate::server::initialize(server_receiver).await;
         });
 
-        info!("[new] ✅");
-
         Router {
             server_channel,
             bot_channel,
