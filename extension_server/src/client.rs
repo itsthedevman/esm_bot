@@ -9,7 +9,8 @@ pub struct Client {
     pub endpoint: Endpoint,
     pub resource_id: ResourceId,
     pub last_checked_at: DateTime<Utc>,
-    server_id: Vec<u8>,
+    pub pong_received: bool,
+    pub server_id: Vec<u8>,
     server_key: Vec<u8>,
 }
 
@@ -21,6 +22,7 @@ impl Client {
             server_id: vec![],
             server_key: vec![],
             last_checked_at: Utc::now(),
+            pong_received: true,
         }
     }
 
@@ -37,18 +39,28 @@ impl Client {
 
         match handler.network().send(self.endpoint, &message_bytes) {
             SendStatus::Sent => {
-                info!(
-                    "[send] Message with id:{} sent to \"{}\"",
-                    message.id,
-                    String::from_utf8_lossy(&self.server_id)
-                );
+                if matches!(message.message_type, Type::Ping) {
+                    trace!(
+                        "[send] Message {:?} with id:{} sent to \"{}\"",
+                        message.message_type,
+                        message.id,
+                        String::from_utf8_lossy(&self.server_id)
+                    );
+                } else {
+                    info!(
+                        "[send] Message {:?} with id:{} sent to \"{}\"",
+                        message.message_type,
+                        message.id,
+                        String::from_utf8_lossy(&self.server_id)
+                    );
+                }
 
                 Ok(())
             }
             SendStatus::MaxPacketSizeExceeded => Err(format!(
                 "[send] Cannot send to \"{}\" - Message is too large. Size: {} bytes. Message: {message:?}", String::from_utf8_lossy(&self.server_id), message_bytes.len()
             )),
-            s => Err(format!("[send] Cannot send to \"{}\" - {s:?}. Message: {message:?}", String::from_utf8_lossy(&self.server_id)))
+            s => Err(format!("[send] Cannot send to \"{}\" - {s:?}. Message: {message}", String::from_utf8_lossy(&self.server_id)))
         }
     }
 
@@ -56,8 +68,18 @@ impl Client {
         handler.network().remove(self.resource_id);
     }
 
-    pub fn ping(&self, handler: &Handler) -> ESMResult {
-        self.send(handler, Message::new(Type::Ping))
+    pub fn ping(&mut self, handler: &Handler) -> ESMResult {
+        self.pong_received = false;
+
+        self.send(
+            handler,
+            Message::new(Type::Ping).set_server_id(&self.server_id),
+        )
+    }
+
+    pub fn pong(&mut self) {
+        self.last_checked_at = Utc::now();
+        self.pong_received = true;
     }
 
     pub fn server_id(&self) -> String {

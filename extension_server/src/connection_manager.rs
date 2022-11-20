@@ -13,6 +13,9 @@ pub struct ConnectionManager {
 }
 
 impl ConnectionManager {
+    const LOBBY_DISCONNECT_AFTER: i64 = 2;
+    const CONNECTION_DISCONNECT_AFTER: i64 = 5;
+
     pub fn new() -> Self {
         let redis_client = match redis::Client::open(crate::ARGS.lock().redis_uri.to_string()) {
             Ok(c) => c,
@@ -41,19 +44,21 @@ impl ConnectionManager {
         self.lobby.push(Client::new(endpoint));
     }
 
-    pub fn remove(&mut self, endpoint: Endpoint) -> Option<Vec<u8>> {
+    pub fn remove(&mut self, endpoint: Endpoint) -> Option<Client> {
         if let Some(index) = self.lobby.iter().position(|c| c.endpoint == endpoint) {
             self.lobby.remove(index);
             return None;
         }
 
-        self.connections.iter().find_map(|(server_id, client)| {
-            if client.endpoint == endpoint {
-                Some(server_id.to_owned())
+        let server_id = self.connections.iter().find_map(|(server_id, client)| {
+            if client.endpoint != endpoint {
+                Some(server_id.clone())
             } else {
                 None
             }
-        })
+        })?;
+
+        self.connections.remove(&server_id)
     }
 
     pub fn authorize(
@@ -118,16 +123,19 @@ impl ConnectionManager {
     pub fn alive_check(&mut self, handler: &Handler) {
         self.lobby.retain(|client| {
             debug!(
-                "[alive_check] LOBBY - {} - Last checked: {} - Needs disconnected: {}",
+                "[alive_check] lobby - {} - Last checked: {} - Needs disconnected: {}",
                 client.server_id(),
                 client.last_checked_at,
-                (client.last_checked_at + Duration::seconds(2)) < Utc::now()
+                (client.last_checked_at + Duration::seconds(Self::LOBBY_DISCONNECT_AFTER))
+                    < Utc::now()
             );
 
             // Clients can only sit in the lobby for 2 seconds before being disconnected
-            if (client.last_checked_at + Duration::seconds(2)) > Utc::now() {
-                debug!(
-                    "[alive_check] LOBBY - {} - Disconnecting",
+            if (client.last_checked_at + Duration::seconds(Self::LOBBY_DISCONNECT_AFTER))
+                < Utc::now()
+            {
+                trace!(
+                    "[alive_check] lobby - {} - Disconnecting",
                     client.server_id()
                 );
 
@@ -139,17 +147,20 @@ impl ConnectionManager {
         });
 
         self.connections.retain(|_, client| {
-            debug!(
-                "[alive_check] CONN - {} - Last checked: {} - Needs disconnected: {}",
+            trace!(
+                "[alive_check] connections - {} - Last checked: {} - Needs disconnected: {}",
                 client.server_id(),
                 client.last_checked_at,
-                (client.last_checked_at + Duration::seconds(2)) < Utc::now()
+                (client.last_checked_at + Duration::seconds(Self::CONNECTION_DISCONNECT_AFTER))
+                    < Utc::now()
             );
 
             // Disconnect the client if it's been more than 5 seconds
-            if (client.last_checked_at + Duration::seconds(5)) > Utc::now() {
-                debug!(
-                    "[alive_check] CONN - {} - Disconnecting",
+            if (client.last_checked_at + Duration::seconds(Self::CONNECTION_DISCONNECT_AFTER + 5))
+                < Utc::now()
+            {
+                trace!(
+                    "[alive_check] connections - {} - Disconnecting",
                     client.server_id()
                 );
 
@@ -158,11 +169,17 @@ impl ConnectionManager {
             }
 
             // Ping every second
-            if (client.last_checked_at + Duration::seconds(1)) < Utc::now() {
-                debug!("[alive_check] CONN - {} - Pinging", client.server_id());
+            if client.pong_received
+                && (client.last_checked_at + Duration::seconds(Self::CONNECTION_DISCONNECT_AFTER))
+                    < Utc::now()
+            {
+                trace!(
+                    "[alive_check] connections - {} - Sending ping",
+                    client.server_id()
+                );
 
                 if let Err(e) = client.ping(handler) {
-                    error!("[alive_check] CONN - {e}");
+                    error!("[alive_check] connections - {e}");
                 }
             }
 
@@ -172,7 +189,14 @@ impl ConnectionManager {
 
     pub fn on_pong(&mut self, server_id: &[u8]) -> Option<()> {
         let client = self.connections.get_mut(server_id)?;
-        client.last_checked_at = Utc::now();
+        client.pong();
+
+        trace!("[on_pong] {}", client.server_id());
         Some(())
+    }
+
+    pub fn on_disconnect(&mut self, endpoint: Endpoint) -> Option<Client> {
+        let client = self.remove(endpoint)?;
+        Some(client)
     }
 }
