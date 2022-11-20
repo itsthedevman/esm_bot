@@ -121,10 +121,8 @@ module ESM
         # Set some internal data for sending
         message.server_id = to if to
 
-        error!(server_id: to, message: message.to_h.except(:server_id))
-
         ESM::Test.outbound_server_messages.store(message, to) if ESM.env.test?
-        __send_internal({type: :route_to_client, content: {server_id: to.bytes, message: message}}) unless ESM.env.test? && ESM::Test.block_outbound_messages
+        __send_internal({type: :route_to_client, content: {server_id: to.bytes, message: message.to_h}}) unless ESM.env.test? && ESM::Test.block_outbound_messages
 
         return message.wait_for_response if wait
 
