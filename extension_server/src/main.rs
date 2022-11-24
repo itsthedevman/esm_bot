@@ -2,20 +2,21 @@ mod bot;
 mod client;
 mod connection_manager;
 mod macros;
+mod request;
 mod router;
 mod server;
-
-use router::Router;
-
-use std::sync::{atomic::AtomicBool, Arc};
 
 use clap::Parser;
 use lazy_static::lazy_static;
 use parking_lot::Mutex;
+use std::sync::{atomic::AtomicBool, Arc};
 use tokio::runtime::Runtime;
 
 pub use esm_message::{Message, Type};
 pub use log::{debug, error, info, trace, warn};
+
+pub use request::*;
+pub use router::ROUTER;
 
 pub type ESMResult = Result<(), String>;
 
@@ -28,9 +29,6 @@ lazy_static! {
 
     /// The runtime for the asynchronous code
     pub static ref TOKIO_RUNTIME: Arc<Runtime> = Arc::new(tokio::runtime::Builder::new_multi_thread().enable_all().build().unwrap());
-
-    /// Handles sending messages to the Bot and the A3 server
-    pub static ref ROUTER: Arc<Router> = Arc::new(Router::new());
 
     /// This executables arguments
     pub static ref ARGS: Arc<Mutex<Args>> = Arc::new(Mutex::new(Args { port: "".into(), redis_uri: "".into() }));
@@ -48,7 +46,7 @@ pub struct Args {
 }
 
 fn main() {
-    env_logger::init();
+    env_logger::builder().format_timestamp_millis().init();
     info!("[main] Starting...");
 
     // Must be the first thing to happen

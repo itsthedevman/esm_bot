@@ -1,6 +1,11 @@
-use crate::{bot::BotRequest, server::ServerRequest, *};
+use crate::*;
 
 use tokio::sync::mpsc::{unbounded_channel, UnboundedSender};
+
+lazy_static! {
+    /// Handles sending messages to the Bot and the A3 server
+    pub static ref ROUTER: Arc<Router> = Arc::new(Router::new());
+}
 
 pub struct Router {
     server_channel: UnboundedSender<ServerRequest>,

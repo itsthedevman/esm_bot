@@ -1,30 +1,11 @@
 use std::{sync::atomic::Ordering, time::Duration};
 
-use crate::{server::ServerRequest, *};
-
+use crate::*;
 use redis::AsyncCommands;
-use serde::{Deserialize, Serialize};
 use tokio::{sync::mpsc::UnboundedReceiver, time::sleep};
 
 lazy_static! {
     static ref PONG_RECEIVED: AtomicBool = AtomicBool::new(true);
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(tag = "type", content = "content", rename_all = "snake_case")]
-pub enum BotRequest {
-    // {"type":"server_request","content":{"type":"connect"}}
-    ServerRequest(ServerRequest),
-    Ping,
-    Pong,
-    RouteToClient {
-        server_id: Vec<u8>,
-        message: Box<Message>,
-    },
-    Message(Box<Message>),
-
-    // Stores a server_id
-    Disconnected(Vec<u8>),
 }
 
 /// Initializes the various processes needed for the "bot" side of the server to run
@@ -50,7 +31,7 @@ pub async fn heartbeat() {
         // Set the flag back to false before sending the ping
         PONG_RECEIVED.store(false, Ordering::SeqCst);
 
-        if let Err(e) = crate::ROUTER.route_to_bot(BotRequest::Ping) {
+        if let Err(e) = BotRequest::ping() {
             error!("[heartbeat] Ping attempt experienced an error. {e}");
             continue;
         }
@@ -81,7 +62,7 @@ pub async fn heartbeat() {
 
         warn!("[heartbeat] Disconnected");
 
-        if let Err(e) = crate::ROUTER.route_to_server(ServerRequest::Disconnect(None)) {
+        if let Err(e) = ServerRequest::disconnect(None) {
             error!("[heartbeat] Failed to route disconnect all to server. {e}");
         }
     }
@@ -98,6 +79,12 @@ async fn routing_thread(mut receiver: UnboundedReceiver<BotRequest>) {
         };
 
         while let Some(request) = receiver.recv().await {
+            if let BotRequest::Disconnected(server_id) = &request {
+                if server_id.is_empty() {
+                    continue;
+                }
+            }
+
             let json: String = match serde_json::to_string(&request) {
                 Ok(s) => s,
                 Err(e) => {
