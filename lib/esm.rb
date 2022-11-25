@@ -45,7 +45,7 @@ require "otr-activerecord" if ENV["ESM_ENV"] != "production"
 # Load Dotenv variables; overwriting any that already exist
 Dotenv.overload
 Dotenv.overload(".env.test") if ENV["ESM_ENV"] == "test"
-Dotenv.overload(".env.prod") if ENV["ESM_ENV"] == "prodution"
+Dotenv.overload(".env.prod") if ENV["ESM_ENV"] == "production"
 
 #################################
 # Logging methods!
@@ -59,7 +59,7 @@ end
 # Used internally by logging methods. Do not call manually
 def __log(severity, caller_data, content)
   if content[:error].is_a?(StandardError)
-    e = payload[:error]
+    e = content[:error]
 
     content[:error] = {
       message: e.message,
