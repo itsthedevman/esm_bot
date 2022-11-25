@@ -41,7 +41,7 @@ module ESM
       when ->(type) { type == "event" && incoming_message.data_type != "empty" }
         on_event(incoming_message, outgoing_message)
       else
-        outgoing_message.run_callback(:on_response, incoming_message, outgoing_message)
+        outgoing_message&.run_callback(:on_response, incoming_message, outgoing_message)
       end
     end
 
