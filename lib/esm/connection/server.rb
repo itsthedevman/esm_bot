@@ -290,7 +290,7 @@ module ESM
         server_id = request[:content]
         connection = @connections.delete(server_id)
 
-        info!(server_id: server_id)
+        info!(server_id: server_id.pack("C*"))
         return if connection.nil?
 
         connection.on_close

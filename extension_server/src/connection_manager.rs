@@ -82,7 +82,7 @@ impl ConnectionManager {
                 return false;
             }
 
-            debug!(
+            trace!(
                 "[alive_check] connections - {} ({}) - Last checked: {} - Needs disconnected: {}",
                 client.network_address(),
                 client.server_id(),
@@ -93,7 +93,7 @@ impl ConnectionManager {
             // Disconnect the client if it's been more than 5 seconds
             if (client.last_checked_at + Duration::seconds(Self::DISCONNECT_AFTER)) < Utc::now() {
                 warn!(
-                    "[alive_check] connections - {} ({}) - Disconnecting",
+                    "[alive_check] connections - {} ({}) - Timed out",
                     client.network_address(),
                     client.server_id()
                 );

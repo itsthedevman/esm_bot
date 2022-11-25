@@ -40,6 +40,7 @@ async fn routing_thread(handler: Handler, mut receiver: UnboundedReceiver<Server
         info!("[routing_thread] ✅");
 
         let mut connection_manager = ConnectionManager::new();
+
         loop {
             let Some(request) = receiver.recv().await else {
                 continue;
@@ -102,7 +103,7 @@ async fn listener_thread(listener: NodeListener<()>) {
 
         let task = listener.for_each_async(move |event| match event.network() {
             NetEvent::Accepted(endpoint, _resource_id) => {
-                debug!("[listener_thread] Accepted - Ready: {}", ready());
+                trace!("[listener_thread] {} - accepted - are we ready? {}", endpoint.addr(), ready());
 
                 if !ready() {
                     if let Err(e) = ServerRequest::disconnect_endpoint(endpoint) {
@@ -159,6 +160,8 @@ async fn heartbeat_thread() {
 
 fn on_connect(endpoint: Endpoint) {
     debug!("[on_connect] \"{}\"", endpoint.addr());
+
+    ServerRequest::send(server_id, message)
 }
 
 fn on_message(
