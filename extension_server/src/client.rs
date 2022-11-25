@@ -10,25 +10,26 @@ pub struct Client {
     pub resource_id: ResourceId,
     pub last_checked_at: DateTime<Utc>,
     pub pong_received: bool,
+    pub connected: bool,
     pub server_id: Vec<u8>,
     server_key: Vec<u8>,
 }
 
 impl Client {
-    pub fn new(endpoint: Endpoint) -> Self {
+    pub fn new(endpoint: Endpoint, server_id: &[u8], server_key: &[u8]) -> Self {
         Client {
             endpoint,
             resource_id: endpoint.resource_id(),
-            server_id: vec![],
-            server_key: vec![],
+            server_id: server_id.into(),
+            server_key: server_key.into(),
             last_checked_at: Utc::now(),
             pong_received: true,
+            connected: true,
         }
     }
 
-    pub fn associate(&mut self, server_id: &[u8], server_key: &[u8]) {
-        self.server_id = server_id.to_vec();
-        self.server_key = server_key.to_vec();
+    pub fn network_address(&self) -> std::net::SocketAddr {
+        self.endpoint.addr()
     }
 
     pub fn send(&self, handler: &Handler, message: Message) -> ESMResult {

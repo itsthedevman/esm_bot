@@ -13,6 +13,8 @@ lazy_static! {
 
 pub type Handler = NodeHandler<()>;
 
+const HEARTBEAT_WAIT_MS: u64 = 1500;
+
 pub async fn initialize(receiver: UnboundedReceiver<ServerRequest>) {
     let (handler, listener) = node::split::<()>();
 
@@ -70,19 +72,14 @@ async fn routing_thread(handler: Handler, mut receiver: UnboundedReceiver<Server
 
                 ServerRequest::AliveCheck => connection_manager.alive_check(&handler),
 
-                ServerRequest::OnConnect(endpoint) => {
-                    if let Err(e) = on_connect(&mut connection_manager, endpoint) {
-                        error!("{e}");
-                    }
-                }
+                ServerRequest::OnConnect(endpoint) => on_connect(endpoint),
 
                 ServerRequest::OnMessage {
                     endpoint,
                     message_bytes,
                 } => {
-                    if let Err(e) =
-                        on_message(&handler, &mut connection_manager, endpoint, &message_bytes)
-                    {
+                    if let Err(e) = on_message(&mut connection_manager, endpoint, &message_bytes) {
+                        connection_manager.disconnect_endpoint(&handler, endpoint);
                         error!("{e}");
                     }
                 }
@@ -151,7 +148,7 @@ async fn heartbeat_thread() {
         info!("[heartbeat_thread] ✅");
 
         loop {
-            tokio::time::sleep(Duration::from_millis(1500)).await;
+            tokio::time::sleep(Duration::from_millis(HEARTBEAT_WAIT_MS)).await;
 
             if let Err(e) = ServerRequest::alive_check() {
                 error!("[heartbeat_thread] Failed to route alive_check to server {e}")
@@ -160,72 +157,22 @@ async fn heartbeat_thread() {
     });
 }
 
-fn on_connect(connection_manager: &mut ConnectionManager, endpoint: Endpoint) -> ESMResult {
+fn on_connect(endpoint: Endpoint) {
     debug!("[on_connect] \"{}\"", endpoint.addr());
-
-    connection_manager.add(endpoint);
-    Ok(())
 }
 
 fn on_message(
-    handler: &Handler,
     connection_manager: &mut ConnectionManager,
     endpoint: Endpoint,
     message_bytes: &[u8],
 ) -> ESMResult {
-    // Extract the server_id from the message
     let server_id = &message_bytes[1..=(message_bytes[0] as usize)];
+    let message = connection_manager.authenticate(endpoint, server_id, message_bytes)?;
+    trace!("[on_message] \"{}\" - {message:#?}", endpoint.addr());
 
-    // Get the server key to perform the decryption
-    let server_key = match connection_manager.server_key(server_id) {
-        Some(key) => key,
-        None => {
-            connection_manager.disconnect_endpoint(handler, endpoint);
-
-            return Err(format!(
-                "[on_message] {} - Failed to find server key",
-                String::from_utf8_lossy(server_id)
-            ));
-        }
-    };
-
-    let message = match Message::from_bytes(message_bytes, &server_key) {
-        Ok(message) => message,
-        Err(e) => {
-            connection_manager.disconnect_endpoint(handler, endpoint);
-            return Err(format!(
-                "[on_message] {} - {e}",
-                String::from_utf8_lossy(server_id)
-            ));
-        }
-    };
-
-    // The client has to encrypt the message with the same server key as the Id
-    // Which means that if it fails to decrypt above, the message was invalid and the endpoint is disconnected
-    // It's safe to assume this endpoint is who they say they are
-    match message.message_type {
-        Type::Init => {
-            if connection_manager
-                .authorize(server_id, &server_key, endpoint)
-                .is_none()
-            {
-                return Err(format!(
-                    "[on_message] {} - Failed to authorize endpoint",
-                    String::from_utf8_lossy(server_id)
-                ));
-            }
-        }
-        Type::Pong => {
-            if connection_manager.on_pong(server_id).is_none() {
-                return Err(format!(
-                    "[on_message] {} - Failed to update on_pong",
-                    String::from_utf8_lossy(server_id)
-                ));
-            }
-
-            return Ok(());
-        }
-        _ => (),
+    // Not all messages are for the bot to ingest
+    let Some(message) = message else {
+        return Ok(());
     };
 
     info!(
@@ -236,17 +183,15 @@ fn on_message(
         message_type = message.message_type,
     );
 
-    trace!("[on_message] \"{}\" - {message:?}", endpoint.addr());
-
     BotRequest::message(message)
 }
 
 fn on_disconnect(connection_manager: &mut ConnectionManager, endpoint: Endpoint) -> ESMResult {
     debug!("[on_disconnect] \"{}\"", endpoint.addr());
 
-    let Some(client) = connection_manager.on_disconnect(endpoint) else {
-        return Err(format!("[on_disconnect] {} - Failed to remove endpoint", endpoint.addr()));
+    let Some(server_id) = connection_manager.on_disconnect(endpoint) else {
+        return Err(format!("[on_disconnect] {} - Failed to mark disconnected", endpoint.addr()));
     };
 
-    BotRequest::disconnected(&client.server_id)
+    BotRequest::disconnected(&server_id)
 }
