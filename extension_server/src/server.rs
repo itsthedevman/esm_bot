@@ -1,7 +1,7 @@
-use crate::{connection_manager::ConnectionManager, *};
+use crate::{client_manager::ClientManager, *};
 
 use message_io::{
-    network::{Endpoint, NetEvent, Transport},
+    network::{NetEvent, Transport},
     node::{self, NodeHandler, NodeListener, NodeTask},
 };
 use std::{sync::atomic::Ordering, time::Duration};
@@ -21,7 +21,7 @@ pub async fn initialize(receiver: UnboundedReceiver<ServerRequest>) {
     // Start listening
     match handler.network().listen(
         Transport::FramedTcp,
-        format!("0.0.0.0:{}", crate::ARGS.lock().port),
+        format!("0.0.0.0:{}", crate::SERVER_PORT),
     ) {
         Ok((_resource_id, real_addr)) => {
             info!("[initialize] ✅ Listening on port {real_addr}");
@@ -39,53 +39,189 @@ async fn routing_thread(handler: Handler, mut receiver: UnboundedReceiver<Server
     tokio::spawn(async move {
         info!("[routing_thread] ✅");
 
-        let mut connection_manager = ConnectionManager::new();
+        let mut client_manager = ClientManager::new();
+
+        let ready = || {
+            crate::BOT_CONNECTED.load(Ordering::SeqCst)
+                && crate::SERVER_READY.load(Ordering::SeqCst)
+        };
 
         loop {
             let Some(request) = receiver.recv().await else {
+                error!("[routing_thread] Receiver has been dropped!");
                 continue;
             };
 
             trace!("[routing_thread] Processing request: {request:?}");
 
             match request {
-                ServerRequest::Disconnect(server_id) => match server_id {
-                    Some(id) => connection_manager.disconnect(&handler, id.as_bytes()),
-                    None => connection_manager.disconnect_all(&handler),
-                },
-
-                ServerRequest::DisconnectEndpoint(endpoint) => {
-                    connection_manager.disconnect_endpoint(&handler, endpoint);
-                }
-
+                /////////////////////
+                // Bot requests
+                /////////////////////
                 ServerRequest::Resume => crate::SERVER_READY.store(true, Ordering::SeqCst),
-
                 ServerRequest::Pause => {
                     crate::SERVER_READY.store(false, Ordering::SeqCst);
-                    connection_manager.disconnect_all(&handler);
+                    client_manager.disconnect_all(&handler);
                 }
 
+                ServerRequest::Disconnect(server_id) => match server_id {
+                    Some(id) => {
+                        let Some(client) = client_manager.get_by_id(&id) else {
+                            error!("[disconnect] {} - Failed to retrieve client", String::from_utf8_lossy(&id));
+                            continue;
+                        };
+
+                        client.disconnect(&handler);
+                        client_manager.remove(client.host());
+                    }
+                    None => client_manager.disconnect_all(&handler),
+                },
+
                 ServerRequest::Send { server_id, message } => {
-                    if let Err(e) = connection_manager.send(&handler, &server_id, *message) {
+                    let Some(client) = client_manager.get_by_id(&server_id) else {
+                        error!("[send] {} - Failed to retrieve client", String::from_utf8_lossy(&server_id));
+                        continue;
+                    };
+
+                    if let Err(e) = client.send_message(&handler, *message) {
                         error!("{e}")
                     }
                 }
 
-                ServerRequest::AliveCheck => connection_manager.alive_check(&handler),
+                /////////////////////
+                // Internal requests
+                /////////////////////
+                ServerRequest::AliveCheck => client_manager.alive_check(&handler),
 
-                ServerRequest::OnConnect(endpoint) => on_connect(endpoint),
+                ServerRequest::DisconnectEndpoint(endpoint) => {
+                    let Some(client) = client_manager.get(endpoint) else {
+                        error!("[disconnect_endpoint] {} - Failed to retrieve client", endpoint.addr());
+                        continue;
+                    };
 
-                ServerRequest::OnMessage {
-                    endpoint,
-                    message_bytes,
-                } => {
-                    if let Err(e) = on_message(&mut connection_manager, endpoint, &message_bytes) {
-                        connection_manager.disconnect_endpoint(&handler, endpoint);
-                        error!("{e}");
+                    client.disconnect(&handler);
+                    client_manager.remove(client.host());
+                }
+
+                ServerRequest::OnConnect(endpoint) => {
+                    trace!(
+                        "[listener_thread] {} - accepted - are we ready? {}",
+                        endpoint.addr(),
+                        ready()
+                    );
+
+                    let client = client_manager.add(endpoint);
+
+                    if !ready() {
+                        client.disconnect(&handler);
+                        client_manager.remove(endpoint.addr());
+
+                        continue;
+                    }
+
+                    debug!("[on_connect] \"{}\"", client.host());
+
+                    // Connection step 1
+                    if let Err(e) = client.request_identity(&handler) {
+                        error!("[on_connect] {e}");
+                    }
+                }
+
+                ServerRequest::OnMessage { endpoint, bytes } => {
+                    let Some(client) = client_manager.get_mut(endpoint) else {
+                        error!("[on_message] {} - Failed to retrieve client", endpoint.addr());
+                        continue;
+                    };
+
+                    if !ready() {
+                        client.disconnect(&handler);
+                        client_manager.remove(endpoint.addr());
+                        continue;
+                    }
+
+                    let request: ClientRequest = match serde_json::from_slice(&bytes) {
+                        Ok(r) => r,
+                        Err(e) => {
+                            error!(
+                                "[on_message] {} - {} - Failed to convert message from bytes - {e}. {bytes:?}",
+                                client.host(),
+                                client.server_id()
+                            );
+
+                            client.disconnect(&handler);
+                            client_manager.remove(endpoint.addr());
+                            continue;
+                        }
+                    };
+
+                    // Connection step 2
+                    if request.request_type.as_str() == "id" {
+                        client.set_token_data(&request.content);
+
+                        // Connection step 3
+                        if let Err(e) = client.request_init(&handler) {
+                            error!(
+                                "[on_message] {} - {} - {e}",
+                                client.host(),
+                                client.server_id()
+                            );
+                        }
+                        continue;
+                    }
+
+                    // The client has to encrypt the message with the same server key as the Id
+                    // Which means that if it fails to decrypt, the message was invalid and the endpoint is disconnected
+                    // It is safe to assume this endpoint is who they say they are if this doesn't error
+                    let message = match client.parse_message(&request.content) {
+                        Ok(message) => match message {
+                            Some(m) => m,
+                            None => continue,
+                        },
+                        Err(e) => {
+                            error!(
+                                "[on_message] {} - {} - {e}",
+                                client.host(),
+                                client.server_id()
+                            );
+
+                            client.disconnect(&handler);
+                            client_manager.remove(endpoint.addr());
+
+                            continue;
+                        }
+                    };
+
+                    info!(
+                        "[on_message] {address} - {server_id} - {message_type:?} - {message_id}",
+                        address = endpoint.addr(),
+                        message_id = message.id,
+                        server_id = client.server_id(),
+                        message_type = message.message_type,
+                    );
+
+                    if let Err(e) = BotRequest::message(message) {
+                        error!(
+                            "[on_message] {} - {} - {e}",
+                            client.host(),
+                            client.server_id()
+                        );
+
+                        client.disconnect(&handler);
+                        client_manager.remove(endpoint.addr());
                     }
                 }
                 ServerRequest::OnDisconnect(endpoint) => {
-                    if let Err(e) = on_disconnect(&mut connection_manager, endpoint) {
+                    let Some(client) = client_manager.get_mut(endpoint) else {
+                        error!("[on_disconnect] {} - Failed to retrieve client", endpoint.addr());
+                        continue;
+                    };
+
+                    debug!("[on_disconnect] {} - {}", client.host(), client.server_id());
+
+                    // The alive check will remove the client for us
+                    client.connected = false;
+
+                    if let Err(e) = BotRequest::disconnected(&client.server_id) {
                         error!("{e}");
                     }
                 }
@@ -96,43 +232,20 @@ async fn routing_thread(handler: Handler, mut receiver: UnboundedReceiver<Server
 
 async fn listener_thread(listener: NodeListener<()>) {
     tokio::spawn(async move {
-        let ready = || {
-            crate::BOT_CONNECTED.load(Ordering::SeqCst)
-                && crate::SERVER_READY.load(Ordering::SeqCst)
-        };
-
         let task = listener.for_each_async(move |event| match event.network() {
+            NetEvent::Connected(_, _) => unreachable!(), // Unused
             NetEvent::Accepted(endpoint, _resource_id) => {
-                trace!("[listener_thread] {} - accepted - are we ready? {}", endpoint.addr(), ready());
-
-                if !ready() {
-                    if let Err(e) = ServerRequest::disconnect_endpoint(endpoint) {
-                        error!("[listener_thread] Failed to route disconnect_endpoint to server on Accepted event. {e}")
-                    }
-
-                    return
-                }
-
-                if let Err(e) = ServerRequest::on_connect(endpoint)
-                {
+                if let Err(e) = ServerRequest::on_connect(endpoint) {
                     error!("[listener_thread] Failed to route on_connect to server on Accepted event. {e}")
                 }
             }
-            NetEvent::Connected(_, _) => unreachable!(), // Unused
             NetEvent::Disconnected(endpoint) => {
                 if let Err(e) = ServerRequest::on_disconnect(endpoint) {
                     error!("[listener_thread] Failed to route endpoint to server on Accepted event. {e}")
                 }
             },
             NetEvent::Message(endpoint, message_bytes) => {
-                if !ready() {
-                    if let Err(e) = ServerRequest::disconnect_endpoint(endpoint) {
-                        error!("[listener_thread] Failed to route disconnect_endpoint to server on Message event. {e}")
-                    }
-                }
-
-                if let Err(e) = ServerRequest::on_message(endpoint, message_bytes)
-                {
+                if let Err(e) = ServerRequest::on_message(endpoint, message_bytes){
                     error!("[listener_thread] Failed to route on_message to server on Message event. {e}")
                 }
             }
@@ -152,49 +265,8 @@ async fn heartbeat_thread() {
             tokio::time::sleep(Duration::from_millis(HEARTBEAT_WAIT_MS)).await;
 
             if let Err(e) = ServerRequest::alive_check() {
-                error!("[heartbeat_thread] Failed to route alive_check to server {e}")
+                error!("[heartbeat_thread] Failed to route alive_check to server - {e}")
             }
         }
     });
-}
-
-fn on_connect(endpoint: Endpoint) {
-    debug!("[on_connect] \"{}\"", endpoint.addr());
-
-    ServerRequest::send(server_id, message)
-}
-
-fn on_message(
-    connection_manager: &mut ConnectionManager,
-    endpoint: Endpoint,
-    message_bytes: &[u8],
-) -> ESMResult {
-    let server_id = &message_bytes[1..=(message_bytes[0] as usize)];
-    let message = connection_manager.authenticate(endpoint, server_id, message_bytes)?;
-    trace!("[on_message] \"{}\" - {message:#?}", endpoint.addr());
-
-    // Not all messages are for the bot to ingest
-    let Some(message) = message else {
-        return Ok(());
-    };
-
-    info!(
-        "[on_message] \"{address}\" - {server_id} - {message_type:?} - {message_id}",
-        address = endpoint.addr(),
-        message_id = message.id,
-        server_id = String::from_utf8_lossy(server_id),
-        message_type = message.message_type,
-    );
-
-    BotRequest::message(message)
-}
-
-fn on_disconnect(connection_manager: &mut ConnectionManager, endpoint: Endpoint) -> ESMResult {
-    debug!("[on_disconnect] \"{}\"", endpoint.addr());
-
-    let Some(server_id) = connection_manager.on_disconnect(endpoint) else {
-        return Err(format!("[on_disconnect] {} - Failed to mark disconnected", endpoint.addr()));
-    };
-
-    BotRequest::disconnected(&server_id)
 }

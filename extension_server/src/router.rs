@@ -23,6 +23,8 @@ impl Router {
             crate::server::initialize(server_receiver).await;
         });
 
+        info!("[router] ✅");
+
         Router {
             server_channel,
             bot_channel,
@@ -32,14 +34,14 @@ impl Router {
     pub fn route_to_server(&self, request: ServerRequest) -> ESMResult {
         match self.server_channel.send(request) {
             Ok(_) => Ok(()),
-            Err(e) => Err(format!("Failed to route. Reason: {}", e)),
+            Err(e) => Err(e.to_string()),
         }
     }
 
     pub fn route_to_bot(&self, request: BotRequest) -> ESMResult {
         match self.bot_channel.send(request) {
             Ok(_) => Ok(()),
-            Err(e) => Err(format!("Failed to route. Reason: {}", e)),
+            Err(e) => Err(e.to_string()),
         }
     }
 }

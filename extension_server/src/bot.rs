@@ -73,7 +73,7 @@ async fn routing_thread(mut receiver: UnboundedReceiver<BotRequest>) {
     tokio::spawn(async move {
         info!("[routing_thread] ✅");
 
-        let redis_client = match redis::Client::open(crate::ARGS.lock().redis_uri.to_string()) {
+        let redis_client = match redis::Client::open(crate::REDIS_URI.to_string()) {
             Ok(c) => c,
             Err(e) => panic!("[routing_thread] Failed to connect to redis. {}", e),
         };
@@ -120,7 +120,7 @@ async fn routing_thread(mut receiver: UnboundedReceiver<BotRequest>) {
 
 /// Manages messages inbound from esm_bot and routes them to their destination
 async fn ipc_thread() {
-    let redis_client = match redis::Client::open(crate::ARGS.lock().redis_uri.to_string()) {
+    let redis_client = match redis::Client::open(crate::REDIS_URI.to_string()) {
         Ok(c) => c,
         Err(e) => panic!("[initialize] Failed to connect to redis. {}", e),
     };
@@ -177,7 +177,7 @@ async fn ipc_thread() {
 
 /// This functions supports the ipc_thread by moving messages from esm_bot's outbound queue into the inbound queue
 async fn delegation_thread() {
-    let redis_client = match redis::Client::open(crate::ARGS.lock().redis_uri.to_string()) {
+    let redis_client = match redis::Client::open(crate::REDIS_URI.to_string()) {
         Ok(c) => c,
         Err(e) => panic!("[delegation_thread] Failed to connect to redis. {}", e),
     };

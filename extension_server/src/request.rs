@@ -57,7 +57,7 @@ impl BotRequest {
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(tag = "type", content = "content", rename_all = "snake_case")]
 pub enum ServerRequest {
-    Disconnect(Option<String>),
+    Disconnect(Option<Vec<u8>>),
     Resume,
     Pause,
     Send {
@@ -77,7 +77,7 @@ pub enum ServerRequest {
     #[serde(skip)]
     OnMessage {
         endpoint: Endpoint,
-        message_bytes: Vec<u8>,
+        bytes: Vec<u8>,
     },
 
     #[serde(skip)]
@@ -85,7 +85,7 @@ pub enum ServerRequest {
 }
 
 impl ServerRequest {
-    pub fn disconnect(server_id: Option<String>) -> ESMResult {
+    pub fn disconnect(server_id: Option<Vec<u8>>) -> ESMResult {
         crate::ROUTER.route_to_server(Self::Disconnect(server_id))
     }
 
@@ -119,11 +119,24 @@ impl ServerRequest {
     pub fn on_message(endpoint: Endpoint, bytes: &[u8]) -> ESMResult {
         crate::ROUTER.route_to_server(Self::OnMessage {
             endpoint,
-            message_bytes: bytes.into(),
+            bytes: bytes.into(),
         })
     }
 
     pub fn on_disconnect(endpoint: Endpoint) -> ESMResult {
         crate::ROUTER.route_to_server(Self::OnDisconnect(endpoint))
     }
+}
+
+///////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct ClientRequest {
+    #[serde(rename = "t")]
+    pub request_type: String,
+
+    #[serde(rename = "c", default, skip_serializing_if = "Vec::is_empty")]
+    pub content: Vec<u8>,
 }
