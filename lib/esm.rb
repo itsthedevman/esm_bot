@@ -51,7 +51,7 @@ Dotenv.overload(".env.prod") if ENV["ESM_ENV"] == "production"
 # Logging methods!
 #################################
 [:trace, :debug, :info, :warn, :error].each do |severity|
-  define_method("#{severity}!") do |**content|
+  define_method("#{severity}!") do |content = {}|
     __log(severity, caller_locations(1, 1).first, content)
   end
 end

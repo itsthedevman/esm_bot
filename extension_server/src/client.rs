@@ -13,15 +13,16 @@ pub struct Client {
     pub pong_received: bool,
     pub connected: bool,
     pub server_id: Vec<u8>,
-    server_key: Vec<u8>,
 }
 
 impl Client {
-    pub fn server_key(server_id: &[u8]) -> Option<Vec<u8>> {
+    pub fn get_server_key(server_id: &[u8]) -> Option<Vec<u8>> {
         let server_id = match String::from_utf8(server_id.to_owned()) {
             Ok(id) => id,
             Err(e) => {
-                error!("[server_key] {server_id:?} - Failed to convert server_id to string. {e}");
+                error!(
+                    "[get_server_key] {server_id:?} - Failed to convert server_id to string. {e}"
+                );
                 return None;
             }
         };
@@ -30,7 +31,7 @@ impl Client {
             Ok(c) => c,
             Err(e) => {
                 error!(
-                    "[server_key] {server_id} - Failed to connect to redis. {}",
+                    "[get_server_key] {server_id} - Failed to connect to redis. {}",
                     e
                 );
                 return None;
@@ -40,7 +41,7 @@ impl Client {
         match redis_client.hget("server_keys", &server_id) {
             Ok(key) => key,
             Err(e) => {
-                error!("[server_key] {server_id} - Experienced an error while calling HGET on server_keys. {e}");
+                error!("[get_server_key] {server_id} - Experienced an error while calling HGET on server_keys. {e}");
                 None
             }
         }
@@ -51,7 +52,6 @@ impl Client {
             endpoint,
             resource_id: endpoint.resource_id(),
             server_id: vec![],
-            server_key: vec![],
             last_checked_at: Utc::now(),
             pong_received: true,
             connected: true,
@@ -68,14 +68,18 @@ impl Client {
 
     pub fn set_token_data(&mut self, server_id: &[u8]) {
         self.server_id = server_id.into();
+    }
 
-        if let Some(server_key) = Self::server_key(server_id) {
-            self.server_key = server_key;
+    pub fn server_key(&self) -> Vec<u8> {
+        if let Some(server_key) = Self::get_server_key(&self.server_id) {
+            server_key
+        } else {
+            Vec::new()
         }
     }
 
     pub fn parse_message(&mut self, bytes: &[u8]) -> Result<Option<Message>, String> {
-        let message = Message::from_bytes(bytes, &self.server_key)?;
+        let message = Message::from_bytes(bytes, &self.server_key())?;
 
         if matches!(message.message_type, Type::Pong) {
             self.pong();
@@ -85,8 +89,12 @@ impl Client {
         }
     }
 
-    pub fn send_message(&self, handler: &Handler, message: Message) -> ESMResult {
-        let message_bytes = match message.as_bytes(&self.server_key) {
+    pub fn send_message(&self, handler: &Handler, mut message: Message) -> ESMResult {
+        if message.server_id.is_none() {
+            message.server_id = Some(self.server_id.clone());
+        }
+
+        let message_bytes = match message.as_bytes(&self.server_key()) {
             Ok(bytes) => bytes,
             Err(error) => return Err(error),
         };

@@ -161,7 +161,7 @@ async fn routing_thread(handler: Handler, mut receiver: UnboundedReceiver<Server
                         // Connection step 3
                         if let Err(e) = client.request_init(&handler) {
                             error!(
-                                "[on_message] {} - {} - {e}",
+                                "[on_message] {} - {} - request_init - {e}",
                                 client.host(),
                                 client.server_id()
                             );
@@ -177,13 +177,7 @@ async fn routing_thread(handler: Handler, mut receiver: UnboundedReceiver<Server
                             Some(m) => m,
                             None => continue,
                         },
-                        Err(e) => {
-                            error!(
-                                "[on_message] {} - {} - {e}",
-                                client.host(),
-                                client.server_id()
-                            );
-
+                        Err(_e) => {
                             client.disconnect(&handler);
                             client_manager.remove(endpoint.addr());
 

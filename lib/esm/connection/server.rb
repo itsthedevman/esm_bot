@@ -142,6 +142,12 @@ module ESM
         connection.on_close
       end
 
+      private
+
+      def __send_internal(request)
+        @redis.rpush("bot_outbound", request.to_json)
+      end
+
       # Store all of the server_ids and their keys in redis.
       # This will allow the TCPServer to quickly pull a key by a server_id to decrypt messages
       def refresh_keys
@@ -152,12 +158,6 @@ module ESM
 
         # Store the data in Redis
         @redis.hmset("server_keys", *server_keys)
-      end
-
-      private
-
-      def __send_internal(request)
-        @redis.rpush("bot_outbound", request.to_json)
       end
 
       def delegate_inbound_messages

@@ -68,13 +68,12 @@ RSpec.configure do |config|
   end
 
   config.around(:each) do |example|
-    server = ESM::Connection::Server.instance
-    server&.disconnect_all!
-    server&.message_overseer&.remove_all!
-    server&.refresh_keys
-
     DatabaseCleaner.cleaning do
       ESM::Test.reset!
+
+      server = ESM::Connection::Server.instance
+      server&.disconnect_all!
+      server&.message_overseer&.remove_all!
 
       # Run the test!
       example.run
@@ -358,4 +357,4 @@ end
 # HEY! LISTEN! The following lines must be the last code to execute in this file
 ESM.run!
 ESM::Test.wait_until { ESM.bot.ready? }
-ESM::Test.wait_until { ESM::Connection::Server.instance.tcp_server_alive? }
+ESM::Test.wait_until { ESM::Connection::Server.instance&.tcp_server_alive? }

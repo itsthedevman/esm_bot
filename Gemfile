@@ -45,12 +45,14 @@ group :development do
   gem "faker"
   gem "memory_profiler"
   gem "rerun"
-  gem "rspec"
-  gem "rspec-wait"
   gem "ruby-prof"
   gem "simplecov"
   gem "solargraph"
   gem "yard"
 end
 
-gem "standard", group: [:development, :test]
+group :development, :test do
+  gem "standard"
+  gem "rspec"
+  gem "rspec-wait"
+end

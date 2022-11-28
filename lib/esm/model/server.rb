@@ -161,8 +161,6 @@ module ESM
       return if !server_key.blank?
 
       self.server_key = Array.new(7).map { SecureRandom.uuid.delete("-") }.join
-
-      # Store the key for the server
       ESM.redis.hmset("server_keys", [server_id, server_key])
     end
 
