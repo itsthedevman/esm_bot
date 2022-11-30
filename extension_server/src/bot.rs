@@ -162,7 +162,7 @@ async fn ipc_thread() {
                 BotRequest::Pong => {
                     PONG_RECEIVED.store(true, Ordering::SeqCst);
                 }
-                BotRequest::RouteToClient { server_id, message } => {
+                BotRequest::SendToClient { server_id, message } => {
                     if let Err(e) =
                         crate::ROUTER.route_to_server(ServerRequest::Send { server_id, message })
                     {

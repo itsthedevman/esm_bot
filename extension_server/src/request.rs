@@ -7,17 +7,26 @@ use crate::ESMResult;
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(tag = "type", content = "content", rename_all = "snake_case")]
 pub enum BotRequest {
-    // {"type":"server_request","content":{"type":"connect"}}
+    // esm_bot -> server.rs
     ServerRequest(ServerRequest),
+
+    // bot.rs -> esm_bot
     Ping,
+
+    // esm_bot -> bot.rs
     Pong,
-    RouteToClient {
+
+    // esm_bot -> server.rs -> esm_arma
+    SendToClient {
         server_id: Vec<u8>,
         message: Box<Message>,
     },
-    Message(Box<Message>),
 
-    // Stores a server_id
+    // extension_server -> esm_bot
+    #[serde(rename(serialize = "inbound"))]
+    Send(Box<Message>),
+
+    // server.rs -> esm_bot
     Disconnected(Vec<u8>),
 }
 
@@ -34,15 +43,12 @@ impl BotRequest {
         crate::ROUTER.route_to_bot(Self::Pong)
     }
 
-    pub fn route_to_client(server_id: &[u8], message: Message) -> ESMResult {
-        crate::ROUTER.route_to_bot(Self::RouteToClient {
-            server_id: server_id.into(),
-            message: Box::new(message),
-        })
+    pub fn send_to_client(server_id: &[u8], message: Message) -> ESMResult {
+        ServerRequest::send(server_id, message)
     }
 
-    pub fn message(message: Message) -> ESMResult {
-        crate::ROUTER.route_to_bot(Self::Message(Box::new(message)))
+    pub fn send(message: Message) -> ESMResult {
+        crate::ROUTER.route_to_bot(Self::Send(Box::new(message)))
     }
 
     pub fn disconnected(server_id: &[u8]) -> ESMResult {
@@ -57,29 +63,41 @@ impl BotRequest {
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(tag = "type", content = "content", rename_all = "snake_case")]
 pub enum ServerRequest {
+    // esm_bot -> server.rs
     Disconnect(Option<Vec<u8>>),
+
+    // esm_bot -> server.rs
     Resume,
+
+    // esm_bot -> server.rs
     Pause,
+
+    // esm_bot -> server.rs -> esm_arma
     Send {
         server_id: Vec<u8>,
         message: Box<Message>,
     },
 
+    // server.rs -> server.rs
     #[serde(skip)]
     AliveCheck,
 
+    // server.rs -> server.rs
     #[serde(skip)]
     DisconnectEndpoint(Endpoint),
 
+    // server.rs -> server.rs
     #[serde(skip)]
     OnConnect(Endpoint),
 
+    // server.rs -> server.rs
     #[serde(skip)]
     OnMessage {
         endpoint: Endpoint,
         bytes: Vec<u8>,
     },
 
+    // server.rs -> server.rs
     #[serde(skip)]
     OnDisconnect(Endpoint),
 }

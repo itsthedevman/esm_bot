@@ -110,7 +110,7 @@ module ESM
       #       "code" # Uses the message to look up a predefined message in the locales
       #       "message" # Treats the message like a string and sends it as is
       #     message [String] The content of this error.
-      def initialize(type:, **args)
+      def initialize(type: "event", **args)
         @id = args[:id] || SecureRandom.uuid
         @type = type.to_s
 

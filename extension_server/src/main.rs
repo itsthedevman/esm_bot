@@ -11,7 +11,7 @@ use parking_lot::Mutex;
 use std::sync::{atomic::AtomicBool, Arc};
 use tokio::runtime::Runtime;
 
-pub use esm_message::{Message, Type};
+pub use esm_message::*;
 pub use log::{debug, error, info, trace, warn};
 
 pub use request::*;

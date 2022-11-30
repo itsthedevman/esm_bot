@@ -77,14 +77,31 @@ async fn routing_thread(handler: Handler, mut receiver: UnboundedReceiver<Server
                     None => client_manager.disconnect_all(&handler),
                 },
 
-                ServerRequest::Send { server_id, message } => {
+                ServerRequest::Send {
+                    server_id,
+                    mut message,
+                } => {
                     let Some(client) = client_manager.get_by_id(&server_id) else {
                         error!("[send] {} - Failed to retrieve client", String::from_utf8_lossy(&server_id));
+
+                        if let Err(e) = BotRequest::send(message.add_error_code("client_not_connected")) {
+                            error!("[send] {} - Failed to send error - {e}", String::from_utf8_lossy(&server_id));
+                        }
+
                         continue;
                     };
 
-                    if let Err(e) = client.send_message(&handler, *message) {
-                        error!("{e}")
+                    if let Err(e) = client.send_message(&handler, message.as_mut()) {
+                        error!("{e}");
+
+                        if let Err(e) =
+                            BotRequest::send(message.add_error_code("client_not_connected"))
+                        {
+                            error!(
+                                "[send] {} - Failed to send error - {e}",
+                                String::from_utf8_lossy(&server_id)
+                            );
+                        }
                     }
                 }
 
@@ -193,7 +210,7 @@ async fn routing_thread(handler: Handler, mut receiver: UnboundedReceiver<Server
                         message_type = message.message_type,
                     );
 
-                    if let Err(e) = BotRequest::message(message) {
+                    if let Err(e) = BotRequest::send(message) {
                         error!(
                             "[on_message] {} - {} - {e}",
                             client.host(),

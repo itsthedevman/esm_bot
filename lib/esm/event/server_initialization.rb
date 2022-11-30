@@ -93,11 +93,13 @@ module ESM
         ).symbolize_keys
 
         data = data.merge(
-          logging_channel_id: @community.logging_channel_id,
-          territory_payment_tax: settings.territory_payment_tax / 100,
-          territory_upgrade_tax: settings.territory_upgrade_tax / 100,
+          community_id: @community.community_id,
           extdb_path: settings.extdb_path || "",
-          territory_admins: build_territory_admins
+          logging_channel_id: @community.logging_channel_id,
+          server_id: @server.server_id,
+          territory_admin_uids: build_territory_admins,
+          taxes_territory_payment: settings.territory_payment_tax / 100,
+          taxes_territory_upgrade: settings.territory_upgrade_tax / 100
         )
 
         @data = OpenStruct.new(data)
@@ -120,7 +122,7 @@ module ESM
       end
 
       def send_response
-        message = ESM::Connection::Message.new(type: "init", data_type: "post_init", data: @data)
+        message = ESM::Connection::Message.new(data_type: "post_init", data: @data)
         message.add_callback(:on_response) do |_incoming, _outgoing|
           # Trigger a connect notification
           ESM::Notifications.trigger("server_on_connect", server: @connection.server)

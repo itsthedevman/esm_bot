@@ -194,12 +194,12 @@ ActiveRecord::Schema.define(version: 2022_02_03_031859) do
   create_table "server_settings", force: :cascade do |t|
     t.integer "server_id"
     t.text "extdb_path"
-    t.integer "gambling_payout", default: 95
+    t.integer "gambling_payout_base", default: 95
     t.integer "gambling_modifier", default: 1
-    t.float "gambling_randomizer_min", default: 0.0
-    t.float "gambling_randomizer_mid", default: 0.5
-    t.float "gambling_randomizer_max", default: 1.0
-    t.integer "gambling_win_chance", default: 35
+    t.float "gambling_payout_randomizer_min", default: 0.0
+    t.float "gambling_payout_randomizer_mid", default: 0.5
+    t.float "gambling_payout_randomizer_max", default: 1.0
+    t.integer "gambling_win_percentage", default: 35
     t.text "logging_path"
     t.boolean "logging_add_player_to_territory", default: true
     t.boolean "logging_demote_player", default: true
@@ -209,8 +209,8 @@ ActiveRecord::Schema.define(version: 2022_02_03_031859) do
     t.boolean "logging_pay_territory", default: true
     t.boolean "logging_promote_player", default: true
     t.boolean "logging_remove_player_from_territory", default: true
-    t.boolean "logging_reward", default: true
-    t.boolean "logging_transfer", default: true
+    t.boolean "logging_reward_player", default: true
+    t.boolean "logging_transfer_poptabs", default: true
     t.boolean "logging_upgrade_territory", default: true
     t.integer "max_payment_count", default: 0
     t.string "request_thread_type", default: "exile"

@@ -122,24 +122,11 @@ module ESM
         message.server_id = to if to
 
         ESM::Test.outbound_server_messages.store(message, to) if ESM.env.test?
-        __send_internal({type: :route_to_client, content: {server_id: to.bytes, message: message.to_h}}) unless ESM.env.test? && ESM::Test.block_outbound_messages
+        __send_internal({type: :send_to_client, content: {server_id: to.bytes, message: message.to_h}}) unless ESM.env.test? && ESM::Test.block_outbound_messages
 
         return message.wait_for_response if wait
 
         message
-      end
-
-      def disconnect(server_id, reason: nil)
-        info!(server_id: server_id, reason: reason.to_s)
-
-        message = ESM::Connection::Message.new(type: :disconnect)
-        message.add_error(type: :message, content: reason) if reason.present?
-        fire(message, to: server_id)
-
-        connection = @connections.delete(server_id)
-        return if connection.nil?
-
-        connection.on_close
       end
 
       private
@@ -228,13 +215,11 @@ module ESM
           on_ping
         when "disconnected"
           on_disconnect(request)
-        when "message"
+        when "inbound"
           message = ESM::Connection::Message.from_string(request[:content])
-          case message.type
+          case message.data_type
           when "init"
             on_connect(message)
-          when "error"
-            on_error(message)
           else
             on_message(message)
           end
@@ -255,7 +240,7 @@ module ESM
         info!(server_id: {incoming: message.server_id}, incoming_message: message.to_h.without(:server_id))
 
         connection = ESM::Connection.new(self, server_id)
-        return disconnect(server_id) if connection.server.nil?
+        return if connection.server.nil?
         return connection.server.community.log_event(:error, message.errors.first.to_s) if message.errors?
 
         connection.on_open(message)
@@ -294,11 +279,6 @@ module ESM
         return if connection.nil?
 
         connection.on_close
-      end
-
-      def on_error(message)
-        outgoing_message = @message_overseer.retrieve(message.id)
-        outgoing_message.run_callback(:on_error, message, outgoing_message)
       end
 
       def on_ping

@@ -24,10 +24,6 @@ module ESM
       @tcp_server.fire(message, to: server_id, forget: forget, wait: wait)
     end
 
-    def disconnect
-      @tcp_server.disconnect(server_id)
-    end
-
     def on_open(message)
       @version = Semantic::Version.new(message.data.extension_version)
       ESM::Event::ServerInitialization.new(self, message).run!

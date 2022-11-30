@@ -81,7 +81,7 @@ impl Client {
     pub fn parse_message(&mut self, bytes: &[u8]) -> Result<Option<Message>, String> {
         let message = Message::from_bytes(bytes, &self.server_key())?;
 
-        if matches!(message.message_type, Type::Pong) {
+        if matches!(message.data, Data::Pong) {
             self.pong();
             Ok(None)
         } else {
@@ -89,7 +89,7 @@ impl Client {
         }
     }
 
-    pub fn send_message(&self, handler: &Handler, mut message: Message) -> ESMResult {
+    pub fn send_message(&self, handler: &Handler, message: &mut Message) -> ESMResult {
         if message.server_id.is_none() {
             message.server_id = Some(self.server_id.clone());
         }
@@ -107,7 +107,7 @@ impl Client {
             },
         )?;
 
-        if matches!(message.message_type, Type::Ping) {
+        if matches!(message.data, Data::Ping) {
             trace!(
                 "[send_message] {} - {} - {:?} - {}",
                 self.host(),
@@ -137,7 +137,9 @@ impl Client {
 
         self.send_message(
             handler,
-            Message::new(Type::Ping).set_server_id(&self.server_id),
+            &mut Message::new()
+                .set_data(Data::Ping)
+                .set_server_id(&self.server_id),
         )
     }
 

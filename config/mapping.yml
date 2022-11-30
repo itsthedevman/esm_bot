@@ -52,13 +52,14 @@ init:
   vg_max_sizes: Array<Integer>
 
 post_init:
+  community_id: String
   extdb_path: String
   gambling_modifier: Integer
-  gambling_payout: Integer
-  gambling_randomizer_max: Decimal
-  gambling_randomizer_mid: Decimal
-  gambling_randomizer_min: Decimal
-  gambling_win_chance: Integer
+  gambling_payout_base: Integer
+  gambling_payout_randomizer_max: Decimal
+  gambling_payout_randomizer_mid: Decimal
+  gambling_payout_randomizer_min: Decimal
+  gambling_win_percentage: Integer
   logging_add_player_to_territory: Boolean
   logging_channel_id: String
   logging_demote_player: Boolean
@@ -68,13 +69,14 @@ post_init:
   logging_pay_territory: Boolean
   logging_promote_player: Boolean
   logging_remove_player_from_territory: Boolean
-  logging_reward: Boolean
-  logging_transfer: Boolean
+  logging_reward_player: Boolean
+  logging_transfer_poptabs: Boolean
   logging_upgrade_territory: Boolean
   max_payment_count: Integer
-  territory_admins: Array<String>
-  territory_payment_tax: Integer
-  territory_upgrade_tax: Integer
+  server_id: String
+  territory_admin_uids: Array<String>
+  taxes_territory_payment: Integer
+  taxes_territory_upgrade: Integer
 
 query:
   arguments: Hash
