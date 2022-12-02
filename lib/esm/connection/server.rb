@@ -121,7 +121,9 @@ module ESM
         # Set some internal data for sending
         message.server_id = to if to
 
+        info!(server_id: to, message: message.to_h.without(:server_id))
         ESM::Test.outbound_server_messages.store(message, to) if ESM.env.test?
+
         __send_internal({type: :send_to_client, content: {server_id: to.bytes, message: message.to_h}}) unless ESM.env.test? && ESM::Test.block_outbound_messages
 
         return message.wait_for_response if wait
@@ -237,10 +239,10 @@ module ESM
       def on_connect(message)
         server_id = message.server_id
 
-        info!(server_id: {incoming: message.server_id}, incoming_message: message.to_h.without(:server_id))
+        info!(server_id: {incoming: server_id}, incoming_message: message.to_h.without(:server_id))
 
         connection = ESM::Connection.new(self, server_id)
-        return if connection.server.nil?
+        return error!(error: "Server does not exist", server_id: server_id) if connection.server.nil?
         return connection.server.community.log_event(:error, message.errors.first.to_s) if message.errors?
 
         connection.on_open(message)
