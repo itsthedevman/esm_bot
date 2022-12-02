@@ -62,10 +62,14 @@ impl ClientManager {
         self.0.clear();
     }
 
-    pub fn alive_check(&mut self, handler: &Handler) {
-        self.0.retain(|_, client| {
+    pub async fn alive_check(&mut self, handler: &Handler) {
+        // Could've written this using retain. Async was needed, though
+        let mut disconnect_addresses: Vec<SocketAddr> = vec![];
+
+        for (addr, client) in &mut self.0 {
             if !client.connected {
-                return false;
+                disconnect_addresses.push(addr.to_owned());
+                continue;
             }
 
             trace!(
@@ -85,7 +89,9 @@ impl ClientManager {
                 );
 
                 client.disconnect(handler);
-                return false;
+
+                disconnect_addresses.push(addr.to_owned());
+                continue;
             }
 
             // Ping
@@ -98,7 +104,7 @@ impl ClientManager {
                     client.server_id()
                 );
 
-                if let Err(e) = client.ping(handler) {
+                if let Err(e) = client.ping(handler).await {
                     error!(
                         "[alive_check] {} - {} - {e}",
                         client.host(),
@@ -106,8 +112,10 @@ impl ClientManager {
                     );
                 }
             }
+        }
 
-            true
-        });
+        for addr in disconnect_addresses {
+            self.0.remove(&addr);
+        }
     }
 }

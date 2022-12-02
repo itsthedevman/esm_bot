@@ -1,6 +1,5 @@
 use chrono::{DateTime, Utc};
 use message_io::network::{Endpoint, ResourceId, SendStatus};
-use redis::Commands;
 
 use crate::server::Handler;
 use crate::*;
@@ -16,7 +15,7 @@ pub struct Client {
 }
 
 impl Client {
-    pub fn get_server_key(server_id: &[u8]) -> Option<Vec<u8>> {
+    pub async fn get_server_key(server_id: &[u8]) -> Option<Vec<u8>> {
         let server_id = match String::from_utf8(server_id.to_owned()) {
             Ok(id) => id,
             Err(e) => {
@@ -27,21 +26,35 @@ impl Client {
             }
         };
 
-        let mut redis_client = match redis::Client::open(crate::REDIS_URI.to_string()) {
-            Ok(c) => c,
-            Err(e) => {
-                error!(
-                    "[get_server_key] {server_id} - Failed to connect to redis. {}",
-                    e
-                );
-                return None;
-            }
+        let database = await_lock!(DATABASE);
+        let Some(client) = database.as_ref() else {
+            error!("");
+            return None;
         };
 
-        match redis_client.hget("server_keys", &server_id) {
-            Ok(key) => key,
+        match client
+            .query(
+                "SELECT server_key FROM servers WHERE server_id = $1",
+                &[&server_id],
+            )
+            .await
+        {
+            Ok(rows) => {
+                if rows.is_empty() {
+                    // error!("[get_server_key] {server_id} - Server does not exist");
+                    return None;
+                }
+
+                match rows[0].try_get::<usize, String>(0) {
+                    Ok(r) => Some(r.as_bytes().to_owned()),
+                    Err(e) => {
+                        error!("[get_server_key] {server_id} - Failed to get server_key - {e}");
+                        None
+                    }
+                }
+            }
             Err(e) => {
-                error!("[get_server_key] {server_id} - Experienced an error while calling HGET on server_keys. {e}");
+                error!("[get_server_key] {server_id} - Error occurred while querying for server_key - {e}");
                 None
             }
         }
@@ -70,16 +83,16 @@ impl Client {
         self.server_id = server_id.into();
     }
 
-    pub fn server_key(&self) -> Vec<u8> {
-        if let Some(server_key) = Self::get_server_key(&self.server_id) {
+    pub async fn server_key(&self) -> Vec<u8> {
+        if let Some(server_key) = Self::get_server_key(&self.server_id).await {
             server_key
         } else {
             Vec::new()
         }
     }
 
-    pub fn parse_message(&mut self, bytes: &[u8]) -> Result<Option<Message>, String> {
-        let message = Message::from_bytes(bytes, &self.server_key())?;
+    pub async fn parse_message(&mut self, bytes: &[u8]) -> Result<Option<Message>, String> {
+        let message = Message::from_bytes(bytes, &self.server_key().await)?;
 
         if matches!(message.data, Data::Pong) {
             self.pong();
@@ -89,12 +102,12 @@ impl Client {
         }
     }
 
-    pub fn send_message(&self, handler: &Handler, message: &mut Message) -> ESMResult {
+    pub async fn send_message(&self, handler: &Handler, message: &mut Message) -> ESMResult {
         if message.server_id.is_none() {
             message.server_id = Some(self.server_id.clone());
         }
 
-        let message_bytes = match message.as_bytes(&self.server_key()) {
+        let message_bytes = match message.as_bytes(&self.server_key().await) {
             Ok(bytes) => bytes,
             Err(error) => return Err(error),
         };
@@ -132,7 +145,7 @@ impl Client {
         handler.network().remove(self.resource_id);
     }
 
-    pub fn ping(&mut self, handler: &Handler) -> ESMResult {
+    pub async fn ping(&mut self, handler: &Handler) -> ESMResult {
         self.pong_received = false;
 
         self.send_message(
@@ -141,6 +154,7 @@ impl Client {
                 .set_data(Data::Ping)
                 .set_server_id(&self.server_id),
         )
+        .await
     }
 
     pub fn pong(&mut self) {

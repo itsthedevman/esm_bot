@@ -91,7 +91,7 @@ async fn routing_thread(handler: Handler, mut receiver: UnboundedReceiver<Server
                         continue;
                     };
 
-                    if let Err(e) = client.send_message(&handler, message.as_mut()) {
+                    if let Err(e) = client.send_message(&handler, message.as_mut()).await {
                         error!("{e}");
 
                         if let Err(e) =
@@ -108,7 +108,7 @@ async fn routing_thread(handler: Handler, mut receiver: UnboundedReceiver<Server
                 /////////////////////
                 // Internal requests
                 /////////////////////
-                ServerRequest::AliveCheck => client_manager.alive_check(&handler),
+                ServerRequest::AliveCheck => client_manager.alive_check(&handler).await,
 
                 ServerRequest::DisconnectEndpoint(endpoint) => {
                     let Some(client) = client_manager.get(endpoint) else {
@@ -189,7 +189,7 @@ async fn routing_thread(handler: Handler, mut receiver: UnboundedReceiver<Server
                     // The client has to encrypt the message with the same server key as the Id
                     // Which means that if it fails to decrypt, the message was invalid and the endpoint is disconnected
                     // It is safe to assume this endpoint is who they say they are if this doesn't error
-                    let message = match client.parse_message(&request.content) {
+                    let message = match client.parse_message(&request.content).await {
                         Ok(message) => match message {
                             Some(m) => m,
                             None => continue,
