@@ -41,7 +41,7 @@ ActiveRecord::Base.logger.level = Logger::INFO if ActiveRecord::Base.logger.pres
 build_result = `cargo build --release; echo $?`.chomp
 raise "Failed to build extension_server" if build_result != "0"
 
-EXTENSION_SERVER = IO.popen("bin/extension_server")
+EXTENSION_SERVER = IO.popen("POSTGRES_DATABASE=esm_test bin/extension_server")
 
 RSpec.configure do |config|
   config.include FactoryBot::Syntax::Methods
