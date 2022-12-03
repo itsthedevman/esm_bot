@@ -64,12 +64,12 @@ describe ESM::Connection::Message, v2: true do
 
   describe "#initialize" do
     it "requires a type" do
-      expect { described_class.new }.to raise_error(ArgumentError, "missing keyword: :type")
       expect { described_class.new(type: "test") }.not_to raise_error
     end
 
     it "defaults to empty" do
-      message = described_class.new(type: "test")
+      message = described_class.new
+      expect(message.type).to eq("event")
       expect(message.data_type).to eq("empty")
       expect(message.data.to_h).to eq({})
       expect(message.metadata_type).to eq("empty")

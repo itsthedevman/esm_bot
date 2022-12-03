@@ -6,15 +6,14 @@ export ESM_ENV='development'
 
 kill -9 $(pgrep -f extension_server) > /dev/null 2>&1
 
-# Compile extension_server
-cargo update --package esm_message
-cargo build --release
+bin/build
 
 # Failed to build, don't start
 if [ $? -ne 0 ]
 then
   exit $?
 fi
+
 
 # Start the extension_server
 bin/extension_server &

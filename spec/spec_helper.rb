@@ -38,7 +38,7 @@ ActiveRecord::Base.logger.level = Logger::INFO if ActiveRecord::Base.logger.pres
 `kill -9 $(pgrep -f extension_server)`
 
 # Build and start the server
-build_result = `cargo build --release; echo $?`.chomp
+build_result = `bin/build; echo $?`.chomp
 raise "Failed to build extension_server" if build_result != "0"
 
 EXTENSION_SERVER = IO.popen("POSTGRES_DATABASE=esm_test bin/extension_server")
