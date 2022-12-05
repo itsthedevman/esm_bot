@@ -165,7 +165,7 @@ module ESM
       ESM::Websocket.add_connection(self)
     rescue ESM::Exception::FailedAuthentication => e
       # Application code may only use codes from 1000, 3000-4999
-      @connection.close(1002, e.message)
+      @connection.close(3002, e.message)
     rescue StandardError => e
       @connection.close(3002, e.message)
       ESM.logger.fatal("#{self.class}##{__method__}") { "Message:\n#{e.message}\n\nBacktrace:\n#{e.backtrace}" }

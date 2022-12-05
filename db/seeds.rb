@@ -9,7 +9,7 @@ ESM::BotAttribute.create!(
   maintenance_mode_enabled: false,
   maintenance_message: "",
   status_type: "PLAYING",
-  status_message: "rewards v2 dev"
+  status_message: "Extension V2 development"
 )
 
 community = ESM::Community.create!(
