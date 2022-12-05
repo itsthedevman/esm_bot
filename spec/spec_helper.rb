@@ -70,16 +70,18 @@ RSpec.configure do |config|
   config.around(:each) do |example|
     DatabaseCleaner.cleaning do
       ESM::Test.reset!
-
-      server = ESM::Connection::Server.instance
-      server&.disconnect_all!
-      server&.message_overseer&.remove_all!
+      ESM::Connection::Server.pause
 
       # Run the test!
       example.run
 
       # Ensure every message is either replied to or timed out
       wait_for { ESM::Connection::Server.instance.message_overseer.size }.to eq(0) if example.metadata[:requires_connection]
+
+      ESM::Connection::Server.pause
+      server = ESM::Connection::Server.instance
+      server&.disconnect_all!
+      server&.message_overseer&.remove_all!
 
       ESM::Websocket.remove_all_connections!
     end
@@ -146,6 +148,7 @@ RSpec.shared_context("connection") do
   end
 
   before(:each) do
+    wait_for { ESM::Connection::Server.instance&.tcp_server_alive? }.to be(true)
     ESM::Connection::Server.resume
     wait_for { server.connected? }.to be(true)
 
