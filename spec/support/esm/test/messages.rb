@@ -3,12 +3,29 @@
 module ESM
   class Test
     class Messages < Array
-      def store(message, to, channel)
-        # Don't break tests
-        self << [channel, message]
+      class Message
+        attr_reader :destination, :content
 
-        # Remove the message set from the queue
-        ESM.bot.resend_queue.dequeue(message, to: to)
+        def initialize(destination, content)
+          @destination = destination
+          @content = content
+        end
+
+        # Legacy support
+        def first
+          @destination
+        end
+
+        def second
+          @content
+        end
+      end
+
+      def store(content, channel)
+        self << Message.new(channel, content)
+
+        # Don't break tests
+        content
       end
     end
   end

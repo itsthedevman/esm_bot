@@ -51,7 +51,7 @@ describe ESM::Websocket do
       connection = ESM::Websocket.connections[esm_malden.server_id]
 
       user = ESM.bot.user(TestUser::User1::ID)
-      command = ESM::Command::Test::Base.new
+      command = ESM::Command::Test::BaseV1.new
 
       request = ESM::Websocket::Request.new(
         command: command,
@@ -91,7 +91,7 @@ describe ESM::Websocket do
     let!(:discord_user) { user.discord_user }
 
     let!(:command) do
-      command = ESM::Command::Test::Base.new
+      command = ESM::Command::Test::BaseV1.new
 
       command_statement = command.statement(
         community_id: esm_community.community_id,

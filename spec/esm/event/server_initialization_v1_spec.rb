@@ -15,16 +15,16 @@ describe ESM::Event::ServerInitializationV1 do
       server_restart: [3, 30],
       server_start_time: DateTime.now.strftime("%Y-%m-%dT%H:%M:%S"),
       server_version: "2.0.0",
-      territory_level_1: { level: 1, purchase_price: 5000, radius: 15, object_count: 30 },
-      territory_level_2: { level: 2, purchase_price: 10_000, radius: 30, object_count: 60 },
-      territory_level_3: { level: 3, purchase_price: 15_000, radius: 45, object_count: 90 },
-      territory_level_4: { level: 4, purchase_price: 20_000, radius: 60, object_count: 120 },
-      territory_level_5: { level: 5, purchase_price: 25_000, radius: 75, object_count: 150 },
-      territory_level_6: { level: 6, purchase_price: 30_000, radius: 90, object_count: 180 },
-      territory_level_7: { level: 7, purchase_price: 35_000, radius: 105, object_count: 210 },
-      territory_level_8: { level: 8, purchase_price: 40_000, radius: 120, object_count: 240 },
-      territory_level_9: { level: 9, purchase_price: 45_000, radius: 135, object_count: 270 },
-      territory_level_10: { level: 10, purchase_price: 50_000, radius: 150, object_count: 300 }
+      territory_level_1: {level: 1, purchase_price: 5000, radius: 15, object_count: 30},
+      territory_level_2: {level: 2, purchase_price: 10_000, radius: 30, object_count: 60},
+      territory_level_3: {level: 3, purchase_price: 15_000, radius: 45, object_count: 90},
+      territory_level_4: {level: 4, purchase_price: 20_000, radius: 60, object_count: 120},
+      territory_level_5: {level: 5, purchase_price: 25_000, radius: 75, object_count: 150},
+      territory_level_6: {level: 6, purchase_price: 30_000, radius: 90, object_count: 180},
+      territory_level_7: {level: 7, purchase_price: 35_000, radius: 105, object_count: 210},
+      territory_level_8: {level: 8, purchase_price: 40_000, radius: 120, object_count: 240},
+      territory_level_9: {level: 9, purchase_price: 45_000, radius: 135, object_count: 270},
+      territory_level_10: {level: 10, purchase_price: 50_000, radius: 150, object_count: 300}
     )
   end
 
@@ -89,16 +89,18 @@ describe ESM::Event::ServerInitializationV1 do
       end
 
       it "should be valid" do
+        member = user.discord_user.on(community.discord_server)
+        expect(event.packet.territory_admins).to eq("[\"#{user.steam_uid}\"]") if member && (member.owner? || community.territory_admin_ids.any? { |id| member.role?(id) })
+
         expect(event.packet.function_name).to eq("postServerInitialization")
         expect(event.packet.server_id).to eq(server.server_id)
-        expect(event.packet.territory_admins).to eq("[\"#{user.steam_uid}\"]")
         expect(event.packet.extdb_path).to eq(setting.extdb_path || "")
         expect(event.packet.gambling_modifier).to eq(setting.gambling_modifier)
-        expect(event.packet.gambling_payout).to eq(setting.gambling_payout)
-        expect(event.packet.gambling_randomizer_max).to eq(setting.gambling_randomizer_max)
-        expect(event.packet.gambling_randomizer_mid).to eq(setting.gambling_randomizer_mid)
-        expect(event.packet.gambling_randomizer_min).to eq(setting.gambling_randomizer_min)
-        expect(event.packet.gambling_win_chance).to eq(setting.gambling_win_chance)
+        expect(event.packet.gambling_payout).to eq(setting.gambling_payout_base)
+        expect(event.packet.gambling_randomizer_max).to eq(setting.gambling_payout_randomizer_max)
+        expect(event.packet.gambling_randomizer_mid).to eq(setting.gambling_payout_randomizer_mid)
+        expect(event.packet.gambling_randomizer_min).to eq(setting.gambling_payout_randomizer_min)
+        expect(event.packet.gambling_win_chance).to eq(setting.gambling_win_percentage)
         expect(event.packet.logging_add_player_to_territory).to eq(setting.logging_add_player_to_territory)
         expect(event.packet.logging_demote_player).to eq(setting.logging_demote_player)
         expect(event.packet.logging_exec).to eq(setting.logging_exec)
@@ -107,8 +109,8 @@ describe ESM::Event::ServerInitializationV1 do
         expect(event.packet.logging_pay_territory).to eq(setting.logging_pay_territory)
         expect(event.packet.logging_promote_player).to eq(setting.logging_promote_player)
         expect(event.packet.logging_remove_player_from_territory).to eq(setting.logging_remove_player_from_territory)
-        expect(event.packet.logging_reward).to eq(setting.logging_reward)
-        expect(event.packet.logging_transfer).to eq(setting.logging_transfer)
+        expect(event.packet.logging_reward).to eq(setting.logging_reward_player)
+        expect(event.packet.logging_transfer).to eq(setting.logging_transfer_poptabs)
         expect(event.packet.logging_upgrade_territory).to eq(setting.logging_upgrade_territory)
         expect(event.packet.logging_path).to eq(setting.logging_path || "")
         expect(event.packet.max_payment_count).to eq(setting.max_payment_count)
@@ -119,7 +121,7 @@ describe ESM::Event::ServerInitializationV1 do
         expect(event.packet.reward_player_poptabs).to eq(reward.player_poptabs)
         expect(event.packet.reward_locker_poptabs).to eq(reward.locker_poptabs)
         expect(event.packet.reward_respect).to eq(reward.respect)
-        expect(event.packet.reward_items).to eq("[[\"Exile_Item_EMRE\",2],[\"Chemlight_blue\",5]]")
+        expect(event.packet.reward_items).to eq(reward.reward_items.to_a.to_json)
       end
     end
   end

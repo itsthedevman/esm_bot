@@ -18,7 +18,7 @@ module ESM
         argument :old_territory_id, template: :territory_id
         argument :new_territory_id, template: :territory_id, description: "commands.set_id.arguments.new_territory_id"
 
-        def discord
+        def on_execute
           # Require at least 3 characters and a max of 30
           check_for_minimum_characters!
           check_for_maximum_characters!

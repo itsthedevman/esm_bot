@@ -3,12 +3,12 @@
 #############################
 # Load Extensions
 #############################
-Dir["#{__dir__}/esm/extension/**/*.rb"].each { |extension| require extension }
+Dir["#{__dir__}/esm/extension/**/*.rb"].sort.each { |extension| require extension }
 
 #############################
 # Autoload ESM
 #############################
-loader = Zeitwerk::Loader.for_gem
+loader = Zeitwerk::Loader.for_gem(warn_on_extra_files: false)
 loader.inflector.inflect("esm" => "ESM", "ostruct" => "OpenStruct", "xm8" => "XM8", "api" => "API", "json" => "JSON")
 
 # Convert ESM::Model::Server -> ESM::Server
@@ -24,6 +24,7 @@ loader.ignore("#{__dir__}/esm/extension")
 # Ignore preinits
 loader.ignore("#{__dir__}/pre_init.rb")
 loader.ignore("#{__dir__}/pre_init_dev.rb")
+loader.ignore("#{__dir__}/esm/database.rb")
 
 # gemspec expects this file, but Zeitwerk does not like it
 loader.ignore("#{__dir__}/esm/version.rb")
@@ -32,3 +33,10 @@ loader.ignore("#{__dir__}/esm/esm.rb")
 # Load everything right meow
 loader.setup
 loader.eager_load
+
+#############################
+# Configure Inflector
+#############################
+ActiveSupport::Inflector.inflections(:en) do |inflect|
+  inflect.acronym("ESM")
+end

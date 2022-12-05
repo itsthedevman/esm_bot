@@ -16,11 +16,30 @@ module ESM
       WATCHING: 3
     }.freeze
 
+    INTENTS = Discordrb::INTENTS.slice(
+      :servers,
+      :server_members,
+      # :server_bans,
+      # :server_emojis,
+      # :server_integrations,
+      # :server_webhooks,
+      # :server_invites,
+      # :server_voice_states,
+      # :server_presences,
+      :server_messages,
+      # :server_message_reactions,
+      :server_message_typing,
+      :direct_messages,
+      # :direct_message_reactions,
+      :direct_message_typing
+    ).keys.freeze
+
     attr_reader :config, :prefix
 
-    attr_reader :resend_queue if ESM.env.test?
-
     def initialize
+      @waiting_for = {}
+      @mutex = Mutex.new
+
       @prefixes = {}
       @prefixes.default = ESM.config.prefix
 
@@ -29,9 +48,12 @@ module ESM
 
       load_community_prefixes
 
-      @resend_queue = ESM::Bot::ResendQueue.new(self)
-
-      super(token: ESM.config.token, prefix: method(:determine_activation_prefix), help_command: false)
+      super(
+        token: ESM.config.token,
+        prefix: method(:determine_activation_prefix),
+        help_command: false,
+        intents: INTENTS
+      )
     end
 
     def run
@@ -52,17 +74,18 @@ module ESM
       ESM::Websocket::Server.stop
       ESM::Connection::Server.stop!
       ESM::Request::Overseer.die
-      @resend_queue.die
 
       super
+
+      exit
     end
 
     # Overriding DiscordRB's variant to allow commands to be case-insensitive
     def simple_execute(chain, event)
       return nil if chain.empty?
 
-      args = chain.split(' ')
-      execute_command(args[0].downcase.to_sym, event, args[1..-1])
+      args = chain.split
+      execute_command(args[0].downcase.to_sym, event, args[1..])
     end
 
     ###########################
@@ -70,12 +93,12 @@ module ESM
     # These all have to have unique-to-ESM names since we are inheriting
     ###########################
     def bind_events!
-      self.mention(&method(:esm_mention))
-      self.ready(&method(:esm_ready))
-      self.server_create(&method(:esm_server_create))
-      self.user_ban(&method(:esm_user_ban))
-      self.user_unban(&method(:esm_user_unban))
-      self.member_join(&method(:esm_member_join))
+      mention { |event| esm_mention(event) }
+      ready { |event| esm_ready(event) }
+      server_create { |event| esm_server_create(event) }
+      user_ban { |event| esm_user_ban(event) }
+      user_unban { |event| esm_user_unban(event) }
+      member_join { |event| esm_member_join(event) }
     end
 
     def esm_mention(_event)
@@ -92,7 +115,7 @@ module ESM
 
       # Sometimes the bot loses connection with Discord. Upon reconnect, the ready event will be triggered again.
       # Don't restart the websocket server again.
-      return if self.ready?
+      return if ready?
 
       # Wait until the bot has connected before starting the websocket.
       # This is to avoid servers connecting before the bot is ready
@@ -140,63 +163,66 @@ module ESM
       @esm_status == :ready
     end
 
-    def deliver(message, to:)
+    #
+    # Sends a message via the bot to a channel
+    #
+    # @param message [String, ESM::Embed] A message or embed to send
+    # @param to [String, Discordrb::Commands::CommandEvent, Discordrb::Channel, Discordrb::Member, Discordrb::User] Where should the message be sent? This ultimately will end up as a channel
+    # @param embed_message [String] An optional message to attach with an embed. Only works if `message` is an embed
+    # @param replying_to [Discordrb::Message] A message to "reply" to. Discord will reference the previous message
+    #
+    # @return [Discordrb::Message, nil] The message response or nil if it failed
+    #
+    def deliver(message, to:, embed_message: "", replying_to: nil)
       return if message.blank?
 
-      delivery_channel = determine_delivery_channel(to)
-
-      raise ESM::Exception::ChannelNotFound.new(message, to) if delivery_channel.nil?
-
-      # Format the message if it's an array
+      replying_to = nil if replying_to.present? && !replying_to.is_a?(Discordrb::Message)
       message = message.join("\n") if message.is_a?(Array)
+
+      delivery_channel = determine_delivery_channel(to)
+      raise ESM::Exception::ChannelNotFound.new(message, to) if delivery_channel.nil?
 
       ESM::Notifications.trigger("bot_deliver", message: message, channel: delivery_channel)
 
       # So we can test if it's working
       # env.error_testing? is to allow testing of errors without sending messages
-      return ESM::Test.messages.store(message, to, delivery_channel) if ESM.env.test? || ESM.env.error_testing?
-
-      discord_message =
-        if message.is_a?(ESM::Embed)
-          # Send the embed
-          delivery_channel.send_embed { |embed| message.transfer(embed) }
-        else
-          # Send the text message
-          delivery_channel.send_message(message)
-        end
-
-      # Dequeue the message if it was enqueued
-      @resend_queue.dequeue(message, to: to)
-
-      # Return the Discordrb::Message
-      discord_message
-    rescue StandardError => e
-      ESM.logger.warn("#{self.class}##{__method__}") { "Send failed!\n#{e.message}" }
-      @resend_queue.enqueue(message, to: to, exception: e)
+      if ESM.env.test? || ESM.env.error_testing?
+        ESM::Test.messages.store(message, delivery_channel)
+      elsif message.is_a?(ESM::Embed)
+        # Send the embed
+        delivery_channel.send_embed(embed_message, nil, nil, false, nil, replying_to) { |embed| message.transfer(embed) }
+      else
+        # Send the text message
+        delivery_channel.send_message(message, false, nil, nil, nil, replying_to)
+      end
+    rescue ESM::Exception::ChannelAccessDenied
+      community = ESM::Community.find_by_guild_id(delivery_channel.server.id)
+      embed = ESM::Embed.build(:error, description: I18n.t("exceptions.deliver_failure", channel_name: delivery_channel.name, message: message))
+      community.log_event(:error, embed)
+    rescue => e
+      warn!(error: e)
 
       nil
     end
 
-    def deliver_and_await!(message, to:, owner: to, expected:, invalid_response: nil, timeout: nil, give_up_after: 99)
+    # Also see #wait_for_reply
+    def await_response(responding_user, expected:, timeout: nil)
       counter = 0
       match = nil
-      invalid_response = format_invalid_response(expected) if invalid_response.nil?
-      channel = determine_delivery_channel(to)
-      owner = self.user(owner)
+      invalid_response = format_invalid_response(expected)
+      responding_user = user(responding_user)
 
-      while match.nil? && counter < give_up_after
-        deliver(message, to: channel)
-
+      while match.nil? && counter < 99
         response =
           if ESM.env.test?
-            ESM::Test.await
+            ESM::Test.wait_for_response(timeout: timeout)
           else
             # Add the await event
-            owner.await!(timeout: timeout)
+            responding_user.await!(timeout: timeout)
           end
 
-        # We timed out, return nil
-        return nil if response.nil?
+        # We timed out
+        break if response.nil?
 
         # Parse the match from the event
         match = response.message.content.match(Regexp.new("(#{expected.map(&:downcase).join("|")})", Regexp::IGNORECASE))
@@ -204,10 +230,9 @@ module ESM
         # We found what we were looking for
         break if !match.nil?
 
-        # Change our message to the invalid response
-        message = invalid_response
+        # Let the user know that was not quite what we were looking for
+        deliver(invalid_response, to: responding_user)
 
-        # Increment
         counter += 1
       end
 
@@ -223,28 +248,97 @@ module ESM
 
     # Channel can be any of the following: An CommandEvent, a Channel, a User/Member, or a String (Channel, or user)
     def determine_delivery_channel(channel)
-      return nil if channel.nil?
+      return if channel.nil?
 
-      case channel
-      when Discordrb::Commands::CommandEvent
-        channel.channel
-      when Discordrb::Channel
-        channel
-      when Discordrb::Member, Discordrb::User
-        channel.pm
-      when String
-        # Try checking if it's a text channel
-        temp_channel = self.channel(channel)
+      channel =
+        case channel
+        when Discordrb::Commands::CommandEvent
+          channel.channel
+        when Discordrb::Channel
+          channel
+        when ESM::User
+          channel.discord_user.pm
+        when Discordrb::Member, Discordrb::User
+          channel.pm
+        when String, Numeric
+          # Try checking if it's a text channel
+          temp_channel = self.channel(channel)
 
-        return temp_channel if temp_channel.present?
+          # Okay, it might be a PM channel, just go with it regardless (it returns nil)
+          if temp_channel.nil?
+            pm_channel(channel)
+          else
+            temp_channel
+          end
+        end
 
-        # Okay, it might be a PM channel, just go with it regardless (it returns nil)
-        self.pm_channel(channel)
-      end
+      return if channel.nil?
+      return channel if channel.pm?
+
+      raise ESM::Exception::ChannelAccessDenied if !channel_permission?(channel, :read_messages)
+      raise ESM::Exception::ChannelAccessDenied if !channel_permission?(channel, :send_messages)
+
+      channel
     end
 
     def update_prefix(community)
       @prefixes[community.guild_id] = community.command_prefix || ESM.config.prefix
+    end
+
+    #
+    # Checks if the bot has send permission to the provided channel
+    #
+    # @param channel [Discordrb::Channel] The channel to check
+    #
+    # @return [Boolean]
+    #
+    def channel_permission?(channel, permission)
+      member = profile.on(channel.server)
+      member.permission?(permission, channel)
+    end
+
+    #
+    # Successor to #await_response. Waits for an event from user_id and channel_id
+    #
+    # @param user_id [Integer/String] The ID of the user who sends the message
+    # @param channel_id [Integer/String] The ID of the channel where the message is sent to. The bot must be a member of said channel
+    # @param expires_at [DateTime, Time] When this time is reached, the callback will be called with `nil` for the event
+    # @param &callback [Proc] The code to execute once the message has been received
+    #
+    # @return [true]
+    #
+    def wait_for_reply(user_id:, channel_id:, expires_at: 5.minutes.from_now, &callback)
+      @mutex.synchronize do
+        @waiting_for[user_id] ||= []
+        @waiting_for[user_id] << channel_id
+      end
+
+      # Event will be nil if it times out
+      timeout = expires_at - ::Time.now
+      event =
+        if ESM.env.test?
+          ESM::Test.wait_for_response(timeout: timeout)
+        else
+          add_await!(Discordrb::Events::MessageEvent, {from: user_id, in: channel_id, timeout: timeout})
+        end
+
+      @mutex.synchronize do
+        @waiting_for[user_id]&.delete_if { |id| id == channel_id }
+      end
+
+      return event unless callback
+
+      yield(event)
+      nil
+    end
+
+    def waiting_for_reply?(user_id:, channel_id:)
+      @mutex.synchronize do
+        channel_ids = @waiting_for[user_id]
+        return false if channel_ids.blank?
+
+        channel_ids.include?(channel_id)
+      end
     end
 
     private
@@ -260,7 +354,7 @@ module ESM
     def determine_activation_prefix(message)
       # The default for @prefixes is the config prefix (NOT NIL)
       prefix = @prefixes[message.channel&.server&.id.to_s]
-      return nil if !message.content.start_with?(prefix)
+      return if !message.content.start_with?(prefix)
 
       message.content[prefix.size..]
     end

@@ -1,0 +1,5 @@
+#!/bin/bash
+
+# Compile extension_server
+cargo update --package esm_message
+cargo build

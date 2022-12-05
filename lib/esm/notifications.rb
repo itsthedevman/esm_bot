@@ -1,12 +1,10 @@
 # frozen_string_literal: true
 
+# 2022-04-02 This should be phased out and just use other logic to perform these tasks
+
 module ESM
   class Notifications
     EVENTS = %w[
-      debug
-      info
-      warn
-      error
       ready
       argument_parse
       server_on_connect
@@ -16,7 +14,6 @@ module ESM
       command_from_server
       command_check_failed
       bot_deliver
-      bot_resend_queue
       websocket_client_on_message
       xm8_notification_invalid_type
       xm8_notification_invalid_attributes
@@ -27,74 +24,13 @@ module ESM
       raise ESM::Exception::Error, "#{name} is not a whitelisted notification event" if !EVENTS.include?(name)
 
       ActiveSupport::Notifications.instrument("#{name}.esm", args)
-    rescue StandardError => e
+    rescue => e
       ESM.logger.error("#{self.class}##{__method__}") { ESM::JSON.pretty_generate(uuid: SecureRandom.uuid, message: e.message, backtrace: e.backtrace) }
     end
 
     def self.subscribe
       EVENTS.each do |event|
         ActiveSupport::Notifications.subscribe("#{event}.esm", &method(event))
-      end
-    end
-
-    def self.debug(name, _start, _finish, _id, payload)
-      if payload.key?(:class) && payload.key?(:method)
-        name = "#{payload[:class]}##{payload[:method]}"
-
-        payload.delete(:class)
-        payload.delete(:method)
-      end
-
-      ESM.logger.info(name) do
-        ESM::JSON.pretty_generate(payload)
-      end
-    end
-
-    def self.info(name, _start, _finish, _id, payload)
-      if payload.key?(:class) && payload.key?(:method)
-        name = "#{payload[:class]}##{payload[:method]}"
-
-        payload.delete(:class)
-        payload.delete(:method)
-      end
-
-      ESM.logger.info(name) do
-        ESM::JSON.pretty_generate(payload)
-      end
-    end
-
-    def self.warn(name, _start, _finish, _id, payload)
-      if payload.key?(:class) && payload.key?(:method)
-        name = "#{payload[:class]}##{payload[:method]}"
-
-        payload.delete(:class)
-        payload.delete(:method)
-      end
-
-      ESM.logger.warn(name) do
-        ESM::JSON.pretty_generate(payload)
-      end
-    end
-
-    def self.error(name, _start, _finish, _id, payload)
-      if payload[:error].is_a?(StandardError)
-        e = payload[:error].dup
-
-        payload[:error] = {
-          message: e.message,
-          backtrace: e.backtrace[0..10]
-        }
-      end
-
-      if payload.key?(:class) && payload.key?(:method)
-        name = "#{payload[:class]}##{payload[:method]}"
-
-        payload.delete(:class)
-        payload.delete(:method)
-      end
-
-      ESM.logger.error(name) do
-        ESM::JSON.pretty_generate(payload)
       end
     end
 
@@ -116,7 +52,6 @@ module ESM
         ESM::JSON.pretty_generate(
           author: "#{command.current_user.distinct} (#{command.current_user.id})",
           channel: "#{Discordrb::Channel::TYPE_NAMES[command.event.channel.type]} (#{command.event.channel.id})",
-          message: command.event.message.content,
           command: command.to_h
         )
       end
@@ -133,7 +68,6 @@ module ESM
         ESM::JSON.pretty_generate(
           author: "#{command.current_user.distinct} (#{command.current_user.id})",
           channel: "#{Discordrb::Channel::TYPE_NAMES[command.event.channel.type]} (#{command.event.channel.id})",
-          message: command.event.message.content,
           reason: reason.is_a?(Embed) ? reason.description : reason,
           command: command.to_h
         )
@@ -151,7 +85,6 @@ module ESM
         JSON.pretty_generate(
           author: "#{command.current_user.distinct} (#{command.current_user.id})",
           channel: "#{Discordrb::Channel::TYPE_NAMES[command.event.channel.type]} (#{command.event.channel.id})",
-          message: command.event.message.content,
           response: payload[:response],
           command: command.to_h
         )
@@ -165,7 +98,7 @@ module ESM
         parser = payload[:parser]
 
         ESM::JSON.pretty_generate(
-          argument: payload[:argument],
+          argument: payload[:argument].to_s,
           message: payload[:message],
           regex: payload[:regex],
           parser: {
@@ -178,7 +111,7 @@ module ESM
 
     def self.websocket_server_deliver(name, _start, _finish, _id, payload)
       ESM.logger.info(name) do
-        ESM::JSON.pretty_generate(payload[:request])
+        ESM::JSON.pretty_generate(payload[:request].to_h)
       end
     end
 
@@ -197,36 +130,6 @@ module ESM
           message: message.is_a?(ESM::Embed) ? message.to_h : message
         )
       end
-    end
-
-    def self.bot_resend_queue(name, _start, _finish, _id, payload)
-      recipient_id = payload[:to].respond_to?(:id) ? payload[:to].id : payload[:to]
-      exception = payload[:exception]
-
-      ESM.logger.debug(name) do
-        ESM::JSON.pretty_generate(
-          message: payload[:message],
-          to: recipient_id,
-          exception: exception.message,
-          backtrace: exception.backtrace[0..2]
-        )
-      end
-
-      # Send a notification to the owner, lots of guards in case the message isn't what we expect
-      # channel = ESM.bot.channel(recipient_id)
-      # return if channel.nil?
-
-      # server = channel.server
-      # return if server.nil?
-
-      # owner = server.owner
-      # return if owner.nil?
-
-      # embed = ESM::Embed.build(
-      #   :error,
-      #   description: I18n.t("exceptions.deliver_failure", message: payload[:message].to_s.gsub("`", ""), channel_name: channel.name, exception: exception)
-      # )
-      # ESM.bot.deliver(embed, to: owner)
     end
 
     def self.xm8_notification_invalid_type(_name, _start, _finish, _id, payload)
@@ -287,14 +190,36 @@ module ESM
       server = payload[:server]
       notification = payload[:embed]
       type = payload[:type]
-      sent_to_users = payload[:delivered].map { |user| "#{user.discord_username}##{user.discord_discriminator} (`#{user.steam_uid}`)" }
       unregistered_steam_uids = payload[:unregistered_steam_uids]
 
-      failed_to_send = payload[:undeliverable].map do |hash|
-        user = hash[:user]
-        reason= hash[:reason]
+      message_statuses = payload[:statuses].map do |user, hash|
+        # { direct_message: :ignored, custom_routes: { sent: 0, expected: 0 } }
+        direct_message = hash[:direct_message]
+        custom_routes =
+          case hash[:custom_routes]
+          when ->(v) { v[:sent].zero? && v[:expected].zero? }
+            :none
+          when ->(v) { v[:expected].positive? && v[:sent] == v[:expected] }
+            :success
+          else
+            :failure
+          end
 
-        "#{user.discord_username}##{user.discord_discriminator} (`#{user.steam_uid}`) - #{reason}"
+        direct_message_status = I18n.t(
+          "xm8_notifications.log.message_statuses.values.direct_message.#{direct_message}",
+          user: "#{user.discord_username}##{user.discord_discriminator}",
+          steam_uid: user.steam_uid
+        )
+
+        custom_route_status = I18n.t(
+          "xm8_notifications.log.message_statuses.values.custom_routes.#{custom_routes}",
+          number_sent: hash[:custom_routes][:sent],
+          number_expected: hash[:custom_routes][:expected]
+        )
+
+        status = "**#{user.distinct}** (`#{user.steam_uid}`)\n **-** #{direct_message_status}"
+        status += "\n **-** #{custom_route_status}" if custom_route_status.present?
+        status
       end
 
       # For debugging
@@ -303,8 +228,7 @@ module ESM
           type: type,
           server: server.server_id,
           embed: notification.to_h,
-          sent_to_users: sent_to_users,
-          failed_to_send: failed_to_send,
+          message_statuses: message_statuses,
           unregistered_steam_uids: unregistered_steam_uids,
           log: server.community.log_xm8_event?
         )
@@ -316,17 +240,10 @@ module ESM
           e.title = I18n.t("xm8_notifications.log.title", type: type, server: server.server_id)
           e.description = I18n.t("xm8_notifications.log.description", title: notification.title, description: notification.description)
 
-          if sent_to_users.present?
+          if message_statuses.present?
             e.add_field(
-              name: I18n.t("xm8_notifications.log.delivered_to"),
-              value: sent_to_users
-            )
-          end
-
-          if failed_to_send.present?
-            e.add_field(
-              name: I18n.t("xm8_notifications.log.undeliverable"),
-              value: failed_to_send
+              name: I18n.t("xm8_notifications.log.message_statuses.name"),
+              value: message_statuses.join("\n\n")
             )
           end
 

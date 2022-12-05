@@ -1,116 +1,307 @@
 # frozen_string_literal: true
 
-describe ESM::Command::Server::Reward, category: "command" do
-  let!(:command) { ESM::Command::Server::Reward.new }
+describe ESM::Command::Server::Reward, category: "command", v2: true do
+  include_context "command"
+  include_examples "validate_command"
 
-  it "should be valid" do
-    expect(command).not_to be_nil
+  it "is a player command" do
+    expect(command.type).to eql(:player)
   end
 
-  it "should have 1 argument" do
-    expect(command.arguments.size).to eq(1)
+  it "requires registration" do
+    expect(command.registration_required?).to be(true)
   end
 
-  it "should have a description" do
-    expect(command.description).not_to be_blank
+  describe "Command workflows", requires_connection: true do
+    include_context "connection"
+
+    it "Executes - Player poptabs only" do
+      reward = server.server_rewards.default
+      reward.update(reward_items: [], reward_vehicles: [], locker_poptabs: 0, respect: 0)
+
+      user.connect
+      execute!(channel_type: :pm, server_id: server.server_id)
+
+      # 1: Send the information embed to the user
+      message = ESM::Test.messages.shift
+      expect(message).not_to be_nil
+
+      information_embed = message.content
+      expect(information_embed.description).to eq(command.t("information_embed.description", user: user.mention, server_id: server.server_id, reward_id: "default"))
+      expect(information_embed.footer.text).to eq(command.t("information_embed.footer"))
+      expect(information_embed.fields.size).to eq(2)
+
+      poptab_field = information_embed.fields.first
+      translation_name = "information_embed.fields.player_poptabs"
+      expect(poptab_field.name).to eq(command.t("#{translation_name}.name"))
+      expect(poptab_field.value).to eq(command.t("#{translation_name}.value", poptabs: reward.player_poptabs.to_poptab))
+      expect(poptab_field.inline).to be(true)
+
+      accept_field = information_embed.fields.second
+      expect(accept_field.name).to eq(ESM::Embed::EMPTY_SPACE)
+      expect(accept_field.value).to eq(command.t("information_embed.fields.accept"))
+      expect(accept_field.inline).to be(false)
+
+      # 2: Reply back "accept" and wait for the server to reply
+      send_discord_message("accept")
+
+      # 3: Send message to server
+      outbound_message = wait_for_outbound_message
+      expect(outbound_message.type).to eq("arma")
+      expect(outbound_message.data_type).to eq("reward")
+      expect(outbound_message.data.player_poptabs).to eq(reward.player_poptabs)
+      expect(outbound_message.data.items).to be_nil
+      expect(outbound_message.data.locker_poptabs).to be_nil
+      expect(outbound_message.data.respect).to be_nil
+      expect(outbound_message.data.vehicles).to be_nil
+
+      expect(outbound_message.metadata_type).to eq("command")
+      expect(outbound_message.metadata).not_to be_nil
+
+      # 4: Check server response
+      inbound_message = wait_for_inbound_message
+      expect(inbound_message.type).to eq("arma")
+      expect(inbound_message.data_type).to eq("reward")
+      expect(inbound_message.data.player_poptabs).to be >= reward.player_poptabs
+      expect(inbound_message.data.items).to be_nil
+      expect(inbound_message.data.locker_poptabs).to be_nil
+      expect(inbound_message.data.respect).to be_nil
+      expect(inbound_message.data.vehicles).to be_nil
+
+      expect(inbound_message.metadata_type).to eq("empty")
+      expect(inbound_message.metadata).to be_nil
+
+      # 5: Check outbound response
+      outbound_message = ESM::Test.messages.shift
+      expect(outbound_message).not_to be_nil
+
+      receipt_embed = outbound_message.content
+      expect(receipt_embed.title).to eq(command.t("receipt_embed.title"))
+      expect(receipt_embed.description).to eq(command.t("receipt_embed.description"))
+      expect(receipt_embed.fields.size).to eq(1)
+
+      field = receipt_embed.fields.first
+      expect(field.name).to eq(command.t("receipt_embed.fields.player_poptabs.name"))
+      expect(field.value).to eq(command.t("receipt_embed.fields.player_poptabs.value", poptabs: reward.player_poptabs.to_poptab))
+    end
+
+    it "Executes - Locker poptabs only" do
+      reward = server.server_rewards.default
+      reward.update(reward_items: [], reward_vehicles: [], player_poptabs: 0, locker_poptabs: 0)
+
+      user.connect
+      execute!(channel_type: :pm, server_id: server.server_id)
+
+      # 1: Send the information embed to the user
+      message = ESM::Test.messages.shift
+      expect(message).not_to be_nil
+
+      information_embed = message.content
+      expect(information_embed.description).to eq(command.t("information_embed.description", user: user.mention, server_id: server.server_id, reward_id: "default"))
+      expect(information_embed.footer.text).to eq(command.t("information_embed.footer"))
+      expect(information_embed.fields.size).to eq(2)
+
+      poptab_field = information_embed.fields.first
+      translation_name = "information_embed.fields.respect"
+      expect(poptab_field.name).to eq(command.t("#{translation_name}.name"))
+      expect(poptab_field.value).to eq(command.t("#{translation_name}.value", respect: reward.respect))
+      expect(poptab_field.inline).to be(true)
+
+      accept_field = information_embed.fields.second
+      expect(accept_field.name).to eq(ESM::Embed::EMPTY_SPACE)
+      expect(accept_field.value).to eq(command.t("information_embed.fields.accept"))
+      expect(accept_field.inline).to be(false)
+
+      # 2: Reply back "accept" and wait for the server to reply
+      send_discord_message("accept")
+
+      # 3: Send message to server
+      outbound_message = wait_for_outbound_message
+      expect(outbound_message.type).to eq("arma")
+      expect(outbound_message.data_type).to eq("reward")
+      expect(outbound_message.data.player_poptabs).to be_nil
+      expect(outbound_message.data.items).to be_nil
+      expect(outbound_message.data.locker_poptabs).to be_nil
+      expect(outbound_message.data.respect).to eq(reward.respect)
+      expect(outbound_message.data.vehicles).to be_nil
+
+      expect(outbound_message.metadata_type).to eq("command")
+      expect(outbound_message.metadata).not_to be_nil
+
+      # 4: Check server response
+      inbound_message = wait_for_inbound_message
+      expect(inbound_message.type).to eq("arma")
+      expect(inbound_message.data_type).to eq("reward")
+      expect(inbound_message.data.player_poptabs).to be_nil
+      expect(inbound_message.data.items).to be_nil
+      expect(inbound_message.data.locker_poptabs).to be_nil
+      expect(inbound_message.data.respect).to be >= reward.respect
+      expect(inbound_message.data.vehicles).to be_nil
+
+      expect(inbound_message.metadata_type).to eq("empty")
+      expect(inbound_message.metadata).to be_nil
+
+      # 5: Check outbound response
+      outbound_message = ESM::Test.messages.shift
+      expect(outbound_message).not_to be_nil
+
+      receipt_embed = outbound_message.content
+      expect(receipt_embed.title).to eq(command.t("receipt_embed.title"))
+      expect(receipt_embed.description).to eq(command.t("receipt_embed.description"))
+      expect(receipt_embed.fields.size).to eq(1)
+
+      field = receipt_embed.fields.first
+      expect(field.name).to eq(command.t("receipt_embed.fields.respect.name"))
+      expect(field.value).to eq(command.t("receipt_embed.fields.respect.value", respect: reward.respect))
+    end
+
+    it "Executes - Respect only" do
+      reward = server.server_rewards.default
+      reward.update(reward_items: [], reward_vehicles: [], player_poptabs: 0, respect: 0)
+
+      user.connect
+      execute!(channel_type: :pm, server_id: server.server_id)
+
+      # 1: Send the information embed to the user
+      message = ESM::Test.messages.shift
+      expect(message).not_to be_nil
+
+      information_embed = message.content
+      expect(information_embed.description).to eq(command.t("information_embed.description", user: user.mention, server_id: server.server_id, reward_id: "default"))
+      expect(information_embed.footer.text).to eq(command.t("information_embed.footer"))
+      expect(information_embed.fields.size).to eq(2)
+
+      poptab_field = information_embed.fields.first
+      translation_name = "information_embed.fields.locker_poptabs"
+      expect(poptab_field.name).to eq(command.t("#{translation_name}.name"))
+      expect(poptab_field.value).to eq(command.t("#{translation_name}.value", poptabs: reward.locker_poptabs.to_poptab))
+      expect(poptab_field.inline).to be(true)
+
+      accept_field = information_embed.fields.second
+      expect(accept_field.name).to eq(ESM::Embed::EMPTY_SPACE)
+      expect(accept_field.value).to eq(command.t("information_embed.fields.accept"))
+      expect(accept_field.inline).to be(false)
+
+      # 2: Reply back "accept" and wait for the server to reply
+      send_discord_message("accept")
+
+      # 3: Send message to server
+      outbound_message = wait_for_outbound_message
+      expect(outbound_message.type).to eq("arma")
+      expect(outbound_message.data_type).to eq("reward")
+      expect(outbound_message.data.player_poptabs).to be_nil
+      expect(outbound_message.data.items).to be_nil
+      expect(outbound_message.data.locker_poptabs).to eq(reward.locker_poptabs)
+      expect(outbound_message.data.respect).to be_nil
+      expect(outbound_message.data.vehicles).to be_nil
+
+      expect(outbound_message.metadata_type).to eq("command")
+      expect(outbound_message.metadata).not_to be_nil
+
+      # 4: Check server response
+      inbound_message = wait_for_inbound_message
+      expect(inbound_message.type).to eq("arma")
+      expect(inbound_message.data_type).to eq("reward")
+      expect(inbound_message.data.player_poptabs).to be_nil
+      expect(inbound_message.data.items).to be_nil
+      expect(inbound_message.data.locker_poptabs).to be >= reward.locker_poptabs
+      expect(inbound_message.data.respect).to be_nil
+      expect(inbound_message.data.vehicles).to be_nil
+
+      expect(inbound_message.metadata_type).to eq("empty")
+      expect(inbound_message.metadata).to be_nil
+
+      # 5: Check outbound response
+      outbound_message = ESM::Test.messages.shift
+      expect(outbound_message).not_to be_nil
+
+      receipt_embed = outbound_message.content
+      expect(receipt_embed.title).to eq(command.t("receipt_embed.title"))
+      expect(receipt_embed.description).to eq(command.t("receipt_embed.description"))
+      expect(receipt_embed.fields.size).to eq(1)
+
+      field = receipt_embed.fields.first
+      expect(field.name).to eq(command.t("receipt_embed.fields.locker_poptabs.name"))
+      expect(field.value).to eq(command.t("receipt_embed.fields.locker_poptabs.value", poptabs: reward.locker_poptabs.to_poptab))
+    end
+
+    it "Executes - Items only" do
+      reward = server.server_rewards.default
+      reward.update(reward_vehicles: [], player_poptabs: 0, locker_poptabs: 0, respect: 0)
+
+      user.connect
+      execute!(channel_type: :pm, server_id: server.server_id)
+
+      # 1: Send the information embed to the user
+      message = ESM::Test.messages.shift
+      expect(message).not_to be_nil
+
+      information_embed = message.content
+      expect(information_embed.description).to eq(command.t("information_embed.description", user: user.mention, server_id: server.server_id, reward_id: "default"))
+      expect(information_embed.footer.text).to eq(command.t("information_embed.footer"))
+      expect(information_embed.fields.size).to eq(2)
+
+      poptab_field = information_embed.fields.first
+      translation_name = "information_embed.fields.items"
+      expect(poptab_field.name).to eq(command.t("#{translation_name}.name"))
+      expect(poptab_field.value).to eq(command.t("#{translation_name}.value", poptabs: reward.locker_poptabs.to_poptab))
+      expect(poptab_field.inline).to be(true)
+
+      accept_field = information_embed.fields.second
+      expect(accept_field.name).to eq(ESM::Embed::EMPTY_SPACE)
+      expect(accept_field.value).to eq(command.t("information_embed.fields.accept"))
+      expect(accept_field.inline).to be(false)
+
+      # 2: Reply back "accept" and wait for the server to reply
+      send_discord_message("accept")
+
+      # 3: Send message to server
+      outbound_message = wait_for_outbound_message
+      expect(outbound_message.type).to eq("arma")
+      expect(outbound_message.data_type).to eq("reward")
+      expect(outbound_message.data.player_poptabs).to be_nil
+      expect(outbound_message.data.items).to be_nil
+      expect(outbound_message.data.locker_poptabs).to eq(reward.locker_poptabs)
+      expect(outbound_message.data.respect).to be_nil
+      expect(outbound_message.data.vehicles).to be_nil
+
+      expect(outbound_message.metadata_type).to eq("command")
+      expect(outbound_message.metadata).not_to be_nil
+
+      # 4: Check server response
+      inbound_message = wait_for_inbound_message
+      expect(inbound_message.type).to eq("arma")
+      expect(inbound_message.data_type).to eq("reward")
+      expect(inbound_message.data.player_poptabs).to be_nil
+      expect(inbound_message.data.items).to be_nil
+      expect(inbound_message.data.locker_poptabs).to be >= reward.locker_poptabs
+      expect(inbound_message.data.respect).to be_nil
+      expect(inbound_message.data.vehicles).to be_nil
+
+      expect(inbound_message.metadata_type).to eq("empty")
+      expect(inbound_message.metadata).to be_nil
+
+      # 5: Check outbound response
+      outbound_message = ESM::Test.messages.shift
+      expect(outbound_message).not_to be_nil
+
+      receipt_embed = outbound_message.content
+      expect(receipt_embed.title).to eq(command.t("receipt_embed.title"))
+      expect(receipt_embed.description).to eq(command.t("receipt_embed.description"))
+      expect(receipt_embed.fields.size).to eq(1)
+
+      field = receipt_embed.fields.first
+      expect(field.name).to eq(command.t("receipt_embed.fields.locker_poptabs.name"))
+      expect(field.value).to eq(command.t("receipt_embed.fields.locker_poptabs.value", poptabs: reward.locker_poptabs.to_poptab))
+    end
+
+    it "Executes - Vehicles only"
+    it "Executes - All"
+    it "accepts a custom reward ID"
   end
 
-  it "should have examples" do
-    expect(command.example).not_to be_blank
-  end
-
-  describe "#execute" do
-    let!(:community) { ESM::Test.community }
-    let!(:server) { ESM::Test.server }
-    let!(:user) { ESM::Test.user }
-
-    let!(:wsc) { WebsocketClient.new(server) }
-    let(:connection) { ESM::Websocket.connections[server.server_id] }
-    let(:response) { command.response }
-
-    before :each do
-      wait_for { wsc.connected? }.to be(true)
-    end
-
-    after :each do
-      wsc.disconnect!
-    end
-
-    it "!reward server_id" do
-      command_statement = command.statement(server_id: server.server_id)
-      event = CommandEvent.create(command_statement, user: user, channel_type: :text)
-      expect { command.execute(event) }.not_to raise_error
-
-      embed = ESM::Test.messages.first.second
-
-      # Checks for requestors message
-      expect(embed).not_to be_nil
-
-      # Checks for requestees message
-      expect(ESM::Test.messages.size).to eq(2)
-
-      # Process the request
-      request = command.request
-      expect(request).not_to be_nil
-
-      # Respond to the request
-      request.respond(true)
-
-      # Reset so we can track the response
-      ESM::Test.reset!
-
-      # Wait for the server to respond
-      wait_for { connection.requests }.to be_blank
-
-      expect(ESM::Test.messages.size).to eq(1)
-
-      embed = ESM::Test.messages.first.second
-
-      reward = server.server_reward
-
-      expect(embed.description).to include("#{reward.player_poptabs}x Poptabs (Player)") if reward.player_poptabs.positive?
-      expect(embed.description).to include("#{reward.locker_poptabs}x Poptabs (Locker)") if reward.locker_poptabs.positive?
-      expect(embed.description).to include("#{reward.respect}x Respect") if reward.respect.positive?
-
-      reward.reward_items.each do |item, quantity|
-        # Technically, the item should be converted to a proper display name by the server, but I don't have that ability here.
-        expect(embed.description).to include("#{quantity}x #{item}")
-      end
-    end
-
-    it "!reward server_id (Pending Request)" do
-      command_statement = command.statement(server_id: server.server_id)
-      event = CommandEvent.create(command_statement, user: user, channel_type: :text)
-
-      # Create a pending request
-      ESM::Request.create!(
-        requestor_user_id: user.id,
-        requestee_user_id: user.id,
-        requested_from_channel_id: event.channel.id,
-        command_name: command.name,
-        command_arguments: { server_id: server.server_id }
-      )
-
-      expect { command.execute(event) }.to raise_error do |error|
-        embed = error.data
-
-        expect(embed.description).to match(/it appears you already have a request pending/i)
-      end
-    end
-
-    describe "No rewards" do
-      before :each do
-        server.server_reward = ESM::ServerReward.create!(server_id: server.id)
-      end
-
-      it "should error" do
-        command_statement = command.statement(server_id: server.server_id)
-        event = CommandEvent.create(command_statement, user: user, channel_type: :text)
-        expect { command.execute(event) }.to raise_error do |error|
-          embed = error.data
-          expect(embed.description).to match(/it looks like this server does not have any rewards for you to redeem/i)
-        end
-      end
-    end
+  describe "SQF Errors" do
+    it "null player object"
+    it "player not alive"
   end
 end

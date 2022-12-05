@@ -32,7 +32,7 @@ module ESM
           end
         )
 
-        def discord
+        def on_execute
           @checks.registered_target_user! if target_user.is_a?(Discordrb::User)
 
           deliver!(

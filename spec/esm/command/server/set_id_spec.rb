@@ -76,7 +76,6 @@ describe ESM::Command::Server::SetId, category: "command" do
       expect { command.execute(event) }.to raise_error(ESM::Exception::CheckFailure, /cannot be longer than 20/i)
     end
 
-    #
     it "should error (DLL Reason)" do
       request = nil
       statement = command.statement(

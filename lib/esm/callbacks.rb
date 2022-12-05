@@ -22,12 +22,12 @@ module ESM
         name = name.to_sym
 
         # Check to make sure the callback is registered
-        if callbacks.keys.exclude?(name) # rubocop:disable Style/IfUnlessModifier
+        if callbacks.keys.exclude?(name)
           return ESM.logger.warn("#{self.class}##{__method__}") { "Attempted to register invalid callback: #{name}" }
         end
 
         callbacks[name.to_sym] +=
-          if block_given?
+          if block
             [block]
           elsif method.is_a?(Proc)
             [method]
@@ -39,7 +39,7 @@ module ESM
 
     def add_callback(name, method = nil, &block)
       disconnect_callbacks!
-      self.class.__add_to_callback(self.__callbacks, name, method, &block)
+      self.class.__add_to_callback(__callbacks, name, method, &block)
       nil
     end
 

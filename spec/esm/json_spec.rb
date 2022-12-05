@@ -8,7 +8,7 @@ describe ESM::JSON do
         float: 2.5,
         bool: true,
         array: [-1, 83_383.52_332, false, [], {}],
-        hash: { foo: "bar" }
+        hash: {foo: "bar"}
       }
     end
 

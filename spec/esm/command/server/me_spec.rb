@@ -35,7 +35,6 @@ describe ESM::Command::Server::Me, category: "command" do
     end
 
     it "should return" do
-      request = nil
       command_statement = command.statement(server_id: server.server_id)
       event = CommandEvent.create(command_statement, user: user, channel_type: :text)
 

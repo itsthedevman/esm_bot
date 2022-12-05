@@ -28,11 +28,14 @@ module ESM
     has_many :cooldowns
     has_many :notifications
     has_many :servers
+    has_many :user_notification_routes, dependent: :destroy, foreign_key: :destination_community_id
 
     alias_attribute :name, :community_name
 
+    attr_accessor :guild_type if ESM.env.test?
+
     module ESM
-      ID = "414643176947843073"
+      ID = "452568470765305866"
       SPAM_CHANNEL = ENV["SPAM_CHANNEL"]
     end
 
@@ -42,7 +45,7 @@ module ESM
     end
 
     def self.community_ids
-      @community_ids ||= self.all.pluck(:community_id)
+      @community_ids ||= all.pluck(:community_id)
     end
 
     def self.correct(id)
@@ -51,11 +54,11 @@ module ESM
     end
 
     def self.find_by_community_id(id)
-      self.order(:community_id).where(community_id: id).first
+      default_scoped.includes(:servers).order(:community_id).where("community_id ilike ?", id).first
     end
 
     def self.find_by_guild_id(id)
-      self.order(:guild_id).where(guild_id: id).first
+      default_scoped.includes(:servers).order(:guild_id).where(guild_id: id).first
     end
 
     def self.find_by_server_id(id)
@@ -68,29 +71,41 @@ module ESM
       find_by_community_id(community_id[1])
     end
 
+    def logging_channel
+      ::ESM.bot.channel(logging_channel_id)
+    end
+
     def discord_server
-      ::ESM.bot.server(self.guild_id)
+      ::ESM.bot.server(guild_id)
     end
 
     def log_event(event, message)
-      return if self.logging_channel_id.blank?
+      return if logging_channel_id.blank?
 
       # Only allow logging events to logging channel if permission has been given
       case event
       when :xm8
-        return if !self.log_xm8_event
+        return if !log_xm8_event
       when :discord_log
-        return if !self.log_discord_log_event
+        return if !log_discord_log_event
       when :reconnect
-        return if !self.log_reconnect_event
+        return if !log_reconnect_event
       when :error
-        return if !self.log_error_event
+        return if !log_error_event
       else
-        raise ::ESM::Exception::Error, "Attempted to log :#{event} to #{self.guild_id} without explicit permission.\nMessage:\n#{message}"
+        raise ::ESM::Exception::Error, "Attempted to log :#{event} to #{guild_id} without explicit permission.\nMessage:\n#{message}"
       end
 
-      # This will also handle resending
-      ::ESM.bot.deliver(message, to: self.logging_channel_id)
+      # Check this first to avoid an infinite loop if the bot cannot send a message to this channel
+      # since this method is called from the #deliver method for this exact reason.
+      channel = logging_channel
+      member = ::ESM.bot.profile.on(channel.server)
+      return ::ESM.bot.deliver(message, to: channel) if member.permission?(:send_messages, channel)
+
+      # The bot did not have permission. Send the owner a message letting them know
+      embed = ::ESM::Embed.build(:error, description: I18n.t("exceptions.logging_channel_access_denied", community_name: community_name, channel_name: channel.name))
+
+      ::ESM.bot.deliver(embed, to: channel.server.owner)
     end
 
     private
@@ -100,14 +115,14 @@ module ESM
     end
 
     def generate_community_id
-      return if self.community_id.present?
+      return if community_id.present?
 
       count = 0
       new_id = nil
 
       loop do
         # Attempt to generate an id. Top rated comment from this answer: https://stackoverflow.com/a/88341
-        new_id = ('a'..'z').to_a.sample(4).join
+        new_id = ("a".."z").to_a.sample(4).join
         count += 1
 
         # Our only saviors
@@ -121,31 +136,7 @@ module ESM
     end
 
     def create_command_configurations
-      configurations =
-        ::ESM::Command.all.map do |command|
-          cooldown_default = command.defines.cooldown_time.default
-
-          case cooldown_default
-          when Enumerator
-            cooldown_type = "times"
-            cooldown_quantity = cooldown_default.size
-          when ActiveSupport::Duration
-            # Converts 2.seconds to [:seconds, 2]
-            cooldown_type, cooldown_quantity = cooldown_default.parts.to_a.first
-          end
-
-          {
-            community_id: self.id,
-            command_name: command.name,
-            enabled: command.defines.enabled.default,
-            cooldown_quantity: cooldown_quantity,
-            cooldown_type: cooldown_type,
-            allowed_in_text_channels: command.defines.allowed_in_text_channels.default,
-            whitelist_enabled: command.defines.whitelist_enabled.default,
-            whitelisted_role_ids: command.defines.whitelisted_role_ids.default
-          }
-        end
-
+      configurations = ::ESM::Command.configurations.map { |c| c.merge(community_id: id) }
       ::ESM::CommandConfiguration.import(configurations)
     end
 
@@ -154,7 +145,7 @@ module ESM
         notifications =
           notifications.map do |notification|
             {
-              community_id: self.id,
+              community_id: id,
               notification_type: notification["type"],
               notification_title: notification["title"],
               notification_description: notification["description"],

@@ -12,7 +12,7 @@ module ESM
           @thread = Thread.new do
             loop do
               check_connections
-              sleep(ESM.env.test? ? 0.5 : check_every)
+              sleep(check_every)
             end
           end
         end
@@ -62,7 +62,7 @@ module ESM
 
           # Let the user know
           request.command.reply(embed)
-        rescue StandardError => e
+        rescue => e
           ESM.logger.error("#{self.class}##{__method__}") do
             ESM::JSON.pretty_generate(
               server_id: @connection&.server&.server_id,

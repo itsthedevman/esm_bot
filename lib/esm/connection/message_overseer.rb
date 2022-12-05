@@ -5,16 +5,18 @@ module ESM
     class MessageOverseer
       Envelope = Struct.new(:message, :expires_at) do
         def undeliverable?
-          self.expires_at <= ::Time.now
+          expires_at <= ::Time.now
         end
 
         def delivered?
-          self.message.delivered?
+          message.delivered?
         end
       end
 
+      attr_reader :mailbox if ESM.env.test?
+
       def initialize
-        @mailbox = []
+        @mailbox = {}
 
         check_every = ESM.config.loops.connection_message_overseer.check_every
         @thread = Thread.new do
@@ -25,16 +27,20 @@ module ESM
         end
       end
 
+      def size
+        @mailbox.size
+      end
+
       #
       # Watches a message for a delivery response. If the message never receives one, the message's `on_error` callback will be triggered
       #
       # @param message [ESM::Connection::Message] The message to match
       # @param expires_at [DateTime, Time] The time when the message should be considered undeliverable.
       #
-      def watch(message, expires_at: 30.seconds.from_now)
+      def watch(message, expires_at: 10.seconds.from_now)
         # I love Ruby
         envelope = Envelope.new(message, expires_at)
-        @mailbox << envelope
+        @mailbox[message.id] = envelope
       end
 
       #
@@ -45,26 +51,45 @@ module ESM
       # @return [ESM::Connection::Message, Nil] The message or nil
       #
       def retrieve(id)
-        @mailbox.find { |envelope| envelope.message.id == id }.try(:message)
+        envelope = @mailbox.delete(id)
+        return if envelope.nil?
+
+        envelope.message
+      end
+
+      def remove(id)
+        @mailbox.delete_if { |e| e.message.id == id }
+      end
+
+      def remove_all!(with_error: false)
+        @mailbox.each do |id, envelope|
+          message = envelope.message
+
+          if with_error
+            message.add_error(type: "code", content: "message_undeliverable")
+            message.run_callback(:on_error, message, nil)
+          end
+
+          @mailbox.delete(id)
+        end
       end
 
       private
 
       def check_messages
         # Hey look, I'm the government
-        @mailbox.each do |envelope|
-          next @mailbox.delete(envelope) if envelope.delivered?
+        @mailbox.each do |id, envelope|
           next if !envelope.undeliverable?
 
           message = envelope.message
           message.add_error(type: "code", content: "message_undeliverable")
           message.run_callback(:on_error, message, nil)
 
-          @mailbox.delete(envelope)
-        rescue StandardError => e
-          ESM::Notifications.trigger("error", class: self.class, method: __method__, error: e)
+          @mailbox.delete(id)
+        rescue => e
+          error!(error: e)
 
-          @mailbox.delete(envelope)
+          @mailbox.delete(id)
         end
       end
     end

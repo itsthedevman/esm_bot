@@ -18,7 +18,7 @@ module ESM
         argument :server_id
         argument :order_by, regex: /id|territory_name|owner_uid/, description: "commands.server_territories.arguments.order_by", default: :territory_name, type: :symbol
 
-        def discord
+        def on_execute
           @checks.owned_server!
           deliver!(command_name: "allterritories", query: "list_territories_all")
         end
@@ -43,7 +43,7 @@ module ESM
           # 1: The width of each row had to be less than 67 (10 characters per line reserved for spacing/separating)
           # 2: The overall size of the table (including spaces and separators) HAS to be under 1992 characters due to Discord's message limit
           @response.in_groups_of(20, false).each do |territories|
-            table = Terminal::Table.new(headings: ["ID", "Name", "Owner UID"], style: { width: 67 })
+            table = Terminal::Table.new(headings: ["ID", "Name", "Owner UID"], style: {width: 67})
 
             territories.each do |territory|
               table << [

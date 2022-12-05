@@ -15,7 +15,7 @@ module ESM
 
         argument :server_id
 
-        def discord
+        def on_execute
           # Create a confirmation request to the requestee
           @checks.pending_request!
           add_request(

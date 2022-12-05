@@ -1,25 +1,26 @@
 # frozen_string_literal: true
 
-describe ESM::Connection::Message do
+describe ESM::Connection::Message, v2: true do
   let(:community) { ESM::Test.community }
   let(:user) { ESM::Test.user }
-  let(:command) { ESM::Command::Test::AdminCommand.new }
+  let(:server) { ESM::Test.server }
+
   let(:input) do
     {
       id: SecureRandom.uuid,
       server_id: "esm_malden".bytes,
-      resource_id: nil,
       type: "test",
       data: {
         type: "test_mapping",
         content: {
-          string: "string",
-          integer: 1,
-          rhash: { foo: "bar" }, # Because OStruct has a method called #hash
-          array: [false, true, "2", 3.0],
-          hash_map: ESM::Arma::HashMap.new(key_0: false, key_1: true),
+          # Order matters!
+          array: [false, true, "2", "3.0"],
           date_time: DateTime.current,
-          date: Date.today
+          date: Date.today,
+          hash_map: ESM::Arma::HashMap.from(key_0: false, key_1: true),
+          integer: "1",
+          rhash: {foo: "bar"},
+          string: "string"
         }
       },
       metadata: {
@@ -33,9 +34,9 @@ describe ESM::Connection::Message do
   let(:input_message) do
     described_class.new(**input.merge(
       data_type: input.dig(:data, :type),
-      data: input.dig(:data, :content),
+      data: input.dig(:data, :content).clone,
       metadata_type: input.dig(:metadata, :type),
-      metadata: input.dig(:metadata, :content)
+      metadata: input.dig(:metadata, :content).clone
     ))
   end
 
@@ -45,7 +46,6 @@ describe ESM::Connection::Message do
 
       expect(message.id).to eq(input_message.id)
       expect(message.server_id).to eq(input_message.server_id)
-      expect(message.resource_id).to eq(input_message.resource_id)
       expect(message.type).to eq(input_message.type)
       expect(message.data_type).to eq(input_message.data_type)
       expect(message.metadata_type).to eq(input_message.metadata_type)
@@ -64,12 +64,12 @@ describe ESM::Connection::Message do
 
   describe "#initialize" do
     it "requires a type" do
-      expect { described_class.new }.to raise_error(ArgumentError, "missing keyword: :type")
       expect { described_class.new(type: "test") }.not_to raise_error
     end
 
     it "defaults to empty" do
-      message = described_class.new(type: "test")
+      message = described_class.new
+      expect(message.type).to eq("event")
       expect(message.data_type).to eq("empty")
       expect(message.data.to_h).to eq({})
       expect(message.metadata_type).to eq("empty")
@@ -77,179 +77,16 @@ describe ESM::Connection::Message do
     end
 
     it "defaults the data_type to the message type if data is provided" do
-      message = described_class.new(type: "test", data: { foo: "bar" })
-      expect(message.data_type).to eq("test")
+      message = described_class.new(type: "data_test", data: {foo: "bar"})
+      expect(message.data_type).to eq("data_test")
     end
 
-    it "raises if data is provided but data_type is empty" do
-      # These have to be forced because of the test above. More a "just in case"
-      expect do
-        described_class.new(type: "test", data_type: "empty", data: { foo: "bar" })
-      end.to raise_error(ESM::Exception::InvalidMessage, "\"data\" has values, but \"data_type\" is \"empty\"")
-
-      expect do
-        described_class.new(type: "test", metadata_type: "empty", metadata: { foo: "bar" })
-      end.to raise_error(ESM::Exception::InvalidMessage, "\"metadata\" has values, but \"metadata_type\" is \"empty\"")
-    end
-  end
-
-  describe "#convert_types" do
-    def mapping(data, type)
-      data.each_with_object({}) { |pair, out| out[pair.first] = type }
-    end
-
-    it "converts (String)" do
-      input = { string: "Hello World", bytes: [1, 2, 3, 4, 5, 6, 7], bool: true }
-      expectation = { string: "Hello World", bytes: "[1, 2, 3, 4, 5, 6, 7]", bool: "true" }
-
-      expect(
-        input_message.send(:convert_types, input, message_type: "test", mapping: mapping(input, "String"))
-      ).to eq(expectation)
-    end
-
-    it "converts (Integer)" do
-      input = { int: 1, float: 4.0, string: "7" }
-      expectation = { int: 1, float: 4, string: 7 }
-
-      expect(
-        input_message.send(:convert_types, input, message_type: "test", mapping: mapping(input, "Integer"))
-      ).to eq(expectation)
-    end
-
-    it "converts (Hash)" do
-      input = { hash: { foo: "bar" }, json: { foo: "bar" }.to_json }
-      expectation = { hash: { foo: "bar" }, json: { foo: "bar" } }
-
-      expect(
-        input_message.send(:convert_types, input, message_type: "test", mapping: mapping(input, "Hash"))
-      ).to eq(expectation)
-    end
-
-    it "converts (Array)" do
-      input = { array: [1, 2, 3, "four"], hash: { foo: "bar" } }
-      expectation = { array: [1, 2, 3, "four"], hash: [[:foo, "bar"]] }
-
-      expect(
-        input_message.send(:convert_types, input, message_type: "test", mapping: mapping(input, "Array"))
-      ).to eq(expectation)
-    end
-
-    it "converts (HashMap)" do
-      input = {
-        hash_map: [
-          ["1", 2],
-          ["three", "4"],
-          ["four", [["five", true]]]
-        ].to_json
-      }
-      expectation = { hash_map: { "1": 2, three: "4", four: { five: true } } }
-
-      expect(
-        input_message.send(:convert_types, input, message_type: "test", mapping: mapping(input, "HashMap"))
-      ).to eq(expectation)
-    end
-
-    it "converts (DateTime)" do
-      current_time = DateTime.current
-      input = { date_time: current_time, string: current_time.to_s }
-      output = input_message.send(:convert_types, input, message_type: "test", mapping: mapping(input, "DateTime"))
-
-      # Can't directly compare two DateTime objects
-      expect(output[:date_time].to_s).to eq(current_time.to_s)
-      expect(output[:string].to_s).to eq(current_time.to_s)
-    end
-
-    it "converts (Date)" do
-      input = { date: Date.today, string: Date.today.to_s }
-      expectation = { date: Date.today, string: Date.today }
-
-      expect(
-        input_message.send(:convert_types, input, message_type: "test", mapping: mapping(input, "Date"))
-      ).to eq(expectation)
-    end
-
-    describe "converts Array<T>" do
-      it "String" do
-        input = { int: [1, 2, 3, 4, 5, 6], string: [true, false, "3"].to_json }
-        expectation = { int: %w[1 2 3 4 5 6], string: ["true", "false", "3"] }
-
-        expect(
-          input_message.send(:convert_types, input, message_type: "test", mapping: mapping(input, "Array<String>"))
-        ).to eq(expectation)
-      end
-
-      it "Integer" do
-        input = { int: [1, 2, 3, 4, 5, 6], string: ["1", "2", "3"].to_json }
-        expectation = { int: [1, 2, 3, 4, 5, 6], string: [1, 2, 3] }
-
-        expect(
-          input_message.send(:convert_types, input, message_type: "test", mapping: mapping(input, "Array<Integer>"))
-        ).to eq(expectation)
-      end
-
-      it "Hash" do
-        input = { hash: [{ foo: "bar" }], json: [{ foo: "bar" }.to_json] }
-        expectation = { hash: [{ foo: "bar" }], json: [{ foo: "bar" }] }
-
-        expect(
-          input_message.send(:convert_types, input, message_type: "test", mapping: mapping(input, "Array<Hash>"))
-        ).to eq(expectation)
-      end
-
-      it "HashMap" do
-        input = {
-          string_hash_map: [[
-            ["1", 2],
-            ["three", "4"],
-            ["four", [["five", true]]]
-          ].to_json],
-          hash_map: [[
-            ["1", 2],
-            ["three", "4"],
-            ["four", [["five", true]]]
-          ]]
-        }
-        expectation = { string_hash_map: [{ "1": 2, three: "4", four: { five: true } }], hash_map: [{ "1": 2, three: "4", four: { five: true } }] }
-
-        expect(
-          input_message.send(:convert_types, input, message_type: "test", mapping: mapping(input, "Array<HashMap>"))
-        ).to eq(expectation)
-      end
-
-      it "DateTime" do
-        current_time = DateTime.current
-        input = { date_time: [current_time], string: [current_time.to_s] }
-        output = input_message.send(:convert_types, input, message_type: "test", mapping: mapping(input, "Array<DateTime>"))
-
-        # Can't directly compare two DateTime objects
-        expect(output[:date_time].first).to be_kind_of(DateTime)
-        expect(output[:string].first).to be_kind_of(DateTime)
-        expect(output[:date_time].first.to_s).to eq(current_time.to_s)
-        expect(output[:string].first.to_s).to eq(current_time.to_s)
-      end
-
-      it "Date" do
-        input = { date: [Date.today], string: [Date.today.to_s] }
-        expectation = { date: [Date.today], string: [Date.today] }
-
-        expect(
-          input_message.send(:convert_types, input, message_type: "test", mapping: mapping(input, "Array<Date>"))
-        ).to eq(expectation)
-      end
-
-      it "raises (failed to parse inner type)"
-    end
-
-    it "raises (failed to find type in the global mapping)" do
-      input = { foo: "bar" }
-
-      expect { input_message.send(:convert_types, input, message_type: "foo") }.to raise_error("Failed to find type \"foo\" in \"message_type_mapping.yml\"")
-    end
-
-    it "raises (failed to find key in the mapping)" do
-      input = { foo: "bar" }
-
-      expect { input_message.send(:convert_types, input, message_type: "test", mapping: { test: {} }) }.to raise_error("Failed to find key \"foo\" in mapping for \"test\"")
+    it "converts symbols to strings" do
+      message = described_class.new(type: :test, data_type: :empty, metadata_type: :empty, server_id: server.server_id.to_sym)
+      expect(message.type).to eq("test")
+      expect(message.data_type).to eq("empty")
+      expect(message.metadata_type).to eq("empty")
+      expect(message.server_id).to eq(server.server_id)
     end
   end
 
@@ -270,36 +107,31 @@ describe ESM::Connection::Message do
       ESM::Connection::Message.new(
         server_id: Faker::ESM.server_id,
         type: "testing",
-        data_type: "test",
-        data: { foo: "bar" },
-        metadata_type: "test",
-        metadata: { bar: "baz" },
-        convert_types: false
+        data_type: "data_test",
+        data: {foo: "bar"},
+        metadata_type: "metadata_test",
+        metadata: {bar: "baz"}
       )
     end
 
     it "handles codes" do
-      # Preload the command with user data
-      event = CommandEvent.create(command.statement(community_id: community.community_id), channel_type: :text, user: user)
-      expect { command.execute(event) }.not_to raise_error
+      current_user = double("user")
+      allow(current_user).to receive(:mention).and_return(user.mention)
+
+      command = double("command")
+      allow(command).to receive(:current_user).and_return(current_user)
+      allow(command).to receive(:target_user).and_return(nil)
 
       # Needed for mention
-      message.routing_data(command: command)
+      message.locals = {command: command}
       message.add_error(type: "code", content: "test")
 
       embed = message.send(:on_error, message, nil)
-      expect(embed.description).to eq("#{user.mention} | #{message.id} | #{message.server_id} | #{message.type} | #{message.data_type} | #{message.metadata_type} | #{message.data.foo} | #{message.metadata.bar}")
+      expect(embed.description).to eq("#{current_user.mention} | #{message.id} | #{message.server_id} | #{message.type} | #{message.data_type} | #{message.metadata_type} | #{message.data.foo} | #{message.metadata.bar}")
     end
 
     it "handles messages" do
       message.add_error(type: "message", content: "Hello World")
-      embed = message.send(:on_error, message, nil)
-
-      expect(embed.description).to eq("Hello World")
-    end
-
-    it "handles embeds" do
-      message.add_error(type: "embed", content: ESM::Embed.build(:success, description: "Hello World"))
       embed = message.send(:on_error, message, nil)
 
       expect(embed.description).to eq("Hello World")

@@ -16,7 +16,7 @@ module ESM
         argument :server_id
         argument :territory_id
 
-        def discord
+        def on_execute
           deliver!(function_name: "payTerritory", territory_id: @arguments.territory_id, uid: current_user.esm_user.steam_uid)
         end
 

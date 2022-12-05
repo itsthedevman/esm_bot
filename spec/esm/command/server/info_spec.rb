@@ -131,28 +131,28 @@ describe ESM::Command::Server::Info, category: "command" do
       expect(embed.description).to eq(territory.payment_reminder_message)
 
       field_info = [
-        { name: "Territory ID", value: "```#{territory.id}```" },
-        { name: "Flag Status", value: "```#{territory.flag_status}```" },
-        { name: "Next Due Date", value: "```#{territory.next_due_date.strftime(ESM::Time::Format::TIME)}```" },
-        { name: "Last Paid", value: "```#{territory.last_paid_at.strftime(ESM::Time::Format::TIME)}```" },
-        { name: "Price to renew protection", value: territory.renew_price },
-        { value: "__Current Territory Stats__" },
-        { name: "Level", value: territory.level },
-        { name: "Radius", value: "#{territory.radius}m" },
-        { name: "Current / Max Objects", value: "#{territory.object_count}/#{territory.max_object_count}" }
+        {name: "Territory ID", value: "```#{territory.id}```"},
+        {name: "Flag Status", value: "```#{territory.flag_status}```"},
+        {name: "Next Due Date", value: "```#{territory.next_due_date.strftime(ESM::Time::Format::TIME)}```"},
+        {name: "Last Paid", value: "```#{territory.last_paid_at.strftime(ESM::Time::Format::TIME)}```"},
+        {name: "Price to renew protection", value: territory.renew_price},
+        {value: "__Current Territory Stats__"},
+        {name: "Level", value: territory.level},
+        {name: "Radius", value: "#{territory.radius}m"},
+        {name: "Current / Max Objects", value: "#{territory.object_count}/#{territory.max_object_count}"}
       ]
 
       if territory.upgradeable?
         field_info.push(
-          { value: "__Next Territory Stats__" },
-          { name: "Level", value: territory.upgrade_level },
-          { name: "Radius", value: "#{territory.upgrade_radius}m" },
-          { name: "Max Objects", value: territory.upgrade_object_count },
-          { name: "Price", value: territory.upgrade_price }
+          {value: "__Next Territory Stats__"},
+          {name: "Level", value: territory.upgrade_level},
+          {name: "Radius", value: "#{territory.upgrade_radius}m"},
+          {name: "Max Objects", value: territory.upgrade_object_count},
+          {name: "Price", value: territory.upgrade_price}
         )
       end
 
-      field_info.push({ value: "__Territory Members__" }, { name: "Owner", value: territory.owner })
+      field_info.push({value: "__Territory Members__"}, {name: "Owner", value: territory.owner})
 
       # Now check the fields
       # Removing them from the embed so we can check moderators/builders easily

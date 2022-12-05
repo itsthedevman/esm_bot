@@ -1,77 +1,61 @@
-PATH
-  remote: .
+GIT
+  remote: https://github.com/shardlab/discordrb.git
+  revision: 413cd095d41706814179a257129e24560afdbc9d
+  branch: main
   specs:
-    esm_bot (2.0.1)
-      actionview
-      activerecord
-      activerecord-import
-      activesupport
-      discordrb
-      dotenv
-      dotiw
-      eye
-      fast_jsonparser (~> 0.5.0)
-      faye-websocket
-      httparty
-      i18n
-      otr-activerecord
-      pg
-      pry
-      puma
-      rake
-      redis
-      sinatra
-      standalone_migrations
-      steam-condenser
-      steam_web_api
-      sucker_punch
-      terminal-table
-      zeitwerk
+    discordrb (3.4.2)
+      discordrb-webhooks (~> 3.4.2)
+      ffi (>= 1.9.24)
+      opus-ruby
+      rest-client (>= 2.0.0)
+      websocket-client-simple (>= 0.3.0)
+    discordrb-webhooks (3.4.2)
+      rest-client (>= 2.0.0)
 
 GEM
   remote: https://rubygems.org/
   specs:
-    actionpack (6.1.4.1)
-      actionview (= 6.1.4.1)
-      activesupport (= 6.1.4.1)
+    actionpack (6.1.7)
+      actionview (= 6.1.7)
+      activesupport (= 6.1.7)
       rack (~> 2.0, >= 2.0.9)
       rack-test (>= 0.6.3)
       rails-dom-testing (~> 2.0)
       rails-html-sanitizer (~> 1.0, >= 1.2.0)
-    actionview (6.1.4.1)
-      activesupport (= 6.1.4.1)
+    actionview (6.1.7)
+      activesupport (= 6.1.7)
       builder (~> 3.1)
       erubi (~> 1.4)
       rails-dom-testing (~> 2.0)
       rails-html-sanitizer (~> 1.1, >= 1.2.0)
     active_record_query_trace (1.8)
-    activemodel (6.1.4.1)
-      activesupport (= 6.1.4.1)
-    activerecord (6.1.4.1)
-      activemodel (= 6.1.4.1)
-      activesupport (= 6.1.4.1)
-    activerecord-import (1.2.0)
-      activerecord (>= 3.2)
-    activesupport (6.1.4.1)
+    activemodel (6.1.7)
+      activesupport (= 6.1.7)
+    activerecord (6.1.7)
+      activemodel (= 6.1.7)
+      activesupport (= 6.1.7)
+    activerecord-import (1.4.1)
+      activerecord (>= 4.2)
+    activesupport (6.1.7)
       concurrent-ruby (~> 1.0, >= 1.0.2)
       i18n (>= 1.6, < 2)
       minitest (>= 5.1)
       tzinfo (~> 2.0)
       zeitwerk (~> 2.3)
-    airbrussh (1.4.0)
+    airbrussh (1.4.1)
       sshkit (>= 1.6.1, != 1.7.0)
     ast (2.4.2)
     awesome_print (1.9.2)
     backport (1.2.0)
     benchmark (0.2.0)
-    benchmark-ips (2.9.2)
+    benchmark-ips (2.10.0)
     builder (3.2.4)
-    capistrano (3.16.0)
+    capistrano (3.17.1)
       airbrussh (>= 1.0.0)
       i18n
       rake (>= 10.0.0)
       sshkit (>= 1.9.0)
-    capistrano-bundler (2.0.1)
+    capistrano-bundler (2.1.0)
       capistrano (~> 3.1)
     capistrano-rbenv (2.2.0)
       capistrano (~> 3.1)
@@ -99,7 +83,8 @@ GEM
       timers (>= 4.1.1)
     coderay (1.1.3)
     colorize (0.8.1)
-    concurrent-ruby (1.1.9)
+    concurrent-ruby (1.1.10)
+    connection_pool (2.3.0)
     crass (1.0.6)
     database_cleaner (2.0.1)
       database_cleaner-active_record (~> 2.0.0)
@@ -107,24 +92,16 @@ GEM
       activerecord (>= 5.a)
       database_cleaner-core (~> 2.0.0)
     database_cleaner-core (2.0.1)
-    diff-lcs (1.4.4)
-    discordrb (3.4.0)
-      discordrb-webhooks (~> 3.3.0)
-      ffi (>= 1.9.24)
-      opus-ruby
-      rest-client (>= 2.0.0)
-      websocket-client-simple (>= 0.3.0)
-    discordrb-webhooks (3.3.0)
-      rest-client (>= 2.1.0.rc1)
+    diff-lcs (1.5.0)
     docile (1.4.0)
     domain_name (0.5.20190701)
       unf (>= 0.0.5, < 1.0.0)
-    dotenv (2.7.6)
-    dotiw (5.3.2)
+    dotenv (2.8.1)
+    dotiw (5.3.3)
       activesupport
       i18n
     e2mmap (0.1.0)
-    erubi (1.10.0)
+    erubi (1.11.0)
     event_emitter (0.2.6)
     eventmachine (1.2.7)
     eye (0.10.0)
@@ -133,101 +110,102 @@ GEM
       kostya-sigar (~> 2.0.0)
       state_machines
       thor
-    factory_bot (6.2.0)
+    factory_bot (6.2.1)
       activesupport (>= 5.0.0)
-    faker (2.19.0)
-      i18n (>= 1.6, < 2)
-    faraday (0.17.4)
+    faker (3.0.0)
+      i18n (>= 1.8.11, < 2)
+    faraday (0.17.6)
       multipart-post (>= 1.2, < 3)
-    fast_jsonparser (0.5.0)
+    fast_jsonparser (0.6.0)
     faye-websocket (0.11.1)
       eventmachine (>= 0.12.0)
       websocket-driver (>= 0.5.1)
-    ffi (1.15.4)
-    ffi (1.15.4-x64-mingw32)
+    ffi (1.15.5)
+    hashids (1.0.6)
     hashie (5.0.0)
     hashie-forbidden_attributes (0.1.1)
       hashie (>= 3.0)
     http-accept (1.7.0)
-    http-cookie (1.0.4)
+    http-cookie (1.0.5)
       domain_name (~> 0.5)
     httparty (0.20.0)
       mime-types (~> 3.0)
       multi_xml (>= 0.5.2)
-    i18n (1.8.11)
+    i18n (1.12.0)
       concurrent-ruby (~> 1.0)
     jaro_winkler (1.5.4)
+    json (2.6.2)
     kostya-sigar (2.0.10)
-    kramdown (2.3.1)
+    kramdown (2.4.0)
       rexml
     kramdown-parser-gfm (1.1.0)
       kramdown (~> 2.0)
-    listen (3.7.0)
+    listen (3.7.1)
       rb-fsevent (~> 0.10, >= 0.10.3)
       rb-inotify (~> 0.9, >= 0.9.10)
-    loofah (2.12.0)
+    loofah (2.19.0)
       crass (~> 1.0.2)
       nokogiri (>= 1.5.9)
-    memory_profiler (1.0.0)
+    memory_profiler (1.0.1)
     method_source (1.0.0)
     mime-types (3.4.1)
       mime-types-data (~> 3.2015)
-    mime-types-data (3.2021.1115)
-    mini_portile2 (2.6.1)
-    minitest (5.14.4)
+    mime-types-data (3.2022.0105)
+    minitest (5.16.3)
     multi_json (1.15.0)
     multi_xml (0.6.0)
-    multipart-post (2.1.1)
-    mustermann (1.1.1)
+    multipart-post (2.2.3)
+    mustermann (3.0.0)
       ruby2_keywords (~> 0.0.1)
-    net-scp (3.0.0)
-      net-ssh (>= 2.6.5, < 7.0.0)
-    net-ssh (6.1.0)
+    neatjson (0.10.5)
+    net-scp (4.0.0)
+      net-ssh (>= 2.6.5, < 8.0.0)
+    net-ssh (7.0.1)
     netrc (0.11.0)
     nio4r (2.5.8)
-    nokogiri (1.12.5)
-      mini_portile2 (~> 2.6.1)
-      racc (~> 1.4)
-    nokogiri (1.12.5-x64-mingw32)
+    nokogiri (1.13.9-x86_64-linux)
       racc (~> 1.4)
     opus-ruby (1.0.1)
       ffi
-    otr-activerecord (2.0.3)
+    otr-activerecord (2.1.1)
       activerecord (>= 4.0, < 7.1)
       hashie-forbidden_attributes (~> 0.1)
-    parallel (1.21.0)
-    parser (3.0.3.2)
+    parallel (1.22.1)
+    parser (3.1.2.1)
       ast (~> 2.4.1)
-    pg (1.2.3)
+    pg (1.4.5)
     pry (0.14.1)
       coderay (~> 1.1)
       method_source (~> 1.0)
-    puma (5.5.2)
+    puma (6.0.0)
       nio4r (~> 2.0)
     racc (1.6.0)
-    rack (2.2.3)
-    rack-protection (2.1.0)
+    rack (2.2.4)
+    rack-protection (3.0.3)
       rack
-    rack-test (1.1.0)
-      rack (>= 1.0, < 3)
+    rack-test (2.0.2)
+      rack (>= 1.3)
     rails-dom-testing (2.0.3)
       activesupport (>= 4.2.0)
       nokogiri (>= 1.6)
-    rails-html-sanitizer (1.4.2)
+    rails-html-sanitizer (1.4.3)
       loofah (~> 2.3)
-    railties (6.1.4.1)
-      actionpack (= 6.1.4.1)
-      activesupport (= 6.1.4.1)
+    railties (6.1.7)
+      actionpack (= 6.1.7)
+      activesupport (= 6.1.7)
       method_source
-      rake (>= 0.13)
+      rake (>= 12.2)
       thor (~> 1.0)
-    rainbow (3.0.0)
+    rainbow (3.1.1)
     rake (13.0.6)
-    rb-fsevent (0.11.0)
+    rb-fsevent (0.11.2)
     rb-inotify (0.10.1)
       ffi (~> 1.0)
-    redis (4.4.0)
-    regexp_parser (2.2.0)
+    redis (5.0.5)
+      redis-client (>= 0.9.0)
+    redis-client (0.11.2)
+      connection_pool
+    regexp_parser (2.6.1)
     rerun (0.13.1)
       listen (~> 3.0)
     rest-client (2.1.0)
@@ -238,48 +216,52 @@ GEM
     reverse_markdown (2.1.1)
       nokogiri
     rexml (3.2.5)
-    rspec (3.10.0)
-      rspec-core (~> 3.10.0)
-      rspec-expectations (~> 3.10.0)
-      rspec-mocks (~> 3.10.0)
-    rspec-core (3.10.1)
-      rspec-support (~> 3.10.0)
-    rspec-expectations (3.10.1)
+    rspec (3.12.0)
+      rspec-core (~> 3.12.0)
+      rspec-expectations (~> 3.12.0)
+      rspec-mocks (~> 3.12.0)
+    rspec-core (3.12.0)
+      rspec-support (~> 3.12.0)
+    rspec-expectations (3.12.0)
       diff-lcs (>= 1.2.0, < 2.0)
-      rspec-support (~> 3.10.0)
-    rspec-mocks (3.10.2)
+      rspec-support (~> 3.12.0)
+    rspec-mocks (3.12.0)
       diff-lcs (>= 1.2.0, < 2.0)
-      rspec-support (~> 3.10.0)
-    rspec-support (3.10.3)
+      rspec-support (~> 3.12.0)
+    rspec-support (3.12.0)
     rspec-wait (0.0.9)
       rspec (>= 3, < 4)
-    rubocop (1.23.0)
+    rubocop (1.39.0)
+      json (~> 2.3)
       parallel (~> 1.10)
-      parser (>= 3.0.0.0)
+      parser (>= 3.1.2.1)
       rainbow (>= 2.2.2, < 4.0)
       regexp_parser (>= 1.8, < 3.0)
-      rexml
-      rubocop-ast (>= 1.12.0, < 2.0)
+      rexml (>= 3.2.5, < 4.0)
+      rubocop-ast (>= 1.23.0, < 2.0)
       ruby-progressbar (~> 1.7)
       unicode-display_width (>= 1.4.0, < 3.0)
-    rubocop-ast (1.14.0)
-      parser (>= 3.0.1.1)
+    rubocop-ast (1.23.0)
+      parser (>= 3.1.1.0)
+    rubocop-performance (1.15.0)
+      rubocop (>= 1.7.0, < 2.0)
+      rubocop-ast (>= 0.4.0)
     ruby-prof (1.4.3)
-    ruby-prof (1.4.3-x64-mingw32)
     ruby-progressbar (1.11.0)
     ruby2_keywords (0.0.5)
+    semantic (1.6.1)
     simplecov (0.21.2)
       docile (~> 1.1)
       simplecov-html (~> 0.11)
       simplecov_json_formatter (~> 0.1)
     simplecov-html (0.12.3)
-    simplecov_json_formatter (0.1.3)
-    sinatra (2.1.0)
-      mustermann (~> 1.0)
-      rack (~> 2.2)
-      rack-protection (= 2.1.0)
+    simplecov_json_formatter (0.1.4)
+    sinatra (3.0.3)
+      mustermann (~> 3.0)
+      rack (~> 2.2, >= 2.2.4)
+      rack-protection (= 3.0.3)
       tilt (~> 2.0)
-    solargraph (0.44.2)
+    solargraph (0.47.2)
       backport (~> 1.2)
       benchmark
       bundler (>= 1.17.2)
@@ -294,50 +276,56 @@ GEM
       thor (~> 1.0)
       tilt (~> 2.0)
       yard (~> 0.9, >= 0.9.24)
-    sshkit (1.21.2)
+    sshkit (1.21.3)
       net-scp (>= 1.1.2)
       net-ssh (>= 2.8.0)
-    standalone_migrations (6.1.0)
-      activerecord (>= 4.2.7, < 6.2.0, != 5.2.3.rc1, != 5.2.3)
-      railties (>= 4.2.7, < 6.2.0, != 5.2.3.rc1, != 5.2.3)
+    standalone_migrations (7.1.0)
+      activerecord (>= 4.2.7, < 7.1.0, != 5.2.3.rc1, != 5.2.3)
+      railties (>= 4.2.7, < 7.1.0, != 5.2.3.rc1, != 5.2.3)
       rake (>= 10.0)
+    standard (1.18.0)
+      rubocop (= 1.39.0)
+      rubocop-performance (= 1.15.0)
     state_machines (0.5.0)
     steam-condenser (1.3.11)
       multi_json (~> 1.6)
       multi_xml (~> 0.5)
     steam_web_api (0.0.3)
       faraday (~> 0.9)
-    sucker_punch (3.0.1)
+    sucker_punch (3.1.0)
       concurrent-ruby (~> 1.0)
     terminal-table (3.0.2)
       unicode-display_width (>= 1.1.1, < 3)
-    thor (1.1.0)
-    tilt (2.0.10)
-    timers (4.3.3)
-    tzinfo (2.0.4)
+    thor (1.2.1)
+    tilt (2.0.11)
+    timers (4.3.5)
+    tzinfo (2.0.5)
       concurrent-ruby (~> 1.0)
     unf (0.1.4)
       unf_ext
-    unf_ext (0.0.8)
-    unicode-display_width (2.1.0)
+    unf_ext (0.0.8.2)
+    unicode-display_width (2.3.0)
     webrick (1.7.0)
     websocket (1.2.9)
-    websocket-client-simple (0.3.0)
+    websocket-client-simple (0.6.0)
       event_emitter
       websocket
     websocket-driver (0.7.5)
       websocket-extensions (>= 0.1.0)
     websocket-extensions (0.1.5)
-    yard (0.9.27)
+    yard (0.9.28)
       webrick (~> 1.7.0)
-    zeitwerk (2.5.1)
+    zeitwerk (2.6.6)
 
 PLATFORMS
-  ruby
-  x64-mingw32
+  x86_64-linux
 
 DEPENDENCIES
+  actionview (~> 6.1, >= 6.1.4.4)
   active_record_query_trace
+  activerecord (~> 6.1, >= 6.1.4.4)
+  activerecord-import
+  activesupport (~> 6.1, >= 6.1.4.4)
   awesome_print
   benchmark-ips
   bundler
@@ -346,18 +334,41 @@ DEPENDENCIES
   capistrano-rbenv
   colorize
   database_cleaner
-  esm_bot!
+  discordrb!
+  dotenv
+  dotiw
+  eye
   factory_bot
   faker
+  fast_jsonparser
+  faye-websocket
+  hashids
+  httparty
+  i18n
   memory_profiler
+  neatjson
+  otr-activerecord
+  pg
+  pry
+  puma
+  rake
+  redis
   rerun
   rspec
   rspec-wait
-  rubocop
   ruby-prof
+  semantic
   simplecov
+  sinatra
   solargraph
+  standalone_migrations (~> 7)
+  standard
+  steam-condenser
+  steam_web_api
+  sucker_punch
+  terminal-table
   yard
+  zeitwerk
 
 BUNDLED WITH
-   2.1.4
+   2.3.25

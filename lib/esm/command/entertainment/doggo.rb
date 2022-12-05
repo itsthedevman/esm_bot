@@ -34,7 +34,7 @@ module ESM
               response = HTTParty.get("https://dog.ceo/api/breeds/image/random", headers: { 'User-agent': "ESM 2.0" })
               next sleep(1) if !response.ok?
 
-              url = response.parsed_response["message"]
+              url = response.parsed_response[0]["data"]["children"][0]["data"]["url"]
               next if url.blank?
               next if !url.match(/\.jpg$|\.png$|\.gif$|\.jpeg$/i)
 

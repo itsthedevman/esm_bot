@@ -4,7 +4,7 @@ describe ESM::Callbacks do
   let(:object) { Callback.new }
 
   before :each do
-    object.instance_variable_set("@tracker", [])
+    object.instance_variable_set(:@tracker, [])
   end
 
   describe "#register_callbacks" do
@@ -12,7 +12,7 @@ describe ESM::Callbacks do
       callbacks = object.class.__callbacks
       expect(callbacks).not_to be_blank
 
-      expect(callbacks).to eq({ before_execute: [:method_to_call_from_class], after_execute: [] })
+      expect(callbacks).to eq({before_execute: [:method_to_call_from_class], after_execute: []})
     end
   end
 
@@ -42,7 +42,7 @@ describe ESM::Callbacks do
 
   describe "#run_callback" do
     it "should add and run the callbacks" do
-      tracker = object.instance_variable_get("@tracker")
+      tracker = object.instance_variable_get(:@tracker)
       object.add_callback(:before_execute, :method_to_call_on_before_execute)
       object.add_callback(:after_execute, :method_to_call_on_after_execute)
       object.add_callback(:before_execute) { tracker << "before_execute_2" }

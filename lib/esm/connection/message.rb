@@ -5,11 +5,59 @@ module ESM
     class Message
       include ESM::Callbacks
 
-      MAPPINGS = YAML.safe_load(File.read(File.expand_path("./config/message_type_mapping.yml")), symbolize_names: true).freeze
+      MAPPING = YAML.safe_load(File.read(File.expand_path("./config/mapping.yml"))).freeze
       ARRAY_REGEX = /array<(?<type>.+)>/i.freeze
+      NIL_REGEX = /^\?(?<type>.+)/.freeze
 
-      attr_reader :id, :server_id, :type, :data, :metadata, :errors, :data_type, :metadata_type
-      attr_accessor :resource_id
+      class Error
+        attr_reader :type, :content
+
+        def initialize(message, type:, content:)
+          @message = message
+          @type = type
+          @content = content
+        end
+
+        def to_h
+          {
+            type: @type,
+            content: @content
+          }
+        end
+
+        def to_s
+          case @type
+          when "code"
+            replacements = {
+              user: @message.locals&.command&.current_user&.mention,
+              target: @message.locals&.command&.target_user&.mention,
+              message_id: @message.id,
+              server_id: @message.server_id,
+              type: @message.type,
+              data_type: @message.data_type,
+              mdata_type: @message.metadata_type
+            }
+
+            # Add the data and metadata to the replacements
+            # For example, if data has two attributes: "steam_uid" and "discord_id", this will define two replacements:
+            #     "data_content_steam_uid", and "data_content_discord_id"
+            #
+            # Same for metadata's attributes. Except the key prefix is "mdata_content_"
+            @message.data.to_h.each { |key, value| replacements["data_content_#{key}".to_sym] = value }
+            @message.metadata.to_h.each { |key, value| replacements["mdata_content_#{key}".to_sym] = value }
+
+            # Call the exception with the replacements
+            I18n.t("exceptions.extension.#{@content}", **replacements)
+          when "message"
+            @content
+          else
+            I18n.t("exceptions.extension.default", type: @type)
+          end
+        end
+      end
+
+      attr_reader :id, :type, :data, :metadata, :errors, :data_type, :metadata_type, :locals
+      attr_accessor :server_id
 
       # All callbacks are provided with two arguments:
       #   incoming_message [ESM::Connection::Message, nil]  The incoming message from the client, if applicable.
@@ -41,19 +89,20 @@ module ESM
         data_hash[:metadata_type] = data_hash.dig(:metadata, :type) || "empty"
         data_hash[:metadata] = data_hash.dig(:metadata, :content)
 
-        # Convert based on the mapping
-        data_hash[:convert_types] = true
-
-        self.new(**data_hash)
+        new(**data_hash)
       end
 
-      # The driver of communication between the bot, server, and client.
+      # The driver of communication between the bot, server, and client. Rust is strict so this has to be too.
+      # Any data and metadata must be configured in config/mapping.yml and defined in esm_message -> data.rs / metadata.rs
+      # They will automatically be sanitized according to their data type as configured in the mapping.
+      # NOTE: Invalid data/metadata attributes will be dropped!
       #
-      # @param type [String] The type of message this is
+      # @param type [Symbol, String] The type of message this is
       # @param args [Hash]
-      # @option args [String, Array<Integer>, nil] :server_id The ID of the server this messages should be sent to. Array<Integer> will be converted to string automatically
-      # @option args [String] :type The type of message. This gives context to the message
+      # @option args [Symbol, String, Array<Integer>, nil] :server_id The ID of the server this messages should be sent to. Array<Integer> will be converted to string automatically
+      # @option args [Symbol, String] :data_type The name of the type that gives the "data" its structure.
       # @option args [Hash] :data The primary data for this message. It's the good stuff.
+      # @option args [Symbol, String] :metadata_type The name of the type that gives the "metadata" its structure.
       # @option args [Hash] :metadata Any extra data that may be needed. For most command messages, this will contain the user's discord and steam data.
       # @option args [Array<Hash>] :errors Any errors that were caused by this message.
       #   Each hash has the following attributes:
@@ -61,71 +110,76 @@ module ESM
       #       "code" # Uses the message to look up a predefined message in the locales
       #       "message" # Treats the message like a string and sends it as is
       #     message [String] The content of this error.
-      # @option args [String] :data_type The name of the type that gives the "data" its structure.
-      # @option args [String] :metadata_type The name of the type that gives the "metadata" its structure.
-      # @option args [Boolean] :convert_types Runs the message's data values against the pre-configured mapping and perform any type conversions if needed
-      def initialize(type:, **args)
+      def initialize(type: "event", **args)
         @id = args[:id] || SecureRandom.uuid
-        @type = type
+        @type = type.to_s
 
         # The server provides the server_id as a UTF8 byte array. Convert it to a string
         @server_id =
           if args[:server_id].is_a?(Array)
             args[:server_id].pack("U*")
-          else
-            args[:server_id]
+          elsif args[:server_id]
+            args[:server_id].to_s
           end
 
-        @data = OpenStruct.new(args[:data] || {})
-
         # If there is data and no data_type provided, default to the message's type. Otherwise, consider it "empty"
+        @metadata_type = args[:metadata_type].presence&.to_s || "empty"
         @data_type =
           if args[:data_type]
-            args[:data_type]
-          elsif @data.present?
-            type
+            args[:data_type].to_s
+          elsif args[:data].present?
+            @type
           else
             "empty"
           end
 
-        @metadata = OpenStruct.new(args[:metadata] || {})
-        @metadata_type = args[:metadata_type] || "empty"
-        @errors = (args[:errors] || []).map(&:to_ostruct)
-        @routing_data = OpenStruct.new(command: nil)
+        @metadata = @metadata_type == "empty" ? nil : OpenStruct.new(sanitize(args[:metadata].to_h || {}, @metadata_type))
+        @data = @data_type == "empty" ? nil : OpenStruct.new(sanitize(args[:data].to_h || {}, @data_type))
+        @errors = (args[:errors] || []).map { |e| Error.new(self, **e) }
+        @locals = OpenStruct.new(command: nil)
         @delivered = false
-
-        self.convert_types(data, message_type: @data_type) if args[:convert_types]
-        self.validate!
+        @mutex = Mutex.new
       end
 
-      def validate!
-        raise ESM::Exception::InvalidMessage, "\"data\" has values, but \"data_type\" is \"empty\"" if @data.present? && @data_type == "empty"
-        raise ESM::Exception::InvalidMessage, "\"metadata\" has values, but \"metadata_type\" is \"empty\"" if @metadata.present? && @metadata_type == "empty"
-      end
-
-      # Sets the various config options used by the overseer when routes the message
+      # Sets the various values used internally by the overseer when routes the message
       #
       # @param opts [Hash]
       # @option opts [ESM::Command] :command The command that triggered this message. The overseer uses this hook back into the command
-      def routing_data(**opts)
-        opts.each { |key, value| @routing_data.send("#{key}=", value) }
-        self
+      def locals=(**opts)
+        opts.each { |key, value| @locals.send("#{key}=", value) }
       end
 
       #
-      # Sets the user's ID, name, mention, and steam uid to the metadata for this message.
+      # Sets the user's ID, name, mention, and steam uid to the metadata for this message. Will also do the same for the target user if the command has one
       # This only applies to messages that have a command in their routing data
       #
-      # @note If this Message was provided a command, calling this method will automatically add the user's discord and steam info to the metadata
-      #   This is done separately because not every message type will use the data. It would be a waste to send it over the wire if it's not used
-      def apply_user_metadata
-        user = @routing_data.try(:command).try(:current_user)
+      def apply_command_metadata
+        user = @locals.try(:command).try(:current_user)
         return if user.nil?
 
-        @metadata[:user_id] = user.id.to_s
-        @metadata[:user_name] = user.username
-        @metadata[:user_mention] = user.mention
-        @metadata[:user_steam_uid] = user.steam_uid
+        @metadata ||= OpenStruct.new
+        @metadata_type = "command"
+        @metadata.player = {
+          steam_uid: user.steam_uid,
+          discord_id: user.id.to_s,
+          discord_name: user.username,
+          discord_mention: user.mention
+        }
+
+        target_user = @locals.try(:command).try(:target_user)
+        return if target_user.nil?
+
+        target = {steam_uid: target_user.steam_uid}
+
+        if !target_user.is_a?(ESM::TargetUser)
+          target.merge!(
+            discord_id: target_user.id.to_s,
+            discord_name: target_user.username,
+            discord_mention: target_user.mention
+          )
+        end
+
+        @metadata.target = target
       end
 
       #
@@ -135,7 +189,7 @@ module ESM
       # @param message [String] The message or code for this error
       #
       def add_error(type:, content:)
-        @errors << OpenStruct.new(type: type, content: content)
+        @errors << Error.new(self, type: type.to_s, content: content)
       end
 
       #
@@ -154,7 +208,6 @@ module ESM
       #   {
       #     id: The ID of this message as a UUID
       #     server_id: The server ID this message is being sent to or from as a byte array
-      #     resource_id: The internal resource ID used by tcp_server
       #     type: The context of this message
       #     data: {
       #       type: Describes the structure of content
@@ -168,14 +221,27 @@ module ESM
       #   }
       #
       def to_h
-        data = self.data.to_h
-        metadata = self.metadata.to_h
+        # Numbers have to be sent as Strings
+        stringify_values = lambda do |value|
+          case value
+          when Numeric
+            value.to_s
+          when Hash, ESM::Arma::HashMap
+            value.transform_values(&stringify_values)
+          when Array
+            value.map(&stringify_values)
+          else
+            value
+          end
+        end
+
+        data = self.data.to_h.transform_values(&stringify_values)
+        metadata = self.metadata.to_h.transform_values(&stringify_values)
 
         {
-          id: self.id,
-          server_id: self.server_id&.bytes,
-          resource_id: self.resource_id,
-          type: self.type,
+          id: id,
+          server_id: server_id&.bytes,
+          type: type,
           data: {
             type: @data_type,
             content: data.present? ? data : nil
@@ -184,7 +250,7 @@ module ESM
             type: @metadata_type,
             content: metadata.present? ? metadata : nil
           },
-          errors: self.errors.map(&:to_h)
+          errors: errors.map(&:to_h)
         }
       end
 
@@ -194,7 +260,7 @@ module ESM
       # @return [Boolean]
       #
       def data?
-        self.data.to_h.present?
+        data.to_h.present?
       end
 
       #
@@ -203,7 +269,7 @@ module ESM
       # @return [Boolean]
       #
       def errors?
-        self.errors.any?
+        errors.any?
       end
 
       #
@@ -212,7 +278,7 @@ module ESM
       # @return [Boolean]
       #
       def delivered?
-        @delivered
+        @mutex.synchronize { @delivered }
       end
 
       #
@@ -222,53 +288,113 @@ module ESM
       # @return [true]
       #
       def delivered
-        @delivered = true
+        @mutex.synchronize { @delivered = true }
+      end
+
+      #
+      # Set's the message as synchronous
+      # This sets the message's callbacks and forces `ESM::Connection::Server#send_message` to become blocking
+      #
+      def synchronous
+        add_callback(:on_response, :on_response_sync)
+        add_callback(:on_error, :on_error_sync)
+      end
+
+      #
+      # Waits for a synchronous message to receive a response or timeout
+      #
+      # @return [ESM::Connection::Message] The incoming message containing the response or errors
+      #
+      def wait_for_response
+        # Waits 2 minutes. This is a backup in case message overseer doesn't time it out
+        counter = 0
+        while !delivered? || counter >= 240
+          sleep(0.5)
+          counter += 1
+        end
+
+        # This should never raise. It's for emergencies
+        raise ESM::Exception::MessageSyncTimeout if counter >= 240
+
+        @mutex.synchronize { @incoming_message }
+      end
+
+      def inspect
+        "#<ESM::Message #{JSON.pretty_generate(to_h)}>"
       end
 
       private
 
-      # Converts a hash's data based on the provided type mapping.
-      # @see config/message_type_mapping.yml for more information
-      def convert_types(data, message_type:, mapping: {})
-        mapping = MAPPINGS[message_type.to_sym] if mapping.blank?
+      # Sanitizes the provided data in accordance to the data defined in config/mapping.yml
+      # Sanitize also ensures the order of the data when exporting
+      # @see config/mapping.yml for more information
+      def sanitize(data, data_type)
+        data.stringify_keys!
+        mapping = MAPPING[data_type]
 
         # Catches if MAPPINGS does not have type defined
-        raise ESM::Exception::InvalidMessage, "Failed to find type \"#{message_type}\" in \"message_type_mapping.yml\"" if mapping.nil?
+        raise ESM::Exception::InvalidMessage, "Failed to find type \"#{data_type}\" in \"config/mapping.yml\"" if mapping.nil?
 
-        data.each do |key, value|
-          mapping_class = mapping[key.to_sym]
-          raise ESM::Exception::InvalidMessage, "Failed to find key \"#{key}\" in mapping for \"#{message_type}\"" if mapping_class.nil?
+        output = {}
+        mapping.each do |attribute_name, attribute_type|
+          data_entry = data[attribute_name]
 
-          # Check for HashMap since it's not a base Ruby class
-          mapping_klass =
-            case mapping_class
+          can_be_nil = attribute_type == "Any" || attribute_type.match?(NIL_REGEX)
+          raise ESM::Exception::InvalidMessage, "\"#{attribute_name}\" is expected for message with data type of \"#{data_type}\"" if data_entry.nil? && !can_be_nil
+
+          # Some classes are not valid ruby classes and need converted
+          klass =
+            case attribute_type
             when "HashMap"
               ESM::Arma::HashMap
-            when "Boolean", ARRAY_REGEX
-              NilClass # Use the exact opposite to skip the check below
+            when "Any", "Boolean", ARRAY_REGEX, NIL_REGEX
+              NilClass # Always convert theses
             when "Decimal"
               BigDecimal
             else
-              mapping_class.constantize
+              attribute_type.constantize
             end
 
-          next if value.is_a?(mapping_klass)
-
-          # Perform the conversion and replace the value
-          data[key] = convert_type(value, message_type: message_type, into_type: mapping_class, data_key: key)
+          output[attribute_name] =
+            if data_entry.is_a?(klass)
+              data_entry
+            else
+              # Perform the conversion and replace the value
+              convert_type(data_entry, into_type: attribute_type)
+            end
+        rescue => e
+          error!(error: e, attribute_name: attribute_name, attribute_type: attribute_type)
         end
+
+        output
       end
 
-      def convert_type(value, message_type:, into_type:, data_key:)
+      def convert_type(value, into_type:)
         return value if value.class.to_s == into_type
 
         case into_type
+        when "Any"
+          result = ESM::JSON.parse(value.to_s)
+          return value if result.nil?
+
+          # Check to see if its a hashmap
+          possible_hashmap = ESM::Arma::HashMap.from(result)
+          return result if possible_hashmap.nil?
+
+          result
         when ARRAY_REGEX
           match = into_type.match(ARRAY_REGEX)
-          raise ESM::Exception::Error, "Failed to parse inner type from \"#{into_type}\" in mapping for \"#{message_type}\"" if match.nil?
+          raise ESM::Exception::Error, "Failed to parse inner type from \"#{into_type}\"" if match.nil?
 
           # Convert the inner values to whatever type is configured
-          value.to_a.map { |v| convert_type(v, message_type: message_type, into_type: match[:type], data_key: data_key) }
+          value.to_a.map { |v| convert_type(v, into_type: match[:type]) }
+        when NIL_REGEX
+          return if value.nil?
+
+          match = into_type.match(NIL_REGEX)
+          raise ESM::Exception::Error, "Failed to parse inner type from \"#{into_type}\"" if match.nil?
+
+          convert_type(value, into_type: match[:type])
         when "Array"
           value.to_a
         when "String"
@@ -282,57 +408,51 @@ module ESM
         when "Boolean"
           value.to_s == "true"
         when "HashMap"
-          ESM::Arma::HashMap.new(value)
+          ESM::Arma::HashMap.from(value)
         when "DateTime"
           ::DateTime.parse(value)
         when "Date"
           ::Date.parse(value)
         else
-          raise ESM::Exception::Error, "Value #{value} has an invalid type \"#{into_type}\" mapped to \"#{data_key}\" in mapping for \"#{message_type}\"."
+          raise ESM::Exception::Error, "\"#{into_type}\" is an unsupported type"
         end
       end
 
       def on_error(incoming_message, _outgoing_message)
         # For now, only support a single error until multiple error support is needed
         error = incoming_message.errors.first
-
-        description =
-          case error.type
-          when "code"
-            replacements = {
-              user: @routing_data.try(:command).try(:current_user).try(:mention),
-              message_id: incoming_message.id,
-              server_id: incoming_message.server_id,
-              type: incoming_message.type,
-              data_type: incoming_message.data_type,
-              mdata_type: incoming_message.metadata_type
-            }
-
-            # Add the data and metadata to the replacements
-            # For example, if data has two attributes: "steam_uid" and "discord_id", this will define two replacements:
-            #     "data_content_steam_uid", and "data_content_discord_id"
-            #
-            # Same for metadata's attributes. Except the key prefix is "mdata_content_"
-            incoming_message.data.to_h.each { |key, value| replacements["data_content_#{key}".to_sym] = value }
-            incoming_message.metadata.to_h.each { |key, value| replacements["mdata_content_#{key}".to_sym] = value }
-
-            # Call the exception with the replacements
-            I18n.t("exceptions.extension.#{error.content}", **replacements)
-          when "message"
-            error.content
-          when "embed"
-            # A special type only available to the bot. Used internally
-            return error.content
-          else
-            I18n.t("exceptions.extension.default", type: error.type)
-          end
-
-        embed = ESM::Embed.build(:error, description: description)
+        embed = ESM::Embed.build(:error, description: error.to_s)
 
         # Attempt to send the embed through the command
-        @routing_data.try(:command).try(:reply, embed)
+        @locals.try(:command).try(:reply, embed)
+
+        error!(error: error.to_h)
 
         embed
+      end
+
+      #
+      # Used when a message needs to be treated like its synchronous.
+      #
+      # @param incoming_message [ESM::Connection::Message] The incoming message
+      # @param _outgoing_message [ESM::Connection::Message] The outgoing message
+      #
+      def on_response_sync(incoming_message, _outgoing_message)
+        @mutex.synchronize { @incoming_message = incoming_message }
+        delivered
+      end
+
+      #
+      # Used when a message needs to be treated like its synchronous.
+      #
+      # @param incoming_message [ESM::Connection::Message] The incoming message
+      # @param _outgoing_message [ESM::Connection::Message] The outgoing message
+      #
+      def on_error_sync(incoming_message, _outgoing_message)
+        @mutex.synchronize { @incoming_message = incoming_message }
+        @error = true
+
+        delivered
       end
     end
   end

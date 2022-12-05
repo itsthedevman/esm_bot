@@ -15,8 +15,8 @@ describe ESM::User do
       discord_user = user.discord_user
 
       expect(discord_user).not_to be_nil
-      expect(discord_user.instance_variable_get("@esm_user")).to eq(user)
-      expect(discord_user.instance_variable_get("@steam_uid")).to eq(user.steam_uid)
+      expect(discord_user.instance_variable_get(:@esm_user)).to eq(user)
+      expect(discord_user.instance_variable_get(:@steam_uid)).to eq(user.steam_uid)
     end
   end
 
@@ -69,7 +69,7 @@ describe ESM::User do
     it "should fail parse and return nil" do
       create(:esm_dev)
       expect(ESM::User.parse("test")).to be_nil
-      expect(ESM::User.parse(TestUser::User1::STEAM_UID[1..-1])).to be_nil
+      expect(ESM::User.parse(TestUser::User1::STEAM_UID[1..])).to be_nil
     end
 
     it "should have no steam uid" do
@@ -124,6 +124,7 @@ describe ESM::User do
 
     it "should be false" do
       user = build(:user)
+      user.discord_id = "foo"
       expect(user.developer?).to be(false)
     end
   end

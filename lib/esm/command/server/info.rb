@@ -18,7 +18,7 @@ module ESM
         argument :target, default: nil
         argument :territory_id, default: nil
 
-        def discord
+        def on_execute
           # Ensure we were given a target or territory ID
           check_for_no_target!
 

@@ -3,7 +3,10 @@
 module ESM
   class API < Sinatra::Base
     def self.run!
-      Thread.new { super; quit! }
+      Thread.new {
+        super
+        quit!
+      }
     end
 
     # Sinatra hooks the Ctrl-C event.

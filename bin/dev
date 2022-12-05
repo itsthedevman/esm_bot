@@ -4,23 +4,21 @@ export RUBYOPT='-W:no-deprecated -W:no-experimental'
 export PRINT_LOG='true'
 export ESM_ENV='development'
 
-working_dir=$(pwd)
+kill -9 $(pgrep -f extension_server) > /dev/null 2>&1
 
-# # Compile all dependencies
-# for dir in crates/*/; do
-#   cd $working_dir/$dir
-#   cargo build --release
-#   if [ $? -ne 0 ]
-#   then
-#     exit $?
-#   fi
-# done
+bin/build
 
-cd $working_dir
-
-if [[ -z $1 ]]
+# Failed to build, don't start
+if [ $? -ne 0 ]
 then
-  rerun --dir lib bin/start_dev.rb
-else
-  bundle exec ruby bin/start_dev.rb
+  exit $?
 fi
+
+
+# Start the extension_server
+bin/extension_server &
+
+# Start the bot
+bundle exec ruby bin/esm.rb
+
+kill -9 $(pgrep -f extension_server) > /dev/null 2>&1

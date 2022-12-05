@@ -1,142 +1,102 @@
 # frozen_string_literal: true
 
 describe ESM::Command::Base do
-  # NOTE: This command REQUIRES esm_community, an esm server, AND a user in ESM.
-  # Bryan - You've tried 3 times to change that. Stop trying to make that work. :P
-  let!(:command) { ESM::Command::Test::Base.new }
-  let!(:community) { create(:esm_community) }
-  let!(:server) { create(:server, community_id: community.id) }
-  let!(:user) { create(:user) }
+  let!(:community) { ESM::Test.community }
+  let!(:server) { ESM::Test.server }
+  let!(:user) { ESM::Test.user }
   let!(:configuration) { community.command_configurations.where(command_name: "base").first }
-  let(:wsc) { WebsocketClient.new(server) }
-  let(:connection) { ESM::Websocket.connections[server.server_id] }
 
-  it "should have a valid name" do
-    expect(command.name).to eq("base")
+  describe "Properties" do
+    include_context "command" do
+      let!(:command_class) { ESM::Command::Test::BaseV1 }
+    end
+
+    it "has a valid name" do
+      expect(command.name).to eq("base")
+    end
+
+    it "has a valid category" do
+      expect(command.category).to eq("test")
+    end
+
+    it "has 2 aliases" do
+      expect(command.aliases.size).to eq(2)
+    end
+
+    it "has #{ESM::Command::Test::BaseV1::ARGUMENT_COUNT} arguments" do
+      expect(command.arguments.size).to eq(ESM::Command::Test::BaseV1::ARGUMENT_COUNT)
+    end
+
+    it "has description" do
+      expect(command.description).to eq("A test command")
+    end
+
+    it "has a type" do
+      expect(command.type).to eq(:player)
+    end
+
+    it "has an example" do
+      expect(command.example).to eq("A test example")
+    end
+
+    it "has defines" do
+      expect(command.defines).not_to be_nil
+      expect(command.defines.enabled.modifiable).to be(true)
+      expect(command.defines.enabled.default).to be(true)
+      expect(command.defines.whitelist_enabled.modifiable).to be(true)
+      expect(command.defines.whitelist_enabled.default).to eq(false)
+      expect(command.defines.whitelisted_role_ids.modifiable).to be(true)
+      expect(command.defines.whitelisted_role_ids.default).to eq([])
+      expect(command.defines.allowed_in_text_channels.modifiable).to be(true)
+      expect(command.defines.allowed_in_text_channels.default).to be(true)
+      expect(command.defines.cooldown_time.modifiable).to be(true)
+      expect(command.defines.cooldown_time.default).to eq(2.seconds)
+    end
+
+    it "has requires" do
+      expect(command.requires).not_to be_nil
+      expect(command.requires).to contain_exactly(:registration)
+    end
+
+    it "has proper usage" do
+      expect(command.usage).to match(/.+base <community_id> <server_id> <target> <_integer> <_preserve> <sa_yalpsid> <\?_default> <\?_multiline>/i)
+    end
   end
 
-  it "should have a valid category" do
-    expect(command.category).to eq("test")
-  end
-
-  it "should have 2 aliases" do
-    expect(command.aliases.size).to eq(2)
-  end
-
-  it "should have #{ESM::Command::Test::Base::ARGUMENT_COUNT} arguments" do
-    expect(command.arguments.size).to eq(ESM::Command::Test::Base::ARGUMENT_COUNT)
-  end
-
-  it "should have description" do
-    expect(command.description).to eq("A test command")
-  end
-
-  it "should have a type" do
-    expect(command.type).to eq(:player)
-  end
-
-  it "should have an example" do
-    expect(command.example).to eq("A test example")
-  end
-
-  it "should have defines" do
-    expect(command.defines).not_to be_nil
-    expect(command.defines.enabled.modifiable).to be(true)
-    expect(command.defines.enabled.default).to be(true)
-    expect(command.defines.whitelist_enabled.modifiable).to be(true)
-    expect(command.defines.whitelist_enabled.default).to eq(false)
-    expect(command.defines.whitelisted_role_ids.modifiable).to be(true)
-    expect(command.defines.whitelisted_role_ids.default).to eq([])
-    expect(command.defines.allowed_in_text_channels.modifiable).to be(true)
-    expect(command.defines.allowed_in_text_channels.default).to be(true)
-    expect(command.defines.cooldown_time.modifiable).to be(true)
-    expect(command.defines.cooldown_time.default).to eq(2.seconds)
-  end
-
-  it "should have requires" do
-    expect(command.requires).not_to be_nil
-    expect(command.requires).to contain_exactly(:registration)
-  end
-
-  it "should have proper usage" do
-    expect(command.usage).to match(/.+base <community_id> <server_id> <target> <_integer> <_preserve> <sa_yalpsid> <\?_default> <\?_multiline>/i)
-  end
-
-  # Due to the way discordrb caches users, this needs to be at the top
   describe "#create_user" do
-    before :each do
-      wait_for { wsc.connected? }.to be(true)
+    include_context "command" do
+      let!(:command_class) { ESM::Command::Test::PlayerCommand }
     end
 
-    after :each do
-      wsc.disconnect!
-    end
-
-    it "should create an unregistered user" do
-      ESM::User.destroy_all
-      command_statement = command.statement(
-        community_id: community.community_id,
-        server_id: server.server_id,
-        target: user.discord_id,
-        _integer: "1",
-        _preserve: "PRESERVE",
-        _display_as: "display_as",
-        _default: "default",
-        _multiline: "multi\nline"
-      )
-      event = CommandEvent.create(command_statement, user: user)
-      expect { command.execute(event) }.to raise_error(ESM::Exception::CheckFailure)
+    it "creates an unregistered user" do
+      execute!
       expect(ESM::User.all.size).to eq(1)
     end
   end
 
   describe "#current_user" do
-    let!(:secondary_user) { create(:secondary_user) }
-
-    before :each do
-      wait_for { wsc.connected? }.to be(true)
+    include_context "command" do
+      let!(:command_class) { ESM::Command::Test::PlayerCommand }
     end
 
-    after :each do
-      wsc.disconnect!
-    end
+    let!(:secondary_user) { ESM::Test.second_user }
 
-    it "should be defined" do
+    it "is defined" do
       expect(command.respond_to?(:current_user)).to be(true)
     end
 
-    it "should have a valid user" do
-      command_statement = command.statement(
-        community_id: community.community_id,
-        server_id: server.server_id,
-        target: secondary_user.discord_id,
-        _integer: "1",
-        _preserve: "PRESERVE",
-        _display_as: "display_as"
-      )
-      event = CommandEvent.create(command_statement, user: user)
-      expect { command.execute(event) }.not_to raise_error
+    it "has a valid user" do
+      execute!
       expect(command.current_user).not_to be_nil
-      expect(command.current_user.id).to eq(event.user.id)
+      expect(command.current_user.id.to_s).to eq(user.discord_id)
     end
 
-    it "should create" do
+    it "creates" do
       discord_id = user.discord_id
-
-      # Remove the user, this should recreate
       user.destroy
 
-      command_statement = command.statement(
-        community_id: community.community_id,
-        server_id: server.server_id,
-        target: secondary_user.discord_id,
-        _integer: "1",
-        _preserve: "PRESERVE",
-        _display_as: "display_as"
-      )
-      event = CommandEvent.create(command_statement, user: user)
+      execute!
 
-      expect { command.execute(event) }.to raise_error(ESM::Exception::CheckFailure)
       new_current_user = ESM::User.find_by_discord_id(discord_id)
       expect(new_current_user).not_to be(nil)
       expect(command.current_user.id.to_s).to eq(new_current_user.discord_id)
@@ -144,181 +104,93 @@ describe ESM::Command::Base do
   end
 
   describe "#current_community" do
-    before :each do
-      wait_for { wsc.connected? }.to be(true)
+    include_context "command" do
+      let!(:command_class) { ESM::Command::Test::PlayerCommand }
     end
 
-    after :each do
-      wsc.disconnect!
-    end
-
-    it "should be defined" do
+    it "is defined" do
       expect(command.respond_to?(:current_community)).to be(true)
     end
 
-    it "should be a valid community" do
-      command_statement = command.statement(
-        community_id: community.community_id,
-        server_id: server.server_id,
-        target: user.discord_id,
-        _integer: "1",
-        _preserve: "PRESERVE",
-        _display_as: "display_as"
-      )
-      event = CommandEvent.create(command_statement, user: user)
-      expect { command.execute(event) }.not_to raise_error
+    it "is a valid community" do
+      execute!
       expect(command.current_community).not_to be_nil
       expect(command.current_community.id).to eq(community.id)
     end
   end
 
   describe "#target_server" do
-    before :each do
-      wait_for { wsc.connected? }.to be(true)
+    include_context "command" do
+      let!(:command_class) { ESM::Command::Test::ServerCommand }
     end
 
-    after :each do
-      wsc.disconnect!
-    end
-
-    it "should be defined" do
+    it "is defined" do
       expect(command.respond_to?(:target_server)).to be(true)
     end
 
-    it "should be a valid server" do
-      command_statement = command.statement(
-        community_id: community.community_id,
-        server_id: server.server_id,
-        target: user.discord_id,
-        _integer: "1",
-        _preserve: "PRESERVE",
-        _display_as: "display_as"
-      )
-      event = CommandEvent.create(command_statement, user: user)
-      expect { command.execute(event) }.not_to raise_error
+    it "is a valid server" do
+      expect { execute!(fail_on_raise: false, server_id: server.server_id) }.to raise_error(ESM::Exception::CheckFailure)
+
       expect(command.target_server).not_to be_nil
       expect(command.target_server.id).to eq(server.id)
       expect(command.arguments.server_id).to eq(server.server_id)
     end
 
-    it "should be invalid" do
-      command_statement = command.statement(
-        community_id: community.community_id,
-        server_id: "esm_mal",
-        target: user.discord_id,
-        _integer: "1",
-        _preserve: "PRESERVE",
-        _display_as: "display_as"
-      )
-      event = CommandEvent.create(command_statement, user: user)
-      expect { command.execute(event) }.to raise_error(ESM::Exception::CheckFailure)
+    it "is invalid" do
+      expect { execute!(fail_on_raise: false, server_id: "esm_ This Server Cannot Exist") }.to raise_error(ESM::Exception::CheckFailure)
     end
   end
 
   describe "#target_community" do
-    before :each do
-      wait_for { wsc.connected? }.to be(true)
+    include_context "command" do
+      let!(:command_class) { ESM::Command::Test::CommunityCommand }
     end
 
-    after :each do
-      wsc.disconnect!
-    end
-
-    it "should be defined" do
+    it "is defined" do
       expect(command.respond_to?(:target_community)).to be(true)
     end
 
-    it "should be a valid community" do
-      command_statement = command.statement(
-        community_id: community.community_id,
-        server_id: server.server_id,
-        target: user.discord_id,
-        _integer: "1",
-        _preserve: "PRESERVE",
-        _display_as: "display_as"
-      )
-      event = CommandEvent.create(command_statement, user: user)
-      expect { command.execute(event) }.not_to raise_error
+    it "is a valid community" do
+      execute!(community_id: community.community_id)
+
       expect(command.target_community).not_to be_nil
       expect(command.target_community.id).to eq(community.id)
     end
 
-    it "should be invalid" do
-      command_statement = command.statement(
-        community_id: "es",
-        server_id: server.server_id,
-        target: user.discord_id,
-        _integer: "1",
-        _preserve: "PRESERVE",
-        _display_as: "display_as"
-      )
-      event = CommandEvent.create(command_statement, user: user)
-      expect { command.execute(event) }.to raise_error(ESM::Exception::CheckFailure) do |error|
+    it "is invalid" do
+      expect { execute!(fail_on_raise: false, community_id: "es") }.to raise_error(ESM::Exception::CheckFailure) do |error|
         expect(error.data.description).to match(/hey .+, i was unable to find a community with an ID of `.+`./i)
       end
     end
   end
 
   describe "#target_user" do
-    let!(:secondary_user) { create(:secondary_user) }
+    let!(:secondary_user) { ESM::Test.second_user }
 
-    before :each do
-      wait_for { wsc.connected? }.to be(true)
+    include_context "command" do
+      let!(:command_class) { ESM::Command::Test::TargetCommand }
     end
 
-    after :each do
-      wsc.disconnect!
-    end
-
-    it "should be defined" do
+    it "is defined" do
       expect(command.respond_to?(:target_user)).to be(true)
     end
 
-    it "should be a valid user" do
-      command_statement = command.statement(
-        community_id: community.community_id,
-        server_id: server.server_id,
-        target: secondary_user.discord_id,
-        _integer: "1",
-        _preserve: "PRESERVE",
-        _display_as: "display_as"
-      )
-      event = CommandEvent.create(command_statement, user: user)
-      expect { command.execute(event) }.not_to raise_error
+    it "is a valid user" do
+      execute!(target: secondary_user.discord_id)
       expect(command.target_user).not_to be_nil
       expect(command.target_user.id.to_s).to eq(secondary_user.discord_id)
     end
 
-    it "should be invalid" do
-      command_statement = command.statement(
-        community_id: community.community_id,
-        server_id: server.server_id,
-        target: "000000000000000000",
-        _integer: "1",
-        _preserve: "PRESERVE",
-        _display_as: "display_as"
-      )
-      event = CommandEvent.create(command_statement, user: user)
-      expect { command.execute(event) }.to raise_error(ESM::Exception::CheckFailure)
+    it "is invalid" do
+      expect { execute!(fail_on_raise: false, target: "000000000000000000") }.to raise_error(ESM::Exception::CheckFailure)
     end
 
-    it "should create" do
+    it "creates" do
       discord_id = secondary_user.discord_id
-
-      # Remove the user, this should recreate
       secondary_user.destroy
 
-      command_statement = command.statement(
-        community_id: community.community_id,
-        server_id: server.server_id,
-        target: discord_id,
-        _integer: "1",
-        _preserve: "PRESERVE",
-        _display_as: "display_as"
-      )
-      event = CommandEvent.create(command_statement, user: user)
+      execute!(target: discord_id)
 
-      expect { command.execute(event) }.not_to raise_error
       new_target_user = ESM::User.find_by_discord_id(discord_id)
       expect(new_target_user).not_to be(nil)
       expect(command.target_user.id.to_s).to eq(new_target_user.discord_id)
@@ -326,196 +198,122 @@ describe ESM::Command::Base do
   end
 
   describe "#target_uid" do
-    let!(:secondary_user) { create(:secondary_user) }
+    let!(:secondary_user) { ESM::Test.second_user }
+
+    include_context "command" do
+      let!(:command_class) { ESM::Command::Test::TargetCommand }
+    end
 
     before :each do
       user.update(steam_uid: TestUser::User1::STEAM_UID)
       secondary_user.update(steam_uid: TestUser::User2::STEAM_UID)
-      wait_for { wsc.connected? }.to be(true)
-    end
-
-    after :each do
-      wsc.disconnect!
     end
 
     it "from Steam UID" do
-      command_statement = command.statement(
-        community_id: community.community_id,
-        server_id: server.server_id,
-        target: secondary_user.steam_uid,
-        _integer: "1",
-        _preserve: "PRESERVE",
-        _display_as: "display_as"
-      )
-      event = CommandEvent.create(command_statement, user: user)
-      expect { command.execute(event) }.not_to raise_error
-
+      execute!(target: secondary_user.steam_uid)
       expect(command.target_uid).to eq(secondary_user.steam_uid)
     end
 
     it "from mention" do
-      command_statement = command.statement(
-        community_id: community.community_id,
-        server_id: server.server_id,
-        target: secondary_user.mention,
-        _integer: "1",
-        _preserve: "PRESERVE",
-        _display_as: "display_as"
-      )
-      event = CommandEvent.create(command_statement, user: user)
-      expect { command.execute(event) }.not_to raise_error
-
+      execute!(target: secondary_user.mention)
       expect(command.target_uid).to eq(secondary_user.steam_uid)
     end
 
     it "from discord ID" do
-      command_statement = command.statement(
-        community_id: community.community_id,
-        server_id: server.server_id,
-        target: secondary_user.discord_id,
-        _integer: "1",
-        _preserve: "PRESERVE",
-        _display_as: "display_as"
-      )
-      event = CommandEvent.create(command_statement, user: user)
-      expect { command.execute(event) }.not_to raise_error
-
+      execute!(target: secondary_user.discord_id)
       expect(command.target_uid).to eq(secondary_user.steam_uid)
     end
 
     it "from unregistered" do
       secondary_user.update(steam_uid: nil)
 
-      command_statement = command.statement(
-        community_id: community.community_id,
-        server_id: server.server_id,
-        target: secondary_user.mention,
-        _integer: "1",
-        _preserve: "PRESERVE",
-        _display_as: "display_as"
-      )
-      event = CommandEvent.create(command_statement, user: user)
-      expect { command.execute(event) }.not_to raise_error
-
+      execute!(target: secondary_user.mention)
       expect(command.target_uid).to eq(nil)
     end
 
     it "from gibberish" do
-      command_statement = command.statement(
-        community_id: community.community_id,
-        server_id: server.server_id,
-        target: "000000000000000000",
-        _integer: "1",
-        _preserve: "PRESERVE",
-        _display_as: "display_as"
-      )
-      event = CommandEvent.create(command_statement, user: user)
-      expect { command.execute(event) }.to raise_error(ESM::Exception::CheckFailure)
-
+      expect { execute!(fail_on_raise: false, target: "000000000000000000") }.to raise_error(ESM::Exception::CheckFailure)
       expect(command.target_uid).to eq(nil)
     end
   end
 
   describe "#registration_required?" do
-    it "should be defined" do
+    include_context "command" do
+      let!(:command_class) { ESM::Command::Test::ServerCommand }
+    end
+
+    it "is defined" do
       expect(command.respond_to?(:registration_required?)).to be(true)
     end
 
-    it "should require registration" do
+    it "requires registration" do
       expect(command.registration_required?).to be(true)
     end
 
-    it "should not require registration" do
+    it "does not require registration" do
       command.requires.delete(:registration)
       expect(command.registration_required?).to be(false)
     end
   end
 
   describe "#discord" do
-    it "should be defined" do
+    include_context "command" do
+      let!(:command_class) { ESM::Command::Test::PlayerCommand }
+    end
+
+    it "is defined" do
       expect(command.respond_to?(:discord)).to be(true)
     end
 
-    it "should be callable" do
+    it "is callable" do
       expect(command.discord).to eq("discord")
     end
   end
 
   describe "#server" do
-    it "should be defined" do
+    include_context "command" do
+      let!(:command_class) { ESM::Command::Test::PlayerCommand }
+    end
+
+    it "is defined" do
       expect(command.respond_to?(:server)).to be(true)
     end
 
-    it "should be callable" do
+    it "is callable" do
       expect(command.server).to eq("server")
     end
   end
 
-  describe "#execute" do
-    before :each do
-      wait_for { wsc.connected? }.to be(true)
+  describe "#execute", requires_connection: true do
+    include_context "connection"
+    include_context "command" do
+      let!(:command_class) { ESM::Command::Test::ServerSuccessCommand }
     end
 
-    after :each do
-      wsc.disconnect!
-    end
-
-    it "should be defined" do
+    it "is defined" do
       expect(command.respond_to?(:execute)).to be(true)
     end
 
-    it "should execute" do
-      command_statement = command.statement(
-        community_id: community.community_id,
-        server_id: server.server_id,
-        target: user.discord_id,
-        _integer: "1",
-        _preserve: "PRESERVE",
-        _display_as: "display_as",
-        _default: "default",
-        _multiline: "multi\nline"
-      )
-      event = CommandEvent.create(command_statement, user: user)
-      expect { command.execute(event) }.not_to raise_error
+    it "executes" do
+      execute!(server_id: server.server_id, nullable: true)
     end
 
-    it "should execute with nullable arguments" do
-      command_statement = command.statement(
-        community_id: community.community_id,
-        server_id: server.server_id,
-        target: user.discord_id,
-        _integer: "1",
-        _preserve: "PRESERVE",
-        _display_as: "display_as"
-      )
-      event = CommandEvent.create(command_statement, user: user)
-      expect { command.execute(event) }.not_to raise_error
+    it "executes with nullable arguments" do
+      execute!(server_id: server.server_id)
     end
 
-    it "should reset cooldown if errored" do
-      request = nil
-      server_command = ESM::Command::Test::ServerErrorCommand.new
-      event = CommandEvent.create(server_command.statement(server_id: server.server_id), channel_type: :text, user: user)
-
-      expect { request = server_command.execute(event) }.not_to raise_error
-      expect(request).not_to be_nil
-      wait_for { connection.requests }.to be_blank
-      expect(ESM::Test.messages.size).to eq(1)
-      expect(server_command.current_cooldown.active?).to be(false)
-    end
-
-    describe "Handle Error" do
+    describe "Handles Errors" do
       before :all do
-        # Change the ENV for ESM so the error won't be raised
-        ESM.instance_variable_set("@env", ActiveSupport::StringInquirer.new("error_testing"))
+        # Change the ENV for ESM so the error won't is raised
+        ESM.instance_variable_set(:@env, ActiveSupport::StringInquirer.new("error_testing"))
       end
 
       after :all do
         # Reset!
-        ESM.instance_variable_set("@env", ActiveSupport::StringInquirer.new("test"))
+        ESM.instance_variable_set(:@env, ActiveSupport::StringInquirer.new("test"))
       end
 
-      it "should send error (CheckFailure)" do
+      it "send error (CheckFailure)" do
         test_command = ESM::Command::Test::DirectMessageCommand.new
         event = CommandEvent.create(test_command.statement, channel_type: :text, user: user)
 
@@ -523,10 +321,10 @@ describe ESM::Command::Base do
         expect(ESM::Test.messages.size).to eq(1)
 
         error = ESM::Test.messages.first.second
-        expect(error.description).to eq("Hey #{user.mention}, this command can only be used in a **Direct Message** with me.\n\nJust right click my name, click **Message**, and send it there")
+        expect(error.description).to eq("Hey #{user.mention}, this command can only is used in a **Direct Message** with me.\n\nJust right click my name, click **Message**, and send it there")
       end
 
-      it "should send error (StandardError)" do
+      it "send error (StandardError)" do
         test_command = ESM::Command::Test::ErrorCommand.new
         event = CommandEvent.create(test_command.statement, channel_type: :text, user: user)
 
@@ -536,26 +334,44 @@ describe ESM::Command::Base do
         error = ESM::Test.messages.first.second
         expect(error.description).to include("Well, this is awkward.\nWill you please join my Discord (https://esmbot.com/join) and let my developer know that this happened?\nPlease give him this code:\n```")
       end
+
+      it "resets cooldown" do
+        command = ESM::Command::Test::ServerErrorCommand.new
+        request = execute!(server_id: server.server_id)
+
+        expect(request).not_to be_nil
+        wait_for { connection.requests }.to be_blank
+        expect(ESM::Test.messages.size).to eq(1)
+        expect(command.current_cooldown.active?).to be(false)
+      end
     end
   end
 
   describe "#check_failed!" do
-    it "should raise the translation" do
+    include_context "command" do
+      let!(:command_class) { ESM::Command::Test::BaseV1 }
+    end
+
+    it "raises the translation" do
       expect { command.check_failed!(:text_only, user: user.mention) }.to raise_error(ESM::Exception::CheckFailure) do |error|
         embed = error.data
 
-        expect(embed.description).to match(/this command can only be used in a discord server's \*\*text channel\*\*/i)
+        expect(embed.description).to match(/this command can only is used in a discord server's \*\*text channel\*\*/i)
       end
     end
 
-    it "should raise the block" do
-      expect { command.check_failed! { "This will be the message" } }.to raise_error(ESM::Exception::CheckFailure) do |error|
-        expect(error.data).to match(/this will be the message/i)
+    it "raises the block" do
+      expect { command.check_failed! { "This will is the message" } }.to raise_error(ESM::Exception::CheckFailure) do |error|
+        expect(error.data).to match(/this will is the message/i)
       end
     end
   end
 
   describe "limit to" do
+    include_context "command" do
+      let!(:command_class) { ESM::Command::Test::BaseV1 }
+    end
+
     before :each do
       wait_for { wsc.connected? }.to be(true)
     end
@@ -564,13 +380,13 @@ describe ESM::Command::Base do
       wsc.disconnect!
     end
 
-    it "should have no limit" do
+    it "has no limit" do
       expect(command.limit_to).to be_nil
       expect(command.dm_only?).to be(false)
       expect(command.text_only?).to be(false)
     end
 
-    it "should be limited to DM" do
+    it "is limited to DM" do
       command.limit_to = :dm
       expect(command.limit_to).to eq(:dm)
       expect(command.dm_only?).to be(true)
@@ -578,7 +394,7 @@ describe ESM::Command::Base do
       command.limit_to = nil
     end
 
-    it "should be limited to text" do
+    it "is limited to text" do
       command.limit_to = :text
       expect(command.limit_to).to eq(:text)
       expect(command.dm_only?).to be(false)
@@ -586,7 +402,7 @@ describe ESM::Command::Base do
       command.limit_to = nil
     end
 
-    it "should execute in both DM and Text channels" do
+    it "executes in both DM and Text channels" do
       ESM::Test.skip_cooldown = true
       command.limit_to = nil
 
@@ -615,7 +431,7 @@ describe ESM::Command::Base do
       expect { command.execute(event) }.not_to raise_error
     end
 
-    it "should execute in only DM channels" do
+    it "executes in only DM channels" do
       ESM::Test.skip_cooldown = true
       command.limit_to = :dm
 
@@ -631,7 +447,7 @@ describe ESM::Command::Base do
       event = CommandEvent.create(command_statement, channel_type: :text, user: user)
       expect { command.execute(event) }.to raise_error(ESM::Exception::CheckFailure) do |error|
         embed = error.data
-        expect(embed.description).to match(/this command can only be used in a \*\*direct message\*\* with me/i)
+        expect(embed.description).to match(/this command can only is used in a \*\*direct message\*\* with me/i)
       end
 
       # Test dm channel
@@ -649,7 +465,7 @@ describe ESM::Command::Base do
       command.limit_to = nil
     end
 
-    it "should execute in on Text channels" do
+    it "executes in on Text channels" do
       ESM::Test.skip_cooldown = true
       command.limit_to = :text
 
@@ -677,7 +493,7 @@ describe ESM::Command::Base do
       event = CommandEvent.create(command_statement, channel_type: :dm, user: user)
       expect { command.execute(event) }.to raise_error(ESM::Exception::CheckFailure) do |error|
         embed = error.data
-        expect(embed.description).to match(/this command can only be used in a discord server's \*\*text channel\*\*\./i)
+        expect(embed.description).to match(/this command can only is used in a discord server's \*\*text channel\*\*\./i)
       end
 
       command.limit_to = nil
@@ -685,6 +501,10 @@ describe ESM::Command::Base do
   end
 
   describe "#create_or_update_cooldown" do
+    include_context "command" do
+      let!(:command_class) { ESM::Command::Test::BaseV1 }
+    end
+
     before :each do
       wait_for { wsc.connected? }.to be(true)
     end
@@ -693,7 +513,7 @@ describe ESM::Command::Base do
       wsc.disconnect!
     end
 
-    it "should add" do
+    it "adds" do
       command_statement = command.statement(
         community_id: community.community_id,
         server_id: server.server_id,
@@ -712,11 +532,15 @@ describe ESM::Command::Base do
   end
 
   describe "#on_cooldown?" do
-    it "should respond" do
+    include_context "command" do
+      let!(:command_class) { ESM::Command::Test::BaseV1 }
+    end
+
+    it "respond" do
       expect(command.respond_to?(:on_cooldown?)).to be(true)
     end
 
-    it "should be on cooldown" do
+    it "is on cooldown" do
       create(:cooldown, :active, user_id: user.id, community_id: community.id)
 
       command_statement = command.statement(
@@ -735,7 +559,7 @@ describe ESM::Command::Base do
       expect(command.on_cooldown?).to be(true)
     end
 
-    it "should not be on cooldown" do
+    it "is not on cooldown" do
       create(:cooldown, :inactive, user_id: user.id, community_id: community.id)
 
       command_statement = command.statement(
@@ -755,7 +579,12 @@ describe ESM::Command::Base do
     end
   end
 
-  describe "#deliver" do
+  describe "#deliver", requires_connection: true do
+    include_context "connection"
+    include_context "command" do
+      let!(:command_class) { ESM::Command::Test::BaseV1 }
+    end
+
     before :each do
       wait_for { wsc.connected? }.to be(true)
     end
@@ -764,7 +593,7 @@ describe ESM::Command::Base do
       wsc.disconnect!
     end
 
-    it "should raise" do
+    it "raises" do
       server_command = ESM::Command::Test::ServerSuccessCommand.new
       event = CommandEvent.create(server_command.statement(server_id: nil), channel_type: :text, user: user)
       server_command.event = event
@@ -772,7 +601,7 @@ describe ESM::Command::Base do
       expect { server_command.deliver! }.to raise_error(ESM::Exception::CheckFailure)
     end
 
-    it "should deliver" do
+    it "delivers" do
       request = nil
       server_command = ESM::Command::Test::ServerSuccessCommand.new
       event = CommandEvent.create(server_command.statement(server_id: server.server_id), channel_type: :text, user: user)
@@ -785,7 +614,7 @@ describe ESM::Command::Base do
   end
 
   describe "#reply" do
-    it "should send a message to channel" do
+    it "sends a message to channel" do
       server_command = ESM::Command::Test::ServerSuccessCommand.new
       event = CommandEvent.create(server_command.statement(server_id: server.server_id), channel_type: :text, user: user)
       server_command.event = event
@@ -814,6 +643,10 @@ describe ESM::Command::Base do
 
     describe "Text Channel" do
       describe "Allowed" do
+        include_context "command" do
+          let!(:command_class) { ESM::Command::Test::BaseV1 }
+        end
+
         it "enabled: true, whitelist_enabled: false, whitelisted: false, allowed: true" do
           command_statement = command.statement(
             community_id: community.community_id,
@@ -850,6 +683,10 @@ describe ESM::Command::Base do
       end
 
       describe "Denied" do
+        include_context "command" do
+          let!(:command_class) { ESM::Command::Test::BaseV1 }
+        end
+
         it "enabled: false, whitelist_enabled: false, whitelisted: false, allowed: false" do
           command_statement = command.statement(
             community_id: community.community_id,
@@ -900,7 +737,7 @@ describe ESM::Command::Base do
 
           expect { command.execute(event) }.to raise_error(ESM::Exception::CheckFailureNoMessage)
 
-          # It should not send a message
+          # It not send a message
           expect(ESM::Test.messages.size).to eq(0)
         end
 
@@ -1027,6 +864,10 @@ describe ESM::Command::Base do
 
     describe "Private Message" do
       describe "Allowed" do
+        include_context "command" do
+          let!(:command_class) { ESM::Command::Test::BaseV1 }
+        end
+
         it "enabled: true, whitelist_enabled: false, whitelisted: false, allowed: true" do
           command_statement = command.statement(
             community_id: community.community_id,
@@ -1097,6 +938,10 @@ describe ESM::Command::Base do
       end
 
       describe "Denied" do
+        include_context "command" do
+          let!(:command_class) { ESM::Command::Test::BaseV1 }
+        end
+
         it "enabled: false, notify_when_disabled: true" do
           command_statement = command.statement(
             community_id: community.community_id,
@@ -1242,24 +1087,24 @@ describe ESM::Command::Base do
   #   Blocks admin commands from being used text channels
   describe "Player Mode" do
     let!(:secondary_community) { create(:secondary_community, :player_mode_enabled) }
-    let!(:secondary_user) { create(:secondary_user) }
+    let!(:secondary_user) { ESM::Test.second_user }
 
-    it "should be enabled" do
+    it "is enabled" do
       expect(secondary_community.player_mode_enabled?).to be(true)
     end
 
-    it "should be able to use DM only commands in text channel" do
+    it "is able to use DM only commands in text channel" do
       dm_only_command = ESM::Command::Test::DirectMessageCommand.new
       event = CommandEvent.create(dm_only_command.statement, channel_type: :text, user: secondary_user)
 
       expect { dm_only_command.execute(event) }.not_to raise_error
     end
 
-    it "should be able to run player command for other communities in text channel" do
+    it "is able to run player command for other communities in text channel" do
       community_command = ESM::Command::Test::CommunityCommand.new
       command_statement = community_command.statement(community_id: community.community_id)
 
-      # Ensure the command can still be used regardless of that communities permissions for "allowed_in_text_channels"
+      # Ensure the command can still is used regardless of that communities permissions for "allowed_in_text_channels"
       community.command_configurations.where(command_name: community_command.name).first.update!(allowed_in_text_channels: false)
 
       event = CommandEvent.create(command_statement, channel_type: :text, user: secondary_user)
@@ -1267,7 +1112,7 @@ describe ESM::Command::Base do
       expect { community_command.execute(event) }.not_to raise_error
     end
 
-    it "should not allow admin commands in text channel" do
+    it "does not allow admin commands in text channel" do
       admin_only_command = ESM::Command::Test::AdminCommand.new
       command_statement = admin_only_command.statement(community_id: community.community_id)
       event = CommandEvent.create(command_statement, channel_type: :text, user: secondary_user)
@@ -1275,7 +1120,7 @@ describe ESM::Command::Base do
       expect { admin_only_command.execute(event) }.to raise_error(ESM::Exception::CheckFailure, /is not available in player mode/i)
     end
 
-    it "should not allow running commands for other communities in text channels (Non-playermode community)" do
+    it "does not allow running commands for other communities in text channels (Non-playermode community)" do
       community_command = ESM::Command::Test::CommunityCommand.new
       command_statement = community_command.statement(community_id: secondary_community.community_id)
 
@@ -1287,7 +1132,7 @@ describe ESM::Command::Base do
   end
 
   describe "#skip_check" do
-    it "should skip #check_for_connected_server!" do
+    it "skips #check_for_connected_server!" do
       # Server is not connected here
       check_command = ESM::Command::Test::SkipServerCheckCommand.new
       event = CommandEvent.create(check_command.statement(server_id: server.server_id), channel_type: :text, user: user)
@@ -1296,7 +1141,7 @@ describe ESM::Command::Base do
   end
 
   describe "#skip" do
-    it "should skip #create_or_update_cooldown" do
+    it "skips #create_or_update_cooldown" do
       skip_command = ESM::Command::Test::SkipCooldownCommand.new
       event = CommandEvent.create(skip_command.statement(server_id: server.server_id), channel_type: :text, user: user)
       expect { skip_command.execute(event) }.not_to raise_error
@@ -1305,9 +1150,9 @@ describe ESM::Command::Base do
   end
 
   describe "#add_request" do
-    let!(:secondary_user) { create(:secondary_user) }
+    let!(:secondary_user) { ESM::Test.second_user }
 
-    it "should add the request" do
+    it "adds the request" do
       request_command = ESM::Command::Test::RequestCommand.new
       event = CommandEvent.create(request_command.statement(target: secondary_user.discord_id), channel_type: :text, user: user)
       expect { request_command.execute(event) }.not_to raise_error
@@ -1317,9 +1162,9 @@ describe ESM::Command::Base do
   end
 
   describe "#from_request" do
-    let!(:secondary_user) { create(:secondary_user) }
+    let!(:secondary_user) { ESM::Test.second_user }
 
-    it "should be accepted" do
+    it "is accepted" do
       request_command = ESM::Command::Test::RequestCommand.new
       event = CommandEvent.create(request_command.statement(target: secondary_user.discord_id), channel_type: :text, user: user)
       expect { request_command.execute(event) }.not_to raise_error
@@ -1332,7 +1177,7 @@ describe ESM::Command::Base do
       expect(ESM::Test.messages.second.second).to eq("accepted")
     end
 
-    it "should be declined" do
+    it "is declined" do
       request_command = ESM::Command::Test::RequestCommand.new
       event = CommandEvent.create(request_command.statement(target: secondary_user.discord_id), channel_type: :text, user: user)
       expect { request_command.execute(event) }.not_to raise_error

@@ -33,10 +33,10 @@ module ESM
         @skipped_checks = Set.new
 
         # ESM::Command::System::Accept => system
-        @category = self.module_parent.name.demodulize.downcase
+        @category = module_parent.name.demodulize.downcase
 
         # ESM::Command::Server::SetId => set_id
-        @command_name = self.name.demodulize.underscore.downcase
+        @command_name = name.demodulize.underscore.downcase
       end
 
       def self.argument(name, opts = {})
@@ -52,8 +52,6 @@ module ESM
       end
 
       # I wanted these as methods instead of attributes
-      #
-      # rubocop:disable Style/TrivialAccessors
       def self.aliases(*aliases)
         @command_aliases = aliases
       end
@@ -62,10 +60,9 @@ module ESM
         @command_type = type
       end
 
-      def self.limit_to(channel_type)
+      def self.limit_to(channel_type) # standard:disable Style/TrivialAccessors
         @limit_to = channel_type
       end
-      # rubocop:enable Style/TrivialAccessors
 
       def self.define(attribute, **opts)
         @defines[attribute] = OpenStruct.new(opts)
@@ -99,17 +96,19 @@ module ESM
       #########################
       # Public Instance Methods
       #########################
-      attr_reader :name, :category, :type, :arguments, :aliases, :limit_to,
-                  :defines, :requires, :executed_at, :response, :cooldown_time,
-                  :event, :permissions, :checks
+      attr_reader :name, :category, :type, :aliases, :limit_to,
+        :requires, :executed_at, :response, :cooldown_time,
+        :defines, :permissions, :checks
 
-      attr_writer :limit_to, :event, :executed_at, :requires if ESM.env.test?
       attr_writer :current_community
+
+      attr_accessor :event, :arguments
 
       def initialize
         attributes = self.class.attributes
 
-        @name = attributes.name
+        # V1 support
+        @name = attributes.name.gsub("_v1", "")
         @category = attributes.category
         @aliases = attributes.aliases
         @arguments = ESM::Command::ArgumentContainer.new(attributes.arguments)
@@ -137,7 +136,7 @@ module ESM
         else
           from_server(event)
         end
-      rescue StandardError => e
+      rescue => e
         handle_error(e)
       end
 
@@ -181,7 +180,7 @@ module ESM
 
         # Save some cycles
         discord_user = user.discord_user
-        discord_user.instance_variable_set("@esm_user", user)
+        discord_user.instance_variable_set(:@esm_user, user)
 
         # Return back the modified discord user
         @current_user = discord_user
@@ -255,7 +254,7 @@ module ESM
         user.update(discord_username: discord_user.name, discord_discriminator: discord_user.discriminator)
 
         # Save some cycles
-        discord_user.instance_variable_set("@esm_user", user)
+        discord_user.instance_variable_set(:@esm_user, user)
 
         # Return back the modified discord user
         @target_user = discord_user
@@ -307,7 +306,7 @@ module ESM
         current_cooldown.active?
       end
 
-      # Send a request to the DLL
+      # V1: Send a request to the DLL
       #
       # @param command_name [String, nil] V1: The name of the command to send to the DLL. Default: self.name.
       def deliver!(command_name: nil, timeout: 30, **parameters)
@@ -328,38 +327,58 @@ module ESM
         ESM::Websocket.deliver!(target_server.server_id, request)
       end
 
-      # Convenience method for replying back to the event's channel
-      def reply(message)
-        ESM.bot.deliver(message, to: current_channel)
-      end
-
-      # Returns a valid command string for execution.
       #
-      # @example No arguments
-      #   ESM::Command::SomeCommand.statement -> "!somecommand"
-      # @example With arguments !argumentcommand <argument_1> <argument_2>
-      #   ESM::Command::ArgumentCommand.statement(argument_1: "foo", argument_2: "bar") -> !argumentcommand foo bar
-      def statement(**flags)
-        # Can't use distinct here - 2020-03-10
-        command_statement = "#{prefix}#{flags[:_use_alias] || @name}"
+      # Sends a message to the target_server
+      #
+      # @param message [ESM::Connection::Message, nil] If a message is provided, this will be the message that is sent. The rest of the arguments for this method are ignored
+      # @param type [String/Symbol] The message type. If no message is provided, this will be used to build the message. See ESM::Connection::Message for more details
+      # @param data_type [String/Symbol] The messages's data type. If no message is provided, this will be used to build the message. See ESM::Connection::Message for more details
+      # @param **data [Hash] The rest of the attributes to pass into ESM::Connection::Message. If no message is provided, this will be used to build the message. See ESM::Connection::Message for more details
+      #
+      # @return [ESM::Connection::Message] The message that was sent
+      #
+      def send_to_arma(message = nil, type: :arma, data_type: name, **data)
+        raise ESM::Exception::CheckFailure, "#send_to_arma was called on #{name} but this command does not require a server" if target_server.nil?
 
-        # !birb, !doggo, etc.
-        return command_statement if @arguments.empty?
-
-        # !whois <target> -> !whois #{flags[:target]} -> !whois 1234567890
-        @arguments.map(&:name).each do |name|
-          command_statement += " #{flags[name]}"
+        # Allows overwriting the outbound message. Otherwise, build a message from the data
+        if message.nil?
+          message = ESM::Connection::Message.new(type: type, data_type: data_type, **data)
+          message.add_callback(:on_error, :on_error)
+          message.add_callback(:on_response) do |incoming_message, outgoing_message|
+            on_response(incoming_message, outgoing_message)
+          end
         end
 
-        command_statement
+        message.locals = {command: self}
+        message.apply_command_metadata
+        target_server.connection.send_message(message)
+      end
+
+      # Convenience method for replying back to the event's channel
+      def reply(message)
+        ESM.bot.deliver(message, to: current_channel, replying_to: @event.message)
+      end
+
+      def edit_message(message, content)
+        if content.is_a?(ESM::Embed)
+          embed = Discordrb::Webhooks::Embed.new
+          content.transfer(embed)
+
+          message.edit("", embed)
+        else
+          message.edit(content)
+        end
       end
 
       # Raises an exception of the given class or ESM::Exception::CheckFailure.
       # If a block is given, the return of that block will be message to raise
       # Otherwise, it will build an error embed
+      #
+      # @deprecated
+      # @see #raise_error!
       def check_failed!(name = nil, **args, &block)
         message =
-          if block_given?
+          if block
             yield
           elsif name.present?
             ESM::Embed.build(:error, description: I18n.t("command_errors.#{name}", **args.except(:exception_class)))
@@ -371,37 +390,86 @@ module ESM
         raise args[:exception_class] || ESM::Exception::CheckFailure, message
       end
 
+      #
+      # Builds a message and raises a CheckFailure with that reason.
+      #
+      # @param error_name [String, Symbol, nil] The name of the error message located in the locales for "commands.<command_name>.errors". If nil, a block must be provided
+      # @param args [Hash] The args to be passed into the translation if an error_name is provided
+      # @param block [Proc] If provided, the block must return the error message to be used. This can be a string or an ESM::Embed.
+      #
+      # @replaces #check_failed!
+      #
+      def raise_error!(error_name = nil, **args, &block)
+        exception_class = args.delete(:exception_class)
+
+        reason =
+          if block
+            yield
+          else
+            ESM::Embed.build(:error, description: I18n.t("commands.#{name}.errors.#{error_name}", **args))
+          end
+
+        # Logging
+        ESM::Notifications.trigger("command_check_failed", command: self, reason: reason)
+
+        raise exception_class || ESM::Exception::CheckFailure, reason
+      end
+
+      #
+      # Makes calls to I18n.t shorter
+      #
+      def t(translation_name, **args)
+        I18n.t("commands.#{name}.#{translation_name}", **args)
+      end
+
+      #
+      # Returns the commands argument values
+      #
+      # @return [ESM::Command::ArgumentContainer] The commands arguments
+      #
+      def args
+        @arguments
+      end
+
       def to_h
         {
-          name: self.name,
-          current_community: self.current_community&.attributes,
-          current_channel: self.current_channel.inspect,
-          current_user: self.current_user.inspect,
-          current_cooldown: self.current_cooldown&.attributes,
-          target_community: self.target_community&.attributes,
-          target_server: self.target_server&.attributes,
-          target_user: self.target_user.respond_to?(:attributes) ? self.target_user.attributes : self.target_user,
-          target_uid: self.target_uid,
-          same_user: self.same_user?,
-          dm_only: self.dm_only?,
-          text_only: self.text_only?,
-          dev_only: self.dev_only?,
-          registration_required: self.registration_required?,
-          whitelist_enabled: self.whitelist_enabled?,
-          on_cooldown: self.on_cooldown?,
+          name: name,
+          current_community: current_community&.attributes,
+          current_channel: current_channel.inspect,
+          current_user: current_user.inspect,
+          current_cooldown: current_cooldown&.attributes,
+          target_community: target_community&.attributes,
+          target_server: target_server&.attributes,
+          target_user: target_user.respond_to?(:attributes) ? target_user.attributes : target_user.inspect,
+          target_uid: target_uid,
+          same_user: same_user?,
+          dm_only: dm_only?,
+          text_only: text_only?,
+          dev_only: dev_only?,
+          registration_required: registration_required?,
+          whitelist_enabled: whitelist_enabled?,
+          on_cooldown: on_cooldown?,
           permissions: @permissions.to_h
         }
       end
 
       private
 
-      def discord; end
+      # V1
+      # @deprecated Use on_execute instead
+      def discord
+      end
 
-      def server; end
+      # V1
+      # @deprecated Use on_response instead
+      def server
+      end
 
-      def request_accepted; end
+      def request_accepted
+      end
 
-      def request_declined; end
+      def request_declined
+      end
 
       def from_discord(event)
         @event = event
@@ -426,23 +494,44 @@ module ESM
         # Run some checks
         @checks.run_all!
 
-        # Call the discord method
-        discord
+        # Call #on_execute. If the command is for a server version that is 1.0.0, load the V1 version of the command
+        if target_server.present? && target_server.version < Semantic::Version.new("2.0.0")
+          class_name = self.class.to_s
+
+          # Initialize the v1 version of this command and give it the required data before calling #on_execute
+          # If the v1 command is used, avoid initializing CommandV1V1
+          command =
+            if class_name.match?(/v1$/i)
+              self
+            else
+              "#{class_name}V1".constantize.new
+            end
+
+          command.event = @event
+          command.arguments = @arguments
+
+          command.on_execute
+        else
+          on_execute
+        end
 
         # Update the cooldown
         create_or_update_cooldown if !@skip_flags.include?(:cooldown)
 
         # Increment the counter
-        ESM::CommandCount.increment_execution_counter(self.name)
+        ESM::CommandCount.increment_execution_counter(name)
       end
 
+      #
+      # V1: This is called when the message is received from the server
+      #
       def from_server(parameters)
         # Parameters is always an array. 90% of the time, parameters size will only be 1
         # This just makes typing a little easier when writing commands
         @response = parameters.size == 1 ? parameters.first : parameters
 
-        # Call the server method
-        server
+        # Trigger the callback
+        on_response
       end
 
       def create_or_update_cooldown
@@ -503,8 +592,6 @@ module ESM
         case error
         when ESM::Exception::CheckFailure, ESM::Exception::FailedArgumentParse
           message = error.data
-        when ESM::Exception::CheckFailureNoMessage
-          return
         when StandardError
           uuid = SecureRandom.uuid
           ESM.logger.error("#{self.class}##{__method__}") { ESM::JSON.pretty_generate(uuid: uuid, message: error.message, backtrace: error.backtrace) }

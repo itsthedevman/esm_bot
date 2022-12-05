@@ -17,7 +17,7 @@ module ESM
         argument :server_id
         argument :territory_id
 
-        def discord
+        def on_execute
           deliver!(
             function_name: "upgradeTerritory",
             territory_id: @arguments.territory_id,

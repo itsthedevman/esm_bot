@@ -6,9 +6,9 @@ module ESM
       attr_reader :data
 
       def initialize(connection, message)
+        @message = message
         @connection = connection
         @server = connection.server
-        @message = message
         @community = @server.community
         @discord_server = @community.discord_server
       end
@@ -39,12 +39,14 @@ module ESM
         update_server
         update_server_settings
         store_territory_data
+        store_metadata
       end
 
       def update_server
         @server.update!(
           server_name: @message.data.server_name,
           server_start_time: @message.data.server_start_time.utc,
+          server_version: @connection.version,
           disconnected_at: nil
         )
       end
@@ -73,27 +75,31 @@ module ESM
         ESM::Territory.import(territories)
       end
 
+      def store_metadata
+        @server.metadata.vg_enabled = @message.data.vg_enabled
+        @server.metadata.vg_max_sizes = @message.data.vg_max_sizes
+      end
+
       def build_setting_data
         settings = @server.server_setting
-        rewards = @server.server_reward
 
         # Remove the database and v1 fields
         data = settings.attributes.without(
           *%w[
             id server_id created_at updated_at deleted_at
-            server_restart_hour server_restart_min request_thread_type request_thread_tick logging_path
+            server_restart_hour server_restart_min request_thread_type
+            request_thread_tick logging_path
           ]
         ).symbolize_keys
 
         data = data.merge(
-          territory_payment_tax: settings.territory_payment_tax / 100,
-          territory_upgrade_tax: settings.territory_upgrade_tax / 100,
+          community_id: @community.community_id,
           extdb_path: settings.extdb_path || "",
-          territory_admins: build_territory_admins,
-          reward_player_poptabs: rewards.player_poptabs,
-          reward_locker_poptabs: rewards.locker_poptabs,
-          reward_respect: rewards.respect,
-          reward_items: rewards.reward_items
+          logging_channel_id: @community.logging_channel_id,
+          server_id: @server.server_id,
+          territory_admin_uids: build_territory_admins,
+          taxes_territory_payment: settings.territory_payment_tax / 100,
+          taxes_territory_upgrade: settings.territory_upgrade_tax / 100
         )
 
         @data = OpenStruct.new(data)
@@ -101,7 +107,9 @@ module ESM
 
       def build_territory_admins
         # Get all roles with administrator or that are set as territory admins
-        roles = @discord_server.roles.select { |role| role.permissions.administrator || @community.territory_admin_ids.include?(role.id.to_s) }
+        roles = @discord_server.roles.select do |role|
+          role.permissions.administrator || @community.territory_admin_ids.include?(role.id.to_s)
+        end
 
         # Get all of the user's discord IDs who have these roles
         discord_ids =
@@ -114,9 +122,8 @@ module ESM
       end
 
       def send_response
-        message = ESM::Connection::Message.new(server_id: @server.server_id, type: "post_init", data: @data)
-        message.add_callback(:on_error, :on_error)
-        message.add_callback("on_response") do |_incoming, _outgoing|
+        message = ESM::Connection::Message.new(data_type: "post_init", data: @data)
+        message.add_callback(:on_response) do |_incoming, _outgoing|
           # Trigger a connect notification
           ESM::Notifications.trigger("server_on_connect", server: @connection.server)
 

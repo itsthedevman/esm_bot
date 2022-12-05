@@ -16,7 +16,7 @@ module ESM
 
         argument :server_id
 
-        def discord
+        def on_execute
           embed =
             ESM::Embed.build do |e|
               e.description = I18n.t("commands.uptime.server_uptime", server: target_server.server_id, time: target_server.uptime)

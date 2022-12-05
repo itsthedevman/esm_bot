@@ -107,6 +107,7 @@ module ESM
 
         def cooldown!
           return if ESM.env.test? && ESM::Test.skip_cooldown
+          return if @skipped_checks.include?(:cooldown)
           return if !@command.on_cooldown?
 
           cooldown = @command.current_cooldown
@@ -128,7 +129,9 @@ module ESM
 
         def connected_server!
           return if @command.arguments.server_id.nil?
-          return if ESM::Websocket.connected?(@command.arguments.server_id)
+
+          # Return if the server is not connected
+          return if @command.target_server.connected?
 
           check_failed!(:server_not_connected, user: current_user.mention, server_id: @command.arguments.server_id)
         end

@@ -4,6 +4,10 @@ module ESM
   module Command
     CATEGORIES = %w[development general server community entertainment system].freeze
 
+    # @return [Array<Symbol>] A list of publicly available command types.
+    #   Any types not in this list will not show up in the help documentation or on the website.
+    TYPES = %i[admin player].freeze
+
     class << self
       attr_reader :all
     end
@@ -29,6 +33,8 @@ module ESM
       path = File.expand_path("lib/esm/command")
       CATEGORIES.each do |category|
         Dir["#{path}/#{category}/*.rb"].each do |command_path|
+          next if command_path.include?("v1")
+
           process_command(command_path, category)
         end
       end
@@ -80,6 +86,7 @@ module ESM
       "ESM::Command::#{category}::#{command_name}".constantize.new
     end
 
+    # TODO: Move this functionality to bot.rb
     def self.define(command_class, name, aliases)
       return if ESM.bot.nil?
 
@@ -100,8 +107,8 @@ module ESM
       # Use command_name instead of command.name to get set_id instead of setid
       @all << command.class
 
-      # Don't cache development commands
-      return if command.type == :development
+      # Don't cache invalid command types.
+      return if !TYPES.include?(command.type)
 
       # To be written to the DB in bulk
       @cache << {
@@ -123,6 +130,39 @@ module ESM
 
     def self.by_type
       @by_type ||= OpenStruct.new(@all.group_by(&:command_type))
+    end
+
+    #
+    # Returns configurations for all commands, often used for database inserts
+    #
+    # @return [Array<Hash>]
+    #
+    def self.configurations
+      @configurations ||=
+        ESM::Command.all.map do |command|
+          cooldown_default = command.defines.cooldown_time.default
+
+          case cooldown_default
+          when Enumerator, Integer
+            cooldown_type = "times"
+            cooldown_quantity = cooldown_default.size
+          when ActiveSupport::Duration
+            # Converts 2.seconds to [:seconds, 2]
+            cooldown_type, cooldown_quantity = cooldown_default.parts.to_a.first
+          else
+            raise TypeError, "Invalid type \"#{cooldown_default.class}\" detected for command #{command.name}'s default cooldown"
+          end
+
+          {
+            command_name: command.name,
+            enabled: command.defines.enabled.default,
+            cooldown_quantity: cooldown_quantity,
+            cooldown_type: cooldown_type,
+            allowed_in_text_channels: command.defines.allowed_in_text_channels.default,
+            whitelist_enabled: command.defines.whitelist_enabled.default,
+            whitelisted_role_ids: command.defines.whitelisted_role_ids.default
+          }
+        end
     end
   end
 end

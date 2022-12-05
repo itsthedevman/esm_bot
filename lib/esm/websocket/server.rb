@@ -7,9 +7,11 @@ module ESM
         # Load Faye support for puma
         Faye::WebSocket.load_adapter("puma")
 
-        @server = Puma::Server.new(self, Puma::Events.strings)
+        @server = Puma::Server.new(self)
         @server.add_tcp_listener("0.0.0.0", ENV["WEBSOCKET_PORT"])
         @server.run
+
+        @overseer = ESM::Websocket::Connection::Overseer.new
       end
 
       def self.call(env)
@@ -18,8 +20,8 @@ module ESM
         # Create a new websocket client
         ws = Faye::WebSocket.new(env)
 
-        # Bind it with ESM
-        ESM::Websocket.new(ws)
+        # To avoid over loading everything
+        @overseer.add_to_lobby(ws)
 
         # Return async Rack response
         ws.rack_response

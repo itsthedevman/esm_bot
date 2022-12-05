@@ -14,15 +14,13 @@ default: &default
     websocket_request_overseer:
       check_every: 15
 
-    # ESM::Bot::ResendQueue
-    bot_resend_queue:
-      check_every: 5
-      max_attempts: 5
-
     # ESM::Connection::MessageOverseer
     connection_message_overseer:
       check_every: 5
 
+    # ESM::Websocket::Connection::Overseer
+    websocket_connection_overseer:
+      check_every: 3
 
 development:
   <<: *default
@@ -31,6 +29,7 @@ development:
 test:
   <<: *default
   prefix: "~"
+
   # ESM::Request::Overseer
   request_overseer:
     check_every: 0.5

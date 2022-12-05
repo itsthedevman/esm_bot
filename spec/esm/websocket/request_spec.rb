@@ -15,7 +15,7 @@ describe ESM::Websocket::Request do
 
   it "should accept ESM::Command for command" do
     request = ESM::Websocket::Request.new(
-      command: ESM::Command::Test::Base.new,
+      command: ESM::Command::Test::BaseV1.new,
       user: nil,
       parameters: nil,
       channel: nil
@@ -68,7 +68,7 @@ describe ESM::Websocket::Request do
         "commandID" => request.id,
         "authorInfo" => [user.mention, user.id],
         "parameters" => params
-    }.to_json
+      }.to_json
 
       expect(request.to_s).to eq(valid_hash_string)
     end

@@ -17,7 +17,7 @@ module ESM
         argument :territory_id
         argument :target
 
-        def discord
+        def on_execute
           # Either a memer or admin trying to add themselves. Either way, the arma server handles this.
           return request_accepted if same_user?
 

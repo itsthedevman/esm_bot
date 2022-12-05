@@ -2,7 +2,7 @@
 
 describe String do
   describe "#to_ostruct" do
-    let!(:struct) { { string: "string", boolean: false, array: %w[foo bar], object: { recursive: { oh: "wow" } } }.to_json.to_ostruct }
+    let!(:struct) { {string: "string", boolean: false, array: %w[foo bar], object: {recursive: {oh: "wow"}}}.to_json.to_ostruct }
 
     it "should be of type OpenStruct" do
       expect(struct).to be_kind_of(OpenStruct)
@@ -28,7 +28,7 @@ describe String do
   end
 
   describe "#to_h" do
-    let!(:hash) { { string: "string", boolean: false, array: %w[foo bar], object: { recursive: { oh: "wow" } } }.to_json.to_h }
+    let!(:hash) { {string: "string", boolean: false, array: %w[foo bar], object: {recursive: {oh: "wow"}}}.to_json.to_h }
 
     it "should be of type Hash" do
       expect(hash).to be_kind_of(Hash)

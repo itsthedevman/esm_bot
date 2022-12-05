@@ -14,9 +14,7 @@ module ESM
 
         argument :server_id
 
-        skip_check :connected_server
-
-        def discord
+        def on_execute
           embed =
             ESM::Embed.build do |e|
               e.title = target_server.server_name
@@ -50,8 +48,7 @@ module ESM
           #     :max_players, :number_of_bots, :dedicated, :operating_system, :password_needed, :secure, :game_version, :server_port,
           #     :server_id, :server_tags, :game_id
           server.server_info.to_ostruct
-        rescue StandardError => e
-          ESM.logger.warn("#{self.class}##{__method__}") { e }
+        rescue
           nil
         end
 
@@ -79,7 +76,7 @@ module ESM
 
           grouped_mods = target_server.server_mods.group_by { |mod| mod.mod_required? ? I18n.t(:required_mods) : I18n.t(:optional_mods) }
           grouped_mods.each do |header, mods|
-            mod_field = { name: header, value: [], inline: true }
+            mod_field = {name: header, value: [], inline: true}
             process_mods(e, mod_field, mods)
           end
         end
@@ -97,7 +94,7 @@ module ESM
             # If the owner added more mods than our field can hold, send it and create a new field
             if (mod_field[:value].total_size + mod_line.size) > ESM::Embed::Limit::FIELD_VALUE_LENGTH_MAX
               e.add_field(mod_field)
-              mod_field = { name: "#{mod_field[:name]} #{I18n.t(:continued)}", value: [], inline: true }
+              mod_field = {name: "#{mod_field[:name]} #{I18n.t(:continued)}", value: [], inline: true}
             end
 
             mod_field[:value] << mod_line
