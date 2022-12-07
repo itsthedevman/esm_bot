@@ -10,7 +10,7 @@ class CommandEvent
     data = {
       "id" => nil,
       "content" => content,
-      "channel_id" => channel_type == :text ? ESM::Test.data[user.guild_type][:channels].sample : user.discord_user.pm.id,
+      "channel_id" => ((channel_type == :text) ? ESM::Test.data[user.guild_type][:channels].sample : user.discord_user.pm.id),
       "guild_id" => ESM::Test.data[user.guild_type][:server_id],
       "pinned" => false,
       "author" => {

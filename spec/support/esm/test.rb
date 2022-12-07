@@ -109,7 +109,7 @@ module ESM
 
         @communities = %i[primary_community secondary_community]
         @community_type = @communities.sample
-        @user_type = @community_type == :primary_community ? :primary_user : :secondary_user
+        @user_type = (@community_type == :primary_community) ? :primary_user : :secondary_user
         @second_community_type = @communities.find { |type| type != @community_type }
 
         # Clear the test list in Redis
@@ -124,7 +124,7 @@ module ESM
         counter = 0
 
         while response.blank? && counter < timeout
-          sleep(0.25)
+          sleep(0.1)
           counter += 1
         end
 
@@ -147,7 +147,7 @@ module ESM
         counter = 0
 
         while counter < timeout
-          sleep(0.25)
+          sleep(0.1)
           counter += 1
 
           # I don't have this in the conditional above because I want it to sleep at least once
