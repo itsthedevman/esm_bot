@@ -46,7 +46,7 @@ module ESM
               requestor_user_id: current_user.esm_user.id,
               requestee_user_id: to.esm_user.id,
               requested_from_channel_id: current_channel.id.to_s,
-              command_name: @name.underscore,
+              command_name: @name,
               command_arguments: @arguments.to_h
             )
 

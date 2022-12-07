@@ -8,6 +8,29 @@ module ESM
       # Request related methods
       include Request
 
+      # These commands have a V1 variant
+      V1_COMMANDS = [
+        # :add,
+        # :demote,
+        # :gamble,
+        # :info,
+        # :logs,
+        # :me,
+        # :pay,
+        # :player,
+        # :promote,
+        # :remove,
+        # :reset,
+        # :restore,
+        :reward,
+        # :server_territories,
+        # :set_id,
+        :sqf
+        # :stuck,
+        # :territories,
+        # :upgrade
+      ].freeze
+
       class << self
         attr_reader :defines, :command_type, :category, :command_aliases
       end
@@ -96,7 +119,7 @@ module ESM
       #########################
       # Public Instance Methods
       #########################
-      attr_reader :name, :category, :type, :aliases, :limit_to,
+      attr_reader :category, :type, :aliases, :limit_to,
         :requires, :executed_at, :response, :cooldown_time,
         :defines, :permissions, :checks
 
@@ -107,8 +130,7 @@ module ESM
       def initialize
         attributes = self.class.attributes
 
-        # V1 support
-        @name = attributes.name.gsub("_v1", "")
+        @name = attributes.name
         @category = attributes.category
         @aliases = attributes.aliases
         @arguments = ESM::Command::ArgumentContainer.new(attributes.arguments)
@@ -126,6 +148,12 @@ module ESM
         # Pre load
         @permissions = Base::Permissions.new(self)
         @checks = Base::Checks.new(self, attributes.skipped_checks)
+      end
+
+      # V1
+      # Using method because requests need the v1 name stored in @name
+      def name
+        @name.sub("_v1", "")
       end
 
       # The entry point for a command
@@ -146,7 +174,7 @@ module ESM
 
       # Don't memoize this, prefix can change based on when its called
       def distinct
-        "#{prefix}#{@name}"
+        "#{prefix}#{name}"
       end
 
       def offset
@@ -356,7 +384,7 @@ module ESM
 
       # Convenience method for replying back to the event's channel
       def reply(message)
-        ESM.bot.deliver(message, to: current_channel, replying_to: @event.message)
+        ESM.bot.deliver(message, to: current_channel, replying_to: @event&.message)
       end
 
       def edit_message(message, content)
@@ -494,21 +522,12 @@ module ESM
         # Run some checks
         @checks.run_all!
 
-        # Call #on_execute. If the command is for a server version that is 1.0.0, load the V1 version of the command
-        if target_server.present? && target_server.version < Semantic::Version.new("2.0.0")
-          class_name = self.class.to_s
-
-          # Initialize the v1 version of this command and give it the required data before calling #on_execute
-          # If the v1 command is used, avoid initializing CommandV1V1
-          command =
-            if class_name.match?(/v1$/i)
-              self
-            else
-              "#{class_name}V1".constantize.new
-            end
-
+        # V1
+        if target_server.present? && target_server.version < Semantic::Version.new("2.0.0") && (V1_COMMANDS.include?(name.to_sym) && !self.class.to_s.ends_with?("V1"))
+          command = "#{self.class}V1".constantize.new
           command.event = @event
           command.arguments = @arguments
+          command.permissions.load
 
           command.on_execute
         else
@@ -528,14 +547,14 @@ module ESM
       def from_server(parameters)
         # Parameters is always an array. 90% of the time, parameters size will only be 1
         # This just makes typing a little easier when writing commands
-        @response = parameters.size == 1 ? parameters.first : parameters
+        @response = (parameters.size == 1) ? parameters.first : parameters
 
         # Trigger the callback
         on_response
       end
 
       def create_or_update_cooldown
-        query = ESM::Cooldown.where(command_name: @name)
+        query = ESM::Cooldown.where(command_name: name)
 
         # If the command requires a steam_uid, use it to track the cooldown.
         query =
@@ -556,7 +575,7 @@ module ESM
       end
 
       def load_current_cooldown
-        query = ESM::Cooldown.where(command_name: @name)
+        query = ESM::Cooldown.where(command_name: name)
 
         # If the command requires a steam_uid, use it to track the cooldown.
         query =

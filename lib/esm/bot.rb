@@ -34,6 +34,17 @@ module ESM
       :direct_message_typing
     ).keys.freeze
 
+    def self.register_command(command_class, name, aliases)
+      ESM.bot&.command(name, aliases: aliases) do |event|
+        # Execute the command.
+        # Threaded since I handle everything in the commands
+        Thread.new { command_class.new.execute(event) }
+
+        # Don't send anything back
+        nil
+      end
+    end
+
     attr_reader :config, :prefix
 
     def initialize

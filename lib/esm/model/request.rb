@@ -29,7 +29,12 @@ module ESM
       @accepted = accepted
 
       # Build the command
-      command = ESM::Command[command_name].new
+      command =
+        if command_name.ends_with?("v1")
+          ESM::Command.get_v1(command_name).new
+        else
+          ESM::Command[command_name].new
+        end
 
       # Respond
       command.from_request(self)

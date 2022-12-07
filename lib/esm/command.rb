@@ -9,7 +9,7 @@ module ESM
     TYPES = %i[admin player].freeze
 
     class << self
-      attr_reader :all
+      attr_reader :all, :v1
     end
 
     def self.[](command_name)
@@ -18,14 +18,20 @@ module ESM
       @all.find { |command| command_name == command.name || command.command_aliases.include?(command_name.to_sym) }
     end
 
-    def self.include?(command_name)
-      return false if command_name.blank?
+    # V1
+    def self.get_v1(command_name)
+      return if command_name.blank?
 
-      @all.any? { |command| command_name == command.name || command.command_aliases.include?(command_name.to_sym) }
+      @v1.find { |command| command_name == command.name }
+    end
+
+    def self.include?(command_name)
+      !self[command_name].nil?
     end
 
     def self.load_commands
       @all = []
+      @v1 = [] # V1
       @by_category = nil
       @by_type = nil
       @cache = []
@@ -33,9 +39,11 @@ module ESM
       path = File.expand_path("lib/esm/command")
       CATEGORIES.each do |category|
         Dir["#{path}/#{category}/*.rb"].each do |command_path|
-          next if command_path.include?("v1")
-
-          process_command(command_path, category)
+          if command_path.include?("v1") # V1
+            process_command_v1(command_path, category) # V1
+          else
+            process_command(command_path, category)
+          end
         end
       end
 
@@ -67,10 +75,19 @@ module ESM
       command = build(command_name, category)
 
       # Tell the bot about our command
-      define(command.class, command.name.to_sym, command.aliases)
+      ESM::Bot.register_command(command.class, command.name.to_sym, command.aliases)
 
       # Cache Command
       cache(command)
+    end
+
+    # V1
+    def self.process_command_v1(command_path, category)
+      command_name = parse_command_name_from_path(command_path)
+      command = build(command_name, category)
+      return if command.type.nil?
+
+      @v1 << command.class
     end
 
     def self.parse_command_name_from_path(command_path)
@@ -84,20 +101,6 @@ module ESM
 
       # "ESM::Command::Server::Pay" -> ESM::Command::Server::Pay -> New instance
       "ESM::Command::#{category}::#{command_name}".constantize.new
-    end
-
-    # TODO: Move this functionality to bot.rb
-    def self.define(command_class, name, aliases)
-      return if ESM.bot.nil?
-
-      ESM.bot.command(name, aliases: aliases) do |event|
-        # Execute the command.
-        # Threaded since I handle everything in the commands
-        Thread.new { command_class.new.execute(event) }
-
-        # Don't send anything back
-        nil
-      end
     end
 
     def self.cache(command)
