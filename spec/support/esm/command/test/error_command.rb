@@ -13,12 +13,8 @@ module ESM
         define :allowed_in_text_channels, modifiable: true, default: true
         define :cooldown_time, modifiable: true, default: 2.seconds
 
-        def discord
-          raise StandardError, "Oops"
-        end
-
         def on_execute
-          discord
+          raise StandardError, "Oops"
         end
 
         def on_response

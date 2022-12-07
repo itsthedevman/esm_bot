@@ -37,7 +37,7 @@ module ESM
           deliver!(command_name: "exec", function_name: "exec", target: execute_on, code: minify_sqf(@arguments.code_to_execute))
         end
 
-        def server
+        def on_response
           return if @response.message.blank?
 
           reply(response_message)
@@ -68,7 +68,7 @@ module ESM
             ESM::Embed.build(
               :success,
               description: I18n.t(
-                "commands.sqf.responses.server_success_with_return",
+                "commands.sqf_v1.responses.server_success_with_return",
                 user: current_user.mention,
                 response: match[1],
                 server_id: target_server.server_id
@@ -78,7 +78,7 @@ module ESM
             ESM::Embed.build(
               :success,
               description: I18n.t(
-                "commands.sqf.responses.server_success",
+                "commands.sqf_v1.responses.server_success",
                 user: current_user.mention,
                 server_id: target_server.server_id
               )
@@ -87,7 +87,7 @@ module ESM
             ESM::Embed.build(
               :success,
               description: I18n.t(
-                "commands.sqf.responses.target_success",
+                "commands.sqf_v1.responses.target_success",
                 user: current_user.mention,
                 server_id: target_server.server_id,
                 target_uid: target_user.steam_uid
@@ -97,7 +97,7 @@ module ESM
             ESM::Embed.build(
               :error,
               description: I18n.t(
-                "commands.sqf.responses.invalid_target",
+                "commands.sqf_v1.responses.invalid_target",
                 user: current_user.mention,
                 server_id: target_server.server_id,
                 target_uid: target_user.steam_uid

@@ -32,7 +32,7 @@ module ESM
           reply(embed)
         end
 
-        def server
+        def on_response
           embed =
             if @response.success
               ESM::Embed.build(:success, description: I18n.t("commands.stuck.success_message", user: current_user.mention))

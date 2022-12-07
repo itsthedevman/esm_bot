@@ -83,7 +83,7 @@ describe ESM::Command::General::Whois, category: "command" do
     end
 
     it "should error (user not in discord server)" do
-      command_statement = command.statement(target: TestUser::User2::ID)
+      command_statement = command.statement(target: "000000000000000000")
       event = CommandEvent.create(command_statement, user: user, channel_type: :text)
       expect { command.execute(event) }.to raise_error(ESM::Exception::CheckFailure)
     end

@@ -22,23 +22,6 @@
 #   Boolean
 #   ?<type> -> Indicates that it can be nil
 
-# For quicker testing
-data_test:
-  foo: String
-
-metadata_test:
-  bar: String
-
-# For detailed testing
-test_mapping:
-  array: Array
-  date_time: DateTime
-  date: Date
-  hash_map: HashMap
-  integer: Integer
-  rhash: Hash
-  string: String
-
 empty: []
 
 init:
@@ -107,3 +90,23 @@ sqf_result:
 ## METADATA
 ###########################
 command: []
+
+
+###########################
+## AUTOMATIC TESTS
+###########################
+data_test:
+  foo: String
+
+metadata_test:
+  bar: String
+
+test_mapping:
+  array: Array
+  date_time: DateTime
+  date: Date
+  hash_map: HashMap
+  integer: Integer
+  rhash: Hash
+  string: String
+###########################

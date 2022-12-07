@@ -14,8 +14,11 @@ module ESM
 
         argument :target
 
-        def discord
+        def on_execute
           add_request(to: target_user)
+        end
+
+        def on_response
         end
 
         def request_accepted
@@ -24,13 +27,6 @@ module ESM
 
         def request_declined
           ESM.bot.deliver("declined", to: @request.requestor.discord_user)
-        end
-
-        def on_execute
-          discord
-        end
-
-        def on_response
         end
       end
     end

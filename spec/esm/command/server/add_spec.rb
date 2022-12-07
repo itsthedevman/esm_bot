@@ -78,7 +78,7 @@ describe ESM::Command::Server::Add, category: "command" do
       request.respond(true)
 
       # Reset so we can track the response
-      ESM::Test.reset!
+      ESM::Test.messages.clear
 
       # Wait for the server to respond
       wait_for { connection.requests }.to be_blank
@@ -97,7 +97,7 @@ describe ESM::Command::Server::Add, category: "command" do
       expect(ESM::Request.all.size).to eq(0)
 
       # Reset so we can track the response
-      ESM::Test.reset!
+      ESM::Test.messages.clear
 
       # Wait for the server to respond
       wait_for { connection.requests }.to be_blank

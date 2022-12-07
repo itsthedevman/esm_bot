@@ -16,20 +16,12 @@ module ESM
         argument :server_id
         argument :nullable, regex: /.*/, description: "commands.server_success_command.arguments.nullable", default: nil
 
-        def discord
-          deliver!
-        end
-
-        def server
-          reply("Yaay")
-        end
-
         def on_execute
           send_to_arma(type: :test, data_type: :empty)
         end
 
-        def on_response
-          server
+        def on_response(_, _)
+          reply("Yaay")
         end
       end
     end

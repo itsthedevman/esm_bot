@@ -30,7 +30,7 @@ module ESM
           )
         end
 
-        def server
+        def on_response
           message = I18n.t(
             "commands.remove.success_message",
             user: current_user.mention,

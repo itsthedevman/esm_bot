@@ -19,7 +19,7 @@ module ESM
           deliver!(query: "list_territories", uid: current_user.esm_user.steam_uid)
         end
 
-        def server
+        def on_response
           check_for_no_territories!
 
           # Apparently past me I didn't default the response to an array if there was only one territory...

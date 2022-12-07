@@ -16,12 +16,6 @@ module ESM
         argument :community_id
         argument :server_id
 
-        def discord
-        end
-
-        def server
-        end
-
         def on_execute
         end
 

@@ -38,6 +38,9 @@ test:
     websocket_request_overseer:
       check_every: 0.5
 
+    connection_message_overseer:
+      check_every: 0.5
+
     # ESM::Websocket::Connection::Overseer
     websocket_connection_overseer:
       check_every: 0.5

@@ -14,12 +14,6 @@ module ESM
 
         argument :target
 
-        def discord
-        end
-
-        def server
-        end
-
         def on_execute
         end
 

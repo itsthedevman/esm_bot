@@ -61,7 +61,7 @@ describe ESM::Command::Server::Reset, category: "command" do
       expect(request).not_to be_nil
 
       # Reset so we can track the response
-      ESM::Test.reset!
+      ESM::Test.messages.clear
 
       # Respond to the request
       request.respond(true)
@@ -95,7 +95,7 @@ describe ESM::Command::Server::Reset, category: "command" do
       expect(request).not_to be_nil
 
       # Reset so we can track the response
-      ESM::Test.reset!
+      ESM::Test.messages.clear
 
       # Respond to the request
       request.respond(true)
@@ -129,7 +129,7 @@ describe ESM::Command::Server::Reset, category: "command" do
       expect(request).not_to be_nil
 
       # Reset so we can track the response
-      ESM::Test.reset!
+      ESM::Test.messages.clear
 
       # Respond to the request
       request.respond(true)
@@ -166,7 +166,7 @@ describe ESM::Command::Server::Reset, category: "command" do
       expect(request).not_to be_nil
 
       # Reset so we can track the response
-      ESM::Test.reset!
+      ESM::Test.messages.clear
 
       # Respond to the request
       request.respond(true)
@@ -200,7 +200,7 @@ describe ESM::Command::Server::Reset, category: "command" do
       expect(request).not_to be_nil
 
       # Reset so we can track the response
-      ESM::Test.reset!
+      ESM::Test.messages.clear
 
       # Respond to the request
       request.respond(true)

@@ -12,18 +12,12 @@ module ESM
         define :allowed_in_text_channels, modifiable: true, default: true
         define :cooldown_time, modifiable: true, default: 2.seconds
 
-        def discord
-          "discord"
-        end
-
-        def server
-          "server"
-        end
-
         def on_execute
+          "on_execute"
         end
 
         def on_response
+          "on_response"
         end
       end
     end

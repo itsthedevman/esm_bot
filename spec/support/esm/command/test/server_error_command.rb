@@ -14,15 +14,8 @@ module ESM
 
         argument :server_id
 
-        def discord
-          deliver!
-        end
-
-        def server
-        end
-
         def on_execute
-          discord
+          send_to_arma(type: :event)
         end
 
         def on_response

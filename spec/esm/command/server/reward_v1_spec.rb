@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 describe ESM::Command::Server::RewardV1, category: "command" do
-  let!(:command) { ESM::Command::Server::RewardV1.new }
+  let!(:command) { described_class.new }
 
   it "should be valid" do
     expect(command).not_to be_nil
@@ -53,18 +53,18 @@ describe ESM::Command::Server::RewardV1, category: "command" do
       request = command.request
       expect(request).not_to be_nil
 
+      # So we can track the response
+      ESM::Test.messages.clear
+
       # Respond to the request
       request.respond(true)
-
-      # Reset so we can track the response
-      ESM::Test.reset!
 
       # Wait for the server to respond
       wait_for { connection.requests }.to be_blank
 
       expect(ESM::Test.messages.size).to eq(1)
 
-      embed = ESM::Test.messages.first.second
+      embed = ESM::Test.messages.first.content
 
       reward = server.server_reward
 
@@ -87,7 +87,7 @@ describe ESM::Command::Server::RewardV1, category: "command" do
         requestor_user_id: user.id,
         requestee_user_id: user.id,
         requested_from_channel_id: event.channel.id,
-        command_name: command.name,
+        command_name: command.instance_variable_get(:@name),
         command_arguments: {server_id: server.server_id}
       )
 

@@ -12,15 +12,8 @@ module ESM
         define :allowed_in_text_channels, modifiable: true, default: true
         define :cooldown_time, modifiable: true, default: 2.seconds
 
-        def discord
-          skip(:cooldown)
-        end
-
-        def server
-        end
-
         def on_execute
-          discord
+          skip(:cooldown)
         end
 
         def on_response

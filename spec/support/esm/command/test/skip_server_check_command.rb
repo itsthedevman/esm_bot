@@ -16,15 +16,8 @@ module ESM
 
         argument :server_id
 
-        def discord
-          "Hello"
-        end
-
-        def server
-        end
-
         def on_execute
-          discord
+          "Hello"
         end
 
         def on_response

@@ -19,7 +19,7 @@ module ESM
           deliver!(query: "player_info", uid: current_user.esm_user.steam_uid)
         end
 
-        def server
+        def on_response
           player = ESM::Arma::Player.new(server: target_server, player: @response)
           reply(player.to_embed)
         end

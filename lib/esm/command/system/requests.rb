@@ -14,7 +14,7 @@ module ESM
         define :allowed_in_text_channels, modifiable: true, default: true
         define :cooldown_time, modifiable: true, default: 2.seconds
 
-        def discord
+        def on_execute
           requests = current_user.esm_user.pending_requests.select(:uuid, :uuid_short, :command_name, :requestor_user_id, :expires_at).order(:command_name)
           return send_no_requests_message if requests.blank?
 

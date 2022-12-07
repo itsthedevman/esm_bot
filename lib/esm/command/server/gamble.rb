@@ -34,7 +34,7 @@ module ESM
           )
         end
 
-        def server
+        def on_response
           update_stats
           send_results
         end

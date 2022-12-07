@@ -18,7 +18,7 @@ module ESM
           embed =
             ESM::Embed.build do |e|
               e.title = target_server.server_name
-              e.color = target_server.online? ? :green : :red
+              e.color = target_server.connected? ? :green : :red
 
               # Server ID, IP, port, status
               add_connection_info(e)
@@ -56,7 +56,7 @@ module ESM
           e.add_field(name: I18n.t(:server_id), value: "```#{target_server.server_id}```")
           e.add_field(name: I18n.t(:ip), value: "```#{target_server.server_ip}```", inline: true)
           e.add_field(name: I18n.t(:port), value: "```#{target_server.server_port}```")
-          return unless target_server.online?
+          return unless target_server.connected?
 
           e.add_field(name: I18n.t("commands.server.online_for"), value: "```#{target_server.uptime}```")
           e.add_field(name: I18n.t("commands.server.restart_in"), value: "```#{target_server.time_left_before_restart}```")
