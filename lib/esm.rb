@@ -58,7 +58,7 @@ end
 
 # Used internally by logging methods. Do not call manually
 def __log(severity, caller_data, content)
-  if content[:error].is_a?(StandardError)
+  if content.is_a?(Hash) && content[:error].is_a?(StandardError)
     e = content[:error]
 
     content[:error] = {
@@ -76,7 +76,11 @@ def __log(severity, caller_data, content)
   caller_method = caller_data.label.gsub("block in ", "")
 
   ESM.logger.send(severity, "#{caller_class}##{caller_method}:#{caller_data.lineno}") do
-    ESM::JSON.pretty_generate(content)
+    if content.is_a?(Hash)
+      ESM::JSON.pretty_generate(content).presence || ""
+    else
+      content || ""
+    end
   end
 end
 #################################
@@ -135,6 +139,7 @@ module ESM
 
   def self.initialize_logger
     @logger = Logger.new("log/#{env}.log", "daily")
+    @logger.level = Logger::TRACE
 
     @logger.formatter = proc do |severity, datetime, progname = "N/A", msg|
       header = "#{severity} [#{datetime.utc.strftime("%F %H:%M:%S:%L")}] (#{progname})"
@@ -144,7 +149,7 @@ module ESM
         header =
           case severity
           when "TRACE"
-            header.colorize(:orange)
+            header.colorize(:light_green)
           when "INFO"
             header.colorize(:light_blue)
           when "DEBUG"
@@ -160,7 +165,7 @@ module ESM
         body =
           case severity
           when "TRACE"
-            body.colorize(:orange)
+            body.colorize(:light_green)
           when "INFO", "DEBUG"
             body.colorize(:light_black)
           when "WARN"
