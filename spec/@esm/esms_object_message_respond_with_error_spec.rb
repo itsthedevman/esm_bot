@@ -15,10 +15,10 @@ describe "ESMs_object_message_respond_withError", requires_connection: true, v2:
       expect(outbound.id).to eq(message.id)
 
       expect(inbound.data_type).to eq("empty")
-      expect(inbound.data).to eq(nil)
+      expect(inbound.data).to eq({})
 
       expect(inbound.metadata_type).to eq("empty")
-      expect(inbound.metadata).to eq(nil)
+      expect(inbound.metadata).to eq({})
 
       expect(outbound.errors).to eq([])
 
