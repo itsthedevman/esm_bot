@@ -1,17 +1,20 @@
 # frozen_string_literal: true
 
 describe ESM::Connection::Server, v2: true do
+  include_context "connection"
+
   let(:connection_server) { described_class.instance }
-  let(:message) { ESM::Connection::Message.new(type: "test", data: {foo: "bar"}, data_type: "data_test") }
+  let(:server) { ESM::Test.server }
+  let(:message) { ESM::Message.test.set_server_id(server.server_id).set_data(:data_test, {foo: "bar"}) }
 
   describe "#on_message" do
     it "triggers on_error if message contains errors" do
       outgoing_message = message.dup
-      outgoing_message.add_error(type: "code", content: "default")
+      outgoing_message.add_error(:code, "default")
 
       # Remove the default callback and set a new one
       outgoing_message.add_callback(:on_error) do |_incoming, outgoing|
-        expect(outgoing.errors.first.to_h).to eql({type: "code", content: "default"})
+        expect(outgoing.errors.first.to_h).to eql({type: :code, content: "default"})
       end
 
       # The overseer needs to know about this message
@@ -23,20 +26,12 @@ describe ESM::Connection::Server, v2: true do
 
   # fire(message, to:, forget: false, wait: false)
   describe "#fire", requires_connection: true do
-    include_context "connection"
-
-    let(:server) { ESM::Test.server }
-
     before :each do
       ESM::Test.block_outbound_messages = true
     end
 
-    after :each do
-      ESM::Connection::Server.instance.message_overseer.remove_all!
-    end
-
     it "sends a message" do
-      expect { connection_server.fire(message, to: server.server_id) }.not_to raise_error
+      expect { connection_server.fire(message, to: server.server_id, forget: true) }.not_to raise_error
 
       outgoing_message = ESM::Test.outbound_server_messages.first
       expect(outgoing_message).not_to be_nil
@@ -46,13 +41,11 @@ describe ESM::Connection::Server, v2: true do
     end
 
     it "sends a message and waits for the reply" do
-      outgoing_message = ESM::Connection::Message.new(id: message.id, type: "test")
-      message.server_id = server.server_id
+      outgoing_message = ESM::Message.test.set_id(message.id).set_server_id(server.server_id)
 
       thread = Thread.new do
         response = nil
         expect { response = connection_server.fire(outgoing_message, to: server.server_id, wait: true) }.not_to raise_error
-
         expect(response).not_to be_nil
         expect(response.type).to eq("test")
         expect(response.data_type).to eq("data_test")

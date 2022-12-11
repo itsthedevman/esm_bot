@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-describe ESM::Event::SendToChannel, requires_connection: true, v2: true do
+describe ESM::Event::SendToChannel, v2: true do
   include_context "connection"
 
   let!(:server) { ESM::Test.server }
@@ -10,10 +10,7 @@ describe ESM::Event::SendToChannel, requires_connection: true, v2: true do
   end
 
   it "sends a message" do
-    inbound_message = ESM::Connection::Message.new(
-      type: "event", data_type: "send_to_channel",
-      data: {id: ESM::Test.channel.id.to_s, content: Faker::String.random}
-    )
+    inbound_message = ESM::Message.event.set_data(:send_to_channel, {id: ESM::Test.channel.id.to_s, content: Faker::String.random})
 
     described_class.new(connection, inbound_message).run!
 
@@ -32,10 +29,7 @@ describe ESM::Event::SendToChannel, requires_connection: true, v2: true do
       ]
     )
 
-    inbound_message = ESM::Connection::Message.new(
-      type: "event", data_type: "send_to_channel",
-      data: {id: ESM::Test.channel.id.to_s, content: embed_hash.to_json}
-    )
+    inbound_message = ESM::Message.event.set_data(:send_to_channel, {id: ESM::Test.channel.id.to_s, content: embed_hash.to_json})
 
     described_class.new(connection, inbound_message).run!
 
@@ -60,10 +54,7 @@ describe ESM::Event::SendToChannel, requires_connection: true, v2: true do
   end
 
   it "only allows sending messages to that community's discord channels" do
-    inbound_message = ESM::Connection::Message.new(
-      type: "event", data_type: "send_to_channel",
-      data: {id: "THIS CHANNEL CANNOT EXIST", content: ""}
-    )
+    inbound_message = ESM::Message.event.set_data(:send_to_channel, {id: "THIS CHANNEL CANNOT EXIST", content: ""})
 
     described_class.new(connection, inbound_message).run!
 

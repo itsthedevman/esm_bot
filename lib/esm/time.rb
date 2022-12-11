@@ -10,7 +10,7 @@ module ESM
       DATE = "%F"
     end
 
-    def self.distance_of_time_in_words(to_time, from_time: DateTime.current, precise: true)
+    def self.distance_of_time_in_words(to_time, from_time: ::Time.current, precise: true)
       distance = new.distance_of_time_in_words(from_time.utc, to_time.utc, precise)
       singularize(distance)
     end
@@ -22,7 +22,13 @@ module ESM
 
     # Parses a stringed time as UTC time
     def self.parse(time)
+      return time if time.is_a?(ActiveSupport::TimeWithZone)
+
       ::Time.find_zone("UTC").parse(time)
+    end
+
+    def self.current
+      ::Time.find_zone("UTC").now
     end
   end
 end

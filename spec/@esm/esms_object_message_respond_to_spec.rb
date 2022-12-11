@@ -5,7 +5,7 @@ describe "ESMs_object_message_respond_to", requires_connection: true, v2: true d
 
   it "acknowledges the message" do
     success = false
-    message = ESM::Connection::Message.new(type: :test)
+    message = ESM::Message.test
 
     message.add_callback(:on_response) do |inbound, outbound|
       expect(outbound.type).to eq("test")
@@ -39,7 +39,7 @@ describe "ESMs_object_message_respond_to", requires_connection: true, v2: true d
 
   it "on_error is triggered when errors" do
     success = false
-    message = ESM::Connection::Message.new(type: :test)
+    message = ESM::Message.test
 
     message.add_callback(:on_error) do |inbound, outbound|
       expect(outbound.type).to eq("test")

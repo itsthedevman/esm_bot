@@ -4,7 +4,7 @@ class OpenStruct
   attr_reader :table
 
   def blank?
-    to_h.blank?
+    table.blank?
   end
 
   def each(&block)

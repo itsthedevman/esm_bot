@@ -15,7 +15,7 @@ module ESM
         argument :server_id
 
         def on_execute
-          send_to_arma(type: :event)
+          send_to_arma({type: :test, errors: [{type: :message, content: "test"}]})
         end
 
         def on_response

@@ -72,8 +72,8 @@ module ESM
         #
         # Called when an Arma 3 server is responding to a message sent from this command
         #
-        # @param incoming_message [ESM::Connection::Message] The incoming message from the server
-        # @param _outgoing_message [ESM::Connection::Message] The outgoing message from the command
+        # @param incoming_message [ESM::Message] The incoming message from the server
+        # @param _outgoing_message [ESM::Message] The outgoing message from the command
         #
         def on_response(incoming_message, _outgoing_message)
           results = incoming_message.data

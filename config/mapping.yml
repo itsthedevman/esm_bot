@@ -22,7 +22,8 @@
 #   Boolean
 #   ?<type> -> Indicates that it can be nil
 
-empty: []
+empty:
+
 
 init:
   extension_version: String
@@ -89,8 +90,9 @@ sqf_result:
 ###########################
 ## METADATA
 ###########################
-command: []
-
+command:
+  player: HashMap
+  target: ?HashMap
 
 ###########################
 ## AUTOMATIC TESTS

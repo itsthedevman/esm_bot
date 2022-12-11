@@ -10,10 +10,9 @@ describe ESM::Event::ServerInitialization, v2: true, requires_connection: true d
   let(:reward) { server.server_reward }
 
   let!(:message) do
-    ESM::Connection::Message.new(
-      type: "init",
-      data_type: "init",
-      data: {
+    ESM::Message.event.set_data(
+      :init,
+      {
         extension_version: "2.0.0",
         server_name: server.server_name,
         price_per_object: Faker::Number.between(from: 0, to: 1_000_000_000),

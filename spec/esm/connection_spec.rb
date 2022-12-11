@@ -5,7 +5,7 @@ describe ESM::Connection, v2: true, requires_connection: true do
 
   let!(:server) { ESM::Test.server }
   let!(:connection_server) { ESM::Connection::Server.instance }
-  let(:message) { ESM::Connection::Message.new(type: :test, data: {foo: "bar"}, data_type: :data_test) }
+  let(:message) { ESM::Message.test.set_data(:data_test, {foo: "bar"}) }
 
   after :each do
     ESM::Connection::Server.instance.message_overseer.remove_all!
@@ -17,7 +17,7 @@ describe ESM::Connection, v2: true, requires_connection: true do
     end
 
     it "accepts a hash" do
-      outgoing_message = connection.send_message(type: :test, data: {foo: "bar"}, data_type: :data_test)
+      outgoing_message = connection.send_message(type: :test, data: {type: :data_test, content: {foo: "bar"}})
 
       message = ESM::Test.outbound_server_messages.first
       expect(message).not_to be_nil
@@ -38,20 +38,16 @@ describe ESM::Connection, v2: true, requires_connection: true do
   describe "#on_open" do
     it "runs ESM::Event::ServerInitialization" do
       incoming_message =
-        ESM::Connection::Message.new(
-          type: "init",
-          data_type: "init",
-          data: {
-            server_name: server.server_name,
-            price_per_object: 10,
-            territory_lifetime: 7,
-            territory_data: "[]",
-            server_start_time: DateTime.now,
-            extension_version: "2.0.0",
-            vg_enabled: false,
-            vg_max_sizes: [-1, 5, 8, 11, 13, 15, 18, 21, 25, 28]
-          }
-        )
+        ESM::Message.event.set_data(:init, {
+          server_name: server.server_name,
+          price_per_object: 10,
+          territory_lifetime: 7,
+          territory_data: "[]",
+          server_start_time: DateTime.now,
+          extension_version: "2.0.0",
+          vg_enabled: false,
+          vg_max_sizes: [-1, 5, 8, 11, 13, 15, 18, 21, 25, 28]
+        })
 
       expect { connection.on_open(incoming_message) }.not_to raise_error
     end
@@ -59,7 +55,7 @@ describe ESM::Connection, v2: true, requires_connection: true do
 
   describe "#on_message" do
     it "acknowledges the message" do
-      incoming_message = ESM::Connection::Message.new(type: "test")
+      incoming_message = ESM::Message.test
 
       message.add_callback(:on_response) do |_, outgoing|
         expect(outgoing).to eq(message)

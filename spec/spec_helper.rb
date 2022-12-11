@@ -41,7 +41,7 @@ ActiveRecord::Base.logger.level = Logger::INFO if ActiveRecord::Base.logger.pres
 build_result = `cargo check; echo $?`.chomp
 raise "Failed to build extension_server" if build_result != "0"
 
-EXTENSION_SERVER = IO.popen("POSTGRES_DATABASE=esm_test bin/extension_server")
+EXTENSION_SERVER = IO.popen("POSTGRES_DATABASE=esm_test RUST_LOG=warn bin/extension_server")
 
 RSpec.configure do |config|
   config.include FactoryBot::Syntax::Methods
@@ -122,17 +122,10 @@ RSpec.shared_context("connection") do
   # @note: The result is ran through a JSON parser during the communication process. The type may not be what you expect, but it will be consistent
   #
   def execute_sqf!(code)
-    message = ESM::Connection::Message.new(
-      type: "arma",
-      data_type: "sqf",
-      data: {
-        execute_on: "server",
-        code: ESM::Arma::Sqf.minify(code)
-      }
-    )
+    message = ESM::Message.arma.set_data(:sqf, {execute_on: "server", code: ESM::Arma::Sqf.minify(code)})
 
-    message.locals = {
-      command: {
+    message.add_attribute(
+      :command, {
         current_user: {
           steam_uid: user.steam_uid || "",
           id: "",
@@ -140,16 +133,15 @@ RSpec.shared_context("connection") do
           mention: ""
         }
       }.to_ostruct
-    }
-
-    message.apply_command_metadata
+    ).apply_command_metadata
 
     connection.send_message(message, wait: true)
   end
 
   before(:each) do
-    wait_for { ESM::Connection::Server.instance&.tcp_server_alive? }.to be(true)
     ESM::Connection::Server.resume
+
+    wait_for { ESM::Connection::Server.instance&.tcp_server_alive? }.to be(true)
     wait_for { server.connected? }.to be(true)
 
     ESM::Test.outbound_server_messages.clear
@@ -252,7 +244,7 @@ end
 #
 # Waits for a message to be sent from the bot to the server
 #
-# @return [ESM::Connection::Message]
+# @return [ESM::Message]
 #
 def wait_for_outbound_message
   message = nil
@@ -263,7 +255,7 @@ end
 #
 # Waits for a message to be sent from the client to the bot
 #
-# @return [ESM::Connection::Message]
+# @return [ESM::Message]
 #
 def wait_for_inbound_message
   message = nil

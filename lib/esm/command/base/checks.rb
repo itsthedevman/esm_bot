@@ -144,6 +144,7 @@ module ESM
             provided_server_id = @command.arguments.server_id
 
             # Attempt to correct them
+            # TODO: V1
             corrections = ESM::Websocket.correct(provided_server_id)
 
             ESM::Embed.build do |e|

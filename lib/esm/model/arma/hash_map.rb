@@ -53,6 +53,10 @@ module ESM
 
       alias_method :to_s, :to_json
 
+      def to_ostruct
+        to_h.to_ostruct
+      end
+
       private
 
       # The parameters sent over by Arma can be in a SimpleArray format. This will convert the value if need be.

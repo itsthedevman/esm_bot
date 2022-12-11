@@ -148,8 +148,7 @@ module ESM
     def log_error(log_message)
       uuid = SecureRandom.uuid
 
-      message = ESM::Connection::Message.new(type: "event")
-      message.add_error(type: "message", content: "[#{uuid}] #{log_message}")
+      message = ESM::Message.event.add_error("message", "[#{uuid}] #{log_message}")
       connection.send_message(message)
 
       ESM.bot.deliver(I18n.t("exceptions.extension_error", server_id: server_id, id: uuid), to: community.logging_channel_id)

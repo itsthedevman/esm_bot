@@ -358,28 +358,29 @@ module ESM
       #
       # Sends a message to the target_server
       #
-      # @param message [ESM::Connection::Message, nil] If a message is provided, this will be the message that is sent. The rest of the arguments for this method are ignored
-      # @param type [String/Symbol] The message type. If no message is provided, this will be used to build the message. See ESM::Connection::Message for more details
-      # @param data_type [String/Symbol] The messages's data type. If no message is provided, this will be used to build the message. See ESM::Connection::Message for more details
-      # @param **data [Hash] The rest of the attributes to pass into ESM::Connection::Message. If no message is provided, this will be used to build the message. See ESM::Connection::Message for more details
+      # @param message [ESM::Message, nil] If a message is provided, this will be the message that is sent. The rest of the arguments for this method are ignored
+      # @param type [String/Symbol] The message type. If no message is provided, this will be used to build the message. See ESM::Message for more details
+      # @param data_type [String/Symbol] The messages's data type. If no message is provided, this will be used to build the message. See ESM::Message for more details
+      # @param **data [Hash] The rest of the attributes to pass into ESM::Message. If no message is provided, this will be used to build the message. See ESM::Message for more details
       #
-      # @return [ESM::Connection::Message] The message that was sent
+      # @return [ESM::Message] The message that was sent
       #
-      def send_to_arma(message = nil, type: :arma, data_type: name, **data)
-        raise ESM::Exception::CheckFailure, "#send_to_arma was called on #{name} but this command does not require a server" if target_server.nil?
+      def send_to_arma(outbound_message = {}, send_opts = {})
+        raise ESM::Exception::CheckFailure, "Command #{name} must define the `server_id` argument in order to use #send_to_arma" if target_server.nil?
 
         # Allows overwriting the outbound message. Otherwise, build a message from the data
-        if message.nil?
-          message = ESM::Connection::Message.new(type: type, data_type: data_type, **data)
-          message.add_callback(:on_error, :on_error)
-          message.add_callback(:on_response) do |incoming_message, outgoing_message|
+        if outbound_message.is_a?(Hash)
+          outbound_message = ESM::Message.from_hash(outbound_message)
+
+          outbound_message.add_callback(:on_error, :on_error)
+          outbound_message.add_callback(:on_response) do |incoming_message, outgoing_message|
             on_response(incoming_message, outgoing_message)
           end
         end
 
-        message.locals = {command: self}
-        message.apply_command_metadata
-        target_server.connection.send_message(message)
+        outbound_message.add_attribute(:command, self)
+        outbound_message.apply_command_metadata
+        target_server.connection.send_message(outbound_message, send_opts)
       end
 
       # Convenience method for replying back to the event's channel

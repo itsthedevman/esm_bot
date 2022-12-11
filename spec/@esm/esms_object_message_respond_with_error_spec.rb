@@ -5,7 +5,7 @@ describe "ESMs_object_message_respond_withError", requires_connection: true, v2:
 
   it "responds with an error" do
     success = false
-    message = ESM::Connection::Message.new(type: :test)
+    message = ESM::Message.test
 
     message.add_callback(:on_error) do |inbound, outbound|
       expect(outbound.type).to eq("test")

@@ -2,7 +2,7 @@
 
 describe ESM::Connection::MessageOverseer, v2: true do
   let!(:overseer) { ESM::Connection::Server.instance.message_overseer }
-  let!(:message) { ESM::Connection::Message.new(type: "test") }
+  let!(:message) { ESM::Message.test }
 
   describe "#watch" do
     it "adds the message to the watch list" do
@@ -19,7 +19,7 @@ describe ESM::Connection::MessageOverseer, v2: true do
 
       sleep(0.5) # Minimum amount of time
       expect(message.errors?).to be(true)
-      expect(message.errors.first.type).to eq("code")
+      expect(message.errors.first.type).to eq(:code)
       expect(message.errors.first.content).to eq("message_undeliverable")
     end
   end

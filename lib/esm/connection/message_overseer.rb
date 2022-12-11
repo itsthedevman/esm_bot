@@ -34,7 +34,7 @@ module ESM
       #
       # Watches a message for a delivery response. If the message never receives one, the message's `on_error` callback will be triggered
       #
-      # @param message [ESM::Connection::Message] The message to match
+      # @param message [ESM::Message] The message to match
       # @param expires_at [DateTime, Time] The time when the message should be considered undeliverable.
       #
       def watch(message, expires_at: 10.seconds.from_now)
@@ -48,7 +48,7 @@ module ESM
       #
       # @param id [String] The ID of the message
       #
-      # @return [ESM::Connection::Message, Nil] The message or nil
+      # @return [ESM::Message, Nil] The message or nil
       #
       def retrieve(id)
         envelope = @mailbox.delete(id)
@@ -66,7 +66,7 @@ module ESM
           message = envelope.message
 
           if with_error
-            message.add_error(type: "code", content: "message_undeliverable")
+            message.add_error("code", "message_undeliverable")
             message.run_callback(:on_error, message, nil)
           end
 
@@ -82,7 +82,7 @@ module ESM
           next if !envelope.undeliverable?
 
           message = envelope.message
-          message.add_error(type: "code", content: "message_undeliverable")
+          message.add_error("code", "message_undeliverable")
           message.run_callback(:on_error, message, nil)
 
           @mailbox.delete(id)

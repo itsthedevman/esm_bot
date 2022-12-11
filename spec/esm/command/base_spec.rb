@@ -256,35 +256,35 @@ describe ESM::Command::Base do
     end
   end
 
-  describe "#discord" do
+  describe "#on_execute" do
     include_context "command" do
       let!(:command_class) { ESM::Command::Test::PlayerCommand }
     end
 
     it "is defined" do
-      expect(command.respond_to?(:discord)).to be(true)
+      expect(command.respond_to?(:on_execute)).to be(true)
     end
 
     it "is callable" do
-      expect(command.discord).to eq("discord")
+      expect(command.on_execute).to eq("on_execute")
     end
   end
 
-  describe "#server" do
+  describe "#on_response" do
     include_context "command" do
       let!(:command_class) { ESM::Command::Test::PlayerCommand }
     end
 
     it "is defined" do
-      expect(command.respond_to?(:server)).to be(true)
+      expect(command.respond_to?(:on_response)).to be(true)
     end
 
     it "is callable" do
-      expect(command.server).to eq("server")
+      expect(command.on_response).to eq("on_response")
     end
   end
 
-  describe "#execute", requires_connection: true do
+  describe "#execute" do
     include_context "connection"
     include_context "command" do
       let!(:command_class) { ESM::Command::Test::ServerSuccessCommand }
@@ -321,7 +321,7 @@ describe ESM::Command::Base do
         expect(ESM::Test.messages.size).to eq(1)
 
         error = ESM::Test.messages.first.second
-        expect(error.description).to eq("Hey #{user.mention}, this command can only is used in a **Direct Message** with me.\n\nJust right click my name, click **Message**, and send it there")
+        expect(error.description).to eq("Hey #{user.mention}, this command can only be used in a **Direct Message** with me.\n\nJust right click my name, click **Message**, and send it there")
       end
 
       it "send error (StandardError)" do
@@ -335,12 +335,10 @@ describe ESM::Command::Base do
         expect(error.description).to include("Well, this is awkward.\nWill you please join my Discord (https://esmbot.com/join) and let my developer know that this happened?\nPlease give him this code:\n```")
       end
 
-      it "resets cooldown" do
+      it "resets cooldown", requires_connection: true do
         command = ESM::Command::Test::ServerErrorCommand.new
-        request = execute!(server_id: server.server_id)
-
-        expect(request).not_to be_nil
-        wait_for { connection.requests }.to be_blank
+        execute!(server_id: server.server_id)
+        wait_for_inbound_message
         expect(ESM::Test.messages.size).to eq(1)
         expect(command.current_cooldown.active?).to be(false)
       end
