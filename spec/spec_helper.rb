@@ -94,9 +94,9 @@ RSpec.shared_context("command") do
   let(:server) { ESM::Test.server }
   let(:user) { ESM::Test.user }
 
-  def execute!(fail_on_raise: true, channel_type: :text, **command_args)
+  def execute!(fail_on_raise: true, channel_type: :text, send_as: user, **command_args)
     command_statement = command.statement(command_args)
-    event = CommandEvent.create(command_statement, user: user, channel_type: channel_type)
+    event = CommandEvent.create(command_statement, user: send_as, channel_type: channel_type)
 
     if fail_on_raise
       expect { command.execute(event) }.not_to raise_error
@@ -138,7 +138,9 @@ RSpec.shared_context("connection") do
     connection.send_message(message, wait: true)
   end
 
-  before(:each) do
+  before(:each) do |example|
+    next unless example.metadata[:requires_connection]
+
     ESM::Connection::Server.resume
 
     wait_for { ESM::Connection::Server.instance&.tcp_server_alive? }.to be(true)
@@ -157,7 +159,9 @@ RSpec.shared_context("connection") do
     end
   end
 
-  after(:each) do
+  after(:each) do |example|
+    next unless example.metadata[:requires_connection]
+
     users = []
     users << user if respond_to?(:user)
     users << second_user if respond_to?(:second_user)
