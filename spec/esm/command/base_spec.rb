@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 describe ESM::Command::Base do
+  include_context "connection"
+
   let!(:community) { ESM::Test.community }
   let!(:server) { ESM::Test.server }
   let!(:user) { ESM::Test.user }
@@ -79,7 +81,7 @@ describe ESM::Command::Base do
       let!(:command_class) { ESM::Command::Test::PlayerCommand }
     end
 
-    let!(:secondary_user) { ESM::Test.second_user }
+    let!(:secondary_user) { ESM::Test.user }
 
     it "is defined" do
       expect(command.respond_to?(:current_user)).to be(true)
@@ -165,7 +167,7 @@ describe ESM::Command::Base do
   end
 
   describe "#target_user" do
-    let!(:secondary_user) { ESM::Test.second_user }
+    let!(:secondary_user) { ESM::Test.user }
 
     include_context "command" do
       let!(:command_class) { ESM::Command::Test::TargetCommand }
@@ -198,7 +200,7 @@ describe ESM::Command::Base do
   end
 
   describe "#target_uid" do
-    let!(:secondary_user) { ESM::Test.second_user }
+    let!(:secondary_user) { ESM::Test.user }
 
     include_context "command" do
       let!(:command_class) { ESM::Command::Test::TargetCommand }
@@ -285,7 +287,6 @@ describe ESM::Command::Base do
   end
 
   describe "#execute" do
-    include_context "connection"
     include_context "command" do
       let!(:command_class) { ESM::Command::Test::ServerSuccessCommand }
     end
@@ -354,7 +355,7 @@ describe ESM::Command::Base do
       expect { command.check_failed!(:text_only, user: user.mention) }.to raise_error(ESM::Exception::CheckFailure) do |error|
         embed = error.data
 
-        expect(embed.description).to match(/this command can only is used in a discord server's \*\*text channel\*\*/i)
+        expect(embed.description).to match(/this command can only be used in a discord server's \*\*text channel\*\*/i)
       end
     end
 
@@ -368,14 +369,6 @@ describe ESM::Command::Base do
   describe "limit to" do
     include_context "command" do
       let!(:command_class) { ESM::Command::Test::BaseV1 }
-    end
-
-    before :each do
-      wait_for { wsc.connected? }.to be(true)
-    end
-
-    after :each do
-      wsc.disconnect!
     end
 
     it "has no limit" do
@@ -400,7 +393,7 @@ describe ESM::Command::Base do
       command.limit_to = nil
     end
 
-    it "executes in both DM and Text channels" do
+    it "executes in both DM and Text channels", requires_connection: true do
       ESM::Test.skip_cooldown = true
       command.limit_to = nil
 
@@ -429,7 +422,7 @@ describe ESM::Command::Base do
       expect { command.execute(event) }.not_to raise_error
     end
 
-    it "executes in only DM channels" do
+    it "executes in only DM channels", requires_connection: true do
       ESM::Test.skip_cooldown = true
       command.limit_to = :dm
 
@@ -445,7 +438,7 @@ describe ESM::Command::Base do
       event = CommandEvent.create(command_statement, channel_type: :text, user: user)
       expect { command.execute(event) }.to raise_error(ESM::Exception::CheckFailure) do |error|
         embed = error.data
-        expect(embed.description).to match(/this command can only is used in a \*\*direct message\*\* with me/i)
+        expect(embed.description).to match(/this command can only be used in a \*\*direct message\*\* with me/i)
       end
 
       # Test dm channel
@@ -463,7 +456,7 @@ describe ESM::Command::Base do
       command.limit_to = nil
     end
 
-    it "executes in on Text channels" do
+    it "executes in on Text channels", requires_connection: true do
       ESM::Test.skip_cooldown = true
       command.limit_to = :text
 
@@ -491,7 +484,7 @@ describe ESM::Command::Base do
       event = CommandEvent.create(command_statement, channel_type: :dm, user: user)
       expect { command.execute(event) }.to raise_error(ESM::Exception::CheckFailure) do |error|
         embed = error.data
-        expect(embed.description).to match(/this command can only is used in a discord server's \*\*text channel\*\*\./i)
+        expect(embed.description).to match(/this command can only be used in a discord server's \*\*text channel\*\*\./i)
       end
 
       command.limit_to = nil
@@ -500,38 +493,34 @@ describe ESM::Command::Base do
 
   describe "#create_or_update_cooldown" do
     include_context "command" do
-      let!(:command_class) { ESM::Command::Test::BaseV1 }
+      let!(:command_class) { ESM::Command::Test::CooldownCommand }
     end
 
-    before :each do
-      wait_for { wsc.connected? }.to be(true)
-    end
-
-    after :each do
-      wsc.disconnect!
-    end
-
-    it "adds" do
-      command_statement = command.statement(
-        community_id: community.community_id,
-        server_id: server.server_id,
-        target: user.discord_id,
-        _integer: "1",
-        _preserve: "PRESERVE",
-        _display_as: "display_as"
-      )
-      event = CommandEvent.create(command_statement, user: user)
-      expect { command.execute(event) }.not_to raise_error
+    it "creates a cooldown if one doesn't exist" do
+      expect(ESM::Cooldown.all.size).to eq(0)
+      execute!
 
       expect(command.current_cooldown).to be_kind_of(ESM::Cooldown)
       expect(command.current_cooldown.valid?).to be(true)
       expect(command.current_cooldown.persisted?).to be(true)
     end
+
+    it "updates the cooldown if one exists" do
+      cooldown = create(:cooldown, :inactive, user_id: user.id, community_id: community.id, command_name: command.name)
+      execute!
+
+      expect(command.current_cooldown).to be_kind_of(ESM::Cooldown)
+      expect(command.current_cooldown.valid?).to be(true)
+      expect(command.current_cooldown.persisted?).to be(true)
+      expect(command.current_cooldown.id).to eq(cooldown.id)
+    end
   end
+
+  describe "#load_current_cooldown"
 
   describe "#on_cooldown?" do
     include_context "command" do
-      let!(:command_class) { ESM::Command::Test::BaseV1 }
+      let!(:command_class) { ESM::Command::Test::CooldownCommand }
     end
 
     it "respond" do
@@ -539,49 +528,27 @@ describe ESM::Command::Base do
     end
 
     it "is on cooldown" do
-      create(:cooldown, :active, user_id: user.id, community_id: community.id)
+      cooldown = create(:cooldown, :active, user_id: user.id, community_id: community.id, command_name: command.name)
+      expect { execute!(fail_on_raise: false) }.to raise_error(ESM::Exception::CheckFailure, /you're on cooldown/i)
 
-      command_statement = command.statement(
-        community_id: community.community_id,
-        server_id: server.server_id,
-        target: user.discord_id,
-        _integer: "1",
-        _preserve: "PRESERVE",
-        _display_as: "display_as",
-        _default: "default",
-        _multiline: "multi\nline"
-      )
-      event = CommandEvent.create(command_statement, user: user)
-      command.event = event
-
+      expect(command.current_cooldown).to eq(cooldown)
       expect(command.on_cooldown?).to be(true)
     end
 
     it "is not on cooldown" do
-      create(:cooldown, :inactive, user_id: user.id, community_id: community.id)
+      create(:cooldown, :inactive, user_id: user.id, community_id: community.id, command_name: command.name)
 
-      command_statement = command.statement(
-        community_id: community.community_id,
-        server_id: server.server_id,
-        target: user.discord_id,
-        _integer: "1",
-        _preserve: "PRESERVE",
-        _display_as: "display_as",
-        _default: "default",
-        _multiline: "multi\nline"
-      )
-      event = CommandEvent.create(command_statement, user: user)
-      command.event = event
+      command.send(:skip, :cooldown)
+      execute!(fail_on_raise: false)
 
       expect(command.on_cooldown?).to be(false)
     end
   end
 
-  describe "#deliver", requires_connection: true do
-    include_context "connection"
-    include_context "command" do
-      let!(:command_class) { ESM::Command::Test::BaseV1 }
-    end
+  # V1
+  describe "#deliver" do
+    let!(:wsc) { WebsocketClient.new(server) }
+    let(:connection) { ESM::Websocket.connections[server.server_id] }
 
     before :each do
       wait_for { wsc.connected? }.to be(true)
@@ -592,7 +559,7 @@ describe ESM::Command::Base do
     end
 
     it "raises" do
-      server_command = ESM::Command::Test::ServerSuccessCommand.new
+      server_command = ESM::Command::Test::ServerSuccessCommandV1.new
       event = CommandEvent.create(server_command.statement(server_id: nil), channel_type: :text, user: user)
       server_command.event = event
 
@@ -601,7 +568,7 @@ describe ESM::Command::Base do
 
     it "delivers" do
       request = nil
-      server_command = ESM::Command::Test::ServerSuccessCommand.new
+      server_command = ESM::Command::Test::ServerSuccessCommandV1.new
       event = CommandEvent.create(server_command.statement(server_id: server.server_id), channel_type: :text, user: user)
 
       expect { request = server_command.execute(event) }.not_to raise_error
@@ -628,452 +595,331 @@ describe ESM::Command::Base do
 
   # Truth table: https://docs.google.com/spreadsheets/d/1BDHVwhyvgbFPlXnAtFKzOcPtGhZ1zG5H-_1km3VXKr8/edit#gid=0
   describe "Command Permissions" do
-    let(:user_with_role) { create(:user_with_role) }
-    let(:whitelisted_role_ids) { [ENV["ROLE_USER_ROLE_ID"]] }
-
-    before :each do
-      wait_for { wsc.connected? }.to be(true)
+    include_context "command" do
+      let!(:command_class) { ESM::Command::Test::CommunityCommand }
     end
 
-    after :each do
-      wsc.disconnect!
-    end
+    let!(:configuration) { ESM::CommandConfiguration.where(command_name: command.name).first }
+    let(:whitelisted_role_ids) { community.role_ids }
 
     describe "Text Channel" do
       describe "Allowed" do
-        include_context "command" do
-          let!(:command_class) { ESM::Command::Test::BaseV1 }
-        end
-
         it "enabled: true, whitelist_enabled: false, whitelisted: false, allowed: true" do
-          command_statement = command.statement(
-            community_id: community.community_id,
-            server_id: server.server_id,
-            target: user.discord_id,
-            _integer: "1",
-            _preserve: "PRESERVE",
-            _display_as: "display_as",
-            _default: "default",
-            _multiline: "multi\nline"
+          configuration.update!(
+            enabled: true,
+            whitelist_enabled: false,
+            whitelisted_role_ids: [],
+            allowed_in_text_channels: true
           )
-          event = CommandEvent.create(command_statement, user: user)
-          configuration.update(enabled: true, whitelist_enabled: false, whitelisted_role_ids: [], allowed_in_text_channels: true)
 
-          expect { command.execute(event) }.not_to raise_error
+          execute!(community_id: community.community_id)
         end
 
         it "enabled: true, whitelist_enabled: true, whitelisted: true, allowed: true" do
-          command_statement = command.statement(
-            community_id: community.community_id,
-            server_id: server.server_id,
-            target: user.discord_id,
-            _integer: "1",
-            _preserve: "PRESERVE",
-            _display_as: "display_as",
-            _default: "default",
-            _multiline: "multi\nline"
+          role_user = ESM::Test.user(:with_role)
+          configuration.update!(
+            enabled: true,
+            whitelist_enabled: true,
+            whitelisted_role_ids: whitelisted_role_ids,
+            allowed_in_text_channels: true
           )
-          event = CommandEvent.create(command_statement, user: user_with_role)
-          configuration.update(enabled: true, whitelist_enabled: true, whitelisted_role_ids: whitelisted_role_ids, allowed_in_text_channels: true)
 
-          expect { command.execute(event) }.not_to raise_error
+          # CHECK THAT user ACTUALLY HAS ROLE
+          execute!(send_as: role_user, community_id: community.community_id)
         end
       end
 
       describe "Denied" do
-        include_context "command" do
-          let!(:command_class) { ESM::Command::Test::BaseV1 }
-        end
-
         it "enabled: false, whitelist_enabled: false, whitelisted: false, allowed: false" do
-          command_statement = command.statement(
-            community_id: community.community_id,
-            server_id: server.server_id,
-            target: user.discord_id,
-            _integer: "1",
-            _preserve: "PRESERVE",
-            _display_as: "display_as",
-            _default: "default",
-            _multiline: "multi\nline"
+          configuration.update!(
+            enabled: false,
+            whitelist_enabled: false,
+            whitelisted_role_ids: [],
+            allowed_in_text_channels: false
           )
-          event = CommandEvent.create(command_statement, user: user)
-          configuration.update(enabled: false, whitelist_enabled: false, whitelisted_role_ids: [], allowed_in_text_channels: false)
 
-          expect { command.execute(event) }.to raise_error(ESM::Exception::CheckFailure, /not enabled/i)
+          expect {
+            execute!(fail_on_raise: false, community_id: community.community_id)
+          }.to raise_error(ESM::Exception::CheckFailure, /not enabled/i)
         end
 
         it "enabled: false, notify_when_disabled: true" do
-          command_statement = command.statement(
-            community_id: community.community_id,
-            server_id: server.server_id,
-            target: user.discord_id,
-            _integer: "1",
-            _preserve: "PRESERVE",
-            _display_as: "display_as",
-            _default: "default",
-            _multiline: "multi\nline"
+          configuration.update!(
+            enabled: false,
+            notify_when_disabled: true
           )
-          event = CommandEvent.create(command_statement, user: user)
-          configuration.update(enabled: false, notify_when_disabled: true)
 
-          expect { command.execute(event) }.to raise_error(ESM::Exception::CheckFailure, /not enabled/i)
+          expect {
+            execute!(fail_on_raise: false, community_id: community.community_id)
+          }.to raise_error(ESM::Exception::CheckFailure, /not enabled/i)
         end
 
         it "enabled: false, notify_when_disabled: false" do
-          command_statement = command.statement(
-            community_id: community.community_id,
-            server_id: server.server_id,
-            target: user.discord_id,
-            _integer: "1",
-            _preserve: "PRESERVE",
-            _display_as: "display_as",
-            _default: "default",
-            _multiline: "multi\nline"
+          configuration.update!(
+            enabled: false,
+            notify_when_disabled: false
           )
-          event = CommandEvent.create(command_statement, user: user)
-          configuration.update(enabled: false, notify_when_disabled: false)
 
-          expect { command.execute(event) }.to raise_error(ESM::Exception::CheckFailureNoMessage)
+          expect {
+            execute!(fail_on_raise: false, community_id: community.community_id)
+          }.to raise_error(ESM::Exception::CheckFailureNoMessage)
 
-          # It not send a message
+          # It did not send a message
           expect(ESM::Test.messages.size).to eq(0)
         end
 
         it "enabled: false, whitelist_enabled: false, whitelisted: false, allowed: true" do
-          command_statement = command.statement(
-            community_id: community.community_id,
-            server_id: server.server_id,
-            target: user.discord_id,
-            _integer: "1",
-            _preserve: "PRESERVE",
-            _display_as: "display_as",
-            _default: "default",
-            _multiline: "multi\nline"
+          configuration.update!(
+            enabled: false,
+            whitelist_enabled: false,
+            whitelisted_role_ids: [],
+            allowed_in_text_channels: true
           )
-          event = CommandEvent.create(command_statement, user: user)
-          configuration.update(enabled: false, whitelist_enabled: false, whitelisted_role_ids: [], allowed_in_text_channels: true)
 
-          expect { command.execute(event) }.to raise_error(ESM::Exception::CheckFailure, /not enabled/i)
+          expect {
+            execute!(fail_on_raise: false, community_id: community.community_id)
+          }.to raise_error(ESM::Exception::CheckFailure, /not enabled/i)
         end
 
         it "enabled: false, whitelist_enabled: true, whitelisted: false, allowed: false" do
-          command_statement = command.statement(
-            community_id: community.community_id,
-            server_id: server.server_id,
-            target: user.discord_id,
-            _integer: "1",
-            _preserve: "PRESERVE",
-            _display_as: "display_as",
-            _default: "default",
-            _multiline: "multi\nline"
+          configuration.update!(
+            enabled: false,
+            whitelist_enabled: true,
+            whitelisted_role_ids: [],
+            allowed_in_text_channels: false
           )
-          event = CommandEvent.create(command_statement, user: user)
-          configuration.update(enabled: false, whitelist_enabled: true, whitelisted_role_ids: [], allowed_in_text_channels: false)
 
-          expect { command.execute(event) }.to raise_error(ESM::Exception::CheckFailure, /not enabled/i)
+          expect {
+            execute!(fail_on_raise: false, community_id: community.community_id)
+          }.to raise_error(ESM::Exception::CheckFailure, /not enabled/i)
         end
 
         it "enabled: false, whitelist_enabled: true, whitelisted: true, allowed: false" do
-          command_statement = command.statement(
-            community_id: community.community_id,
-            server_id: server.server_id,
-            target: user.discord_id,
-            _integer: "1",
-            _preserve: "PRESERVE",
-            _display_as: "display_as",
-            _default: "default",
-            _multiline: "multi\nline"
+          configuration.update!(
+            enabled: false,
+            whitelist_enabled: true,
+            whitelisted_role_ids: whitelisted_role_ids,
+            allowed_in_text_channels: false
           )
-          event = CommandEvent.create(command_statement, user: user_with_role)
-          configuration.update(enabled: false, whitelist_enabled: true, whitelisted_role_ids: whitelisted_role_ids, allowed_in_text_channels: false)
 
-          expect { command.execute(event) }.to raise_error(ESM::Exception::CheckFailure, /not enabled/i)
+          expect {
+            execute!(fail_on_raise: false, community_id: community.community_id)
+          }.to raise_error(ESM::Exception::CheckFailure, /not enabled/i)
         end
 
         it "enabled: false, whitelist_enabled: true, whitelisted: true, allowed: true" do
-          command_statement = command.statement(
-            community_id: community.community_id,
-            server_id: server.server_id,
-            target: user.discord_id,
-            _integer: "1",
-            _preserve: "PRESERVE",
-            _display_as: "display_as",
-            _default: "default",
-            _multiline: "multi\nline"
+          configuration.update!(
+            enabled: false,
+            whitelist_enabled: true,
+            whitelisted_role_ids: whitelisted_role_ids,
+            allowed_in_text_channels: true
           )
-          event = CommandEvent.create(command_statement, user: user_with_role)
-          configuration.update(enabled: false, whitelist_enabled: true, whitelisted_role_ids: whitelisted_role_ids, allowed_in_text_channels: true)
 
-          expect { command.execute(event) }.to raise_error(ESM::Exception::CheckFailure, /not enabled/i)
+          expect {
+            execute!(fail_on_raise: false, community_id: community.community_id)
+          }.to raise_error(ESM::Exception::CheckFailure, /not enabled/i)
         end
 
         it "enabled: true, whitelist_enabled: false, whitelisted: false, allowed: false" do
-          command_statement = command.statement(
-            community_id: community.community_id,
-            server_id: server.server_id,
-            target: user.discord_id,
-            _integer: "1",
-            _preserve: "PRESERVE",
-            _display_as: "display_as",
-            _default: "default",
-            _multiline: "multi\nline"
+          configuration.update!(
+            enabled: true,
+            whitelist_enabled: false,
+            whitelisted_role_ids: [],
+            allowed_in_text_channels: false
           )
-          event = CommandEvent.create(command_statement, user: user)
-          configuration.update(enabled: true, whitelist_enabled: false, whitelisted_role_ids: [], allowed_in_text_channels: false)
 
-          expect { command.execute(event) }.to raise_error(ESM::Exception::CheckFailure, /not allowed/i)
+          expect {
+            execute!(fail_on_raise: false, community_id: community.community_id)
+          }.to raise_error(ESM::Exception::CheckFailure, /not allowed/i)
         end
 
         it "enabled: true, whitelist_enabled: true, whitelisted: false, allowed: true" do
-          command_statement = command.statement(
-            community_id: community.community_id,
-            server_id: server.server_id,
-            target: user.discord_id,
-            _integer: "1",
-            _preserve: "PRESERVE",
-            _display_as: "display_as",
-            _default: "default",
-            _multiline: "multi\nline"
+          configuration.update!(
+            enabled: true,
+            whitelist_enabled: true,
+            whitelisted_role_ids: [],
+            allowed_in_text_channels: true
           )
-          event = CommandEvent.create(command_statement, user: user)
-          configuration.update(enabled: true, whitelist_enabled: true, whitelisted_role_ids: [], allowed_in_text_channels: true)
 
-          expect { command.execute(event) }.to raise_error(ESM::Exception::CheckFailure, /not have permission/i)
+          expect {
+            execute!(fail_on_raise: false, community_id: community.community_id)
+          }.to raise_error(ESM::Exception::CheckFailure, /not have permission/i)
         end
 
         it "enabled: true, whitelist_enabled: true, whitelisted: true, allowed: false" do
-          command_statement = command.statement(
-            community_id: community.community_id,
-            server_id: server.server_id,
-            target: user.discord_id,
-            _integer: "1",
-            _preserve: "PRESERVE",
-            _display_as: "display_as",
-            _default: "default",
-            _multiline: "multi\nline"
+          configuration.update!(
+            enabled: true,
+            whitelist_enabled: true,
+            whitelisted_role_ids: whitelisted_role_ids,
+            allowed_in_text_channels: false
           )
-          event = CommandEvent.create(command_statement, user: user_with_role)
-          configuration.update(enabled: true, whitelist_enabled: true, whitelisted_role_ids: whitelisted_role_ids, allowed_in_text_channels: false)
 
-          expect { command.execute(event) }.to raise_error(ESM::Exception::CheckFailure, /not allowed/i)
+          expect {
+            execute!(fail_on_raise: false, community_id: community.community_id)
+          }.to raise_error(ESM::Exception::CheckFailure, /not allowed/i)
         end
       end
     end
 
     describe "Private Message" do
       describe "Allowed" do
-        include_context "command" do
-          let!(:command_class) { ESM::Command::Test::BaseV1 }
-        end
-
         it "enabled: true, whitelist_enabled: false, whitelisted: false, allowed: true" do
-          command_statement = command.statement(
-            community_id: community.community_id,
-            server_id: server.server_id,
-            target: user.discord_id,
-            _integer: "1",
-            _preserve: "PRESERVE",
-            _display_as: "display_as",
-            _default: "default",
-            _multiline: "multi\nline"
+          configuration.update!(
+            enabled: true,
+            whitelist_enabled: false,
+            whitelisted_role_ids: [],
+            allowed_in_text_channels: true
           )
-          event = CommandEvent.create(command_statement, channel_type: :pm, user: user)
-          configuration.update(enabled: true, whitelist_enabled: false, whitelisted_role_ids: [], allowed_in_text_channels: true)
 
-          expect { command.execute(event) }.not_to raise_error
+          execute!(channel_type: :pm, community_id: community.community_id)
         end
 
         it "enabled: true, whitelist_enabled: true, whitelisted: true, allowed: true" do
-          command_statement = command.statement(
-            community_id: community.community_id,
-            server_id: server.server_id,
-            target: user.discord_id,
-            _integer: "1",
-            _preserve: "PRESERVE",
-            _display_as: "display_as",
-            _default: "default",
-            _multiline: "multi\nline"
+          role_user = ESM::Test.user(:with_role)
+          configuration.update!(
+            enabled: true,
+            whitelist_enabled: true,
+            whitelisted_role_ids: whitelisted_role_ids,
+            allowed_in_text_channels: true
           )
-          event = CommandEvent.create(command_statement, channel_type: :pm, user: user_with_role)
-          configuration.update(enabled: true, whitelist_enabled: true, whitelisted_role_ids: whitelisted_role_ids, allowed_in_text_channels: true)
 
-          expect { command.execute(event) }.not_to raise_error
+          execute!(send_as: role_user, channel_type: :pm, community_id: community.community_id)
         end
 
         it "enabled: true, whitelist_enabled: false, whitelisted: false, allowed: false" do
-          command_statement = command.statement(
-            community_id: community.community_id,
-            server_id: server.server_id,
-            target: user.discord_id,
-            _integer: "1",
-            _preserve: "PRESERVE",
-            _display_as: "display_as",
-            _default: "default",
-            _multiline: "multi\nline"
+          configuration.update!(
+            enabled: true,
+            whitelist_enabled: false,
+            whitelisted_role_ids: [],
+            allowed_in_text_channels: false
           )
-          event = CommandEvent.create(command_statement, channel_type: :pm, user: user)
-          configuration.update(enabled: true, whitelist_enabled: false, whitelisted_role_ids: [], allowed_in_text_channels: false)
 
-          expect { command.execute(event) }.not_to raise_error
+          execute!(channel_type: :pm, community_id: community.community_id)
         end
 
         it "enabled: true, whitelist_enabled: true, whitelisted: true, allowed: false" do
-          command_statement = command.statement(
-            community_id: community.community_id,
-            server_id: server.server_id,
-            target: user.discord_id,
-            _integer: "1",
-            _preserve: "PRESERVE",
-            _display_as: "display_as",
-            _default: "default",
-            _multiline: "multi\nline"
+          role_user = ESM::Test.user(:with_role)
+          configuration.update!(
+            enabled: true,
+            whitelist_enabled: true,
+            whitelisted_role_ids: whitelisted_role_ids,
+            allowed_in_text_channels: false
           )
-          event = CommandEvent.create(command_statement, channel_type: :pm, user: user_with_role)
-          configuration.update(enabled: true, whitelist_enabled: true, whitelisted_role_ids: whitelisted_role_ids, allowed_in_text_channels: false)
 
-          expect { command.execute(event) }.not_to raise_error
+          execute!(send_as: role_user, channel_type: :pm, community_id: community.community_id)
         end
       end
 
       describe "Denied" do
-        include_context "command" do
-          let!(:command_class) { ESM::Command::Test::BaseV1 }
-        end
-
         it "enabled: false, notify_when_disabled: true" do
-          command_statement = command.statement(
-            community_id: community.community_id,
-            server_id: server.server_id,
-            target: user.discord_id,
-            _integer: "1",
-            _preserve: "PRESERVE",
-            _display_as: "display_as",
-            _default: "default",
-            _multiline: "multi\nline"
+          configuration.update!(
+            enabled: false,
+            notify_when_disabled: true
           )
-          event = CommandEvent.create(command_statement, channel_type: :pm, user: user)
-          configuration.update(enabled: false, notify_when_disabled: true)
 
-          expect { command.execute(event) }.to raise_error(ESM::Exception::CheckFailure, /not enabled/i)
+          expect {
+            execute!(fail_on_raise: false, channel_type: :pm, community_id: community.community_id)
+          }.to raise_error(ESM::Exception::CheckFailure, /not enabled/i)
         end
 
         it "enabled: false, notify_when_disabled: false" do
-          command_statement = command.statement(
-            community_id: community.community_id,
-            server_id: server.server_id,
-            target: user.discord_id,
-            _integer: "1",
-            _preserve: "PRESERVE",
-            _display_as: "display_as",
-            _default: "default",
-            _multiline: "multi\nline"
+          configuration.update!(
+            enabled: false,
+            notify_when_disabled: false
           )
-          event = CommandEvent.create(command_statement, channel_type: :pm, user: user)
-          configuration.update(enabled: false, notify_when_disabled: false)
 
-          expect { command.execute(event) }.to raise_error(ESM::Exception::CheckFailure, /not enabled/i)
+          expect {
+            execute!(fail_on_raise: false, channel_type: :pm, community_id: community.community_id)
+          }.to raise_error(ESM::Exception::CheckFailure, /not enabled/i)
         end
 
         it "enabled: false, whitelist_enabled: false, whitelisted: false, allowed: false" do
-          command_statement = command.statement(
-            community_id: community.community_id,
-            server_id: server.server_id,
-            target: user.discord_id,
-            _integer: "1",
-            _preserve: "PRESERVE",
-            _display_as: "display_as",
-            _default: "default",
-            _multiline: "multi\nline"
+          configuration.update!(
+            enabled: false,
+            whitelist_enabled: false,
+            whitelisted_role_ids: [],
+            allowed_in_text_channels: false
           )
-          event = CommandEvent.create(command_statement, channel_type: :pm, user: user)
-          configuration.update(enabled: false, whitelist_enabled: false, whitelisted_role_ids: [], allowed_in_text_channels: false)
 
-          expect { command.execute(event) }.to raise_error(ESM::Exception::CheckFailure, /not enabled/i)
+          expect {
+            execute!(fail_on_raise: false, channel_type: :pm, community_id: community.community_id)
+          }.to raise_error(ESM::Exception::CheckFailure, /not enabled/i)
         end
 
         it "enabled: false, whitelist_enabled: false, whitelisted: false, allowed: true" do
-          command_statement = command.statement(
-            community_id: community.community_id,
-            server_id: server.server_id,
-            target: user.discord_id,
-            _integer: "1",
-            _preserve: "PRESERVE",
-            _display_as: "display_as",
-            _default: "default",
-            _multiline: "multi\nline"
+          configuration.update!(
+            enabled: false,
+            whitelist_enabled: false,
+            whitelisted_role_ids: [],
+            allowed_in_text_channels: true
           )
-          event = CommandEvent.create(command_statement, channel_type: :pm, user: user)
-          configuration.update(enabled: false, whitelist_enabled: false, whitelisted_role_ids: [], allowed_in_text_channels: true)
 
-          expect { command.execute(event) }.to raise_error(ESM::Exception::CheckFailure, /not enabled/i)
+          expect {
+            execute!(fail_on_raise: false, channel_type: :pm, community_id: community.community_id)
+          }.to raise_error(ESM::Exception::CheckFailure, /not enabled/i)
         end
 
         it "enabled: false, whitelist_enabled: true, whitelisted: false, allowed: false" do
-          command_statement = command.statement(
-            community_id: community.community_id,
-            server_id: server.server_id,
-            target: user.discord_id,
-            _integer: "1",
-            _preserve: "PRESERVE",
-            _display_as: "display_as",
-            _default: "default",
-            _multiline: "multi\nline"
+          configuration.update!(
+            enabled: false,
+            whitelist_enabled: true,
+            whitelisted_role_ids: [],
+            allowed_in_text_channels: false
           )
-          event = CommandEvent.create(command_statement, channel_type: :pm, user: user)
-          configuration.update(enabled: false, whitelist_enabled: true, whitelisted_role_ids: [], allowed_in_text_channels: false)
 
-          expect { command.execute(event) }.to raise_error(ESM::Exception::CheckFailure, /not enabled/i)
+          expect {
+            execute!(
+              fail_on_raise: false,
+              channel_type: :pm,
+              send_as: user,
+              community_id: community.community_id
+            )
+          }.to raise_error(ESM::Exception::CheckFailure, /not enabled/i)
         end
 
         it "enabled: false, whitelist_enabled: true, whitelisted: true, allowed: false" do
-          command_statement = command.statement(
-            community_id: community.community_id,
-            server_id: server.server_id,
-            target: user.discord_id,
-            _integer: "1",
-            _preserve: "PRESERVE",
-            _display_as: "display_as",
-            _default: "default",
-            _multiline: "multi\nline"
+          configuration.update!(
+            enabled: false,
+            whitelist_enabled: true,
+            whitelisted_role_ids: community.role_ids,
+            allowed_in_text_channels: false
           )
-          event = CommandEvent.create(command_statement, channel_type: :pm, user: user_with_role)
-          configuration.update(enabled: false, whitelist_enabled: true, whitelisted_role_ids: whitelisted_role_ids, allowed_in_text_channels: false)
 
-          expect { command.execute(event) }.to raise_error(ESM::Exception::CheckFailure, /not enabled/i)
+          expect {
+            execute!(
+              fail_on_raise: false,
+              channel_type: :pm,
+              send_as: user,
+              community_id: community.community_id
+            )
+          }.to raise_error(ESM::Exception::CheckFailure, /not enabled/i)
         end
 
         it "enabled: false, whitelist_enabled: true, whitelisted: true, allowed: true" do
-          command_statement = command.statement(
-            community_id: community.community_id,
-            server_id: server.server_id,
-            target: user.discord_id,
-            _integer: "1",
-            _preserve: "PRESERVE",
-            _display_as: "display_as",
-            _default: "default",
-            _multiline: "multi\nline"
+          configuration.update!(
+            enabled: false,
+            whitelist_enabled: true,
+            whitelisted_role_ids: whitelisted_role_ids,
+            allowed_in_text_channels: true
           )
-          event = CommandEvent.create(command_statement, channel_type: :pm, user: user_with_role)
-          configuration.update(enabled: false, whitelist_enabled: true, whitelisted_role_ids: whitelisted_role_ids, allowed_in_text_channels: true)
 
-          expect { command.execute(event) }.to raise_error(ESM::Exception::CheckFailure, /not enabled/i)
+          expect {
+            execute!(fail_on_raise: false, channel_type: :pm, community_id: community.community_id)
+          }.to raise_error(ESM::Exception::CheckFailure, /not enabled/i)
         end
 
         it "enabled: true, whitelist_enabled: true, whitelisted: false, allowed: true" do
-          command_statement = command.statement(
-            community_id: community.community_id,
-            server_id: server.server_id,
-            target: user.discord_id,
-            _integer: "1",
-            _preserve: "PRESERVE",
-            _display_as: "display_as",
-            _default: "default",
-            _multiline: "multi\nline"
+          role_user = ESM::Test.user(:with_role)
+          configuration.update!(
+            enabled: true,
+            whitelist_enabled: true,
+            whitelisted_role_ids: [],
+            allowed_in_text_channels: true
           )
-          event = CommandEvent.create(command_statement, channel_type: :pm, user: user)
-          configuration.update(enabled: true, whitelist_enabled: true, whitelisted_role_ids: [], allowed_in_text_channels: true)
 
-          expect { command.execute(event) }.to raise_error(ESM::Exception::CheckFailure, /not have permission/i)
+          expect {
+            execute!(fail_on_raise: false, send_as: role_user, channel_type: :pm, community_id: community.community_id)
+          }.to raise_error(ESM::Exception::CheckFailure, /not have permission/i)
         end
       end
     end
@@ -1084,11 +930,11 @@ describe ESM::Command::Base do
   #   Run commands for OTHER community servers in text channels
   #   Blocks admin commands from being used text channels
   describe "Player Mode" do
-    let!(:secondary_community) { create(:secondary_community, :player_mode_enabled) }
-    let!(:secondary_user) { ESM::Test.second_user }
+    let!(:secondary_user) { ESM::Test.user }
+    let!(:player_mode_community) { ESM::Test.second_community(:player_mode_enabled) }
 
     it "is enabled" do
-      expect(secondary_community.player_mode_enabled?).to be(true)
+      expect(player_mode_community.player_mode_enabled?).to be(true)
     end
 
     it "is able to use DM only commands in text channel" do
@@ -1120,7 +966,7 @@ describe ESM::Command::Base do
 
     it "does not allow running commands for other communities in text channels (Non-playermode community)" do
       community_command = ESM::Command::Test::CommunityCommand.new
-      command_statement = community_command.statement(community_id: secondary_community.community_id)
+      command_statement = community_command.statement(community_id: player_mode_community.community_id)
 
       # `User` is executing this command from `community`.
       event = CommandEvent.create(command_statement, channel_type: :text, user: user)
@@ -1148,7 +994,7 @@ describe ESM::Command::Base do
   end
 
   describe "#add_request" do
-    let!(:secondary_user) { ESM::Test.second_user }
+    let!(:secondary_user) { ESM::Test.user }
 
     it "adds the request" do
       request_command = ESM::Command::Test::RequestCommand.new
@@ -1160,7 +1006,7 @@ describe ESM::Command::Base do
   end
 
   describe "#from_request" do
-    let!(:secondary_user) { ESM::Test.second_user }
+    let!(:secondary_user) { ESM::Test.user }
 
     it "is accepted" do
       request_command = ESM::Command::Test::RequestCommand.new
