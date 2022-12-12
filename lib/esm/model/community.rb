@@ -32,7 +32,7 @@ module ESM
 
     alias_attribute :name, :community_name
 
-    attr_accessor :guild_type if ESM.env.test?
+    attr_accessor :guild_type, :role_ids if ESM.env.test?
 
     module ESM
       ID = "452568470765305866"

@@ -21,6 +21,7 @@ FactoryBot.define do
       guild_id { ESM::Community::ESM::ID }
       logging_channel_id { ESM::Community::ESM::SPAM_CHANNEL }
       player_mode_enabled { false }
+      role_ids { [] }
     end
 
     factory :primary_community do
@@ -34,6 +35,7 @@ FactoryBot.define do
       logging_channel_id { data[:logging_channel_id] }
       player_mode_enabled { false }
       guild_type { :primary }
+      role_ids { data[:role_users].map { |u| u[:role_id].to_s } }
     end
 
     factory :secondary_community do
@@ -47,6 +49,7 @@ FactoryBot.define do
       logging_channel_id { data[:logging_channel_id] }
       player_mode_enabled { false }
       guild_type { :secondary }
+      role_ids { data[:role_users].map { |u| u[:role_id].to_s } }
     end
 
     trait :player_mode_enabled do

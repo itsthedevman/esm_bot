@@ -198,7 +198,7 @@ module ESM
       # The user that executed the command
       def current_user
         return @current_user if defined?(@current_user) && @current_user.present?
-        return nil if @event.user.nil?
+        return if @event.user.nil?
 
         user = ESM::User.where(discord_id: @event.user.id).first_or_initialize
         user.update(
