@@ -4,6 +4,8 @@ module ESM
   class Test
     # Don't forget to add new entries to .reset!
     class << self
+      DATA = YAML.load_file(File.expand_path("./spec/test_data.yml")).deep_symbolize_keys.freeze
+
       attr_reader :response
       attr_writer :messages
       attr_accessor :skip_cooldown, :block_outbound_messages
@@ -22,7 +24,7 @@ module ESM
 
       def data
         @data ||= lambda do
-          data = YAML.load_file(File.expand_path("./spec/test_data.yml")).deep_symbolize_keys
+          data = DATA.deep_dup
           redis.set("test_data", data.to_json)
 
           data
@@ -33,12 +35,12 @@ module ESM
       #
       # @note The type of community controls what user type is selected
       # @see #reset!
-      def community(type: @community_type)
-        @community ||= FactoryBot.create(type, :player_mode_disabled)
+      def community(*args, type: @community_type)
+        @community ||= FactoryBot.create(type, :player_mode_disabled, *args)
       end
 
-      def second_community
-        @second_community ||= FactoryBot.create(@second_community_type, :player_mode_disabled)
+      def second_community(*args)
+        @second_community ||= FactoryBot.create(@second_community_type, :player_mode_disabled, *args)
       end
 
       # Attempt to simulate random users for tests
@@ -47,38 +49,31 @@ module ESM
       # @see #reset!
       def user(*args, type: @user_type)
         args = [type] + args
-        @user ||= FactoryBot.create(*args)
-      end
 
-      # Creates a second user that isn't #user
-      def second_user(*args, type: @user_type)
-        args = [type] + args
+        counter = 0
+        loop do
+          counter += 1
+          user = FactoryBot.build(*args)
 
-        @second_user ||= lambda do
-          counter = 0
-          loop do
-            counter += 1
-            user = FactoryBot.build(*args)
-
-            raise "Failed to create second user" if counter > 10
-            break user if user.valid? && user.save
+          if counter > 10
+            ap ESM::User.all.to_a
+            raise "Failed to create unique user. Decrease number of calls to ESM::Test.user or add more users to test_data.yml"
           end
-        end.call
+          break user if user.valid? && user.save
+        end
       end
 
       def server
-        @server ||= FactoryBot.create(:server, community_id: community.id)
+        FactoryBot.create(:server, community_id: community.id)
       end
 
       def second_server
-        @second_server ||= FactoryBot.create(:server, community_id: second_community.id)
+        FactoryBot.create(:server, community_id: second_community.id)
       end
 
       def channel
-        @channel ||= lambda do
-          id = data[community.guild_type][:channels].sample
-          ESM.bot.channel(id)
-        end.call
+        id = data[community.guild_type][:channels].sample
+        ESM.bot.channel(id)
       end
 
       def redis
@@ -93,16 +88,18 @@ module ESM
         }.to_ostruct
       end
 
+      def steam_uid
+        data[:steam_uids].delete(data[:steam_uids].sample)
+      end
+
       def reset!
+        @data = nil
         @response = nil
         @messages = nil
         @outbound_server_messages = nil
         @inbound_server_messages = nil
         @community = nil
-        @server = nil
-        @user = nil
-        @second_user = nil
-        @channel = nil
+        @second_community = nil
 
         @skip_cooldown = false
         @block_outbound_messages = false

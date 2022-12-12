@@ -24,7 +24,7 @@ describe ESM::Command::Server::Broadcast, category: "command" do
     let!(:server) { ESM::Test.server }
     let!(:second_server) { create(:server, community_id: community.id) }
     let!(:user) { ESM::Test.user }
-    let!(:second_user) { ESM::Test.second_user }
+    let!(:second_user) { ESM::Test.user }
     let!(:wsc) { WebsocketClient.new(server) }
     let!(:second_wsc) { WebsocketClient.new(second_server) }
     let(:connection) { ESM::Websocket.connections[server.server_id] }

@@ -2,7 +2,7 @@
 
 describe ESM::Request do
   let!(:user_1) { ESM::Test.user }
-  let!(:user_2) { ESM::Test.second_user }
+  let!(:user_2) { ESM::Test.user }
   let(:request) do
     channel_id = [ESM::Community::ESM::SPAM_CHANNEL, ESM::Community::Secondary::SPAM_CHANNEL].sample
 

@@ -24,7 +24,7 @@ describe ESM::Command::Server::Logs, category: "command" do
     let!(:server) { ESM::Test.server }
     let!(:user) { ESM::Test.user }
 
-    let(:second_user) { ESM::Test.second_user }
+    let(:second_user) { ESM::Test.user }
 
     let!(:wsc) { WebsocketClient.new(server) }
     let(:connection) { ESM::Websocket.connections[server.server_id] }

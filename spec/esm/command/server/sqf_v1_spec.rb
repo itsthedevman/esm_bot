@@ -23,7 +23,7 @@ describe ESM::Command::Server::SqfV1, category: "command" do
     let!(:community) { ESM::Test.community }
     let!(:server) { ESM::Test.server }
     let!(:user) { ESM::Test.user }
-    let(:second_user) { ESM::Test.second_user }
+    let(:second_user) { ESM::Test.user }
     let!(:wsc) { WebsocketClient.new(server) }
     let(:connection) { ESM::Websocket.connections[server.server_id] }
     let(:response) { command.response }

@@ -4,7 +4,7 @@ describe ESM::Event::Xm8NotificationV1 do
   let!(:community) { ESM::Test.community }
   let!(:server) { ESM::Test.server }
   let!(:user) { ESM::Test.user }
-  let!(:second_user) { ESM::Test.second_user }
+  let!(:second_user) { ESM::Test.user }
 
   let!(:wsc) { WebsocketClient.new(server) }
   let!(:recipients) { [user.steam_uid, second_user.steam_uid] }

@@ -25,7 +25,7 @@ describe ESM::Command::System::ResetCooldown, category: "command" do
     let!(:user) { ESM::Test.user }
     let(:second_community) { ESM::Test.second_community }
     let(:second_server) { ESM::Test.second_server }
-    let(:second_user) { ESM::Test.second_user }
+    let(:second_user) { ESM::Test.user }
     let!(:target_regex) { ESM::Regex::TARGET.source }
 
     let(:cooldown_one) do

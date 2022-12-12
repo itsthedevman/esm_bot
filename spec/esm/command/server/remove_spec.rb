@@ -26,7 +26,7 @@ describe ESM::Command::Server::Remove, category: "command" do
     let!(:user) { ESM::Test.user }
 
     # If you need a second set
-    let(:second_user) { ESM::Test.second_user }
+    let(:second_user) { ESM::Test.user }
 
     # If you need to connect to a server
     let!(:wsc) { WebsocketClient.new(server) }

@@ -4,7 +4,7 @@ describe ESM::Command::Base::Checks do
   let!(:command) { ESM::Command::Test::TargetCommand.new }
   let!(:community) { ESM::Test.community }
   let!(:user) { ESM::Test.user }
-  let!(:second_user) { ESM::Test.second_user }
+  let!(:second_user) { ESM::Test.user }
 
   before :each do
     command.instance_variable_set(:@current_user, user.discord_user)

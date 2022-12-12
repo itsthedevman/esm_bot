@@ -16,7 +16,7 @@ describe ESM::Command::Server::Sqf, category: "command", v2: true do
   describe "#on_execute/#on_response", requires_connection: true do
     include_context "connection"
 
-    let(:second_user) { ESM::Test.second_user }
+    let(:second_user) { ESM::Test.user }
 
     before :each do
       grant_command_access!(community, "sqf")
