@@ -6,7 +6,6 @@ describe ESM::Command::Base do
   let!(:community) { ESM::Test.community }
   let!(:server) { ESM::Test.server }
   let!(:user) { ESM::Test.user }
-  let!(:configuration) { community.command_configurations.where(command_name: "base").first }
 
   describe "Properties" do
     include_context "command" do
@@ -81,8 +80,6 @@ describe ESM::Command::Base do
       let!(:command_class) { ESM::Command::Test::PlayerCommand }
     end
 
-    let!(:secondary_user) { ESM::Test.user }
-
     it "is defined" do
       expect(command.respond_to?(:current_user)).to be(true)
     end
@@ -107,7 +104,7 @@ describe ESM::Command::Base do
 
   describe "#current_community" do
     include_context "command" do
-      let!(:command_class) { ESM::Command::Test::PlayerCommand }
+      let!(:command_class) { ESM::Command::Test::CommunityCommand }
     end
 
     it "is defined" do
@@ -115,7 +112,7 @@ describe ESM::Command::Base do
     end
 
     it "is a valid community" do
-      execute!
+      execute!(community_id: community.community_id)
       expect(command.current_community).not_to be_nil
       expect(command.current_community.id).to eq(community.id)
     end
@@ -296,29 +293,23 @@ describe ESM::Command::Base do
     end
 
     it "executes" do
-      execute!(server_id: server.server_id, nullable: true)
+      expect {
+        execute!(fail_on_raise: false, server_id: server.server_id, nullable: true)
+      }.to raise_error(ESM::Exception::CheckFailure)
     end
 
     it "executes with nullable arguments" do
-      execute!(server_id: server.server_id)
+      expect {
+        execute!(fail_on_raise: false, server_id: server.server_id)
+      }.to raise_error(ESM::Exception::CheckFailure)
     end
 
     describe "Handles Errors" do
-      before :all do
-        # Change the ENV for ESM so the error won't is raised
-        ESM.instance_variable_set(:@env, ActiveSupport::StringInquirer.new("error_testing"))
-      end
-
-      after :all do
-        # Reset!
-        ESM.instance_variable_set(:@env, ActiveSupport::StringInquirer.new("test"))
-      end
-
       it "send error (CheckFailure)" do
         test_command = ESM::Command::Test::DirectMessageCommand.new
         event = CommandEvent.create(test_command.statement, channel_type: :text, user: user)
 
-        expect { test_command.execute(event) }.not_to raise_error
+        expect { test_command.execute(event, raise_error: false) }.not_to raise_error
         expect(ESM::Test.messages.size).to eq(1)
 
         error = ESM::Test.messages.first.second
@@ -329,18 +320,17 @@ describe ESM::Command::Base do
         test_command = ESM::Command::Test::ErrorCommand.new
         event = CommandEvent.create(test_command.statement, channel_type: :text, user: user)
 
-        expect { test_command.execute(event) }.not_to raise_error
+        expect { test_command.execute(event, raise_error: false) }.not_to raise_error
         expect(ESM::Test.messages.size).to eq(1)
 
         error = ESM::Test.messages.first.second
         expect(error.description).to include("Well, this is awkward.\nWill you please join my Discord (https://esmbot.com/join) and let my developer know that this happened?\nPlease give him this code:\n```")
       end
 
-      it "resets cooldown", requires_connection: true do
+      it "resets cooldown when an error occurs", requires_connection: true do
         command = ESM::Command::Test::ServerErrorCommand.new
-        execute!(server_id: server.server_id)
-        wait_for_inbound_message
-        expect(ESM::Test.messages.size).to eq(1)
+        execute!(command_override: command, server_id: server.server_id)
+        expect(wait_for_inbound_message).not_to be_nil
         expect(command.current_cooldown.active?).to be(false)
       end
     end
