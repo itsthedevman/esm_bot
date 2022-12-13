@@ -196,8 +196,7 @@ module ESM
       ESM::Notifications.trigger("bot_deliver", message: message, channel: delivery_channel)
 
       # So we can test if it's working
-      # env.error_testing? is to allow testing of errors without sending messages
-      if ESM.env.test? || ESM.env.error_testing?
+      if ESM.env.test?
         ESM::Test.messages.store(message, delivery_channel)
       elsif message.is_a?(ESM::Embed)
         # Send the embed

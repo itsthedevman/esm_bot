@@ -73,7 +73,7 @@ describe ESM::Message, v2: true do
 
     it "converts to symbols except server_id" do
       message = described_class.test.set_server_id(server.server_id.to_sym)
-      expect(message.type).to eq("test")
+      expect(message.type).to eq("event")
       expect(message.data_type).to eq("empty")
       expect(message.metadata_type).to eq("empty")
       expect(message.server_id).to eq(server.server_id)
@@ -95,7 +95,7 @@ describe ESM::Message, v2: true do
 
   describe "#on_error" do
     let(:message) do
-      ESM::Message.test
+      ESM::Message.event
         .set_server_id(Faker::ESM.server_id)
         .set_data(:data_test, {foo: "bar"})
         .set_metadata(:metadata_test, {bar: "baz"})

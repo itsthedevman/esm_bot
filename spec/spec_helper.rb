@@ -41,7 +41,7 @@ ActiveRecord::Base.logger.level = Logger::INFO if ActiveRecord::Base.logger.pres
 build_result = `cargo check; echo $?`.chomp
 raise "Failed to build extension_server" if build_result != "0"
 
-EXTENSION_SERVER = IO.popen("POSTGRES_DATABASE=esm_test RUST_LOG=warn bin/extension_server")
+EXTENSION_SERVER = IO.popen("POSTGRES_DATABASE=esm_test RUST_LOG=info bin/extension_server")
 
 RSpec.configure do |config|
   config.include FactoryBot::Syntax::Methods
@@ -94,14 +94,24 @@ RSpec.shared_context("command") do
   let(:server) { ESM::Test.server }
   let(:user) { ESM::Test.user }
 
-  def execute!(fail_on_raise: true, channel_type: :text, send_as: user, **command_args)
-    command_statement = command.statement(command_args)
+  #
+  # Executes the command as a user in a text or pm channel.
+  # The majority of the time, this method will be used along with the input arguments for the command
+  #
+  # @param fail_on_raise [Boolean] Controls if the spec will fail if the execute raises an exception. Default: true
+  # @param channel_type [Symbol] Controls what type of channel messages are triggered in. Options: :text, :pm
+  # @param send_as [ESM::User] The user to send the message as. Defaults to the `user` let binding
+  # @param command_override [ESM::Command] The command to execute. Defaults to the `command` let binding
+  # @param **command_args [Hash] Any arguments the command is expecting as key: value pairs
+  #
+  def execute!(fail_on_raise: true, channel_type: :text, send_as: user, command_override: command, **command_args)
+    command_statement = command_override.statement(command_args)
     event = CommandEvent.create(command_statement, user: send_as, channel_type: channel_type)
 
     if fail_on_raise
-      expect { command.execute(event) }.not_to raise_error
+      expect { command_override.execute(event) }.not_to raise_error
     else
-      command.execute(event)
+      command_override.execute(event)
     end
   end
 end

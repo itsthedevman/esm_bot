@@ -5,7 +5,7 @@ describe ESM::Connection, v2: true, requires_connection: true do
 
   let!(:server) { ESM::Test.server }
   let!(:connection_server) { ESM::Connection::Server.instance }
-  let(:message) { ESM::Message.test.set_data(:data_test, {foo: "bar"}) }
+  let(:message) { ESM::Message.event.set_data(:data_test, {foo: "bar"}) }
 
   after :each do
     ESM::Connection::Server.instance.message_overseer.remove_all!
@@ -17,7 +17,7 @@ describe ESM::Connection, v2: true, requires_connection: true do
     end
 
     it "accepts a hash" do
-      outgoing_message = connection.send_message(type: :test, data: {type: :data_test, content: {foo: "bar"}})
+      outgoing_message = connection.send_message(data: {type: :data_test, content: {foo: "bar"}})
 
       message = ESM::Test.outbound_server_messages.first
       expect(message).not_to be_nil
@@ -55,7 +55,7 @@ describe ESM::Connection, v2: true, requires_connection: true do
 
   describe "#on_message" do
     it "acknowledges the message" do
-      incoming_message = ESM::Message.test
+      incoming_message = ESM::Message.event
 
       message.add_callback(:on_response) do |_, outgoing|
         expect(outgoing).to eq(message)

@@ -5,7 +5,7 @@ describe ESM::Connection::Server, v2: true do
 
   let(:connection_server) { described_class.instance }
   let(:server) { ESM::Test.server }
-  let(:message) { ESM::Message.test.set_server_id(server.server_id).set_data(:data_test, {foo: "bar"}) }
+  let(:message) { ESM::Message.event.set_server_id(server.server_id).set_data(:data_test, {foo: "bar"}) }
 
   describe "#on_message" do
     it "triggers on_error if message contains errors" do
@@ -41,13 +41,13 @@ describe ESM::Connection::Server, v2: true do
     end
 
     it "sends a message and waits for the reply" do
-      outgoing_message = ESM::Message.test.set_id(message.id).set_server_id(server.server_id)
+      outgoing_message = ESM::Message.event.set_id(message.id).set_server_id(server.server_id)
 
       thread = Thread.new do
         response = nil
         expect { response = connection_server.fire(outgoing_message, to: server.server_id, wait: true) }.not_to raise_error
         expect(response).not_to be_nil
-        expect(response.type).to eq("test")
+        expect(response.type).to eq("event")
         expect(response.data_type).to eq("data_test")
       end
 

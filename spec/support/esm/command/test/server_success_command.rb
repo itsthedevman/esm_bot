@@ -17,7 +17,7 @@ module ESM
         argument :nullable, regex: /.*/, description: "commands.server_success_command.arguments.nullable", default: nil
 
         def on_execute
-          send_to_arma(type: :test, data_type: "empty")
+          send_to_arma(data_type: "empty")
         end
 
         def on_response(_, _)

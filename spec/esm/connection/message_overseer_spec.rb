@@ -2,7 +2,7 @@
 
 describe ESM::Connection::MessageOverseer, v2: true do
   let!(:overseer) { ESM::Connection::Server.instance.message_overseer }
-  let!(:message) { ESM::Message.test }
+  let!(:message) { ESM::Message.event }
 
   describe "#watch" do
     it "adds the message to the watch list" do
