@@ -158,14 +158,14 @@ module ESM
 
       # The entry point for a command
       # @note Do not handle exceptions anywhere in this commands lifecycle
-      def execute(event)
+      def execute(event, ...)
         if event.is_a?(Discordrb::Commands::CommandEvent)
           from_discord(event)
         else
           from_server(event)
         end
       rescue => e
-        handle_error(e)
+        handle_error(e, ...)
       end
 
       def usage
@@ -198,7 +198,7 @@ module ESM
       # The user that executed the command
       def current_user
         return @current_user if defined?(@current_user) && @current_user.present?
-        return if @event.user.nil?
+        return if @event&.user.nil?
 
         user = ESM::User.where(discord_id: @event.user.id).first_or_initialize
         user.update(
@@ -217,7 +217,7 @@ module ESM
       # @return [ESM::Community, nil] The community the command was executed from. Nil if sent from Direct Message
       def current_community
         return @current_community if defined?(@current_community) && @current_community.present?
-        return nil if @event&.server.nil?
+        return if @event&.server.nil?
 
         @current_community = ESM::Community.find_by_guild_id(@event.server.id)
       end
@@ -509,11 +509,7 @@ module ESM
 
         @checks.text_only!
         @checks.dm_only!
-
         @checks.permissions!
-
-        # Start typing. The bot will automatically stop after 5 seconds or when the next message sends
-        # @event.channel.start_typing if !ESM.env.test? || !ESM.env.error_testing?
 
         @arguments.validate!
 
@@ -603,11 +599,11 @@ module ESM
         flags.each { |flag| @skip_flags << flag }
       end
 
-      def handle_error(error)
+      def handle_error(error, raise_error: ESM.env.test?)
         message = nil
 
         # So tests can check for errors
-        raise error if ESM.env.test?
+        raise error if raise_error
 
         case error
         when ESM::Exception::CheckFailure, ESM::Exception::FailedArgumentParse
