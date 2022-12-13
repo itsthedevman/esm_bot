@@ -162,8 +162,8 @@ module ESM
       @data.content
     end
 
-    def data_attributes
-      @data.to_h
+    def data_attributes(for_arma: false)
+      @data.to_h(for_arma: for_arma)
     end
 
     def metadata_type
@@ -174,8 +174,8 @@ module ESM
       @metadata.content
     end
 
-    def metadata_attributes
-      @metadata.to_h
+    def metadata_attributes(for_arma: false)
+      @metadata.to_h(for_arma: for_arma)
     end
 
     #
@@ -247,8 +247,8 @@ module ESM
         id: id,
         server_id: for_arma ? server_id&.bytes : server_id,
         type: type,
-        data: data_attributes,
-        metadata: metadata_attributes,
+        data: data_attributes(for_arma: for_arma),
+        metadata: metadata_attributes(for_arma: for_arma),
         errors: errors.map(&:to_h)
       }.stringify_keys
     end

@@ -32,7 +32,9 @@ module ESM
         @content = content.to_ostruct
       end
 
-      def to_h
+      def to_h(for_arma: false)
+        hash = {type: type}
+
         convert_values = lambda do |value|
           case value
           when Numeric
@@ -49,12 +51,13 @@ module ESM
           end
         end
 
-        {
-          type: type,
-          content: if type != "empty" && @original_content.is_a?(Hash)
-                     @original_content.transform_values(&convert_values)
-                   end
-        }
+        # This blocks the content key from being added to the hash
+        #   which in turn keeps it from being included in the JSON that is sent to the server
+        #   Bonus: Handles invalid data
+        return hash if !@original_content.is_a?(Hash) || (for_arma && type == "empty") || (for_arma && @original_content.blank?)
+
+        hash[:content] = @original_content.transform_values(&convert_values)
+        hash
       end
 
       private
