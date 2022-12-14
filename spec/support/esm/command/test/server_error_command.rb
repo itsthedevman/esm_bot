@@ -15,10 +15,14 @@ module ESM
         argument :server_id
 
         def on_execute
-          send_to_arma(data: {type: :echo}, errors: [{type: :message, content: "test"}])
+          send_to_arma(
+            wait: true,
+            data: {type: :echo},
+            errors: [{type: :message, content: "this is an error message"}]
+          )
         end
 
-        def on_response
+        def on_response(_, _)
         end
       end
     end

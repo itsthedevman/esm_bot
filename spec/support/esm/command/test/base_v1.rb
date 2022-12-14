@@ -33,7 +33,7 @@ module ESM
           "discord"
         end
 
-        def on_response
+        def on_response(_, _)
           raise ESM::Exception::CheckFailure, ESM::Embed.build(:error, description: "This failed a check") if @defines.FLAG_RAISE_ERROR
 
           "server"

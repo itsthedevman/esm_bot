@@ -20,7 +20,7 @@ module ESM
           deliver!
         end
 
-        def on_response
+        def on_response(_, _)
           reply("Yaay")
         end
       end

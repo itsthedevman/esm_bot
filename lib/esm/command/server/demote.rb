@@ -30,7 +30,7 @@ module ESM
           )
         end
 
-        def on_response
+        def on_response(_, _)
           message = I18n.t(
             "commands.demote.success_message",
             user: current_user.mention,

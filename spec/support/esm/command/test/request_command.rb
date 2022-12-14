@@ -18,7 +18,7 @@ module ESM
           add_request(to: target_user)
         end
 
-        def on_response
+        def on_response(_, _)
         end
 
         def request_accepted

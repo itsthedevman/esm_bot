@@ -33,7 +33,7 @@ module ESM
           )
         end
 
-        def on_response
+        def on_response(_, _)
           check_for_failure!
           reply(success_message)
         end

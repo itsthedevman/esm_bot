@@ -36,7 +36,7 @@ module ESM
           reply(embed)
         end
 
-        def on_response
+        def on_response(_, _)
           embed =
             if target_user.present?
               if @response.success

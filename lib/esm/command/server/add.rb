@@ -40,7 +40,7 @@ module ESM
           reply(embed)
         end
 
-        def on_response
+        def on_response(_, _)
           # Send the success message to the requestee (which can be the requestor)
           embed = ESM::Embed.build(:success, description: I18n.t("commands.add.requestee_success", user: target_user.mention, territory_id: @arguments.territory_id))
           ESM.bot.deliver(embed, to: target_user)

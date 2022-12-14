@@ -34,7 +34,7 @@ module ESM
           reply(embed)
         end
 
-        def on_response
+        def on_response(_, _)
           # Array<Array<item, quantity>>
           receipt = @response.receipt.to_h
 

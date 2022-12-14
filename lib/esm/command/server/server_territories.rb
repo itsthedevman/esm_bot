@@ -23,7 +23,7 @@ module ESM
           deliver!(command_name: "allterritories", query: "list_territories_all")
         end
 
-        def on_response
+        def on_response(_, _)
           # The data must an array if its not already.
           @response = [@response] if !@response.is_a?(Array)
 

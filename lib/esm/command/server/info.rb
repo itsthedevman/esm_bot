@@ -31,7 +31,7 @@ module ESM
           end
         end
 
-        def on_response
+        def on_response(_, _)
           # I'm not quite sure if this is needed, but just in case...
           check_for_response!
 

@@ -34,7 +34,7 @@ module ESM
           )
         end
 
-        def on_response
+        def on_response(_, _)
           update_stats
           send_results
         end
