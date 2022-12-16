@@ -106,7 +106,7 @@ module ESM
 
         @communities = %i[primary_community secondary_community]
         @community_type = @communities.sample
-        @user_type = (@community_type == :primary_community) ? :primary_user : :secondary_user
+        @user_type = (@community_type == :primary_community) ? :user : :secondary_user
         @second_community_type = @communities.find { |type| type != @community_type }
 
         # Clear the test list in Redis

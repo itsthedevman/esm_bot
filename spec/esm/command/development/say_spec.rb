@@ -4,7 +4,7 @@ describe ESM::Command::Development::Say, category: "command" do
   let!(:command) { ESM::Command::Development::Say.new }
   let!(:community) { create(:esm_community) }
   let!(:server) { create(:esm_malden, community_id: community.id) }
-  let!(:user) { create(:esm_dev) }
+  let!(:user) { create(:developer) }
 
   it "should be valid" do
     expect(command).not_to be_nil

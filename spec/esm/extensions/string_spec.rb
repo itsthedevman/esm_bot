@@ -70,12 +70,14 @@ describe String do
   end
 
   describe "#steam_uid?" do
-    it "should return true" do
-      expect(TestUser::User1::STEAM_UID.steam_uid?).to be(true)
+    let(:user) { ESM::Test.user }
+
+    it "returns true" do
+      expect(user.steam_uid.steam_uid?).to be(true)
     end
 
-    it "should return false" do
-      expect(TestUser::User1::ID.steam_uid?).to be(false)
+    it "returns false" do
+      expect(user.discord_id.steam_uid?).to be(false)
     end
   end
 end

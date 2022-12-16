@@ -5,13 +5,13 @@ FactoryBot.define do
     transient do
       user do
         user_id = ESM::Test.data[:primary][:users].sample
-        user = ESM.bot.user(user_id)
+        discord_user = ESM.bot.user(user_id)
 
         {
           id: user_id,
-          name: user.username,
-          discriminator: user.discriminator,
-          steam_uid: ESM::Test.data[:steam_uids].sample
+          name: discord_user.username,
+          discriminator: discord_user.discriminator,
+          steam_uid: ESM::Test.steam_uid
         }
       end
     end
@@ -26,7 +26,7 @@ FactoryBot.define do
       steam_uid { nil }
     end
 
-    factory :esm_dev do
+    factory :developer do
       transient do
         user { ESM::Test.data[:dev] }
         discord_user { ESM.bot.user(user[:id]) }
@@ -35,28 +35,6 @@ FactoryBot.define do
       discord_id { user[:id] }
       discord_username { discord_user.username }
       discord_discriminator { discord_user.discriminator }
-      steam_uid { user[:steam_uid] }
-      guild_type { :primary }
-    end
-
-    factory :primary_user do
-      transient do
-        user do
-          user_id = ESM::Test.data[:primary][:users].sample
-          discord_user = ESM.bot.user(user_id)
-
-          {
-            id: user_id,
-            name: discord_user.username,
-            discriminator: discord_user.discriminator,
-            steam_uid: ESM::Test.steam_uid
-          }
-        end
-      end
-
-      discord_id { user[:id] }
-      discord_username { user[:name] }
-      discord_discriminator { user[:discriminator] }
       steam_uid { user[:steam_uid] }
       guild_type { :primary }
     end

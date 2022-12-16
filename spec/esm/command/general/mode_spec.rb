@@ -22,7 +22,7 @@ describe ESM::Command::General::Mode, category: "command" do
   describe "#execute" do
     # This requires an owner user
     let!(:community) { ESM::Test.community }
-    let!(:owner) { create(:esm_dev) }
+    let!(:owner) { create(:developer) }
 
     it "should disable player mode and return an embed" do
       community.update(player_mode_enabled: true)

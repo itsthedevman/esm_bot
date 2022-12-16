@@ -50,7 +50,7 @@ describe ESM::Websocket do
     it "should deliver" do
       connection = ESM::Websocket.connections[esm_malden.server_id]
 
-      user = ESM.bot.user(TestUser::User1::ID)
+      user = ESM::Test.user.discord_user
       command = ESM::Command::Test::BaseV1.new
 
       request = ESM::Websocket::Request.new(
