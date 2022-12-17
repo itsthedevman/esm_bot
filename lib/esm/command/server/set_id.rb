@@ -4,8 +4,8 @@ module ESM
   module Command
     module Server
       class SetId < ESM::Command::Base
-        type :player
-        aliases :setterritoryid, :setid
+        set_type :player
+        register_aliases :setterritoryid, :setid
         requires :registration
 
         define :enabled, modifiable: true, default: true

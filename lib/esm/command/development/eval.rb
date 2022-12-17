@@ -4,9 +4,9 @@ module ESM
   module Command
     module Development
       class Eval < ESM::Command::Base
-        type :development
+        set_type :development
         requires :dev
-        aliases :e
+        register_aliases :e
 
         define :enabled, modifiable: false, default: true
         define :whitelist_enabled, modifiable: false, default: false

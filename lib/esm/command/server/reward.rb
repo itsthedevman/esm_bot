@@ -28,7 +28,7 @@ module ESM
         #   3. Server response back (#on_response)
         #         TODO
         #
-        type :player
+        set_type :player
         requires :registration
 
         define :enabled, modifiable: true, default: true

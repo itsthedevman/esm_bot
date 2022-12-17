@@ -4,7 +4,7 @@ module ESM
   module Command
     module Test
       class PlayerCommand < ESM::Command::Base
-        type :player
+        set_type :player
 
         define :enabled, modifiable: true, default: true
         define :whitelist_enabled, modifiable: true, default: false

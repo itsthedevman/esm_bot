@@ -4,7 +4,7 @@ module ESM
   module Command
     module Test
       class AdminCommand < ESM::Command::Base
-        type :admin
+        set_type :admin
 
         define :enabled, modifiable: true, default: true
         define :whitelist_enabled, modifiable: true, default: false

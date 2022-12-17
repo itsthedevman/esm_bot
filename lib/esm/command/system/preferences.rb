@@ -19,8 +19,8 @@ module ESM
           marxet-item-sold
         ].freeze
 
-        type :player
-        aliases :notif
+        set_type :player
+        register_aliases :notif
         limit_to :dm
         requires :registration
 

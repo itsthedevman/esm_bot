@@ -5,7 +5,7 @@ module ESM
   module Command
     module Server
       class Demote < ESM::Command::Base
-        type :player
+        set_type :player
         requires :registration
 
         define :enabled, modifiable: true, default: true

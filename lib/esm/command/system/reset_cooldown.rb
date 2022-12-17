@@ -5,8 +5,8 @@ module ESM
   module Command
     module System
       class ResetCooldown < ESM::Command::Base
-        type :admin
-        aliases :resetcooldown
+        set_type :admin
+        register_aliases :resetcooldown
         limit_to :text
         requires :registration
 

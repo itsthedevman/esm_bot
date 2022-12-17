@@ -5,7 +5,7 @@ module ESM
   module Command
     module Server
       class Restore < ESM::Command::Base
-        type :admin
+        set_type :admin
         limit_to :text
         requires :registration
 

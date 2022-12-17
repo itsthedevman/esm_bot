@@ -4,7 +4,7 @@ module ESM
   module Command
     module Server
       class Gamble < ESM::Command::Base
-        type :player
+        set_type :player
         requires :registration
 
         # Skipped because of `stats` argument. This is manually checked in `#discord`

@@ -4,8 +4,8 @@ module ESM
   module Command
     module General
       class Help < ESM::Command::Base
-        type :player
-        aliases :commands
+        set_type :player
+        register_aliases :commands
 
         define :enabled, modifiable: false, default: true
         define :whitelist_enabled, modifiable: false, default: false

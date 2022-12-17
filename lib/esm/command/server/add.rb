@@ -4,7 +4,7 @@ module ESM
   module Command
     module Server
       class Add < ESM::Command::Base
-        type :player
+        set_type :player
         requires :registration
 
         define :enabled, modifiable: true, default: true

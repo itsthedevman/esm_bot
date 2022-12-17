@@ -5,7 +5,7 @@ module ESM
   module Command
     module General
       class Register < ESM::Command::Base
-        type :player
+        set_type :player
 
         define :enabled, modifiable: false, default: true
         define :whitelist_enabled, modifiable: false, default: false

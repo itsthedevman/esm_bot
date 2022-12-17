@@ -4,8 +4,8 @@ module ESM
   module Command
     module Server
       class Sqf < ESM::Command::Base
-        type :admin
-        aliases :exec, :execute
+        set_type :admin
+        register_aliases :exec, :execute
         limit_to :text
         requires :registration
 

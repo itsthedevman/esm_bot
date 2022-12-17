@@ -5,7 +5,7 @@ module ESM
   module Command
     module Server
       class RewardV1 < ESM::Command::Base
-        type :v1
+        set_type :v1
         requires :registration
 
         define :enabled, modifiable: true, default: true
