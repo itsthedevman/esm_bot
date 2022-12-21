@@ -2,6 +2,7 @@
 
 class Callback
   include ESM::Callbacks
+
   register_callbacks :before_execute, :after_execute
   add_callback :before_execute, :method_to_call_from_class
 
