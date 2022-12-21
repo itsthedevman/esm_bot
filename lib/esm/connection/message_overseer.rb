@@ -4,12 +4,10 @@ module ESM
   class Connection
     class MessageOverseer
       Envelope = Struct.new(:message, :expires_at) do
+        delegate :delivered?, to: :message
+
         def undeliverable?
           expires_at <= ::Time.now
-        end
-
-        def delivered?
-          message.delivered?
         end
       end
 
@@ -38,7 +36,6 @@ module ESM
       # @param expires_at [DateTime, Time] The time when the message should be considered undeliverable.
       #
       def watch(message, expires_at: 10.seconds.from_now)
-        # I love Ruby
         envelope = Envelope.new(message, expires_at)
         @mailbox[message.id] = envelope
       end
@@ -51,14 +48,14 @@ module ESM
       # @return [ESM::Message, Nil] The message or nil
       #
       def retrieve(id)
-        envelope = @mailbox.delete(id)
+        envelope = remove(id)
         return if envelope.nil?
 
         envelope.message
       end
 
       def remove(id)
-        @mailbox.delete_if { |e| e.message.id == id }
+        @mailbox.delete(id)
       end
 
       def remove_all!(with_error: false)
@@ -70,7 +67,7 @@ module ESM
             message.run_callback(:on_error, message, nil)
           end
 
-          @mailbox.delete(id)
+          remove(id)
         end
       end
 
@@ -81,15 +78,17 @@ module ESM
         @mailbox.each do |id, envelope|
           next if !envelope.undeliverable?
 
-          message = envelope.message
-          message.add_error("code", "message_undeliverable")
-          message.run_callback(:on_error, message, nil)
+          # Don't skip - The envelope needs to be removed
+          if !envelope.delivered?
+            message = envelope.message
+            message.add_error("code", "message_undeliverable")
+            message.run_callback(:on_error, nil, message)
+          end
 
-          @mailbox.delete(id)
+          remove(id)
         rescue => e
           error!(error: e)
-
-          @mailbox.delete(id)
+          remove(id)
         end
       end
     end

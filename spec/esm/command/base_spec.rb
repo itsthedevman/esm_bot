@@ -203,11 +203,6 @@ describe ESM::Command::Base do
       let!(:command_class) { ESM::Command::Test::TargetCommand }
     end
 
-    before :each do
-      user.update(steam_uid: TestUser::User1::STEAM_UID)
-      secondary_user.update(steam_uid: TestUser::User2::STEAM_UID)
-    end
-
     it "from Steam UID" do
       execute!(target: secondary_user.steam_uid)
       expect(command.target_uid).to eq(secondary_user.steam_uid)
@@ -279,7 +274,7 @@ describe ESM::Command::Base do
     end
 
     it "is callable" do
-      expect(command.on_response).to eq("on_response")
+      expect(command.on_response(nil)).to eq("on_response")
     end
   end
 
@@ -329,8 +324,8 @@ describe ESM::Command::Base do
 
       it "resets cooldown when an error occurs", requires_connection: true do
         command = ESM::Command::Test::ServerErrorCommand.new
-        execute!(command_override: command, server_id: server.server_id)
-        expect(wait_for_inbound_message).not_to be_nil
+        execute!(command: command, server_id: server.server_id)
+        wait_for { ESM::Test.messages.size }.to eq(1)
         expect(command.current_cooldown.active?).to be(false)
       end
     end
@@ -724,6 +719,7 @@ describe ESM::Command::Base do
         end
 
         it "enabled: true, whitelist_enabled: true, whitelisted: false, allowed: true" do
+          role_user = ESM::Test.user(:with_role)
           configuration.update!(
             enabled: true,
             whitelist_enabled: true,
@@ -732,7 +728,7 @@ describe ESM::Command::Base do
           )
 
           expect {
-            execute!(fail_on_raise: false, community_id: community.community_id)
+            execute!(send_as: role_user, fail_on_raise: false, community_id: community.community_id)
           }.to raise_error(ESM::Exception::CheckFailure, /not have permission/i)
         end
 
@@ -746,7 +742,7 @@ describe ESM::Command::Base do
 
           expect {
             execute!(fail_on_raise: false, community_id: community.community_id)
-          }.to raise_error(ESM::Exception::CheckFailure, /not allowed/i)
+          }.to raise_error(ESM::Exception::CheckFailure, /not have permission/i)
         end
       end
     end
@@ -920,48 +916,60 @@ describe ESM::Command::Base do
   #   Run commands for OTHER community servers in text channels
   #   Blocks admin commands from being used text channels
   describe "Player Mode" do
-    let!(:secondary_user) { ESM::Test.user }
-    let!(:player_mode_community) { ESM::Test.second_community(:player_mode_enabled) }
+    include_context "command" do
+      let!(:command_class) { ESM::Command::Test::CommunityCommand }
+    end
+
+    let!(:player_community) { community }
+    let(:server_community) { ESM::Test.second_community }
+
+    before do
+      player_community.update!(player_mode_enabled: true)
+    end
 
     it "is enabled" do
-      expect(player_mode_community.player_mode_enabled?).to be(true)
+      expect(player_community.player_mode_enabled?).to be(true)
     end
 
     it "is able to use DM only commands in text channel" do
-      dm_only_command = ESM::Command::Test::DirectMessageCommand.new
-      event = CommandEvent.create(dm_only_command.statement, channel_type: :text, user: secondary_user)
-
-      expect { dm_only_command.execute(event) }.not_to raise_error
+      execute!(command: ESM::Command::Test::DirectMessageCommand.new)
     end
 
     it "is able to run player command for other communities in text channel" do
-      community_command = ESM::Command::Test::CommunityCommand.new
-      command_statement = community_command.statement(community_id: community.community_id)
+      # Ensure the command can still be used regardless of that communities permissions for "allowed_in_text_channels"
+      player_community.command_configurations.where(command_name: command.name).first.update!(allowed_in_text_channels: false)
 
-      # Ensure the command can still is used regardless of that communities permissions for "allowed_in_text_channels"
-      community.command_configurations.where(command_name: community_command.name).first.update!(allowed_in_text_channels: false)
-
-      event = CommandEvent.create(command_statement, channel_type: :text, user: secondary_user)
-
-      expect { community_command.execute(event) }.not_to raise_error
+      execute!(community_id: server_community.community_id)
     end
 
     it "does not allow admin commands in text channel" do
       admin_only_command = ESM::Command::Test::AdminCommand.new
-      command_statement = admin_only_command.statement(community_id: community.community_id)
-      event = CommandEvent.create(command_statement, channel_type: :text, user: secondary_user)
 
-      expect { admin_only_command.execute(event) }.to raise_error(ESM::Exception::CheckFailure, /is not available in player mode/i)
+      expect {
+        execute!(
+          fail_on_raise: false,
+          command: admin_only_command,
+          community_id: server_community.community_id
+        )
+      }.to raise_error(ESM::Exception::CheckFailure, /is not available in player mode/i)
+
+      expect {
+        execute!(
+          fail_on_raise: false,
+          command: admin_only_command,
+          community_id: player_community.community_id
+        )
+      }.to raise_error(ESM::Exception::CheckFailure, /is not available in player mode/i)
     end
 
-    it "does not allow running commands for other communities in text channels (Non-playermode community)" do
-      community_command = ESM::Command::Test::CommunityCommand.new
-      command_statement = community_command.statement(community_id: player_mode_community.community_id)
-
-      # `User` is executing this command from `community`.
-      event = CommandEvent.create(command_statement, channel_type: :text, user: user)
-
-      expect { community_command.execute(event) }.to raise_error(ESM::Exception::CheckFailure, /commands for other communities/i)
+    it "does not allow running commands for other communities in another server community's text channels" do
+      expect {
+        execute!(
+          fail_on_raise: false,
+          channel: ESM::Test.channel(in: server_community),
+          community_id: player_community.community_id
+        )
+      }.to raise_error(ESM::Exception::CheckFailure, /commands for other communities/i)
     end
   end
 

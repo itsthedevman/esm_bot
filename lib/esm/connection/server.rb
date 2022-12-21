@@ -103,32 +103,37 @@ module ESM
       #
       # @param message [ESM::Message] The message to send
       # @param to [String] The ID of the server to send the message to
-      # @param forget [Boolean] If false, this message will be registered with the MessageOverseer for automatic timeout. If true, the message is not registered
-      # @param wait [Boolean] If true, the request will be considered synchronous and this will block until either the message is responded to or it times out. Option "forget" is ignored when this is true.
+      # @param forget [Boolean] By default (true), the message will be sent asynchronously. Set to false to synchronously send the message. The response message (if any) will be returned from this message
       #
-      # @return [ESM::Message] If wait is true, this will be the incoming message containing the response. If wait is false, this is the message that was sent
+      # @return [ESM::Message] If forget is false, this will be the incoming message containing the response. Otherwise, it will be the outgoing message
       #
-      def fire(message, to:, forget: false, wait: false)
+      def fire(message, to:, forget: true)
         raise ESM::Exception::ServerNotConnected if !tcp_server_alive?
         raise ESM::Exception::CheckFailureNoMessage if !message.is_a?(ESM::Message)
 
         # Set some internal data for sending
         message = message.set_server_id(to) if to
 
+        info!(
+          send_opts: {forget: forget},
+          server_id: to,
+          message: message.to_h.without(:server_id)
+        )
+
         # Watch the message to see if it's been acknowledged or responded to.
-        @message_overseer.watch(message) if wait || !forget
+        message.synchronous unless forget
 
-        # Wait for a response after the message as sent
-        message.synchronous if wait
+        @message_overseer.watch(message)
 
-        info!(server_id: to, message: message.to_h.without(:server_id))
         ESM::Test.outbound_server_messages.store(message, to) if ESM.env.test?
 
-        __send_internal({type: :send_to_client, content: {server_id: to.bytes, message: message.to_arma}}) unless ESM.env.test? && ESM::Test.block_outbound_messages
+        __send_internal({type: :send_to_client, content: message.to_arma}) unless ESM.env.test? && ESM::Test.block_outbound_messages
 
-        return message.wait_for_response if wait
-
-        message
+        if forget
+          message
+        else
+          message.wait_for_response
+        end
       end
 
       private
@@ -226,46 +231,47 @@ module ESM
       def on_inbound(request)
         message = ESM::Message.from_string(request[:content])
 
-        ESM::Test.inbound_server_messages.store(message, message.server_id) if ESM.env.test?
-
         case message.data_type
         when "init"
           on_connect(message)
         else
           on_message(message)
         end
+
+        ESM::Test.inbound_server_messages.store(message, message.server_id) if ESM.env.test?
       rescue => e
         uuid = SecureRandom.uuid
         error!(error: e, id: uuid, message_id: message&.id)
 
-        if message
+        # Prevents getting stuck in a error reporting loop
+        if message && !message.errors?
           # Reply back to the message
           message = ESM::Message.event
             .set_id(message.id)
             .set_server_id(message.server_id)
             .add_error("message", I18n.t("exceptions.system", error_code: uuid))
 
-          fire(message, to: message.server_id)
+          fire(message, to: message.server_id, forget: true)
         end
       end
 
       def on_connect(message)
-        server_id = message.server_id
-
         info!(incoming_message: message.to_h)
 
+        server_id = message.server_id
         connection = ESM::Connection.new(self, server_id)
-        return error!(error: "Server does not exist", server_id: server_id) if connection.server.nil?
-        return connection.server.community.log_event(:error, message.errors.first.to_s) if message.errors?
 
-        connection.on_open(message)
+        return error!(error: "Server does not exist", server_id: server_id) if connection.server.nil?
+        return connection.server.community.log_event(:error, message.errors.join("\n")) if message.errors?
 
         @connections[server_id] = connection
+        connection.on_open(message)
       end
 
       def on_message(incoming_message)
         # Retrieve the original message. If it's nil, the message originated from the client
         outgoing_message = @message_overseer.retrieve(incoming_message.id)
+        outgoing_message&.delivered
 
         info!(
           outgoing_message: outgoing_message&.to_h,
@@ -273,13 +279,14 @@ module ESM
         )
 
         # Handle any errors
-        return outgoing_message.run_callback(:on_error, incoming_message, outgoing_message) if incoming_message.errors?
+        if incoming_message.errors?
+          outgoing_message&.run_callback(:on_error, incoming_message)
 
-        # The message is good, call the on_message for this connection
+          return
+        end
+
         connection = @connections[incoming_message.server_id]
-        return warn!(note: "Connection was nil?") if connection.nil?
-
-        connection.on_message(incoming_message, outgoing_message)
+        connection&.on_message(incoming_message, outgoing_message)
       end
 
       def on_disconnect(request)

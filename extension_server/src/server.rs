@@ -136,7 +136,7 @@ async fn routing_thread(handler: Handler, mut receiver: UnboundedReceiver<Server
                         continue;
                     }
 
-                    debug!("[on_connect] \"{}\"", client.host());
+                    info!("[on_connect] \"{}\" - Requesting identity", client.host());
 
                     // Connection step 1
                     if let Err(e) = client.request_identity(&handler) {
@@ -175,6 +175,8 @@ async fn routing_thread(handler: Handler, mut receiver: UnboundedReceiver<Server
                     if request.request_type.as_str() == "id" {
                         client.set_token_data(&request.content);
 
+                        info!("[on_message] \"{}\" - Requesting init", client.host());
+
                         // Connection step 3
                         if let Err(e) = client.request_init(&handler) {
                             error!(
@@ -203,11 +205,12 @@ async fn routing_thread(handler: Handler, mut receiver: UnboundedReceiver<Server
                     };
 
                     info!(
-                        "[on_message] {address} - {server_id} - {message_type:?} - {message_id}",
+                        "[on_message] {address} - {server_id} - {message_type:?}/{message_data:?}- {message_id}",
                         address = endpoint.addr(),
                         message_id = message.id,
                         server_id = client.server_id(),
                         message_type = message.message_type,
+                        message_data = message.data
                     );
 
                     if let Err(e) = BotRequest::send(message) {

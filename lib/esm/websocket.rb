@@ -166,7 +166,7 @@ module ESM
     rescue ESM::Exception::FailedAuthentication => e
       # Application code may only use codes from 1000, 3000-4999
       @connection.close(3002, e.message)
-    rescue StandardError => e
+    rescue => e
       @connection.close(3002, e.message)
       ESM.logger.fatal("#{self.class}##{__method__}") { "Message:\n#{e.message}\n\nBacktrace:\n#{e.backtrace}" }
     end
@@ -192,6 +192,7 @@ module ESM
         server_request.process
       rescue => e
         ESM.logger.error("#{self.class}##{__method__}") { "Exception: #{e.message}\n#{e.backtrace[0..5].join("\n")}" }
+        raise e if ESM.env.test?
       end
     rescue => e
       ESM.logger.error("#{self.class}##{__method__}") { "Exception: #{e.message}\n#{e.backtrace[0..5].join("\n")}" }

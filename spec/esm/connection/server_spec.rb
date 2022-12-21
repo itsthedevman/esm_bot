@@ -24,7 +24,7 @@ describe ESM::Connection::Server, v2: true do
     end
   end
 
-  # fire(message, to:, forget: false, wait: false)
+  # fire(message, to:, forget: false)
   describe "#fire", requires_connection: true do
     before :each do
       ESM::Test.block_outbound_messages = true
@@ -45,7 +45,7 @@ describe ESM::Connection::Server, v2: true do
 
       thread = Thread.new do
         response = nil
-        expect { response = connection_server.fire(outgoing_message, to: server.server_id, wait: true) }.not_to raise_error
+        expect { response = connection_server.fire(outgoing_message, to: server.server_id) }.not_to raise_error
         expect(response).not_to be_nil
         expect(response.type).to eq("event")
         expect(response.data_type).to eq("data_test")

@@ -24,7 +24,7 @@ module ESM
     # @return [Self] The message
     #
     def self.from_hash(hash)
-      hash = hash.symbolize_keys
+      hash = hash.deep_symbolize_keys
 
       message = event
       message = message.set_id(hash[:id]) if hash[:id].present?
@@ -40,6 +40,7 @@ module ESM
       end
 
       message = message.add_errors(hash[:errors]) if hash[:errors].present?
+      message.add_callback(:on_error, :on_error) if !message.callback?(:on_error)
       message
     end
 
@@ -60,6 +61,8 @@ module ESM
     end
 
     attr_reader :id, :type, :server_id, :attributes, :errors
+
+    delegate :command, to: :attributes, allow_nil: true
 
     # All callbacks are provided with two arguments:
     #   incoming_message [ESM::Message, nil]  The incoming message from the client, if applicable.
@@ -82,7 +85,7 @@ module ESM
       @type = "event"
       @server_id = nil
       @data = Data.new
-      @metadata = Metadata.new
+      @metadata = Data.new
       @errors = []
       @attributes = Struct.new(:command).new
       @delivered = false
@@ -120,7 +123,7 @@ module ESM
 
     # Any extra data that may be needed. For most command messages, this will contain the user's discord and steam data.
     def set_metadata(type, content)
-      @metadata = Metadata.new(type, content)
+      @metadata = Data.new(type, content)
       self
     end
 
@@ -145,7 +148,7 @@ module ESM
     def add_error(type, content)
       return if type.nil? || content.nil?
 
-      @errors << Error.new(self, type: type.to_s, content: content)
+      @errors << Error.new(type, content)
       self
     end
 
@@ -183,35 +186,35 @@ module ESM
     # This only applies to messages that have a command in their routing data
     #
     def apply_command_metadata
-      user = attributes.command&.current_user
-      return self if user.nil?
+      metadata = Struct.new(:player, :target).new
 
-      set_metadata(
-        :command,
-        Struct.new(:player, :target).new({
-          steam_uid: user.steam_uid,
-          discord_id: user.id.to_s,
-          discord_name: user.username,
-          discord_mention: user.mention
-        })
-      )
-
-      target_user = attributes.command&.target_user
-      return self if target_user.nil?
-
-      target = {steam_uid: target_user.steam_uid}
-
-      # Instances of TargetUser do not contain discord information
-      if !target_user.is_a?(ESM::TargetUser)
-        target.merge!(
-          discord_id: target_user.id.to_s,
-          discord_name: target_user.username,
-          discord_mention: target_user.mention
-        )
+      current_user = attributes.command&.current_user
+      if current_user
+        metadata.player = {
+          steam_uid: current_user.steam_uid,
+          discord_id: current_user.id.to_s,
+          discord_name: current_user.username,
+          discord_mention: current_user.mention
+        }
       end
 
-      metadata.target = target
-      self
+      target_user = attributes.command&.target_user
+      if target_user
+        target = {steam_uid: target_user.steam_uid}
+
+        # Instances of TargetUser do not contain discord information
+        if !target_user.is_a?(ESM::TargetUser)
+          target.merge!(
+            discord_id: target_user.id.to_s,
+            discord_name: target_user.username,
+            discord_mention: target_user.mention
+          )
+        end
+
+        metadata.target = target
+      end
+
+      set_metadata(:command, metadata)
     end
 
     #
@@ -250,11 +253,14 @@ module ESM
         data: data_attributes(for_arma: for_arma),
         metadata: metadata_attributes(for_arma: for_arma),
         errors: errors.map(&:to_h)
-      }.stringify_keys
+      }
     end
 
     def to_arma
-      to_h(for_arma: true)
+      {
+        server_id: server_id&.bytes,
+        message: to_h(for_arma: true)
+      }.deep_stringify_keys
     end
 
     #
@@ -328,17 +334,19 @@ module ESM
 
     private
 
-    def on_error(incoming_message, _outgoing_message)
-      # For now, only support a single error until multiple error support is needed
-      error = incoming_message.errors.first
-      embed = ESM::Embed.build(:error, description: error.to_s)
+    def on_error(incoming_message)
+      errors = (self.errors || []) + (incoming_message&.errors || [])
+      errors.map! { |e| e.to_s(self) }.uniq!
 
-      # Attempt to send the embed through the command
-      attributes.command&.reply(embed)
+      if command.nil?
+        error!(errors: errors)
+        return
+      end
 
-      error!(error: error.to_h)
+      command.current_cooldown&.reset!
 
-      embed
+      embed = ESM::Embed.build(:error, description: errors.join("\n"))
+      command.reply(embed)
     end
 
     #
@@ -347,9 +355,8 @@ module ESM
     # @param incoming_message [ESM::Message] The incoming message
     # @param _outgoing_message [ESM::Message] The outgoing message
     #
-    def on_response_sync(incoming_message, _outgoing_message)
+    def on_response_sync(incoming_message)
       @mutex.synchronize { @incoming_message = incoming_message }
-      delivered
     end
 
     #
@@ -358,11 +365,9 @@ module ESM
     # @param incoming_message [ESM::Message] The incoming message
     # @param _outgoing_message [ESM::Message] The outgoing message
     #
-    def on_error_sync(incoming_message, _outgoing_message)
+    def on_error_sync(incoming_message)
       @mutex.synchronize { @incoming_message = incoming_message }
       @error = true
-
-      delivered
     end
   end
 end

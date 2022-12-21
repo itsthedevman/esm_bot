@@ -53,18 +53,7 @@ describe ESM::Connection, v2: true, requires_connection: true do
     end
   end
 
-  describe "#on_message" do
-    it "acknowledges the message" do
-      incoming_message = ESM::Message.event
-
-      message.add_callback(:on_response) do |_, outgoing|
-        expect(outgoing).to eq(message)
-        expect(outgoing.delivered?).to be(true)
-      end
-
-      expect { connection.on_message(incoming_message, message) }.not_to raise_error
-    end
-  end
+  describe "#on_message"
 
   # Not implemented
   # describe "#on_close"

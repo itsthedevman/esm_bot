@@ -95,17 +95,6 @@ module ESM
   end
 
   def self.run!
-    # Cache the A3 lookup data
-    ESM::Arma::ClassLookup.cache
-
-    load_i18n
-    initialize_steam
-    initialize_logger
-    initialize_redis
-
-    # Subscribe to notifications
-    ESM::Notifications.subscribe
-
     # Start the bot
     @bot = ESM::Bot.new
 
@@ -126,7 +115,7 @@ module ESM
     @console = true
   end
 
-  def self.load_i18n
+  def self.initialize_i18n
     I18n.load_path += Dir[File.expand_path("config/locales/**/*.yml")]
     I18n.reload!
   end
@@ -196,6 +185,7 @@ module ESM
   @config = JSON.parse(config.to_json, object_class: OpenStruct)
 end
 
+# Required ahead of time, ignored in autoloader
 require_relative "esm/database"
 ESM::Database.connect!
 

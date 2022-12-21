@@ -27,7 +27,7 @@ RSpec.shared_context("connection") do
       }.to_ostruct
     ).apply_command_metadata
 
-    connection.send_message(message, wait: true)
+    connection.send_message(message)
   end
 
   before(:each) do |example|

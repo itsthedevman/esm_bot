@@ -264,8 +264,7 @@ module ESM
                     uid: current_user.steam_uid
                   }
                 }
-              },
-              wait: true
+              }
             )
 
             if response.errors?

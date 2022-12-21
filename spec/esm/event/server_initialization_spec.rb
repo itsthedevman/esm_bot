@@ -47,7 +47,7 @@ describe ESM::Event::ServerInitialization, v2: true, requires_connection: true d
 
     expect do
       message = event.run!
-      message.run_callback(:on_response, nil, nil)
+      message.run_callback(:on_response, nil)
     end.not_to raise_error
 
     server.reload

@@ -25,10 +25,10 @@ describe ESM::Message, v2: true do
       },
       metadata: {
         type: "empty",
-        content: nil
+        content: {}
       },
       errors: []
-    }.stringify_keys
+    }
   end
 
   let(:input_message) do
@@ -73,7 +73,7 @@ describe ESM::Message, v2: true do
 
     it "converts to symbols except server_id" do
       message = described_class.test.set_server_id(server.server_id.to_sym)
-      expect(message.type).to eq("event")
+      expect(message.type).to eq("test")
       expect(message.data_type).to eq("empty")
       expect(message.metadata_type).to eq("empty")
       expect(message.server_id).to eq(server.server_id)
@@ -88,12 +88,22 @@ describe ESM::Message, v2: true do
 
   describe "#to_arma" do
     it "is a valid hash" do
-      input["server_id"] = input["server_id"].bytes
-      expect(input_message.to_arma).to eq(input)
+      input[:server_id] = input[:server_id].bytes
+      arma_hash = input_message.to_arma # Convert first because of the delete
+
+      input[:metadata].delete(:content)
+      expect(arma_hash).to eq({
+        server_id: input[:server_id],
+        message: input
+      }.deep_stringify_keys)
     end
   end
 
   describe "#on_error" do
+    include_context "command" do
+      let!(:command_class) { ESM::Command::Test::PlayerCommand }
+    end
+
     let(:message) do
       ESM::Message.event
         .set_server_id(Faker::ESM.server_id)
@@ -101,26 +111,29 @@ describe ESM::Message, v2: true do
         .set_metadata(:metadata_test, {bar: "baz"})
     end
 
-    it "handles codes" do
-      current_user = double("user")
-      allow(current_user).to receive(:mention).and_return(user.mention)
+    before do
+      command.instance_variable_set(:@current_user, user.discord_user)
+      command.instance_variable_set(:@current_channel, ESM::Test.channel)
 
-      command = double("command")
-      allow(command).to receive(:current_user).and_return(current_user)
-      allow(command).to receive(:target_user).and_return(nil)
-      allow(command).to receive(:reply).and_return(nil)
-
-      # Needed for mention
       message.add_attribute(:command, command)
-      message.add_error(:code, "test")
+    end
 
-      embed = message.send(:on_error, message, nil)
-      expect(embed.description).to eq("#{current_user.mention} | #{message.id} | #{message.server_id} | #{message.type} | #{message.data_type} | #{message.metadata_type} | #{message.data.foo} | #{message.metadata.bar}")
+    it "handles codes" do
+      message.add_error(:code, "test").send(:on_error, nil)
+      wait_for { ESM::Test.messages.size }.to eq(1)
+
+      embed = ESM::Test.messages.shift&.content
+      expect(embed).not_to be_nil
+
+      expect(embed.description).to eq("#{user.mention} | #{message.id} | #{message.server_id} | #{message.type} | #{message.data_type} | #{message.metadata_type} | #{message.data.foo} | #{message.metadata.bar}")
     end
 
     it "handles messages" do
-      message.add_error("message", "Hello World")
-      embed = message.send(:on_error, message, nil)
+      message.add_error("message", "Hello World").send(:on_error, nil)
+      wait_for { ESM::Test.messages.size }.to eq(1)
+
+      embed = ESM::Test.messages.shift&.content
+      expect(embed).not_to be_nil
 
       expect(embed.description).to eq("Hello World")
     end

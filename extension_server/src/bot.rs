@@ -133,21 +133,14 @@ async fn ipc_thread() {
             Err(e) => panic!("[ipc_thread] Failed to retrieve redis connection. {}", e),
         };
 
-        loop {
-            let (_, json): (String, String) = match connection.blpop("server_inbound", 0).await {
-                Ok(json) => json,
-                Err(e) => {
-                    error!("[ipc_thread] server_inbound blpop encountered an error. {e:?}");
-                    continue;
-                }
-            };
-
+        let process_inbound_request = |json: String| -> ESMResult {
             let command: BotRequest = match serde_json::from_str(&json) {
-                Ok(message) => message,
+                Ok(r) => r,
                 Err(e) => {
-                    error!("[ipc_thread] Conversion from str to BotRequest failed. {e}");
-                    error!("[ipc_thread] Input: {json:#?}");
-                    continue;
+                    error!("[ipc_thread] Failed to parse request - {e}");
+                    error!("[ipc_thread] {json:#?}");
+
+                    return Err(e.to_string());
                 }
             };
 
@@ -156,7 +149,7 @@ async fn ipc_thread() {
             match command {
                 BotRequest::ServerRequest(r) => {
                     if let Err(e) = crate::ROUTER.route_to_server(r) {
-                        error!("[ipc_thread] Error while sending request to server. {e}");
+                        return Err(format!("Error while sending request to server. {e}"));
                     }
                 }
                 BotRequest::Pong => {
@@ -166,11 +159,38 @@ async fn ipc_thread() {
                     if let Err(e) =
                         crate::ROUTER.route_to_server(ServerRequest::Send { server_id, message })
                     {
-                        error!("[ipc_thread] Error while sending message to client. {e}");
+                        return Err(format!("Error while sending message to client. {e}"));
                     }
                 }
-                c => error!("[ipc_thread] Unsupported command \"{c:?}\"."),
+                c => return Err(format!("Unsupported command \"{c:?}\".")),
+            }
+
+            Ok(())
+        };
+
+        loop {
+            let (_, json): (String, String) = match connection.blpop("server_inbound", 0).await {
+                Ok(json) => json,
+                Err(e) => {
+                    error!("[ipc_thread] Failed to retrieve inbound message - {e:?}");
+                    continue;
+                }
             };
+
+            match process_inbound_request(json) {
+                Ok(_) => {}
+                Err(e) => {
+                    error!("[ipc_thread] {e}");
+
+                    if let Err(e) = BotRequest::send(
+                        Message::new()
+                            .add_error_code("system_exception")
+                            .add_error_message(format!("```{e}```")),
+                    ) {
+                        error!("[ipc_thread] System exception send - {e}");
+                    };
+                }
+            }
         }
     });
 }

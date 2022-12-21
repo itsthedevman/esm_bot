@@ -16,7 +16,7 @@ module ESM
 
         def on_execute
           send_to_arma(
-            wait: true,
+            type: :event,
             data: {type: :echo},
             errors: [{type: :message, content: "this is an error message"}]
           )

@@ -28,13 +28,12 @@ module ESM
 
     def on_message(incoming_message, outgoing_message)
       @server.reload # Ensure the server is up-to-date
-      outgoing_message&.delivered # Let the overseer know that it's good
 
       case incoming_message.type
       when ->(type) { type == "event" && incoming_message.data_type != "empty" }
         on_event(incoming_message, outgoing_message)
       else
-        outgoing_message&.run_callback(:on_response, incoming_message, outgoing_message)
+        outgoing_message&.run_callback(:on_response, incoming_message)
       end
     end
 

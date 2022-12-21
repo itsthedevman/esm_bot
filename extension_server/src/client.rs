@@ -122,19 +122,21 @@ impl Client {
 
         if matches!(message.data, Data::Ping) {
             trace!(
-                "[send_message] {} - {} - {:?} - {}",
+                "[send_message] {} - {} - {} - {:?}/{:?}",
                 self.host(),
                 self.server_id(),
-                message.message_type,
                 message.id,
+                message.message_type,
+                message.data,
             );
         } else {
             info!(
-                "[send_message] {} - {} - {:?} - {}",
+                "[send_message] {} - {} - {} - {:?}/{:?}",
                 self.host(),
                 self.server_id(),
-                message.message_type,
                 message.id,
+                message.message_type,
+                message.data,
             );
         }
 

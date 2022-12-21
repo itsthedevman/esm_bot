@@ -5,32 +5,26 @@ describe "ESMs_object_message_respond_to", requires_connection: true, v2: true d
 
   it "acknowledges the message" do
     success = false
-    message = ESM::Message.event
+    outbound_message = ESM::Message.event
 
-    message.add_callback(:on_response) do |inbound, outbound|
-      expect(outbound.type).to eq("event")
+    outbound_message.add_callback(:on_response) do |inbound|
       expect(inbound.type).to eq("event")
-
-      expect(inbound.id).to eq(message.id)
-      expect(outbound.id).to eq(message.id)
-
+      expect(inbound.id).to eq(outbound_message.id)
       expect(inbound.data_type).to eq("empty")
       expect(inbound.data).to eq({})
-
       expect(inbound.metadata_type).to eq("empty")
       expect(inbound.metadata).to eq({})
-
       expect(inbound.errors).to eq([])
 
       success = true
     end
 
     # Needed for the message cycle to properly complete
-    connection.tcp_server.message_overseer.watch(message)
+    connection.tcp_server.message_overseer.watch(outbound_message)
 
     execute_sqf!(
       <<~SQF
-        ["#{message.id}"] call ESMs_object_message_respond_to;
+        ["#{outbound_message.id}"] call ESMs_object_message_respond_to;
       SQF
     )
 
@@ -39,21 +33,16 @@ describe "ESMs_object_message_respond_to", requires_connection: true, v2: true d
 
   it "on_error is triggered when errors" do
     success = false
-    message = ESM::Message.event
+    outbound_message = ESM::Message.event
 
-    message.add_callback(:on_error) do |inbound, outbound|
+    outbound_message.add_callback(:on_error) do |inbound|
       expect(outbound.type).to eq("event")
       expect(inbound.type).to eq("event")
-
-      expect(inbound.id).to eq(message.id)
-      expect(outbound.id).to eq(message.id)
-
+      expect(inbound.id).to eq(outbound_message.id)
       expect(inbound.data_type).to eq("empty")
       expect(inbound.data).to eq({})
-
       expect(inbound.metadata_type).to eq("empty")
       expect(inbound.metadata).to eq({})
-
       expect(outbound.errors).to eq([])
 
       errors = inbound.errors.map(&:to_h)
@@ -64,11 +53,11 @@ describe "ESMs_object_message_respond_to", requires_connection: true, v2: true d
     end
 
     # Needed for the message cycle to properly complete
-    connection.tcp_server.message_overseer.watch(message)
+    connection.tcp_server.message_overseer.watch(outbound_message)
 
     execute_sqf!(
       <<~SQF
-        ["#{message.id}", "event", "empty", [], "empty", [], [["code", "ERROR_CODE"], ["message", "An error message"]]] call ESMs_object_message_respond_to;
+        ["#{outbound_message.id}", "event", "empty", [], "empty", [], [["code", "ERROR_CODE"], ["message", "An error message"]]] call ESMs_object_message_respond_to;
       SQF
     )
 

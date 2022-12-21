@@ -2,7 +2,14 @@
 
 module ESM
   module Command
-    CATEGORIES = %w[development general server community entertainment system].freeze
+    CATEGORIES = %w[
+      community
+      development
+      entertainment
+      general
+      server
+      system
+    ].freeze
 
     # @return [Array<Symbol>] A list of publicly available command types.
     #   Any types not in this list will not show up in the help documentation or on the website.
@@ -15,7 +22,7 @@ module ESM
     def self.[](command_name)
       return if command_name.blank?
 
-      @all.find { |command| command_name == command.name || command.command_aliases.include?(command_name.to_sym) }
+      @all.find { |command| command_name == command.name || command.aliases.include?(command_name.to_sym) }
     end
 
     # V1
@@ -29,30 +36,18 @@ module ESM
       !self[command_name].nil?
     end
 
-    def self.load_commands
+    def self.load
       @all = []
       @v1 = [] # V1
       @by_category = nil
       @by_type = nil
       @cache = []
 
-      path = File.expand_path("lib/esm/command")
-      CATEGORIES.each do |category|
-        Dir["#{path}/#{category}/*.rb"].each do |command_path|
-          if command_path.include?("v1") # V1
-            process_command_v1(command_path, category) # V1
-          else
-            process_command(command_path, category)
-          end
-        end
-      end
-
-      # Load all of our test commands
-      # Can't load in spec_helper because of race condition
-      if ESM.env.test?
-        path = File.expand_path("spec/support/esm/command/test")
-        Dir["#{path}/*.rb"].each do |command_path|
-          process_command(command_path, "test")
+      ESM::Command::Base.subclasses.each do |command_class|
+        if command_class.name.include?("v1") # V1
+          process_command_v1(command_class) # V1
+        else
+          process_command(command_class)
         end
       end
 
@@ -68,47 +63,33 @@ module ESM
       @cache = nil
     end
 
-    def self.process_command(command_path, category)
-      command_name = parse_command_name_from_path(command_path)
-
-      # Create our command to be stored
-      command = build(command_name, category)
-
+    def self.process_command(command_class)
       # Tell the bot about our command
-      ESM::Bot.register_command(command.class, command.name.to_sym, command.aliases)
+      ESM::Bot.register_command(command_class)
 
       # Cache Command
-      cache(command)
+      cache(command_class)
     end
 
     # V1
-    def self.process_command_v1(command_path, category)
-      command_name = parse_command_name_from_path(command_path)
-      command = build(command_name, category)
-      return if command.type.nil?
+    def self.process_command_v1(command_class)
+      return if command_class.type.nil?
 
-      @v1 << command.class
+      @v1 << command_class
     end
 
     def self.parse_command_name_from_path(command_path)
       command_path.gsub("#{File.expand_path("..", command_path)}/", "").gsub(/\.rb$/, "")
     end
 
-    def self.build(command_name, category)
-      # set_id -> SetId or pay -> Pay
-      command_name = command_name.classify(keep_plural: true)
-      category = category.classify(keep_plural: true)
+    def self.cache(command_class)
+      command = command_class.new
 
-      # "ESM::Command::Server::Pay" -> ESM::Command::Server::Pay -> New instance
-      "ESM::Command::#{category}::#{command_name}".constantize.new
-    end
-
-    def self.cache(command)
       # Background commands do not have types
       return if command.type.nil?
 
       # Use command_name instead of command.name to get set_id instead of setid
-      @all << command.class
+      @all << command_class
 
       # Don't cache invalid command types.
       return if !TYPES.include?(command.type)
@@ -132,7 +113,7 @@ module ESM
     end
 
     def self.by_type
-      @by_type ||= OpenStruct.new(@all.group_by(&:command_type))
+      @by_type ||= OpenStruct.new(@all.group_by(&:type))
     end
 
     #

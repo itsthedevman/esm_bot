@@ -71,8 +71,11 @@ module ESM
         FactoryBot.create(:server, community_id: second_community.id)
       end
 
-      def channel
-        id = data[community.guild_type][:channels].sample
+      def channel(opts = {})
+        community = opts.delete(:in) || community
+        guild_type = community&.guild_type || :primary
+
+        id = data[guild_type][:channels].sample
         ESM.bot.channel(id)
       end
 

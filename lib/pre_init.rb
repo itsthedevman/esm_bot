@@ -40,3 +40,16 @@ loader.eager_load
 ActiveSupport::Inflector.inflections(:en) do |inflect|
   inflect.acronym("ESM")
 end
+
+#############################
+# Initializers
+#############################
+ESM.initialize_i18n
+ESM.initialize_logger
+ESM.initialize_steam
+ESM.initialize_redis
+
+ESM::Notifications.subscribe
+ESM::Arma::ClassLookup.cache
+
+ESM::Command.load if ESM.env != "test"

@@ -34,8 +34,8 @@ module ESM
       :direct_message_typing
     ).keys.freeze
 
-    def self.register_command(command_class, name, aliases)
-      ESM.bot&.command(name, aliases: aliases) do |event|
+    def self.register_command(command_class)
+      ESM.bot&.command(command_class.name.to_sym, aliases: command_class.aliases) do |event|
         # Execute the command.
         # Threaded since I handle everything in the commands
         Thread.new { command_class.new.execute(event) }
@@ -54,9 +54,6 @@ module ESM
       @prefixes = {}
       @prefixes.default = ESM.config.prefix
 
-      # Connect to the database
-      ESM::Database.connect!
-
       load_community_prefixes
 
       super(
@@ -70,9 +67,6 @@ module ESM
     def run
       # Binds the Discord Events
       bind_events!
-
-      # Register all of ESM's commands
-      ESM::Command.load_commands
 
       # Call Discordrb::Commands::Commandbot.run
       super

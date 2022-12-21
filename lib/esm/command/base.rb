@@ -32,7 +32,7 @@ module ESM
       ].freeze
 
       class << self
-        attr_reader :defines, :command_type, :category, :command_aliases
+        attr_reader :defines, :type, :category, :aliases
       end
 
       def self.name
@@ -47,7 +47,7 @@ module ESM
       end
 
       def self.reset_variables!
-        @command_aliases = []
+        @aliases = []
         @arguments = []
         @type = nil
         @limit_to = nil
@@ -74,13 +74,12 @@ module ESM
         I18n.t("commands.#{@command_name}.description", prefix: prefix, default: "")
       end
 
-      # I wanted these as methods instead of attributes
-      def self.aliases(*aliases)
-        @command_aliases = aliases
+      def self.register_aliases(*aliases)
+        @aliases = aliases
       end
 
-      def self.type(type)
-        @command_type = type
+      def self.set_type(type)
+        @type = type
       end
 
       def self.limit_to(channel_type) # standard:disable Style/TrivialAccessors
@@ -100,9 +99,9 @@ module ESM
           OpenStruct.new(
             name: @command_name,
             category: @category,
-            aliases: @command_aliases,
+            aliases: @aliases,
             arguments: @arguments,
-            type: @command_type,
+            type: @type,
             limit_to: @limit_to,
             defines: @defines,
             requires: @requires,
@@ -120,12 +119,12 @@ module ESM
       # Public Instance Methods
       #########################
       attr_reader :category, :type, :aliases, :limit_to,
-        :requires, :executed_at, :response, :cooldown_time,
-        :defines, :permissions, :checks
+        :requires, :response, :cooldown_time,
+        :defines, :permissions, :checks, :skip_flags
 
       attr_writer :current_community
 
-      attr_accessor :event, :arguments
+      attr_accessor :executed_at, :event, :arguments
 
       def initialize
         attributes = self.class.attributes
@@ -200,10 +199,10 @@ module ESM
         return @current_user if defined?(@current_user) && @current_user.present?
         return if @event&.user.nil?
 
-        user = ESM::User.where(discord_id: @event.user.id).first_or_initialize
+        user = ESM::User.where(discord_id: @event&.user&.id).first_or_initialize
         user.update(
-          discord_username: @event.user.name,
-          discord_discriminator: @event.user.discriminator
+          discord_username: @event&.user&.name,
+          discord_discriminator: @event&.user&.discriminator
         )
 
         # Save some cycles
@@ -219,7 +218,7 @@ module ESM
         return @current_community if defined?(@current_community) && @current_community.present?
         return if @event&.server.nil?
 
-        @current_community = ESM::Community.find_by_guild_id(@event.server.id)
+        @current_community = ESM::Community.find_by_guild_id(@event&.server&.id)
       end
 
       # @return [ESM::Cooldown] The cooldown for this command and user
@@ -228,7 +227,7 @@ module ESM
       end
 
       def current_channel
-        @current_channel ||= @event.channel
+        @current_channel ||= @event&.channel
       end
 
       # @return [ESM::Server, nil] The server that the command was executed for
@@ -358,29 +357,37 @@ module ESM
       #
       # Sends a message to the target_server
       #
-      # @param message [ESM::Message, nil] If a message is provided, this will be the message that is sent. The rest of the arguments for this method are ignored
-      # @param type [String/Symbol] The message type. If no message is provided, this will be used to build the message. See ESM::Message for more details
-      # @param data_type [String/Symbol] The messages's data type. If no message is provided, this will be used to build the message. See ESM::Message for more details
-      # @param **data [Hash] The rest of the attributes to pass into ESM::Message. If no message is provided, this will be used to build the message. See ESM::Message for more details
-      #
+      # @param outgoing_message [ESM::Message, Hash] If a ESM::Message is provided, this message will be sent as is. If a Hash is provided, a message will be built from it
+      # @param send_opts [Hash] Passed into #send_message. @see ESM::Connection::Server.fire
       # @return [ESM::Message] The message that was sent
       #
-      def send_to_arma(outbound_message = {}, send_opts = {})
+      def send_to_arma(outgoing_message = {}, send_opts = {})
         raise ESM::Exception::CheckFailure, "Command #{name} must define the `server_id` argument in order to use #send_to_arma" if target_server.nil?
 
         # Allows overwriting the outbound message. Otherwise, build a message from the data
-        if outbound_message.is_a?(Hash)
-          outbound_message = ESM::Message.from_hash(outbound_message)
+        if outgoing_message.is_a?(Hash)
+          # Allows providing `data: content` or,
+          #                  `data: { type: :different }` or,
+          #                  `data: { type: :different, content: different_content }`
+          data = outgoing_message[:data] || {}
+          unless data.key?(:type) && (data.key?(:content) || data.size == 1)
+            outgoing_message[:data] = {
+              type: name,
+              content: outgoing_message[:data]
+            }
+          end
 
-          outbound_message.add_callback(:on_error, :on_error)
-          outbound_message.add_callback(:on_response) do |incoming_message, outgoing_message|
+          outgoing_message[:type] = :arma unless outgoing_message.key?(:type)
+
+          outgoing_message = ESM::Message.from_hash(outgoing_message)
+          outgoing_message.add_callback(:on_response) do |incoming_message|
             on_response(incoming_message, outgoing_message)
           end
         end
 
-        outbound_message.add_attribute(:command, self)
-        outbound_message.apply_command_metadata
-        target_server.connection.send_message(outbound_message, send_opts)
+        outgoing_message.add_attribute(:command, self)
+        outgoing_message.apply_command_metadata
+        target_server.connection.send_message(outgoing_message, send_opts)
       end
 
       # Convenience method for replying back to the event's channel
@@ -500,42 +507,40 @@ module ESM
       def request_declined
       end
 
+      def on_response(_incoming_message, _outgoing_message)
+      end
+
       def from_discord(event)
-        @event = event
-        @executed_at = DateTime.now
-
-        @arguments.parse!(@event)
-        @permissions.load
-
-        @checks.text_only!
-        @checks.dm_only!
-        @checks.permissions!
-
-        @arguments.validate!
-
-        # Logging
-        ESM::Notifications.trigger("command_from_discord", command: self)
-
-        # Run some checks
-        @checks.run_all!
-
         # V1
-        if target_server.present? && target_server.version < Semantic::Version.new("2.0.0") && (V1_COMMANDS.include?(name.to_sym) && !self.class.to_s.ends_with?("V1"))
-          command = "#{self.class}V1".constantize.new
-          command.event = @event
-          command.arguments = @arguments
-          command.permissions.load
+        command =
+          if target_server.present? && target_server.version < Semantic::Version.new("2.0.0") && (V1_COMMANDS.include?(name.to_sym) && !self.class.to_s.ends_with?("V1"))
+            "#{self.class}V1".constantize.new
+          else
+            self
+          end
 
-          command.on_execute
-        else
-          on_execute
-        end
+        command.event = event
+        command.executed_at = DateTime.now
 
-        # Update the cooldown
-        create_or_update_cooldown if !@skip_flags.include?(:cooldown)
+        command.arguments.parse!(@event)
+        command.permissions.load
 
-        # Increment the counter
+        command.checks.text_only!
+        command.checks.dm_only!
+        command.checks.permissions!
+
+        command.arguments.validate!
+
+        ESM::Notifications.trigger("command_from_discord", command: self)
+        command.checks.run_all!
+
+        result = command.on_execute
+        create_or_update_cooldown if !command.skip_flags.include?(:cooldown)
+
+        # This just tracks how many times a command is used
         ESM::CommandCount.increment_execution_counter(name)
+
+        result
       end
 
       #
@@ -547,7 +552,7 @@ module ESM
         @response = (parameters.size == 1) ? parameters.first : parameters
 
         # Trigger the callback
-        on_response
+        on_response(nil, nil)
       end
 
       def create_or_update_cooldown
@@ -617,7 +622,7 @@ module ESM
           return
         end
 
-        ESM.bot.deliver(message, to: @event.channel)
+        ESM.bot.deliver(message, to: @event&.channel)
       end
     end
   end

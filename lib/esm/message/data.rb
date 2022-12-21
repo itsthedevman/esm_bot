@@ -46,6 +46,8 @@ module ESM
             value.map(&convert_values)
           when OpenStruct, Struct
             value.table.symbolize_keys.transform_values(&convert_values)
+          when DateTime, Time
+            value.strftime("%FT%T%:z") # yyyy-mm-ddT00:00:00ZONE
           else
             value
           end
@@ -54,7 +56,11 @@ module ESM
         # This blocks the content key from being added to the hash
         #   which in turn keeps it from being included in the JSON that is sent to the server
         #   Bonus: Handles invalid data
-        return hash if !@original_content.is_a?(Hash) || (for_arma && type == "empty") || (for_arma && @original_content.blank?)
+        if !@original_content.is_a?(Hash) ||
+            (for_arma && type == "empty") ||
+            (for_arma && @original_content.blank?)
+          return hash
+        end
 
         hash[:content] = @original_content.transform_values(&convert_values)
         hash

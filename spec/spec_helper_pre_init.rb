@@ -31,6 +31,9 @@ loader.collapse("#{__dir__}/support/model")
 loader.setup
 loader.eager_load
 
+# Load the commands after they've been auto-loaded
+ESM::Command.load
+
 # Enable discordrb logging
 Discordrb::LOGGER.debug = false
 

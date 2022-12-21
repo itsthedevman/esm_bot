@@ -3,7 +3,7 @@
 require_relative "../lib/esm"
 require_relative "../spec/support/esm/test"
 
-ESM::Command.load_commands
+ESM::Command.load
 
 ESM::BotAttribute.create!(
   maintenance_mode_enabled: false,

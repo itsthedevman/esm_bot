@@ -7,9 +7,9 @@ module ESM
     attribute :user_id, :integer
     attribute :steam_uid, :string
     attribute :command_name, :string
-    attribute :cooldown_quantity, :integer
-    attribute :cooldown_type, :string
-    attribute :cooldown_amount, :integer, default: 0
+    attribute :cooldown_quantity, :integer, default: 1
+    attribute :cooldown_type, :string, default: "seconds"
+    attribute :cooldown_amount, :integer, default: 2
     attribute :expires_at, :datetime
     attribute :created_at, :datetime
     attribute :updated_at, :datetime
@@ -40,7 +40,7 @@ module ESM
     end
 
     def reset!
-      update!(expires_at: 1.second.ago, cooldown_amount: 0)
+      update!(expires_at: 5.second.ago, cooldown_amount: 0)
     end
 
     def update_expiry!(executed_at, cooldown_time)
