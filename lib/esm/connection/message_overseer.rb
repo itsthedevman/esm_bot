@@ -64,7 +64,7 @@ module ESM
 
           if with_error
             message.add_error("code", "message_undeliverable")
-            message.run_callback(:on_error, message, nil)
+            message.on_error(message)
           end
 
           remove(id)
@@ -82,7 +82,7 @@ module ESM
           if !envelope.delivered?
             message = envelope.message
             message.add_error("code", "message_undeliverable")
-            message.run_callback(:on_error, nil, message)
+            message.on_error(nil)
           end
 
           remove(id)

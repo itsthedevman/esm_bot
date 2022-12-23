@@ -129,11 +129,9 @@ module ESM
 
         __send_internal({type: :send_to_client, content: message.to_arma}) unless ESM.env.test? && ESM::Test.block_outbound_messages
 
-        if forget
-          message
-        else
-          message.wait_for_response
-        end
+        return message if forget
+
+        message.wait_for_response
       end
 
       private
@@ -271,7 +269,6 @@ module ESM
       def on_message(incoming_message)
         # Retrieve the original message. If it's nil, the message originated from the client
         outgoing_message = @message_overseer.retrieve(incoming_message.id)
-        outgoing_message&.delivered
 
         info!(
           outgoing_message: outgoing_message&.to_h,
@@ -280,8 +277,7 @@ module ESM
 
         # Handle any errors
         if incoming_message.errors?
-          outgoing_message&.run_callback(:on_error, incoming_message)
-
+          outgoing_message&.on_error(incoming_message)
           return
         end
 

@@ -16,7 +16,7 @@ module ESM
 
     # @param message [Hash, ESM::Message] This can be either a hash of arguments for ESM::Message, or an instance of it.
     def send_message(message = nil, opts = {})
-      message = ESM::Message.from_hash(**message) if message.is_a?(Hash)
+      message = ESM::Message.from_hash(message) if message.is_a?(Hash)
 
       @tcp_server.fire(message, to: server_id, **opts)
     end
@@ -33,7 +33,7 @@ module ESM
       when ->(type) { type == "event" && incoming_message.data_type != "empty" }
         on_event(incoming_message, outgoing_message)
       else
-        outgoing_message&.run_callback(:on_response, incoming_message)
+        outgoing_message&.on_response(incoming_message)
       end
     end
 

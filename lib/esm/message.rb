@@ -305,8 +305,14 @@ module ESM
     # This sets the message's callbacks and forces `ESM::Connection::Server#send_message` to become blocking
     #
     def synchronous
-      add_callback(:on_response, :on_response_sync)
-      add_callback(:on_error, :on_error_sync)
+      add_callback(:on_response) do |incoming_message|
+        @mutex.synchronize { @incoming_message = incoming_message }
+      end
+
+      add_callback(:on_error) do |incoming_message|
+        @mutex.synchronize { @incoming_message = incoming_message }
+        @error = true
+      end
     end
 
     #
@@ -332,42 +338,34 @@ module ESM
       "#<ESM::Message #{JSON.pretty_generate(to_h)}>"
     end
 
-    private
+    def on_response(incoming_message)
+      run_callback(:on_response, incoming_message)
+
+      # Runs after callbacks because of tests and such
+      delivered
+    end
 
     def on_error(incoming_message)
+      raise "Impl default_on_error"
+      run_callback(:on_error, incoming_message)
+
+      delivered
+    end
+
+    private
+
+    def default_on_error
       errors = (self.errors || []) + (incoming_message&.errors || [])
       errors.map! { |e| e.to_s(self) }.uniq!
 
       if command.nil?
         error!(errors: errors)
-        return
+      else
+        command.current_cooldown&.reset!
+
+        embed = ESM::Embed.build(:error, description: errors.join("\n"))
+        command.reply(embed)
       end
-
-      command.current_cooldown&.reset!
-
-      embed = ESM::Embed.build(:error, description: errors.join("\n"))
-      command.reply(embed)
-    end
-
-    #
-    # Used when a message needs to be treated like its synchronous.
-    #
-    # @param incoming_message [ESM::Message] The incoming message
-    # @param _outgoing_message [ESM::Message] The outgoing message
-    #
-    def on_response_sync(incoming_message)
-      @mutex.synchronize { @incoming_message = incoming_message }
-    end
-
-    #
-    # Used when a message needs to be treated like its synchronous.
-    #
-    # @param incoming_message [ESM::Message] The incoming message
-    # @param _outgoing_message [ESM::Message] The outgoing message
-    #
-    def on_error_sync(incoming_message)
-      @mutex.synchronize { @incoming_message = incoming_message }
-      @error = true
     end
   end
 end
