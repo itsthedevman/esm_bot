@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 SPEC_TIMEOUT_SECONDS = 5
+EXTENSION_SERVER_LOG_LEVEL = :info
 
 RSpec.configure do |config|
   require_relative "./spec_helper_pre_init"
@@ -24,7 +25,7 @@ RSpec.configure do |config|
   end
 
   config.after :suite do
-    `kill -9 #{EXTENSION_SERVER.pid}`
+    `kill -9 $(pgrep -f esm_extension_server) > /dev/null 2>&1 && kill -9 $(pgrep -f esm_bot) > /dev/null 2>&1`
     EXTENSION_SERVER.close
   end
 

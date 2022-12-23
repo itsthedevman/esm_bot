@@ -48,4 +48,4 @@ ActiveRecord::Base.logger.level = Logger::INFO if ActiveRecord::Base.logger.pres
 build_result = `cargo check; echo $?`.chomp
 raise "Failed to build extension_server" if build_result != "0"
 
-EXTENSION_SERVER = IO.popen("POSTGRES_DATABASE=esm_test RUST_LOG=info bin/extension_server")
+EXTENSION_SERVER = IO.popen("POSTGRES_DATABASE=esm_test RUST_LOG=#{EXTENSION_SERVER_LOG_LEVEL} bin/extension_server")
