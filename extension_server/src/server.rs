@@ -52,7 +52,9 @@ async fn routing_thread(handler: Handler, mut receiver: UnboundedReceiver<Server
                 continue;
             };
 
-            trace!("[routing_thread] Processing request: {request:?}");
+            if !matches!(request, ServerRequest::AliveCheck) {
+                debug!("[routing_thread] Processing request: {:?}", request);
+            }
 
             match request {
                 /////////////////////
@@ -205,12 +207,17 @@ async fn routing_thread(handler: Handler, mut receiver: UnboundedReceiver<Server
                     };
 
                     info!(
-                        "[on_message] {address} - {server_id} - {message_type:?}/{message_data:?}- {message_id}",
+                        "[on_message] {address} - {server_id} - {message_id} - {message_type:?}/{status} - {message_data:?}",
                         address = endpoint.addr(),
                         message_id = message.id,
                         server_id = client.server_id(),
                         message_type = message.message_type,
-                        message_data = message.data
+                        message_data = message.data,
+                        status = if message.errors.is_empty() {
+                            "Success"
+                        } else {
+                            "Failed"
+                        }
                     );
 
                     if let Err(e) = BotRequest::send(message) {

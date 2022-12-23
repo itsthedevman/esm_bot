@@ -144,6 +144,7 @@ impl Client {
     }
 
     pub fn disconnect(&self, handler: &Handler) {
+        info!("[disconnect] {} - {}", self.host(), self.server_id());
         handler.network().remove(self.resource_id);
     }
 
