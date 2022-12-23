@@ -36,14 +36,12 @@ describe "ESMs_object_message_respond_to", requires_connection: true, v2: true d
     outbound_message = ESM::Message.event
 
     outbound_message.add_callback(:on_error) do |inbound|
-      expect(outbound.type).to eq("event")
       expect(inbound.type).to eq("event")
       expect(inbound.id).to eq(outbound_message.id)
       expect(inbound.data_type).to eq("empty")
       expect(inbound.data).to eq({})
       expect(inbound.metadata_type).to eq("empty")
       expect(inbound.metadata).to eq({})
-      expect(outbound.errors).to eq([])
 
       errors = inbound.errors.map(&:to_h)
       expect(errors).to include({type: "code", content: "ERROR_CODE"})
