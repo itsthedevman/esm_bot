@@ -61,6 +61,10 @@ module ESM
       default_scoped.includes(:servers).order(:guild_id).where(guild_id: id).first
     end
 
+    def self.find_by_guild_id(id)
+      order(:guild_id).where(guild_id: id).first
+    end
+
     def self.find_by_server_id(id)
       return if id.blank?
 
@@ -73,10 +77,14 @@ module ESM
 
     def logging_channel
       ::ESM.bot.channel(logging_channel_id)
+    rescue
+      nil
     end
 
     def discord_server
       ::ESM.bot.server(guild_id)
+    rescue
+      nil
     end
 
     def log_event(event, message)
@@ -98,14 +106,17 @@ module ESM
 
       # Check this first to avoid an infinite loop if the bot cannot send a message to this channel
       # since this method is called from the #deliver method for this exact reason.
-      channel = logging_channel
-      member = ::ESM.bot.profile.on(channel.server)
-      return ::ESM.bot.deliver(message, to: channel) if member.permission?(:send_messages, channel)
+      logging_channel = logging_channel
+      return if logging_channel.nil?
 
-      # The bot did not have permission. Send the owner a message letting them know
-      embed = ::ESM::Embed.build(:error, description: I18n.t("exceptions.logging_channel_access_denied", community_name: community_name, channel_name: channel.name))
+      ::ESM.bot.deliver(message, to: channel)
+    end
 
-      ::ESM.bot.deliver(embed, to: channel.server.owner)
+    def modifiable_by?(guild_member)
+      return true if guild_member.permission?(:administrator) || guild_member.owner?
+
+      # Check for roles
+      dashboard_access_role_ids.any? { |role_id| guild_member.role?(role_id) }
     end
 
     private

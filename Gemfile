@@ -48,6 +48,7 @@ group :development do
   gem "ruby-prof"
   gem "simplecov"
   gem "solargraph"
+  gem "standard"
   gem "yard"
 end
 

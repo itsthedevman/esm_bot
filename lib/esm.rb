@@ -32,7 +32,7 @@
   "redis",
   "securerandom",
   "semantic",
-  "sinatra/base",
+  "sinatra",
   "steam_web_api",
   "steam-condenser",
   "terminal-table",

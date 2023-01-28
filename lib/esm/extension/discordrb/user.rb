@@ -12,5 +12,14 @@ module Discordrb
         user
       end.call
     end
+
+    def to_h
+      {
+        id: id.to_s,
+        username: username,
+        discriminator: discriminator,
+        avatar_url: avatar_url
+      }
+    end
   end
 end

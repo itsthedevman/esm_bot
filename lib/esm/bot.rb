@@ -160,6 +160,10 @@ module ESM
     ###########################
     # Public Methods
     ###########################
+    def channel_permission?(permission, channel)
+      profile.on(channel.server)&.permission?(permission, channel) || false
+    end
+
     def stopping?
       @esm_status == :stopping
     end

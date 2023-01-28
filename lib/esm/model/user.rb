@@ -85,7 +85,7 @@ module ESM
     end
 
     def distinct
-      "#{discord_username}\##{discord_discriminator}"
+      "#{discord_username}##{discord_discriminator}"
     end
 
     def discord_user
@@ -102,6 +102,29 @@ module ESM
 
         discord_user
       end.call
+    end
+
+    def discord_servers
+      @discord_servers ||= ESM.bot.servers.values.select do |server|
+        server.users.any? { |user| user.id.to_s == discord_id }
+      end
+    end
+
+    def can_modify?(guild_id)
+      return true if developer? && !Rails.env.development?
+
+      community = Community.find_by_guild_id(guild_id)
+      return false if community.nil?
+
+      server = community.discord_server
+      return false if server.nil?
+
+      # Check if they're the owner or admin
+      community.modifiable_by?(discord_user.on(server))
+    end
+
+    def channel_permission?(permission, channel)
+      discord_user&.on(channel.server)&.permission?(permission, channel) || false
     end
 
     private
