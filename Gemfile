@@ -53,7 +53,6 @@ group :development do
 end
 
 group :development, :test do
-  gem "standard"
   gem "rspec"
   gem "rspec-wait"
 end

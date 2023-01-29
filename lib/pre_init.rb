@@ -52,4 +52,4 @@ ESM.initialize_redis
 ESM::Notifications.subscribe
 ESM::Arma::ClassLookup.cache
 
-ESM::Command.load if ESM.env != "test"
+ESM::Command.load unless ESM.env.test?

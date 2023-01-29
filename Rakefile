@@ -23,6 +23,9 @@ task default: [:test, "standard:fix"]
 
 # Some db tasks require your app code to be loaded; they'll expect to find it here
 task :environment do
+end
+
+task :bot do
   require_relative "lib/esm"
 
   ESM.console!
