@@ -346,15 +346,18 @@ module ESM
     end
 
     def on_error(incoming_message)
-      raise "Impl default_on_error"
-      run_callback(:on_error, incoming_message)
+      if callback?(:on_error)
+        run_callback(:on_error, incoming_message)
+      else
+        default_on_error
+      end
 
       delivered
     end
 
     private
 
-    def default_on_error
+    def default_on_error(incoming_message)
       errors = (self.errors || []) + (incoming_message&.errors || [])
       errors.map! { |e| e.to_s(self) }.uniq!
 
