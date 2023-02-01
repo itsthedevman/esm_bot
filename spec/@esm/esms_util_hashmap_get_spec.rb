@@ -6,7 +6,7 @@ describe "ESMs_util_hashmap_get", requires_connection: true, v2: true do
   (1..5).each do |level|
     it "extracts the value from the hashmap (#{level} levels deep)" do
       keys = Array.new(level) { Faker::Crypto.md5 }
-      expected_value = Faker::Crypto.md5
+      expected_value = Faker::Crypto.md5.delete("e") # Arma will parse the "e" as scientific notation
       expected_key = keys.delete_at(level - 1)
 
       # _hash3 set ["key_3", "value"];
