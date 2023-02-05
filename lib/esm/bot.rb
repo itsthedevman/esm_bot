@@ -160,7 +160,16 @@ module ESM
     ###########################
     # Public Methods
     ###########################
-    def channel_permission?(permission, channel)
+
+    #
+    # Checks if the bot has send permission to the provided channel
+    #
+    # @param channel [Discordrb::Channel] The channel to check
+    # @param permission [Symbol] The permission to check
+    #
+    # @return [Boolean]
+    #
+    def channel_permission?(channel, permission)
       profile.on(channel.server)&.permission?(permission, channel) || false
     end
 
@@ -291,18 +300,6 @@ module ESM
 
     def update_prefix(community)
       @prefixes[community.guild_id] = community.command_prefix || ESM.config.prefix
-    end
-
-    #
-    # Checks if the bot has send permission to the provided channel
-    #
-    # @param channel [Discordrb::Channel] The channel to check
-    #
-    # @return [Boolean]
-    #
-    def channel_permission?(channel, permission)
-      member = profile.on(channel.server)
-      member.permission?(permission, channel)
     end
 
     #

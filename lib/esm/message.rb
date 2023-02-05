@@ -40,7 +40,6 @@ module ESM
       end
 
       message = message.add_errors(hash[:errors]) if hash[:errors].present?
-      message.add_callback(:on_error, :on_error) if !message.callback?(:on_error)
       message
     end
 
@@ -349,7 +348,7 @@ module ESM
       if callback?(:on_error)
         run_callback(:on_error, incoming_message)
       else
-        default_on_error
+        default_on_error(incoming_message)
       end
 
       delivered

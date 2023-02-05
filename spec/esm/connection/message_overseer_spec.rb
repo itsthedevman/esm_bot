@@ -11,14 +11,14 @@ describe ESM::Connection::MessageOverseer, v2: true do
     end
 
     it "times out and calls on_error" do
-      message.add_callback(:on_error) do |incoming, _|
-        expect(incoming.id).to eq(message.id)
+      message.add_callback(:on_error) do |incoming|
+        expect(incoming).to be_nil
       end
 
       expect { overseer.watch(message, expires_at: Time.now) }.not_to raise_error
 
       wait_for { message.delivered? }.to be(true)
-      
+
       expect(message.errors?).to be(true)
       expect(message.errors.first.type).to eq("code")
       expect(message.errors.first.content).to eq("message_undeliverable")

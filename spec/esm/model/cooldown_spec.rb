@@ -110,10 +110,15 @@ describe ESM::Cooldown do
   describe "#adjust_for_community_changes" do
     let(:community) { ESM::Test.community }
     let(:user) { ESM::Test.user }
-    let!(:configuration) { community.command_configurations.where(command_name: "base_v1").first }
+    let!(:cooldown_defaults) { {user_id: user.id, community_id: community.id, command_name: "player_command", expires_at: expires_at} }
+    let!(:configuration) { community.command_configurations.where(command_name: cooldown_defaults[:command_name]).first }
     let!(:expires_at) { Time.now.utc + 1.day }
-    let!(:cooldown_defaults) { {user_id: user.id, community_id: community.id, command_name: "base_v1", expires_at: expires_at} }
 
+    before do
+      configuration.update!(cooldown_type: "seconds", cooldown_quantity: 2)
+    end
+
+    # #reload causes `adjust_for_community_changes` to be triggered
     it "does not crash (no community ID)" do
       expect { create(:cooldown, cooldown_defaults.merge(community_id: nil, cooldown_type: configuration.cooldown_type, cooldown_quantity: configuration.cooldown_quantity)).reload }.not_to raise_error
     end

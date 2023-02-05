@@ -5,11 +5,11 @@ describe ESM::Event::DiscordMessageChannelV1 do
   let!(:server) { create(:server, community_id: community.id) }
 
   def event(params)
-    ESM::Event::DiscordMessageChannelV1.new(server: server, parameters: params, connection: nil)
+    described_class.new(server: server, parameters: params, connection: nil)
   end
 
   describe "Errors" do
-    it "should not send to other community channel" do
+    it "does not send to other community channel" do
       params = OpenStruct.new(channelID: ESM::Community::Secondary::SPAM_CHANNEL, message: "TESTING!")
 
       expect { event(params).run! }.not_to raise_error
@@ -19,7 +19,7 @@ describe ESM::Event::DiscordMessageChannelV1 do
       expect(message).to eq("**[`ESM_fnc_sendToChannel`]**\nYour Discord Server does not have a channel with ID `#{params.channelID}`. Please provide `ESM_fnc_sendToChannel` a channel ID that belongs to your Discord Server.")
     end
 
-    it "should log and not send (Malformed)" do
+    it "logs and does not send (Malformed)" do
       params = OpenStruct.new(channelID: community.logging_channel_id, message: '["title", "description"]')
 
       expect { event(params).run! }.not_to raise_error
@@ -31,7 +31,7 @@ describe ESM::Event::DiscordMessageChannelV1 do
   end
 
   describe "Sending String" do
-    it "should send" do
+    it "sends" do
       params = OpenStruct.new(channelID: community.logging_channel_id, message: "TESTING!")
 
       expect { event(params).run! }.not_to raise_error
@@ -44,7 +44,7 @@ describe ESM::Event::DiscordMessageChannelV1 do
   end
 
   describe "Sending Embed" do
-    it "should send (Const Color)" do
+    it "sends (Const Color)" do
       params = OpenStruct.new(
         channelID: community.logging_channel_id,
         message: [
@@ -71,7 +71,7 @@ describe ESM::Event::DiscordMessageChannelV1 do
       expect(embed.color).to eq(ESM::Color::Toast::BLUE)
     end
 
-    it "should send (Hex Color)" do
+    it "sends (Hex Color)" do
       params = OpenStruct.new(
         channelID: community.logging_channel_id,
         message: [
@@ -98,7 +98,7 @@ describe ESM::Event::DiscordMessageChannelV1 do
       expect(embed.color.upcase).to eq(ESM::Color::BLUE)
     end
 
-    it "should send (Invalid/Random Color)" do
+    it "sends (Invalid/Random Color)" do
       params = OpenStruct.new(
         channelID: community.logging_channel_id,
         message: [

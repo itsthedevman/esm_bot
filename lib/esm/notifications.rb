@@ -258,7 +258,7 @@ module ESM
           e.footer = I18n.t("xm8_notifications.footer")
         end
 
-      server.community.log_event(:xm8, embed)
+      server.community&.log_event(:xm8, embed)
     end
 
     def self.server_on_connect(name, _start, _finish, _id, payload)
@@ -268,7 +268,7 @@ module ESM
         ESM::JSON.pretty_generate(server_id: server.server_id, uptime: server.uptime)
       end
 
-      server.community.log_event(:reconnect, I18n.t("server_connected", server: server.server_id, uptime: server.uptime))
+      server.community&.log_event(:reconnect, I18n.t("server_connected", server: server.server_id, uptime: server.uptime))
     end
 
     def self.websocket_server_on_close(name, _start, _finish, _id, payload)
@@ -285,7 +285,7 @@ module ESM
           I18n.t("server_disconnected", server: server.server_id, uptime: server.uptime)
         end
 
-      server.community.log_event(:reconnect, message)
+      server.community&.log_event(:reconnect, message)
     end
   end
 end

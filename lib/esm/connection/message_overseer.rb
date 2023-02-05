@@ -64,7 +64,7 @@ module ESM
 
           if with_error
             message.add_error("code", "message_undeliverable")
-            message.on_error(message)
+            message.on_error(nil)
           end
 
           remove(id)

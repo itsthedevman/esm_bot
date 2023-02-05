@@ -36,7 +36,7 @@ RSpec.shared_context("connection") do
     ESM::Connection::Server.resume
 
     wait_for { ESM::Connection::Server.instance&.tcp_server_alive? }.to be(true)
-    wait_for { server.connected? }.to be(true)
+    wait_for { server.connected? }.to be(true), "esm_arma never connected. From the esm_arma repo, please run `bin/bot_testing`"
 
     ESM::Test.outbound_server_messages.clear
 

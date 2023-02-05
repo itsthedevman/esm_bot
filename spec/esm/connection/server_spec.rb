@@ -5,16 +5,16 @@ describe ESM::Connection::Server, v2: true do
 
   let(:connection_server) { described_class.instance }
   let(:server) { ESM::Test.server }
-  let(:message) { ESM::Message.event.set_server_id(server.server_id).set_data(:data_test, {foo: "bar"}) }
+  let(:message) { ESM::Message.event.set_server_id(server.server_id) }
 
   describe "#on_message" do
     it "triggers on_error if message contains errors" do
-      outgoing_message = message.dup
+      outgoing_message = ESM::Message.event.set_server_id(server.server_id).set_id(message.id)
       outgoing_message.add_error(:code, "default")
 
       # Remove the default callback and set a new one
-      outgoing_message.add_callback(:on_error) do |_incoming, outgoing|
-        expect(outgoing.errors.first.to_h).to eql({type: :code, content: "default"})
+      outgoing_message.add_callback(:on_error) do |incoming|
+        expect(errors.first.to_h).to eql({type: :code, content: "default"})
       end
 
       # The overseer needs to know about this message
@@ -26,8 +26,12 @@ describe ESM::Connection::Server, v2: true do
 
   # fire(message, to:, forget: false)
   describe "#fire", requires_connection: true do
-    before :each do
+    before do
       ESM::Test.block_outbound_messages = true
+    end
+
+    after do
+      connection_server.message_overseer.remove_all!
     end
 
     it "sends a message" do
@@ -48,7 +52,7 @@ describe ESM::Connection::Server, v2: true do
         expect { response = connection_server.fire(outgoing_message, to: server.server_id) }.not_to raise_error
         expect(response).not_to be_nil
         expect(response.type).to eq("event")
-        expect(response.data_type).to eq("data_test")
+        expect(response.data_type).to eq("empty")
       end
 
       sleep(0.2)

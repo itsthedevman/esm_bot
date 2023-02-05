@@ -9,7 +9,7 @@ module ESM
     attribute :command_name, :string
     attribute :cooldown_quantity, :integer, default: 1
     attribute :cooldown_type, :string, default: "seconds"
-    attribute :cooldown_amount, :integer, default: 2
+    attribute :cooldown_amount, :integer, default: 0
     attribute :expires_at, :datetime
     attribute :created_at, :datetime
     attribute :updated_at, :datetime

@@ -80,7 +80,12 @@ describe ESM::Event::ServerInitialization, v2: true, requires_connection: true d
   end
 
   it "settings data is valid" do
-    expect(event.data.territory_admins).to eq([user.steam_uid])
+    if user.steam_uid.present?
+      expect(event.data.territory_admin_uids).to eq([user.steam_uid])
+    else
+      expect(event.data.territory_admin_uids).to eq([])
+    end
+
     expect(event.data.extdb_path).to eq(setting.extdb_path || "")
     expect(event.data.gambling_modifier).to eq(setting.gambling_modifier)
     expect(event.data.gambling_payout_base).to eq(setting.gambling_payout_base)
@@ -96,11 +101,11 @@ describe ESM::Event::ServerInitialization, v2: true, requires_connection: true d
     expect(event.data.logging_pay_territory).to eq(setting.logging_pay_territory)
     expect(event.data.logging_promote_player).to eq(setting.logging_promote_player)
     expect(event.data.logging_remove_player_from_territory).to eq(setting.logging_remove_player_from_territory)
-    expect(event.data.logging_reward).to eq(setting.logging_reward_player)
+    expect(event.data.logging_reward_player).to eq(setting.logging_reward_player)
     expect(event.data.logging_transfer_poptabs).to eq(setting.logging_transfer_poptabs)
     expect(event.data.logging_upgrade_territory).to eq(setting.logging_upgrade_territory)
     expect(event.data.max_payment_count).to eq(setting.max_payment_count)
-    expect(event.data.territory_payment_tax).to eq(setting.territory_payment_tax / 100)
-    expect(event.data.territory_upgrade_tax).to eq(setting.territory_upgrade_tax / 100)
+    expect(event.data.taxes_territory_payment).to eq(setting.territory_payment_tax / 100)
+    expect(event.data.taxes_territory_upgrade).to eq(setting.territory_upgrade_tax / 100)
   end
 end

@@ -106,8 +106,8 @@ module ESM
 
       # Check this first to avoid an infinite loop if the bot cannot send a message to this channel
       # since this method is called from the #deliver method for this exact reason.
-      logging_channel = logging_channel
-      return if logging_channel.nil?
+      channel = logging_channel
+      return if channel.nil?
 
       ::ESM.bot.deliver(message, to: channel)
     end

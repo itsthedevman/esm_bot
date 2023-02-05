@@ -3,6 +3,40 @@
 module ESM
   module Event
     class ServerInitialization
+      DATA_ATTRIBUTES = %i[
+        community_id
+        extdb_path
+        gambling_modifier
+        gambling_payout_base
+        gambling_payout_randomizer_max
+        gambling_payout_randomizer_mid
+        gambling_payout_randomizer_min
+        gambling_win_percentage
+        logging_add_player_to_territory
+        logging_channel_id
+        logging_demote_player
+        logging_exec
+        logging_gamble
+        logging_modify_player
+        logging_pay_territory
+        logging_promote_player
+        logging_remove_player_from_territory
+        logging_reward_player
+        logging_transfer_poptabs
+        logging_upgrade_territory
+        max_payment_count
+        server_id
+        taxes_territory_payment
+        taxes_territory_upgrade
+        territory_admin_uids
+        territory_lifetime
+        territory_payment_tax
+        territory_price_per_object
+        territory_upgrade_tax
+      ].freeze
+
+      DATA = Struct.new(*DATA_ATTRIBUTES)
+
       attr_reader :data
 
       def initialize(connection, message)
@@ -102,7 +136,7 @@ module ESM
           taxes_territory_upgrade: settings.territory_upgrade_tax / 100
         )
 
-        @data = OpenStruct.new(data)
+        @data = DATA.new(*DATA_ATTRIBUTES.map { |attribute| data[attribute] })
       end
 
       def build_territory_admins
