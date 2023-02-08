@@ -65,6 +65,8 @@ module ESM
     end
 
     def run
+      ESM::Command.load unless ESM.env.test?
+
       # Binds the Discord Events
       bind_events!
 
