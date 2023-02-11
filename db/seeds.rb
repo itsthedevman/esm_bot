@@ -134,4 +134,4 @@ ESM::Server.create!(
   ESM::UserNotificationPreference.create!(user_id: user.id, server_id: server.id)
 end
 
-Redis.new.set("test_server_key", server.token.to_json)
+Redis.new.set("server_key", server.token.to_json)
