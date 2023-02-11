@@ -20,6 +20,7 @@ module ESM
         end
 
         def on_response(_, _)
+          # TODO: V1 If the user isn't a member on the server, @response will be []
           player = ESM::Arma::Player.new(server: target_server, player: @response)
           reply(player.to_embed)
         end

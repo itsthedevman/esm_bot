@@ -45,6 +45,7 @@ module ESM
         @server.update!(
           server_name: @params.server_name,
           server_start_time: DateTime.parse(@params.server_start_time).utc,
+          server_version: "1.0.0",
           disconnected_at: nil
         )
       end

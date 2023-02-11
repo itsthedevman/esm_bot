@@ -158,13 +158,29 @@ module ESM
       # The entry point for a command
       # @note Do not handle exceptions anywhere in this commands lifecycle
       def execute(event, ...)
+        # Needed for target_server below
+        arguments.parse!(event)
+
+        # V1
+        command =
+          if target_server.present? &&
+              target_server.version < Semantic::Version.new("2.0.0") &&
+              (
+                V1_COMMANDS.include?(name.to_sym) &&
+                !self.class.to_s.ends_with?("V1")
+              )
+            "#{self.class}V1".constantize.new
+          else
+            self
+          end
+
         if event.is_a?(Discordrb::Commands::CommandEvent)
-          from_discord(event)
+          command.send(:from_discord, event, arguments)
         else
-          from_server(event)
+          command.send(:from_server, event)
         end
       rescue => e
-        handle_error(e, ...)
+        command.send(:handle_error, e, ...)
       end
 
       def usage
@@ -510,32 +526,23 @@ module ESM
       def on_response(_incoming_message, _outgoing_message)
       end
 
-      def from_discord(event)
-        # V1
-        command =
-          if target_server.present? && target_server.version < Semantic::Version.new("2.0.0") && (V1_COMMANDS.include?(name.to_sym) && !self.class.to_s.ends_with?("V1"))
-            "#{self.class}V1".constantize.new
-          else
-            self
-          end
+      def from_discord(discord_event, arguments)
+        self.event = discord_event
+        self.executed_at = DateTime.now
+        self.arguments = arguments
+        permissions.load
 
-        command.event = event
-        command.executed_at = DateTime.now
+        checks.text_only!
+        checks.dm_only!
+        checks.permissions!
 
-        command.arguments.parse!(@event)
-        command.permissions.load
-
-        command.checks.text_only!
-        command.checks.dm_only!
-        command.checks.permissions!
-
-        command.arguments.validate!
+        arguments.validate!
 
         ESM::Notifications.trigger("command_from_discord", command: self)
-        command.checks.run_all!
+        checks.run_all!
 
-        result = command.on_execute
-        create_or_update_cooldown if !command.skip_flags.include?(:cooldown)
+        result = on_execute
+        create_or_update_cooldown if !skip_flags.include?(:cooldown)
 
         # This just tracks how many times a command is used
         ESM::CommandCount.increment_execution_counter(name)
