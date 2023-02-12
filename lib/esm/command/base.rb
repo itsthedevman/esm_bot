@@ -19,7 +19,7 @@ module ESM
         # :remove,
         # :reset,
         # :restore,
-        :reward,
+        # :reward,
         # :server_territories,
         # :set_id,
         :sqf
