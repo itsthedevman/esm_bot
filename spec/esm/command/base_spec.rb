@@ -501,7 +501,67 @@ describe ESM::Command::Base do
     end
   end
 
-  describe "#load_current_cooldown"
+  describe "#current_cooldown_query" do
+    include_context "command" do
+      let!(:command_class) { ESM::Command::Test::CooldownCommand }
+    end
+
+    let(:query_hash) { command.current_cooldown_query.where_values_hash.symbolize_keys }
+    let!(:target_community) { ESM::Test.second_community }
+
+    before do
+      command.instance_variable_set(:@current_user, user.discord_user)
+    end
+
+    it "uses the user ID when registration is not required" do
+      expect(query_hash).to include(
+        command_name: command.name, user_id: user.id
+      ).and exclude(
+        :steam_uid, :server_id, :community_id
+      )
+    end
+
+    it "uses the steam UID when registration is required" do
+      command.instance_variable_set(:@requires, [:registration])
+
+      expect(query_hash).to include(
+        command_name: command.name, steam_uid: user.steam_uid
+      ).and exclude(
+        :user_id, :server_id, :community_id
+      )
+    end
+
+    it "includes the target community's ID when one is provided" do
+      command.instance_variable_set(:@current_community, community)
+      command.instance_variable_set(:@target_community, target_community)
+
+      expect(query_hash).to include(
+        command_name: command.name, user_id: user.id, community_id: target_community.id
+      ).and exclude(
+        :steam_uid, :server_id
+      )
+    end
+
+    it "includes the current community's ID when there is a current community but no target community" do
+      command.instance_variable_set(:@current_community, community)
+
+      expect(query_hash).to include(
+        command_name: command.name, user_id: user.id, community_id: community.id
+      ).and exclude(
+        :steam_uid, :server_id
+      )
+    end
+
+    it "includes the target server's ID when one is provided" do
+      command.instance_variable_set(:@target_server, server)
+
+      expect(query_hash).to include(
+        command_name: command.name, user_id: user.id, server_id: server.id
+      ).and exclude(
+        :steam_uid, :community_id
+      )
+    end
+  end
 
   describe "#on_cooldown?" do
     include_context "command" do
