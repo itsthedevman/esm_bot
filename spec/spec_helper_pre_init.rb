@@ -49,3 +49,5 @@ build_result = `cargo check; echo $?`.chomp
 raise "Failed to build extension_server" if build_result != "0"
 
 EXTENSION_SERVER = IO.popen("POSTGRES_DATABASE=esm_test RUST_LOG=#{EXTENSION_SERVER_LOG_LEVEL} bin/extension_server")
+
+RSpec::Matchers.define_negated_matcher :exclude, :include
