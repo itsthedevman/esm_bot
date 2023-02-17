@@ -2,8 +2,10 @@ ENV["ESM_ENV"] = "test"
 ENV["PRINT_LOG"] = PRINT_LOG.to_s
 
 # Must execute before esm is required
-require "simplecov"
-SimpleCov.start
+if ENV["CODE_COVERAGE"] == "true"
+  require "simplecov"
+  SimpleCov.start
+end
 
 require "bundler/setup"
 require "awesome_print"
@@ -16,6 +18,7 @@ require "faker"
 require "rspec/expectations"
 require "rspec/wait"
 require "neatjson"
+require "timecop"
 
 # Load the spec related files
 require_relative "./spec_helper_methods"

@@ -46,14 +46,17 @@ group :development do
   gem "memory_profiler"
   gem "rerun"
   gem "ruby-prof"
-  gem "simplecov"
   gem "solargraph"
   gem "standard"
   gem "yard"
 end
 
+group :test do
+  gem "simplecov", require: false
+  gem "timecop"
+end
+
 group :development, :test do
   gem "rspec"
   gem "rspec-wait"
-  gem "simplecov", require: false
 end

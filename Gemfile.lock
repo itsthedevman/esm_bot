@@ -303,6 +303,7 @@ GEM
       unicode-display_width (>= 1.1.1, < 3)
     thor (1.2.1)
     tilt (2.0.11)
+    timecop (0.9.6)
     timers (4.3.5)
     tzinfo (2.0.5)
       concurrent-ruby (~> 1.0)
@@ -373,6 +374,7 @@ DEPENDENCIES
   steam_web_api
   sucker_punch
   terminal-table
+  timecop
   yard
   zeitwerk
 
