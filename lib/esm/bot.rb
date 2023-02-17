@@ -202,12 +202,14 @@ module ESM
       delivery_channel = determine_delivery_channel(to)
       raise ESM::Exception::ChannelNotFound.new(message, to) if delivery_channel.nil?
 
+      if !delivery_channel.pm?
+        raise ESM::Exception::ChannelAccessDenied if !channel_permission?(delivery_channel, :read_messages)
+        raise ESM::Exception::ChannelAccessDenied if !channel_permission?(delivery_channel, :send_messages)
+      end
+
       ESM::Notifications.trigger("bot_deliver", message: message, channel: delivery_channel)
 
-      # So we can test if it's working
-      if ESM.env.test?
-        ESM::Test.messages.store(message, delivery_channel)
-      elsif message.is_a?(ESM::Embed)
+      if message.is_a?(ESM::Embed)
         # Send the embed
         delivery_channel.send_embed(embed_message, nil, nil, false, nil, replying_to) { |embed| message.transfer(embed) }
       else
@@ -215,9 +217,15 @@ module ESM
         delivery_channel.send_message(message, false, nil, nil, nil, replying_to)
       end
     rescue ESM::Exception::ChannelAccessDenied
+      embed = ESM::Embed.build(
+        :error,
+        description: I18n.t("exceptions.deliver_failure", channel_name: delivery_channel.name, message: message)
+      )
+
       community = ESM::Community.find_by_guild_id(delivery_channel.server.id)
-      embed = ESM::Embed.build(:error, description: I18n.t("exceptions.deliver_failure", channel_name: delivery_channel.name, message: message))
       community.log_event(:error, embed)
+
+      nil
     rescue => e
       warn!(error: e)
 
@@ -269,35 +277,26 @@ module ESM
     def determine_delivery_channel(channel)
       return if channel.nil?
 
-      channel =
-        case channel
-        when Discordrb::Commands::CommandEvent
-          channel.channel
-        when Discordrb::Channel
-          channel
-        when ESM::User
-          channel.discord_user.pm
-        when Discordrb::Member, Discordrb::User
-          channel.pm
-        when String, Numeric
-          # Try checking if it's a text channel
-          temp_channel = self.channel(channel)
+      case channel
+      when Discordrb::Commands::CommandEvent
+        channel.channel
+      when Discordrb::Channel
+        channel
+      when ESM::User
+        channel.discord_user.pm
+      when Discordrb::Member, Discordrb::User
+        channel.pm
+      when String, Numeric
+        # Try checking if it's a text channel
+        temp_channel = self.channel(channel)
 
-          # Okay, it might be a PM channel, just go with it regardless (it returns nil)
-          if temp_channel.nil?
-            pm_channel(channel)
-          else
-            temp_channel
-          end
+        # Okay, it might be a PM channel, just go with it regardless (it returns nil)
+        if temp_channel.nil?
+          pm_channel(channel)
+        else
+          temp_channel
         end
-
-      return if channel.nil?
-      return channel if channel.pm?
-
-      raise ESM::Exception::ChannelAccessDenied if !channel_permission?(channel, :read_messages)
-      raise ESM::Exception::ChannelAccessDenied if !channel_permission?(channel, :send_messages)
-
-      channel
+      end
     end
 
     def update_prefix(community)

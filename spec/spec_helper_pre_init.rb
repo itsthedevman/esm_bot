@@ -20,12 +20,15 @@ require_relative "./spec_helper_methods"
 require_relative "./support/esm/command/base"
 
 Dir["#{__dir__}/spec_*/**/*.rb"].sort.each { |extension| require extension }
+Dir["#{__dir__}/support/esm/extension/**/*.rb"].sort.each { |extension| require extension }
+
 
 # Load all of our support files
 loader = Zeitwerk::Loader.new
 loader.inflector.inflect("esm" => "ESM")
 loader.push_dir("#{__dir__}/support")
 loader.collapse("#{__dir__}/support/model")
+loader.ignore("#{__dir__}/support/esm/extension") # Loaded in spec_helper_post_init.rb
 
 # Load everything right meow
 loader.setup

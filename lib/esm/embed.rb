@@ -111,7 +111,7 @@ module ESM
       embed.author = author if author
       embed.fields = fields if fields
 
-      embed
+      self
     end
 
     def to_s

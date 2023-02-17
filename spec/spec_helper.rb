@@ -57,6 +57,7 @@ end
 
 # Wait until everything is ready
 # HEY! LISTEN! The following lines must be the last code to execute in this file
+ESM.console!
 ESM.run!
 ESM::Test.wait_until { ESM.bot.ready? }
 ESM::Test.wait_until { ESM::Connection::Server.instance&.tcp_server_alive? }

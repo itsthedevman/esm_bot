@@ -98,7 +98,7 @@ module ESM
     # Start the bot
     @bot = ESM::Bot.new
 
-    if ESM.env.test? || @console
+    if @console
       # Allow RSpec to continue
       Thread.new { @bot.run }
     else
