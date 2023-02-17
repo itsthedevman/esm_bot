@@ -10,8 +10,8 @@ module ESM
       DATE = "%F"
     end
 
-    def self.distance_of_time_in_words(to_time, from_time: ::Time.current, precise: true)
-      distance = new.distance_of_time_in_words(from_time.utc, to_time.utc, precise)
+    def self.distance_of_time_in_words(to_time, from_time: ESM::Time.current, precise: true)
+      distance = new.distance_of_time_in_words(from_time.utc, to_time.utc, include_seconds: precise)
       singularize(distance)
     end
 

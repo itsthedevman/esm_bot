@@ -1,6 +1,14 @@
 # frozen_string_literal: true
 
 describe ESM::Cooldown do
+  before do
+    Timecop.freeze(Time.parse("1990-01-01"))
+  end
+
+  after do
+    Timecop.return
+  end
+
   describe "#active?" do
     it "is active (seconds)" do
       cooldown = build(:cooldown, :active)
@@ -29,7 +37,7 @@ describe ESM::Cooldown do
   it "shows time left" do
     # These will always be one second off.
     cooldown = build(:cooldown, :active)
-    expect(cooldown.to_s).to eq("9 seconds")
+    expect(cooldown.to_s).to eq("10 seconds")
 
     cooldown = build(:cooldown, :active, delay: 2.days)
     expect(cooldown.to_s).to eq("1 day, 23 hours, 59 minutes, and 59 seconds")
