@@ -55,4 +55,5 @@ end
 group :development, :test do
   gem "rspec"
   gem "rspec-wait"
+  gem "simplecov", require: false
 end

@@ -1,6 +1,10 @@
 ENV["ESM_ENV"] = "test"
 ENV["PRINT_LOG"] = PRINT_LOG.to_s
 
+# Must execute before esm is required
+require "simplecov"
+SimpleCov.start
+
 require "bundler/setup"
 require "awesome_print"
 require "colorize"
