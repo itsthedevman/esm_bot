@@ -4,11 +4,14 @@ module ESM
   module Command
     class Base
       module Metadata
-        # V1
-        # Using method because requests need the v1 name stored in @name
-        def name
-          @name.sub("_v1", "")
-        end
+        # V1: name is defined in the migrations file, but will need to be added here once v1 has been deprecated
+        attr_reader :category, :type, :aliases, :limit_to,
+          :requires, :response, :cooldown_time,
+          :defines, :permissions, :checks, :skip_flags
+
+        attr_writer :current_community
+
+        attr_accessor :executed_at, :event, :arguments
 
         def usage
           @usage ||= "#{distinct} #{@arguments.map(&:to_s).join(" ")}"

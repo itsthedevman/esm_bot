@@ -13,15 +13,10 @@ module ESM
 
             # V1
             command =
-              if target_server.present? &&
-                  target_server.version < Semantic::Version.new("2.0.0") &&
-                  (
-                    V1_COMMANDS.include?(name.to_sym) &&
-                    !self.class.to_s.ends_with?("V1")
-                  )
-                "#{self.class}V1".constantize.new
-              else
+              if v2_target_server? || !self.class.has_v1_variant?
                 self
+              else
+                "#{self.class}V1".constantize.new
               end
 
             command.send(:from_discord, event, arguments)
@@ -34,25 +29,6 @@ module ESM
           else
             handle_error(e, ...)
           end
-        end
-
-        # V1
-        # @deprecated Use on_execute instead
-        def discord
-        end
-
-        # V1
-        # @deprecated Use on_response instead
-        def server
-        end
-
-        def request_accepted
-        end
-
-        def request_declined
-        end
-
-        def on_response(_incoming_message, _outgoing_message)
         end
 
         def from_discord(discord_event, arguments)
@@ -79,18 +55,6 @@ module ESM
           result
         end
 
-        #
-        # V1: This is called when the message is received from the server
-        #
-        def from_server(parameters)
-          # Parameters is always an array. 90% of the time, parameters size will only be 1
-          # This just makes typing a little easier when writing commands
-          @response = (parameters.size == 1) ? parameters.first : parameters
-
-          # Trigger the callback
-          on_response(nil, nil)
-        end
-
         # @param request [ESM::Request] The request to build this command with
         # @note Don't load `target_user` from the request. If the arguments contain a target, it will handle it
         def from_request(request)
@@ -109,6 +73,15 @@ module ESM
 
             request_declined
           end
+        end
+
+        def on_response(_incoming_message, _outgoing_message)
+        end
+
+        def request_accepted
+        end
+
+        def request_declined
         end
 
         def request

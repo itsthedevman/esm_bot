@@ -18,6 +18,7 @@ module ESM
 
         def on_execute
           deliver!
+          self
         end
 
         def on_response(_, _)

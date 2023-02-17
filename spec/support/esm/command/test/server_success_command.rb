@@ -4,6 +4,8 @@ module ESM
   module Command
     module Test
       class ServerSuccessCommand < ESM::Command::Base
+        has_v1_variant!
+
         set_type :player
         requires :registration
 
@@ -17,7 +19,8 @@ module ESM
         argument :nullable, regex: /.*/, description: "commands.server_success_command.arguments.nullable", default: nil
 
         def on_execute
-          send_to_arma(data_type: "empty")
+          send_to_arma(type: :echo, data: {type: :empty})
+          self
         end
 
         def on_response(_, _)

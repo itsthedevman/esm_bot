@@ -29,6 +29,7 @@ module ESM
             @defines = OpenStruct.new
             @requires = []
             @skipped_checks = Set.new
+            @has_v1_variant = false
 
             # ESM::Command::System::Accept => system
             @category = module_parent.name.demodulize.downcase
@@ -90,14 +91,6 @@ module ESM
             end
           end
         end
-
-        attr_reader :category, :type, :aliases, :limit_to,
-          :requires, :response, :cooldown_time,
-          :defines, :permissions, :checks, :skip_flags
-
-        attr_writer :current_community
-
-        attr_accessor :executed_at, :event, :arguments
 
         def initialize
           attributes = self.class.attributes

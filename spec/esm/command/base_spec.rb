@@ -283,6 +283,9 @@ describe ESM::Command::Base do
       let!(:command_class) { ESM::Command::Test::ServerSuccessCommand }
     end
 
+    let(:wsc) { WebsocketClient.new(server) }
+    let(:connection) { ESM::Websocket.connections[server.server_id] }
+
     it "is defined" do
       expect(command.respond_to?(:execute)).to be(true)
     end
@@ -297,6 +300,24 @@ describe ESM::Command::Base do
       expect {
         execute!(fail_on_raise: false, server_id: server.server_id)
       }.to raise_error(ESM::Exception::CheckFailure)
+    end
+
+    it "switches to a v1 command for v1 servers" do
+      wait_for { wsc.connected? }.to be(true)
+
+      expect(
+        execute!(fail_on_raise: false, server_id: server.server_id)
+      ).to be_instance_of(ESM::Command::Test::ServerSuccessCommandV1)
+
+      wsc.disconnect!
+    end
+
+    it "stays as a v2 command", requires_connection: true do
+      expect(
+        execute!(server_id: server.server_id)
+      ).to be_instance_of(ESM::Command::Test::ServerSuccessCommand)
+
+      wait_for { ESM::Test.messages }.not_to be_empty
     end
 
     describe "Handles Errors" do
