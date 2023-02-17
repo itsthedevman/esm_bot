@@ -157,9 +157,13 @@ module ESM
       uuid = SecureRandom.uuid
 
       message = ESM::Message.event.add_error("message", "[#{uuid}] #{log_message}")
-      connection.send_message(message)
+      connection&.send_message(message)
+      return if community.logging_channel_id.blank?
 
-      ESM.bot.deliver(I18n.t("exceptions.extension_error", server_id: server_id, id: uuid), to: community.logging_channel_id)
+      ESM.bot.deliver(
+        I18n.t("exceptions.extension_error", server_id: server_id, id: uuid),
+        to: community.logging_channel_id
+      )
     end
 
     private

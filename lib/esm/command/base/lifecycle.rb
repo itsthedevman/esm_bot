@@ -8,7 +8,8 @@ module ESM
         # @note Do not handle exceptions anywhere in this commands lifecycle
         def execute(event, ...)
           if event.is_a?(Discordrb::Commands::CommandEvent)
-            # Needed for target_server below
+            # The event has to be stored before argument parsing because of callbacks referencing event data
+            self.event = event
             arguments.parse!(event)
 
             # V1
