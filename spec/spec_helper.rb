@@ -2,6 +2,7 @@
 
 SPEC_TIMEOUT_SECONDS = 5
 EXTENSION_SERVER_LOG_LEVEL = :warn
+PRINT_LOG = false
 
 RSpec.configure do |config|
   require_relative "./spec_helper_pre_init"
@@ -33,6 +34,11 @@ RSpec.configure do |config|
     DatabaseCleaner.cleaning do
       ESM::Test.reset!
       ESM::Connection::Server.pause
+
+      info!(
+        example_group: example.example_group&.description,
+        example: example.description
+      )
 
       # Run the test!
       example.run
