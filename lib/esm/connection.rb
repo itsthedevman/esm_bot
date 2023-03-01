@@ -38,6 +38,7 @@ module ESM
     end
 
     def on_close
+      @server.metadata.clear!
     end
 
     def on_event(incoming_message, _outgoing_message)
