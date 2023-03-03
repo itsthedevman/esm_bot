@@ -1,13 +1,5 @@
 # This file controls how the data of a message is built and parsed.
-# When building a message, the data will
 #
-# Note! Ensure all attributes are sorted A-Z or the server will reject the message (VSCode: Select all attributes -> Command Palette -> Sort Lines Ascending)
-#
-# data_type:
-#   a_attribute: Type
-#   b_attribute: Type
-#   c_attribute: Type
-
 # Supported Types:
 #   Any -> Only accepts a string/nil, but will attempt to parse the value from it. Accepts any JSON type or nil (stringify!)
 #   String
@@ -23,7 +15,6 @@
 #   ?<type> -> Indicates that it can be nil
 
 empty:
-
 
 init:
   extension_version: String
