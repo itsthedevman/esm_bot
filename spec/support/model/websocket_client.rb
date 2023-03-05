@@ -70,7 +70,7 @@ class WebsocketClient
 
   def send_response(**args)
     args[:commandID] = @data.commandID if @data
-    @ws.send(DiscordReturn.new(args).to_json)
+    @ws.send(DiscordReturn.new(**args).to_json)
   end
 
   def send_xm8_notification(type:, recipients:, message:, **args)

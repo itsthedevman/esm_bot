@@ -3,9 +3,8 @@
 describe ESM::Event::SendToChannel, v2: true, requires_connection: true do
   include_context "connection"
 
-  let!(:server) { ESM::Test.server }
-
   after :each do
+    community.update!(logging_channel_id: nil)
     ESM::Connection::Server.instance.message_overseer.remove_all!
   end
 
@@ -63,4 +62,6 @@ describe ESM::Event::SendToChannel, v2: true, requires_connection: true do
 
     expect(message.content).to match(%r{hi there!\nyour server `#{server.server_id}` has encountered an error that requires your attention. please open `esm.log` located in \[`@esm/logs/`\]\(or the pre-configured log file path\) and search for `[\w-]{36}` for the full error.}i)
   end
+
+  it "logs when there is an error"
 end

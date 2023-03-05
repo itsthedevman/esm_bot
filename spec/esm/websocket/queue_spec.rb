@@ -2,7 +2,7 @@
 
 describe ESM::Websocket::Queue do
   let(:params) { {foo: "Foo", bar: ["Bar"], baz: false} }
-  let(:request) { create_request(params) }
+  let(:request) { create_request(**params) }
   let(:queue) do
     queue = ESM::Websocket::Queue.new
     queue << request

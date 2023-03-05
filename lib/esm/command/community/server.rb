@@ -13,12 +13,22 @@ module ESM
         define :cooldown_time, modifiable: true, default: 2.seconds
 
         argument :server_id
+        skip_check :connected_server
 
         def on_execute
           embed =
             ESM::Embed.build do |e|
               e.title = target_server.server_name
               e.color = target_server.connected? ? :green : :red
+
+              if !target_server.connected?
+                e.description =
+                  if target_server.disconnected_at.nil?
+                    I18n.t("commands.servers.offline")
+                  else
+                    I18n.t("commands.servers.offline_for", time: target_server.time_since_last_connection)
+                  end
+              end
 
               # Server ID, IP, port, status
               add_connection_info(e)
@@ -93,14 +103,14 @@ module ESM
 
             # If the owner added more mods than our field can hold, send it and create a new field
             if (mod_field[:value].total_size + mod_line.size) > ESM::Embed::Limit::FIELD_VALUE_LENGTH_MAX
-              e.add_field(mod_field)
+              e.add_field(**mod_field)
               mod_field = {name: "#{mod_field[:name]} #{I18n.t(:continued)}", value: [], inline: true}
             end
 
             mod_field[:value] << mod_line
           end
 
-          e.add_field(mod_field)
+          e.add_field(**mod_field)
         end
       end
     end

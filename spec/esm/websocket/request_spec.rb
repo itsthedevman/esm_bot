@@ -62,7 +62,7 @@ describe ESM::Websocket::Request do
         baz: false
       }
 
-      request = create_request(params)
+      request = create_request(**params)
       user = request.user
 
       valid_hash_string = {

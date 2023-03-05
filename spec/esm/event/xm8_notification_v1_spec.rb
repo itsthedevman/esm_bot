@@ -22,7 +22,7 @@ describe ESM::Event::Xm8NotificationV1 do
   def run_test(log_xm8_event: false, expected_messages: [])
     community.update(log_xm8_event: log_xm8_event)
 
-    expect { wsc.send_xm8_notification(attributes) }.not_to raise_error
+    expect { wsc.send_xm8_notification(**attributes) }.not_to raise_error
     wait_for { ESM::Test.messages.size }.to eql(expected_messages.size)
 
     # To ensure all messages have been sent

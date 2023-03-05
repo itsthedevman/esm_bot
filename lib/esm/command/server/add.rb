@@ -64,13 +64,20 @@ module ESM
         end
 
         def request_accepted
-          # Request the arma server to add the user
-          deliver!(
-            function_name: "addPlayerToTerritory",
-            territory_id: @arguments.territory_id,
-            target_uid: target_user.steam_uid,
-            uid: current_user.steam_uid
-          )
+          if v2_target_server?
+            # send_to_arma(
+            #   data_type:
+            # )
+          else
+            # Request the arma server to add the user
+            deliver!(
+              function_name: "addPlayerToTerritory",
+              territory_id: @arguments.territory_id,
+              target_uid: target_user.steam_uid,
+              uid: current_user.steam_uid
+            )
+          end
+
 
           # # Don't send the request accepted message if the requestor is the requestee
           # return if same_user?

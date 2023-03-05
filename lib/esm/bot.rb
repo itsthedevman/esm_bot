@@ -166,12 +166,12 @@ module ESM
     #
     # Checks if the bot has send permission to the provided channel
     #
-    # @param channel [Discordrb::Channel] The channel to check
     # @param permission [Symbol] The permission to check
+    # @param channel [Discordrb::Channel] The channel to check
     #
     # @return [Boolean]
     #
-    def channel_permission?(channel, permission)
+    def channel_permission?(permission, channel)
       profile.on(channel.server)&.permission?(permission, channel) || false
     end
 
@@ -203,8 +203,8 @@ module ESM
       raise ESM::Exception::ChannelNotFound.new(message, to) if delivery_channel.nil?
 
       if !delivery_channel.pm?
-        raise ESM::Exception::ChannelAccessDenied if !channel_permission?(delivery_channel, :read_messages)
-        raise ESM::Exception::ChannelAccessDenied if !channel_permission?(delivery_channel, :send_messages)
+        raise ESM::Exception::ChannelAccessDenied if !channel_permission?(:read_messages, delivery_channel)
+        raise ESM::Exception::ChannelAccessDenied if !channel_permission?(:send_messages, delivery_channel)
       end
 
       ESM::Notifications.trigger("bot_deliver", message: message, channel: delivery_channel)

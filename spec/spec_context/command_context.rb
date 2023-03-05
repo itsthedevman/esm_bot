@@ -22,7 +22,7 @@ RSpec.shared_context("command") do
     command = opts.delete(:command) || self.command
     channel = opts.delete(:channel)
 
-    command_statement = command.statement(opts)
+    command_statement = command.statement(**opts)
     event = CommandEvent.create(
       command_statement,
       user: send_as_user,

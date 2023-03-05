@@ -137,7 +137,9 @@ module ESM
       end
 
       def notification_embed
-        embed = ESM::Notification.build_random(@attributes.merge(community_id: @community.id, type: @xm8_type, category: "xm8"))
+        embed = ESM::Notification.build_random(
+          **@attributes.merge(community_id: @community.id, type: @xm8_type, category: "xm8")
+        )
         embed.footer = "[#{@server.server_id}] #{@server.server_name}"
         embed
       end

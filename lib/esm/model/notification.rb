@@ -25,7 +25,7 @@ module ESM
       # Grab a default if one was not found
       notification = DEFAULTS[category][type].sample(1).first if notification.nil?
 
-      notification.build_embed(templates)
+      notification.build_embed(**templates)
     end
 
     def build_embed(**templates)

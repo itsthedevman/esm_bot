@@ -187,14 +187,14 @@ module ESM
         value += "\n"
 
         if field[:value].size + value.size >= Limit::FIELD_VALUE_LENGTH_MAX
-          store_field(field)
+          store_field(**field)
           field = {name: "#{name} #{I18n.t(:continued)}", value: "", inline: inline}
         end
 
         field[:value] += value
       end
 
-      store_field(field)
+      store_field(**field)
     end
 
     def store_field(name:, value:, inline:)
