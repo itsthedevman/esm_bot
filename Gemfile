@@ -54,6 +54,8 @@ end
 group :test do
   gem "simplecov", require: false
   gem "timecop"
+  gem "mysql2"
+  gem "hashids"
 end
 
 group :development, :test do
