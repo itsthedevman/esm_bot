@@ -1,4 +1,5 @@
 ENV["ESM_ENV"] = "test"
+ENV["RAILS_ENV"] = "test"
 
 # Must execute before esm is required
 if ENV["CODE_COVERAGE"] == "true"
@@ -14,6 +15,7 @@ require "pry"
 require "esm"
 require "factory_bot"
 require "faker"
+require "hashids"
 require "rspec/expectations"
 require "rspec/wait"
 require "neatjson"
@@ -46,6 +48,8 @@ Dir["#{__dir__}/support/esm/extension/**/*.rb"].sort.each { |extension| require 
 loader = Zeitwerk::Loader.new
 loader.inflector.inflect("esm" => "ESM")
 loader.push_dir("#{__dir__}/support")
+loader.push_dir("#{__dir__}/support/esm/model")
+loader.collapse("#{__dir__}/support/esm/model")
 loader.collapse("#{__dir__}/support/model")
 loader.ignore("#{__dir__}/support/esm/extension")
 
