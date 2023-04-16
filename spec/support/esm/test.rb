@@ -79,6 +79,12 @@ module ESM
         ESM.bot.channel(id)
       end
 
+      def territory(server, steam_uid: nil)
+        query = ExileTerritory.all
+        query.where(owner_uid: steam_uid, build_rights: [steam_uid], moderators: [steam_uid]) if steam_uid
+        query.sample.tap { |t| t.server_id = server.id }
+      end
+
       def redis
         @redis ||= Redis.new(ESM::REDIS_OPTS)
       end
