@@ -163,6 +163,10 @@ sqf_result:
   result:
     type: any
 
+add:
+  territory_id:
+    type: string
+
 ###########################
 ## AUTOMATIC TESTS
 ###########################
