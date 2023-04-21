@@ -1,6 +1,10 @@
 # frozen_string_literal: true
 
 class ImmutableStruct < Data
+  def self.name
+    "ImmutableStruct"
+  end
+
   alias_method :to_hash, :to_h
 
   def ==(other)
