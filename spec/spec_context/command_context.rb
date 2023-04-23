@@ -3,6 +3,7 @@ RSpec.shared_context("command") do
   let(:community) { ESM::Test.community }
   let(:server) { ESM::Test.server }
   let(:user) { ESM::Test.user }
+  let(:second_user) { ESM::Test.user }
 
   #
   # Executes the command as a user in a text or pm channel.
