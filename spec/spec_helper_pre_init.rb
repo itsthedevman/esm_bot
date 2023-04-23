@@ -12,7 +12,6 @@ require "awesome_print"
 require "colorize"
 require "database_cleaner"
 require "pry"
-require "esm"
 require "factory_bot"
 require "faker"
 require "hashids"
@@ -20,6 +19,20 @@ require "rspec/expectations"
 require "rspec/wait"
 require "neatjson"
 require "timecop"
+
+###########
+# Reload the extension server before starting ESM
+`kill -9 $(pgrep -f esm_bot)`
+`kill -9 $(pgrep -f extension_server)`
+
+build_result = `cargo check; echo $?`.chomp
+raise "Failed to build extension_server" if build_result != "0"
+
+EXTENSION_SERVER = IO.popen("POSTGRES_DATABASE=esm_test RUST_LOG=#{LOG_LEVEL} bin/extension_server")
+
+###########
+# This starts ESM
+require "esm"
 
 ESM.logger.level =
   case LOG_LEVEL
@@ -65,15 +78,5 @@ Discordrb::LOGGER.debug = false
 
 # Ignore debug messages when running tests
 ActiveRecord::Base.logger.level = Logger::INFO if ActiveRecord::Base.logger.present?
-
-# Make sure these programs are not running
-`kill -9 $(pgrep -f esm_bot)`
-`kill -9 $(pgrep -f extension_server)`
-
-# Build and start the server
-build_result = `cargo check; echo $?`.chomp
-raise "Failed to build extension_server" if build_result != "0"
-
-EXTENSION_SERVER = IO.popen("POSTGRES_DATABASE=esm_test RUST_LOG=#{LOG_LEVEL} bin/extension_server")
 
 RSpec::Matchers.define_negated_matcher :exclude, :include
