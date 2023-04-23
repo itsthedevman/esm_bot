@@ -79,8 +79,8 @@ module ESM
         ESM.bot.channel(id)
       end
 
-      def territory(server, steam_uid: nil)
-        query = ExileTerritory.all
+      def territory(server, steam_uid: nil, **query)
+        query = ExileTerritory.all.where(**query)
         query.where(owner_uid: steam_uid, build_rights: [steam_uid], moderators: [steam_uid]) if steam_uid
         query.sample.tap { |t| t.server_id = server.id }
       end
