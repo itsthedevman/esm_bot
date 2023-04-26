@@ -25,6 +25,8 @@ class ExileTerritory < MysqlRecord
   attribute :esm_payment_counter, :integer
   attribute :deleted_at, :datetime
 
+  after_save :update_arma
+
   def server
     ESM::Server.find(server_id)
   end
@@ -34,5 +36,34 @@ class ExileTerritory < MysqlRecord
       hashids = Hashids.new(server.server_key, 5, "abcdefghijklmnopqrstuvwxyz")
       hashids.encode(id)
     end
+  end
+
+  private
+
+  # _flagObject setVariable ["ExileTerritoryName", _name, true];
+  # _flagObject setVariable ["ExileDatabaseID", _id];
+  # _flagObject setVariable ["ExileOwnerUID", _owner, true];
+  # _flagObject setVariable ["ExileTerritorySize", _radius, true];
+  # _flagObject setVariable ["ExileTerritoryLevel", _level, true];
+  # _flagObject setVariable ["ExileTerritoryLastPayed", _lastPayed];
+  # _flagObject call ExileServer_system_territory_maintenance_recalculateDueDate;
+  # _flagObject setVariable ["ExileTerritoryNumberOfConstructions", _data select 15, true];
+  # _flagObject setVariable ["ExileRadiusShown", false, true];
+  # _flagObject setVariable ["ExileFlagStolen",_flagStolen,true];
+  # _flagObject setVariable ["ExileFlagTexture",_flagTexture];
+  def update_arma
+    changed_items = previous_changes.except("server_id")
+    return if changed_items.blank?
+
+    sqf = "private _flagObject = #{id} call ESMs_object_flag_get;"
+    if ((_, new_value) = changed_items["moderators"])
+      sqf += "_flagObject setVariable [\"ExileTerritoryModerators\", #{new_value}, true];"
+    end
+
+    if ((_, new_value) = changed_items["build_rights"])
+      sqf += "_flagObject setVariable [\"ExileTerritoryBuildRights\", #{new_value}, true];"
+    end
+
+    ESM::Test.execute_sqf!(server.connection, sqf, steam_uid: owner_uid)
   end
 end

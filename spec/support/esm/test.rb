@@ -162,6 +162,32 @@ module ESM
 
         raise StandardError, "Timeout!"
       end
+
+      #
+      # Sends the provided SQF code to the linked connection.
+      #
+      # @param code [String] Valid and error free SQF code as a string
+      #
+      # @return [Any] The result of the SQF code.
+      #
+      # @note: The result is ran through a JSON parser during the communication process. The type may not be what you expect, but it will be consistent
+      #
+      def execute_sqf!(connection, code, steam_uid: nil)
+        message = ESM::Message.arma.set_data(:sqf, {execute_on: "server", code: ESM::Arma::Sqf.minify(code)})
+
+        message.add_attribute(
+          :command, {
+            current_user: {
+              steam_uid: steam_uid || "",
+              id: "",
+              username: "",
+              mention: ""
+            }
+          }.to_ostruct
+        ).apply_command_metadata
+
+        connection.send_message(message, forget: false)
+      end
     end
   end
 end
