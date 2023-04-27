@@ -27,6 +27,22 @@ class ExileTerritory < MysqlRecord
 
   after_save :update_arma
 
+  scope :active, -> { where(deleted_at: nil) }
+  scope :not_stolen, -> { where(flag_stolen: false) }
+  scope :owned_by, ->(user) { where(owner_uid: user.steam_uid) }
+  scope :built_by, ->(user) { where("build_rights LIKE ?", "%#{user.steam_uid}%") }
+  scope :moderated_by, ->(user) { where("moderators LIKE ?", "%#{user.steam_uid}%") }
+
+  scope :not_member_of, ->(user) do
+    where.not(owner_uid: user.steam_uid)
+      .and(where("build_rights NOT LIKE ?", "%#{user.steam_uid}%"))
+      .and(where("moderators NOT LIKE ?", "%#{user.steam_uid}%"))
+  end
+
+  def self.sampled_for(server)
+    all.sample.tap { |t| t.server_id = server.id }
+  end
+
   def server
     ESM::Server.find(server_id)
   end
