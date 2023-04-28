@@ -33,13 +33,13 @@ class ExileTerritory < MysqlRecord
   scope :built_by, ->(user) { where("build_rights LIKE ?", "%#{user.steam_uid}%") }
   scope :moderated_by, ->(user) { where("moderators LIKE ?", "%#{user.steam_uid}%") }
 
-  scope :not_member_of, ->(user) do
+  scope :with_no_membership_for, ->(user) do
     where.not(owner_uid: user.steam_uid)
-      .and(where("build_rights NOT LIKE ?", "%#{user.steam_uid}%"))
-      .and(where("moderators NOT LIKE ?", "%#{user.steam_uid}%"))
+      .and(where.not("build_rights LIKE ?", "%#{user.steam_uid}%"))
+      .and(where.not("moderators LIKE ?", "%#{user.steam_uid}%"))
   end
 
-  def self.sampled_for(server)
+  def self.and_sampled_for(server)
     all.sample.tap { |t| t.server_id = server.id }
   end
 
