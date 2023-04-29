@@ -1,7 +1,7 @@
 RSpec.shared_context("connection") do
-  let(:community) { ESM::Test.community }
+  let!(:community) { ESM::Test.community }
+  let!(:user) { ESM::Test.user }
   let(:server) { ESM::Test.server }
-  let(:user) { ESM::Test.user }
   let(:connection) { server.connection }
 
   def execute_sqf!(code)

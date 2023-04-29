@@ -36,6 +36,7 @@ FactoryBot.define do
       player_mode_enabled { false }
       guild_type { :primary }
       role_ids { data[:role_users].map { |u| u[:role_id].to_s } }
+      channel_ids { data[:channels].map(&:to_s) }
     end
 
     factory :secondary_community do
@@ -50,6 +51,7 @@ FactoryBot.define do
       player_mode_enabled { false }
       guild_type { :secondary }
       role_ids { data[:role_users].map { |u| u[:role_id].to_s } }
+      channel_ids { data[:channels].map(&:to_s) }
     end
 
     trait :player_mode_enabled do

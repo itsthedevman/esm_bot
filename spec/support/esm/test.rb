@@ -72,11 +72,8 @@ module ESM
       end
 
       def channel(opts = {})
-        community = opts.delete(:in) || community
-        guild_type = community&.guild_type || :primary
-
-        id = data[guild_type][:channels].sample
-        ESM.bot.channel(id)
+        channel_community = opts.delete(:in) || community
+        ESM.bot.channel(channel_community.channel_ids.sample)
       end
 
       def redis
