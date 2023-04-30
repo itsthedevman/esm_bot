@@ -2,7 +2,7 @@
 
 module ESM
   class Community < ApplicationRecord
-    attr_accessor :guild_type, :role_ids, :channel_ids
+    attr_accessor :guild_type, :role_ids, :channel_ids, :everyone_role_id
 
     module ESM
       SPAM_CHANNEL = ENV["SPAM_CHANNEL"]
