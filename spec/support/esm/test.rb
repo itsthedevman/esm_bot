@@ -10,6 +10,10 @@ module ESM
       attr_writer :messages
       attr_accessor :skip_cooldown, :block_outbound_messages
 
+      def callbacks
+        @callbacks ||= CallbackHandler.new
+      end
+
       def messages
         @messages ||= Messages.new
       end

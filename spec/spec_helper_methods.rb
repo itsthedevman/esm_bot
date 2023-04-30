@@ -130,3 +130,7 @@ def spawn_test_user(user, **attrs)
   user.connected = true
   net_id
 end
+
+def before_connection(&block)
+  ESM::Test.callbacks.add_callback(:before_connection, &block)
+end

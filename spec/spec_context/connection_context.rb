@@ -11,6 +11,7 @@ RSpec.shared_context("connection") do
   before(:each) do |example|
     next unless example.metadata[:requires_connection]
 
+    ESM::Test.callbacks.run_callback(:before_connection, on_instance: self)
     ESM::Connection::Server.resume
 
     wait_for { ESM::Connection::Server.instance&.tcp_server_alive? }.to be(true)

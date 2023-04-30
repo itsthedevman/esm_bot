@@ -43,14 +43,18 @@ module ESM
       nil
     end
 
-    def run_callback(name, *arguments)
+    def run_callback(name, *arguments, on_instance: nil)
       callbacks = __callbacks[name.to_sym]
       return if callbacks.blank?
 
       callbacks.each do |callback|
         callback = method(callback) if callback.is_a?(Symbol)
 
-        callback.call(*arguments)
+        if on_instance
+          on_instance.instance_exec(*arguments, &callback)
+        else
+          callback.call(*arguments)
+        end
       end
     end
 
