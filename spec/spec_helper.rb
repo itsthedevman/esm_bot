@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
-SPEC_TIMEOUT_SECONDS = 5
+# Set to zero for indefinite
+SPEC_TIMEOUT_SECONDS = 3
 LOG_LEVEL = :warn
 
 RSpec.configure do |config|
