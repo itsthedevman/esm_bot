@@ -54,18 +54,24 @@ require_relative "./spec_helper_methods"
 # Loaded separately because the rest of these files are loaded in ESM::Command
 require_relative "./support/esm/command/base"
 
-Dir["#{__dir__}/spec_*/**/*.rb"].sort.each { |extension| require extension }
-Dir["#{__dir__}/support/esm/extension/**/*.rb"].sort.each { |extension| require extension }
-Dir["#{__dir__}/support/esm/model/**/*.rb"].sort.each { |extension| require extension }
+# Spec related files
+Dir["#{__dir__}/spec_*/**/*.rb"]
+  .sort
+  .each { |extension| require extension }
 
-# Load all of our support files
+# ESM overrides and other support files
+Dir["#{__dir__}/support/esm/**/*.rb"]
+  .reject { |f| f.match?(/esm\/command\//i) }
+  .sort
+  .each { |extension| require extension }
+
+# Load the rest of our support files
 loader = Zeitwerk::Loader.new
 loader.inflector.inflect("esm" => "ESM")
 loader.push_dir("#{__dir__}/support")
 
 loader.collapse("#{__dir__}/support/model")
-loader.ignore("#{__dir__}/support/esm/extension")
-loader.ignore("#{__dir__}/support/esm/model")
+loader.ignore("#{__dir__}/support/esm")
 
 # Load everything right meow
 loader.setup
