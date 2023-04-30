@@ -42,7 +42,6 @@ module ESM
 
     def self.sampled_for(server)
       territory = all.sample
-      binding.pry if territory.nil?
       territory.tap { |t| t.server_id = server.id }
     end
 
