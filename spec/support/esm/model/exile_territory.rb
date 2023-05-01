@@ -63,6 +63,11 @@ module ESM
       end
     end
 
+    def delete_flag
+      sqf = "private _flagObject = #{id} call ESMs_object_flag_get; deleteVehicle _flagObject;"
+      ESM::Test.execute_sqf!(server.connection, sqf, steam_uid: owner_uid)
+    end
+
     private
 
     # _flagObject setVariable ["ExileTerritoryName", _name, true];

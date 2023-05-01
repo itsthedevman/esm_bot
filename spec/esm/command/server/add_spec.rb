@@ -139,16 +139,12 @@ describe ESM::Command::Server::Add, category: "command" do
       let(:territory) do
         ESM::ExileTerritory.all
           .active
-          .not_stolen
           .moderated_by(user)
           .sampled_for(server)
           .revoke_membership(second_user)
       end
 
       it "adds the user and logs to Discord" do
-        # Do not do `VAR = value` or Arma barfs with "Error GIAS pre stack size violation"
-        execute_sqf!("missionNamespace setVariable [\"ESM_Logging_AddPlayerToTerritory\", true]")
-
         execute!(server_id: server.server_id, territory_id: territory.encoded_id, target: second_user.steam_uid)
         wait_for { ESM::Test.messages }.not_to be_empty
 
@@ -191,7 +187,7 @@ describe ESM::Command::Server::Add, category: "command" do
         expect(log_embed.fields.size).to eq(3)
 
         [
-          {name: "Territory", value: "ID: `#{territory.encoded_id}`\nName: #{territory.name}"},
+          {name: "Territory", value: "ID: #{territory.encoded_id}\nName: #{territory.name}"},
           {name: "Player", value: "Discord ID: #{user.discord_id}\nSteam UID: #{user.steam_uid}\nDiscord name: #{user.discord_username}\nDiscord mention: #{user.mention}"},
           {name: "Target", value: "Discord ID: #{second_user.discord_id}\nSteam UID: #{second_user.steam_uid}\nDiscord name: #{second_user.discord_username}\nDiscord mention: #{second_user.mention}"}
         ].each_with_index do |test_field, i|
@@ -201,6 +197,77 @@ describe ESM::Command::Server::Add, category: "command" do
           expect(field.value).to eq(test_field[:value])
         end
       end
+
+      describe "Territory admin override" do
+        before_connection do
+          community.update!(territory_admin_ids: [community.everyone_role_id])
+        end
+
+        it "adds a user via territory admin override" do
+          # The user and target user are not members of this territory.
+          # However, user is a territory admin
+          territory.revoke_membership(user)
+
+          execute!(server_id: server.server_id, territory_id: territory.encoded_id, target: second_user.steam_uid)
+          wait_for { ESM::Test.messages.size }.to eq(2)
+
+          # 1: Request
+          # 2: Request notice
+          # 3: Target's add notification
+          # 4: Requestor's confirmation
+          # 5: Discord log
+          expect(command.request&.respond(true)).to be_truthy
+          wait_for { ESM::Test.messages.size }.to eq(5)
+
+          target_embed = ESM::Test.messages.third.content
+          expect(target_embed.description).to match(/you've been added to `#{territory.encoded_id}` successfully/i)
+        end
+      end
+
+      it "does not allow adding a Steam UID that hasn't been registered with ESM" do
+        second_user_steam_uid = second_user.steam_uid
+        second_user.update(steam_uid: "")
+
+        expect {
+          execute!(
+            server_id: server.server_id,
+            territory_id: territory.encoded_id,
+            target: second_user_steam_uid,
+            fail_on_raise: false
+          )
+        }.to raise_error do |error|
+          expect(error.data.description).to match(/hey .+, .+ has not registered with me yet/i)
+        end
+      end
+
+      it "handles NullFlag" do
+        territory.delete_flag
+
+        execute!(server_id: server.server_id, territory_id: territory.encoded_id, target: second_user.steam_uid)
+        wait_for { ESM::Test.messages.size }.to eq(2)
+
+        # 1: Request
+        # 2: Request notice
+        # 3: Discord log
+        # 4: Failure notification
+        expect(command.request&.respond(true)).to be_truthy
+        wait_for { ESM::Test.messages.size }.to eq(4)
+
+        log_embed = ESM::Test.messages.third.content
+        expect(log_embed.description).to eq(
+          "Player attempted to add target to territory, but the territory flag was not found in game"
+        )
+
+        failure_embed = ESM::Test.messages.fourth.content
+        expect(failure_embed.description).to match(
+          /i was unable to find a territory with the ID of `#{territory.encoded_id}`/i
+        )
+      end
+
+      it "handles Add_MissingAccess"
+      it "handles Add_InvalidAdd"
+      it "handles Add_InvalidAdd_Owner"
+      it "handles Add_InvalidAdd_Exists"
     end
   end
 end
