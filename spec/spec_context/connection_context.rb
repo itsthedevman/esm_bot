@@ -18,7 +18,6 @@ RSpec.shared_context("connection") do
     wait_for { server.connected? }.to be(true), "esm_arma never connected. From the esm_arma repo, please run `bin/bot_testing`"
 
     ESM::Test.outbound_server_messages.clear
-    execute_sqf!("missionNamespace setVariable [\"ESM_Logging_Exec\", false];")
 
     users = []
     users << user if respond_to?(:user)
