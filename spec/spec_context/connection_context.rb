@@ -41,7 +41,7 @@ RSpec.shared_context("connection") do
       "ESM_TestUser_#{user.steam_uid} call _deleteFunction;" if user.connected
     end
 
-    sqf = "missionNamespace setVariable [\"ESM_Logging_Exec\", false];"
+    sqf = ""
     if users.present?
       sqf +=
         <<~SQF
@@ -54,7 +54,7 @@ RSpec.shared_context("connection") do
         SQF
     end
 
-    execute_sqf!(sqf)
+    execute_sqf!(sqf) if sqf.present?
 
     ESM::Connection::Server.pause
   end

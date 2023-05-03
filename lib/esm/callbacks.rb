@@ -65,6 +65,10 @@ module ESM
       callbacks.reject! { |callback| callback == method_name.to_sym }
     end
 
+    def remove_all_callbacks!
+      __callbacks.transform_values!(&:clear)
+    end
+
     def callback?(name)
       __callbacks[name.to_sym].present?
     end

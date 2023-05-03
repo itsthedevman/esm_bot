@@ -43,4 +43,8 @@ class String
       ActiveSupport::Inflector.classify(self)
     end
   end
+
+  def quoted
+    "\"#{self}\""
+  end
 end

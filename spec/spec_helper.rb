@@ -59,6 +59,10 @@ RSpec.configure do |config|
       ESM::Websocket.remove_all_connections!
     end
   end
+
+  config.after(:context) do
+    ESM::Test.callbacks.remove_all_callbacks!
+  end
 end
 
 # Wait until everything is ready
