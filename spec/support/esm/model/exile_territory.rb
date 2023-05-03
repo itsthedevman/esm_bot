@@ -64,7 +64,7 @@ module ESM
     end
 
     def delete_flag
-      sqf = "private _flagObject = #{id} call ESMs_object_flag_get; deleteVehicle _flagObject;"
+      sqf = "private _flagObject = #{id} call ESMs_system_territory_get; deleteVehicle _flagObject;"
       ESM::Test.execute_sqf!(server.connection, sqf, steam_uid: owner_uid)
     end
 
@@ -85,7 +85,12 @@ module ESM
       changed_items = previous_changes.except("server_id")
       return if changed_items.blank?
 
-      sqf = "private _flagObject = #{id} call ESMs_object_flag_get;"
+      sqf = "private _flagObject = #{id} call ESMs_system_territory_get;"
+
+      if ((_, new_value) = changed_items["owner_uid"])
+        sqf += "_flagObject setVariable [\"ExileOwnerUID\", #{new_value.quoted}, true];"
+      end
+
       if ((_, new_value) = changed_items["moderators"])
         sqf += "_flagObject setVariable [\"ExileTerritoryModerators\", #{new_value}, true];"
       end
