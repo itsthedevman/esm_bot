@@ -137,11 +137,14 @@ describe ESM::Command::Server::Add, category: "command" do
       include_context "connection"
 
       let(:territory) do
-        ESM::ExileTerritory.all
-          .active
-          .moderated_by(user)
-          .sampled_for(server)
-          .revoke_membership(second_user)
+        owner_uid = ESM::Test.steam_uid
+        create(
+          :exile_territory,
+          owner_uid: owner_uid,
+          moderators: [owner_uid, user.steam_uid],
+          build_rights: [owner_uid, user.steam_uid],
+          server_id: server.id
+        )
       end
 
       it "adds the user and logs to Discord" do
@@ -183,7 +186,7 @@ describe ESM::Command::Server::Add, category: "command" do
         expect(log_message.destination.id.to_s).to eq(community.logging_channel_id)
 
         log_embed = log_message.content
-        expect(log_embed.description).to eq("Player added target to territory")
+        expect(log_embed.description).to eq("Player added Target to territory")
         expect(log_embed.fields.size).to eq(3)
 
         [
@@ -198,17 +201,37 @@ describe ESM::Command::Server::Add, category: "command" do
         end
       end
 
-      describe "Territory admin override" do
-        before_connection do
-          community.update!(territory_admin_ids: [community.everyone_role_id])
+      describe "Territory Admin" do
+        before :context do
+          before_connection do
+            community.update!(territory_admin_ids: [community.everyone_role_id])
+          end
         end
 
-        it "adds a user via territory admin override" do
+        before do
           # The user and target user are not members of this territory.
           # However, user is a territory admin
           territory.revoke_membership(user)
+        end
 
+        it "adds a user via territory admin override" do
           execute!(server_id: server.server_id, territory_id: territory.encoded_id, target: second_user.steam_uid)
+          wait_for { ESM::Test.messages.size }.to eq(2)
+
+          # 1: Request
+          # 2: Request notice
+          # 3: Target's add notification
+          # 4: Requestor's confirmation
+          # 5: Discord log
+          expect(command.request&.respond(true)).to be_truthy
+          wait_for { ESM::Test.messages.size }.to eq(5)
+
+          target_embed = ESM::Test.messages.third.content
+          expect(target_embed.description).to match(/you've been added to `#{territory.encoded_id}` successfully/i)
+        end
+
+        it "adds self via territory admin override" do
+          execute!(server_id: server.server_id, territory_id: territory.encoded_id, target: user.steam_uid)
           wait_for { ESM::Test.messages.size }.to eq(2)
 
           # 1: Request
@@ -240,34 +263,119 @@ describe ESM::Command::Server::Add, category: "command" do
         end
       end
 
-      it "handles NullFlag" do
-        territory.delete_flag
+      describe "SQF Errors" do
+        before :context do
+          disable_log_printing
+        end
 
-        execute!(server_id: server.server_id, territory_id: territory.encoded_id, target: second_user.steam_uid)
-        wait_for { ESM::Test.messages.size }.to eq(2)
+        after :context do
+          enable_log_printing
+        end
 
-        # 1: Request
-        # 2: Request notice
-        # 3: Discord log
-        # 4: Failure notification
-        expect(command.request&.respond(true)).to be_truthy
-        wait_for { ESM::Test.messages.size }.to eq(4)
+        it "handles NullFlag" do
+          territory.delete_flag
 
-        log_embed = ESM::Test.messages.third.content
-        expect(log_embed.description).to eq(
-          "Player attempted to add target to territory, but the territory flag was not found in game"
-        )
+          execute!(server_id: server.server_id, territory_id: territory.encoded_id, target: second_user.steam_uid)
+          wait_for { ESM::Test.messages.size }.to eq(2)
 
-        failure_embed = ESM::Test.messages.fourth.content
-        expect(failure_embed.description).to match(
-          /i was unable to find a territory with the ID of `#{territory.encoded_id}`/i
-        )
+          # 1: Request
+          # 2: Request notice
+          # 3: Discord log
+          # 4: Failure notification
+          expect(command.request&.respond(true)).to be_truthy
+          wait_for { ESM::Test.messages.size }.to eq(4)
+
+          log_embed = ESM::Test.messages.third.content
+          expect(log_embed.description).to eq(
+            "Player attempted to add Target to territory, but the territory flag was not found in game"
+          )
+
+          failure_embed = ESM::Test.messages.fourth.content
+          expect(failure_embed.description).to match(
+            /i was unable to find a territory with the ID of `#{territory.encoded_id}`/i
+          )
+        end
+
+        it "handles MissingAccess" do
+          territory.revoke_membership(user)
+
+          execute!(server_id: server.server_id, territory_id: territory.encoded_id, target: second_user.steam_uid)
+          wait_for { ESM::Test.messages.size }.to eq(2)
+
+          # 1: Request
+          # 2: Request notice
+          # 3: Discord log
+          # 4: Failure notification
+          expect(command.request&.respond(true)).to be_truthy
+          wait_for { ESM::Test.messages.size }.to eq(4)
+
+          log_embed = ESM::Test.messages.third.content
+          expect(log_embed.description).to eq(
+            "Player attempted to add Target to territory, but Player does not have permission"
+          )
+
+          failure_embed = ESM::Test.messages.fourth.content
+          expect(failure_embed.description).to eq("#{user.mention}, you do not have permission to add people to `#{territory.encoded_id}`")
+        end
+
+        it "handles InvalidAdd" do
+          execute!(server_id: server.server_id, territory_id: territory.encoded_id, target: user.steam_uid)
+          wait_for { ESM::Test.messages.size }.to eq(2)
+
+          # 1: Request
+          # 2: Request notice
+          # 3: Discord log
+          # 4: Failure notification
+          expect(command.request&.respond(true)).to be_truthy
+          wait_for { ESM::Test.messages.size }.to eq(4)
+
+          log_embed = ESM::Test.messages.third.content
+          expect(log_embed.description).to eq(
+            "Player attempted to add themselves to the territory. Time to go laugh at them!"
+          )
+
+          failure_embed = ESM::Test.messages.fourth.content
+          expect(failure_embed.description).to eq("#{user.mention}, you cannot add yourself to this territory")
+        end
+
+        it "handles InvalidAdd_Owner" do
+          territory.owner_uid = user.steam_uid
+          territory.save!
+
+          execute!(server_id: server.server_id, territory_id: territory.encoded_id, target: second_user.steam_uid)
+          wait_for { ESM::Test.messages.size }.to eq(2)
+
+          # 1: Request
+          # 2: Request notice
+          # 3: Player only Discord message
+          expect(command.request&.respond(true)).to be_truthy
+          wait_for { ESM::Test.messages.size }.to eq(3)
+
+          log_embed = ESM::Test.messages.third.content
+          expect(log_embed.description).to eq(
+            "#{user.mention}, you are the owner of this territory which automatically makes you a member of this territory, silly :stuck_out_tongue_winking_eye:"
+          )
+        end
+
+        it "handles InvalidAdd_Exists" do
+          territory.build_rights << second_user.steam_uid
+          territory.save!
+
+          execute!(server_id: server.server_id, territory_id: territory.encoded_id, target: second_user.steam_uid)
+          wait_for { ESM::Test.messages.size }.to eq(2)
+
+          # 1: Request
+          # 2: Request notice
+          # 3: Player only Discord message
+          expect(command.request&.respond(true)).to be_truthy
+          wait_for { ESM::Test.messages.size }.to eq(3)
+
+          log_embed = ESM::Test.messages.third.content
+          expect(log_embed.description).to eq(
+            "#{user.mention}, this Player already has build rights"
+          )
+        end
       end
-
-      it "handles Add_MissingAccess"
-      it "handles Add_InvalidAdd"
-      it "handles Add_InvalidAdd_Owner"
-      it "handles Add_InvalidAdd_Exists"
     end
   end
 end

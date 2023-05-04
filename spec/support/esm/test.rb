@@ -93,7 +93,7 @@ module ESM
       end
 
       def steam_uid
-        data[:steam_uids].delete(data[:steam_uids].sample)
+        data[:steam_uids].delete(data[:steam_uids].sample).to_s
       end
 
       def reset!

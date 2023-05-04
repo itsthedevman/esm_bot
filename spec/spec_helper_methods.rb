@@ -46,6 +46,14 @@ def wait_for_inbound_message
   message.content
 end
 
+def enable_log_printing
+  ENV["PRINT_LOG"] = "true"
+end
+
+def disable_log_printing
+  ENV["PRINT_LOG"] = "false"
+end
+
 def spawn_test_user(user, **attrs)
   attributes = {
     damage: 0,

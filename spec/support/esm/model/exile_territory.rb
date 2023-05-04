@@ -2,6 +2,33 @@
 
 module ESM
   class ExileTerritory < ArmaRecord
+    FLAG_TEXTURES = %w[
+      exile_assets\texture\flag\flag_mate_bis_co.paa exile_assets\texture\flag\flag_mate_vish_co.paa exile_assets\texture\flag\flag_mate_hollow_co.paa
+      exile_assets\texture\flag\flag_mate_legion_ca.paa exile_assets\texture\flag\flag_mate_21dmd_co.paa exile_assets\texture\flag\flag_mate_spawny_co.paa
+      exile_assets\texture\flag\flag_mate_secretone_co.paa exile_assets\texture\flag\flag_mate_stitchmoonz_co.paa
+      exile_assets\texture\flag\flag_mate_commandermalc_co.paa \A3\Data_F\Flags\flag_blue_co.paa \A3\Data_F\Flags\flag_green_co.paa
+      \A3\Data_F\Flags\flag_red_co.paa \A3\Data_F\Flags\flag_white_co.paa \A3\Data_F\Flags\flag_uk_co.paa exile_assets\texture\flag\flag_country_de_co.paa
+      exile_assets\texture\flag\flag_country_at_co.paa exile_assets\texture\flag\flag_country_sct_co.paa exile_assets\texture\flag\flag_country_ee_co.paa
+      exile_assets\texture\flag\flag_country_cz_co.paa exile_assets\texture\flag\flag_country_nl_co.paa exile_assets\texture\flag\flag_country_hr_co.paa
+      exile_assets\texture\flag\flag_country_cn_co.paa exile_assets\texture\flag\flag_country_ru_co.paa exile_assets\texture\flag\flag_country_ir_co.paa
+      exile_assets\texture\flag\flag_country_by_co.paa exile_assets\texture\flag\flag_country_fi_co.paa exile_assets\texture\flag\flag_country_fr_co.paa
+      exile_assets\texture\flag\flag_country_au_co.paa exile_assets\texture\flag\flag_country_be_co.paa exile_assets\texture\flag\flag_country_se_co.paa
+      exile_assets\texture\flag\flag_country_pl_co.paa exile_assets\texture\flag\flag_country_pl2_co.paa exile_assets\texture\flag\flag_country_pt_co.paa
+      exile_assets\texture\flag\flag_mate_zanders_streched_co.paa exile_assets\texture\flag\flag_misc_brunswik_co.paa
+      exile_assets\texture\flag\flag_misc_dorset_co.paa exile_assets\texture\flag\flag_misc_svarog_co.paa exile_assets\texture\flag\flag_misc_exile_co.paa
+      exile_assets\texture\flag\flag_misc_utcity_co.paa exile_assets\texture\flag\flag_misc_dickbutt_co.paa exile_assets\texture\flag\flag_misc_rainbow_co.paa
+      exile_assets\texture\flag\flag_misc_battleye_co.paa exile_assets\texture\flag\flag_misc_bss_co.paa exile_assets\texture\flag\flag_misc_skippy_co.paa
+      exile_assets\texture\flag\flag_misc_kiwifern_co.paa exile_assets\texture\flag\flag_misc_trololol_co.paa exile_assets\texture\flag\flag_misc_dream_cat_co.paa
+      exile_assets\texture\flag\flag_misc_pirate_co.paa exile_assets\texture\flag\flag_misc_pedobear_co.paa exile_assets\texture\flag\flag_misc_petoria_co.paa
+      exile_assets\texture\flag\flag_misc_smashing_co.paa exile_assets\texture\flag\flag_misc_lemonparty_co.paa exile_assets\texture\flag\flag_misc_rma_co.paa
+      exile_assets\texture\flag\flag_cp_co.paa exile_assets\texture\flag\flag_trouble2_co.paa exile_assets\texture\flag\flag_exile_city_co.paa
+      exile_assets\texture\flag\flag_misc_eraser1_co.paa exile_assets\texture\flag\flag_misc_willbeeaten_co.paa
+      exile_assets\texture\flag\flag_misc_privateproperty_co.paa exile_assets\texture\flag\flag_misc_nuclear_co.paa
+      exile_assets\texture\flag\flag_misc_lazerkiwi_co.paa exile_assets\texture\flag\flag_misc_beardageddon_co.paa exile_assets\texture\flag\flag_country_dk_co.paa
+      exile_assets\texture\flag\flag_country_it_co.paa exile_assets\texture\flag\flag_misc_alkohol_co.paa exile_assets\texture\flag\flag_misc_kickass_co.paa
+      exile_assets\texture\flag\flag_misc_knuckles_co.paa exile_assets\texture\flag\flag_misc_snake_co.paa exile_assets\texture\flag\flag_misc_weeb_co.paa
+    ].freeze
+
     self.table_name = "territory"
 
     attribute :id, :integer
@@ -27,12 +54,15 @@ module ESM
     attribute :deleted_at, :datetime
 
     after_save :update_arma
+    after_create :create_territory
 
     scope :active, -> { where(deleted_at: nil) }
     scope :not_stolen, -> { where(flag_stolen: false) }
     scope :owned_by, ->(user) { where(owner_uid: user.steam_uid) }
+    scope :not_owned_by, ->(user) { where.not(owner_uid: user.steam_uid) }
     scope :built_by, ->(user) { where("build_rights LIKE ?", "%#{user.steam_uid}%") }
     scope :moderated_by, ->(user) { where("moderators LIKE ?", "%#{user.steam_uid}%") }
+    scope :not_moderated_by, ->(user) { where.not("moderators LIKE ?", "%#{user.steam_uid}%") }
 
     scope :with_no_membership_for, ->(user) do
       where.not(owner_uid: user.steam_uid)
@@ -83,7 +113,7 @@ module ESM
     # _flagObject setVariable ["ExileFlagTexture",_flagTexture];
     def update_arma
       changed_items = previous_changes.except("server_id")
-      return if changed_items.blank?
+      return if changed_items.blank? || changed_items.key?("id")
 
       sqf = "private _flagObject = #{id} call ESMs_system_territory_get;"
 
@@ -92,13 +122,47 @@ module ESM
       end
 
       if ((_, new_value) = changed_items["moderators"])
-        sqf += "_flagObject setVariable [\"ExileTerritoryModerators\", #{new_value}, true];"
+        sqf += "_flagObject setVariable [\"ExileTerritoryModerators\", #{new_value.to_json}, true];"
       end
 
       if ((_, new_value) = changed_items["build_rights"])
-        sqf += "_flagObject setVariable [\"ExileTerritoryBuildRights\", #{new_value}, true];"
+        sqf += "_flagObject setVariable [\"ExileTerritoryBuildRights\", #{new_value.to_json}, true];"
       end
 
+      ESM::Test.execute_sqf!(server.connection, sqf, steam_uid: owner_uid)
+    end
+
+    def create_territory
+      # I cannot get ExileServer_system_territory_database_load to load the territories
+      # IDK why extDB won't pull it back
+      sqf = <<~SQF
+        private _flagObject = createVehicle [
+          "Exile_Construction_Flag_Static",
+          [#{position_x},#{position_y}],
+          [], 0, "CAN_COLLIDE"
+        ];
+
+        if (#{!flag_stolen}) then
+        {
+          _flagObject setFlagTexture #{flag_texture.quoted};
+        };
+
+        ExileLocations pushBack _flagObject;
+
+        _flagObject setVariable ["ExileTerritoryName", #{name.quoted}, true];
+        _flagObject setVariable ["ExileDatabaseID", #{id}];
+        _flagObject setVariable ["ExileOwnerUID", #{owner_uid}, true];
+        _flagObject setVariable ["ExileTerritorySize", #{radius}, true];
+        _flagObject setVariable ["ExileTerritoryBuildRights", #{build_rights.to_json}, true];
+        _flagObject setVariable ["ExileTerritoryModerators", #{moderators.to_json}, true];
+        _flagObject setVariable ["ExileTerritoryLevel", #{level}, true];
+        _flagObject setVariable ["ExileTerritoryLastPayed", #{last_paid_at.to_s.quoted}];
+        _flagObject setVariable ["ExileTerritoryMaintenanceDue", #{7.days.from_now.to_s.quoted}];
+        _flagObject setVariable ["ExileTerritoryNumberOfConstructions", 0, true];
+        _flagObject setVariable ["ExileRadiusShown", false, true];
+        _flagObject setVariable ["ExileFlagStolen", #{flag_stolen},true];
+        _flagObject setVariable ["ExileFlagTexture", #{flag_texture.quoted}];
+      SQF
       ESM::Test.execute_sqf!(server.connection, sqf, steam_uid: owner_uid)
     end
   end
