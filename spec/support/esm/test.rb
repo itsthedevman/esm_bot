@@ -63,7 +63,7 @@ module ESM
             ap ESM::User.all.to_a
             raise "Failed to create unique user. Decrease number of calls to ESM::Test.user or add more users to test_data.yml"
           end
-          break user if user.valid? && user.save
+          break user if user.save
         end
       end
 
