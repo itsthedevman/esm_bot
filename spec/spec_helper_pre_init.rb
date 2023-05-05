@@ -51,9 +51,6 @@ ESM.logger.level =
 # Load the spec related files
 require_relative "./spec_helper_methods"
 
-# Loaded separately because the rest of these files are loaded in ESM::Command
-require_relative "./support/esm/command/base"
-
 # Spec related files
 Dir["#{__dir__}/spec_*/**/*.rb"]
   .sort
@@ -61,7 +58,6 @@ Dir["#{__dir__}/spec_*/**/*.rb"]
 
 # ESM overrides and other support files
 Dir["#{__dir__}/support/esm/**/*.rb"]
-  .reject { |f| f.match?(/esm\/command\//i) }
   .sort
   .each { |extension| require extension }
 
