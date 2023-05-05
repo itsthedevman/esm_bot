@@ -38,6 +38,8 @@ RSpec.shared_context("connection") do
     users << second_user if respond_to?(:second_user)
 
     users = users.format(join_with: "\n") do |user|
+      next if user.steam_uid.blank?
+
       "ESM_TestUser_#{user.steam_uid} call _deleteFunction;" if user.connected
     end
 

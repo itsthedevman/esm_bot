@@ -69,6 +69,14 @@ RSpec.configure do |config|
   config.after(:context, :territory_admin_bypass) do
     ESM::Test.callbacks.remove_all_callbacks!
   end
+
+  config.before(:context, :error_testing) do
+    disable_log_printing
+  end
+
+  config.after(:context, :error_testing) do
+    enable_log_printing
+  end
 end
 
 # Wait until everything is ready

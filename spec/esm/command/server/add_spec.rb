@@ -270,15 +270,7 @@ describe ESM::Command::Server::Add, category: "command" do
         end
       end
 
-      describe "SQF Errors" do
-        before :context do
-          disable_log_printing
-        end
-
-        after :context do
-          enable_log_printing
-        end
-
+      describe "SQF Errors", :error_testing do
         it "handles NullFlag" do
           territory.delete_flag
 
