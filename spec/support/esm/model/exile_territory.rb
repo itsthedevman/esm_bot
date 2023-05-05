@@ -75,9 +75,10 @@ module ESM
       territory.tap { |t| t.server_id = server.id }
     end
 
-    def revoke_membership(user)
-      moderators.delete(user.steam_uid)
-      build_rights.delete(user.steam_uid)
+    def revoke_membership(steam_uid)
+      self.owner_uid = ESM::Test.steam_uid if owner_uid == steam_uid
+      moderators.delete(steam_uid)
+      build_rights.delete(steam_uid)
       save! if changed?
       self
     end
