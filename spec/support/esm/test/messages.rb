@@ -27,6 +27,17 @@ module ESM
         # Don't break tests
         content
       end
+
+      def find(needle)
+        super do |message|
+          content = message.content
+          if content.is_a?(ESM::Embed)
+            content.title&.match?(needle) || content.description&.match?(needle)
+          else
+            content&.match?(needle)
+          end
+        end
+      end
     end
   end
 end
