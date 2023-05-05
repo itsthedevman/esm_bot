@@ -52,7 +52,7 @@ describe ESM::Event::SendToChannel, v2: true, requires_connection: true do
     expect(embed_field.inline).to eql(hash_field[:inline])
   end
 
-  it "only allows sending messages to that community's discord channels" do
+  it "only allows sending messages to that community's discord channels", :error_testing do
     inbound_message = ESM::Message.event.set_data(:send_to_channel, {id: "THIS CHANNEL CANNOT EXIST", content: ""})
 
     described_class.new(connection, inbound_message).run!

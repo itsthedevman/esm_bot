@@ -320,7 +320,7 @@ describe ESM::Command::Base do
       wait_for { ESM::Test.messages }.not_to be_empty
     end
 
-    describe "Handles Errors" do
+    describe "Handles Errors", :error_testing do
       it "send error (CheckFailure)" do
         test_command = ESM::Command::Test::DirectMessageCommand.new
         event = CommandEvent.create(test_command.statement, channel_type: :text, user: user)
