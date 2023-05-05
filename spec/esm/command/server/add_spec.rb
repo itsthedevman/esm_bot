@@ -172,79 +172,86 @@ describe ESM::Command::Server::Add, category: "command" do
         # 5: Discord log
         wait_for { ESM::Test.messages.size }.to eq(5)
 
-        target_embed = ESM::Test.messages.third.content
-        expect(target_embed.description).to match(/you've been added to `#{territory.encoded_id}` successfully/i)
+        # The last messages are not always in order...
+        expect(
+          ESM::Test.messages.find(/you've been added to `#{territory.encoded_id}` successfully/i)
+        ).not_to be_nil
 
-        requestor_embed = ESM::Test.messages.fourth.content
-        expect(requestor_embed.description).to match(
-          /#{second_user.distinct} has been added to territory `#{territory.encoded_id}`/
-        )
+        expect(
+          ESM::Test.messages.find(
+            /#{second_user.distinct} has been added to territory `#{territory.encoded_id}`/
+          )
+        ).not_to be_nil
 
         # Admin log on the community's discord server
-        log_message = ESM::Test.messages.fifth
-
+        log_message = ESM::Test.messages.find("Player added Target to territory")
+        expect(log_message).not_to be_nil
         expect(log_message.destination.id.to_s).to eq(community.logging_channel_id)
 
         log_embed = log_message.content
-        expect(log_embed.description).to eq("Player added Target to territory")
         expect(log_embed.fields.size).to eq(3)
 
         [
-          {name: "Territory", value: "ID: #{territory.encoded_id}\nName: #{territory.name}"},
-          {name: "Player", value: "Discord ID: #{user.discord_id}\nSteam UID: #{user.steam_uid}\nDiscord name: #{user.discord_username}\nDiscord mention: #{user.mention}"},
-          {name: "Target", value: "Discord ID: #{second_user.discord_id}\nSteam UID: #{second_user.steam_uid}\nDiscord name: #{second_user.discord_username}\nDiscord mention: #{second_user.mention}"}
+          {
+            name: "Territory",
+            value: "ID: #{territory.encoded_id}\nName: #{territory.name}"
+          },
+          {
+            name: "Player",
+            value: "Discord ID: #{user.discord_id}\nSteam UID: #{user.steam_uid}\nDiscord name: #{user.discord_username}\nDiscord mention: #{user.mention}"
+          },
+          {
+            name: "Target",
+            value: "Discord ID: #{second_user.discord_id}\nSteam UID: #{second_user.steam_uid}\nDiscord name: #{second_user.discord_username}\nDiscord mention: #{second_user.mention}"
+          }
         ].each_with_index do |test_field, i|
           field = log_embed.fields[i]
           expect(field).not_to be_nil
           expect(field.name).to eq(test_field[:name])
           expect(field.value).to eq(test_field[:value])
         end
+
+        # Check that Arma update the territory
+        territory.reload
+        expect(territory.build_rights).to include(second_user.steam_uid)
       end
 
-      describe "Territory Admin" do
-        before :context do
-          before_connection do
-            community.update!(territory_admin_ids: [community.everyone_role_id])
-          end
-        end
+      it "adds a user via territory admin override", :territory_admin_bypass do
+        # The user and target user are not members of this territory.
+        # However, user is a territory admin
+        territory.revoke_membership(user.steam_uid)
 
-        before do
-          # The user and target user are not members of this territory.
-          # However, user is a territory admin
-          territory.revoke_membership(user)
-        end
+        execute!(server_id: server.server_id, territory_id: territory.encoded_id, target: second_user.steam_uid)
+        wait_for { ESM::Test.messages.size }.to eq(2)
 
-        it "adds a user via territory admin override" do
-          execute!(server_id: server.server_id, territory_id: territory.encoded_id, target: second_user.steam_uid)
-          wait_for { ESM::Test.messages.size }.to eq(2)
+        # 1: Request
+        # 2: Request notice
+        # 3: Target's add notification
+        # 4: Requestor's confirmation
+        # 5: Discord log
+        expect(command.request&.respond(true)).to be_truthy
+        wait_for { ESM::Test.messages.size }.to eq(5)
 
-          # 1: Request
-          # 2: Request notice
-          # 3: Target's add notification
-          # 4: Requestor's confirmation
-          # 5: Discord log
-          expect(command.request&.respond(true)).to be_truthy
-          wait_for { ESM::Test.messages.size }.to eq(5)
+        expect(
+          ESM::Test.messages.find(/you've been added to `#{territory.encoded_id}` successfully/i)
+        ).not_to be_nil
+      end
 
-          target_embed = ESM::Test.messages.third.content
-          expect(target_embed.description).to match(/you've been added to `#{territory.encoded_id}` successfully/i)
-        end
+      it "adds self via territory admin override", :territory_admin_bypass do
+        # The user and target user are not members of this territory.
+        # However, user is a territory admin
+        territory.revoke_membership(user.steam_uid)
 
-        it "adds self via territory admin override" do
-          execute!(server_id: server.server_id, territory_id: territory.encoded_id, target: user.steam_uid)
-          wait_for { ESM::Test.messages.size }.to eq(2)
+        execute!(server_id: server.server_id, territory_id: territory.encoded_id, target: user.steam_uid)
 
-          # 1: Request
-          # 2: Request notice
-          # 3: Target's add notification
-          # 4: Requestor's confirmation
-          # 5: Discord log
-          expect(command.request&.respond(true)).to be_truthy
-          wait_for { ESM::Test.messages.size }.to eq(5)
+        # No request message is sent for oneself
+        # 1: Success message
+        # 2: Discord log
+        wait_for { ESM::Test.messages.size }.to eq(2)
 
-          target_embed = ESM::Test.messages.third.content
-          expect(target_embed.description).to match(/you've been added to `#{territory.encoded_id}` successfully/i)
-        end
+        expect(
+          ESM::Test.messages.find(/you've been added to `#{territory.encoded_id}` successfully/i)
+        ).not_to be_nil
       end
 
       it "does not allow adding a Steam UID that hasn't been registered with ESM" do
@@ -285,19 +292,19 @@ describe ESM::Command::Server::Add, category: "command" do
           expect(command.request&.respond(true)).to be_truthy
           wait_for { ESM::Test.messages.size }.to eq(4)
 
-          log_embed = ESM::Test.messages.third.content
-          expect(log_embed.description).to eq(
-            "Player attempted to add Target to territory, but the territory flag was not found in game"
-          )
+          expect(
+            ESM::Test.messages.find(
+              "Player attempted to add Target to territory, but the territory flag was not found in game"
+            )
+          ).not_to be_nil
 
-          failure_embed = ESM::Test.messages.fourth.content
-          expect(failure_embed.description).to match(
-            /i was unable to find a territory with the ID of `#{territory.encoded_id}`/i
-          )
+          expect(
+            ESM::Test.messages.find(/i was unable to find a territory with the ID of `#{territory.encoded_id}`/i)
+          ).not_to be_nil
         end
 
         it "handles MissingAccess" do
-          territory.revoke_membership(user)
+          territory.revoke_membership(user.steam_uid)
 
           execute!(server_id: server.server_id, territory_id: territory.encoded_id, target: second_user.steam_uid)
           wait_for { ESM::Test.messages.size }.to eq(2)
@@ -309,37 +316,36 @@ describe ESM::Command::Server::Add, category: "command" do
           expect(command.request&.respond(true)).to be_truthy
           wait_for { ESM::Test.messages.size }.to eq(4)
 
-          log_embed = ESM::Test.messages.third.content
-          expect(log_embed.description).to eq(
-            "Player attempted to add Target to territory, but Player does not have permission"
-          )
+          expect(
+            ESM::Test.messages.find("Player attempted to add Target to territory, but Player does not have permission")
+          ).not_to be_nil
 
-          failure_embed = ESM::Test.messages.fourth.content
-          expect(failure_embed.description).to eq("#{user.mention}, you do not have permission to add people to `#{territory.encoded_id}`")
+          expect(
+            ESM::Test.messages.find(
+              "#{user.mention}, you do not have permission to add people to `#{territory.encoded_id}`"
+            )
+          ).not_to be_nil
         end
 
         it "handles InvalidAdd" do
           execute!(server_id: server.server_id, territory_id: territory.encoded_id, target: user.steam_uid)
+
+          # No request message is sent for oneself
+          # 1: Player failure message
+          # 2: Discord log
           wait_for { ESM::Test.messages.size }.to eq(2)
 
-          # 1: Request
-          # 2: Request notice
-          # 3: Discord log
-          # 4: Failure notification
-          expect(command.request&.respond(true)).to be_truthy
-          wait_for { ESM::Test.messages.size }.to eq(4)
+          expect(
+            ESM::Test.messages.find("#{user.mention}, you cannot add yourself to this territory")
+          ).not_to be_nil
 
-          log_embed = ESM::Test.messages.third.content
-          expect(log_embed.description).to eq(
-            "Player attempted to add themselves to the territory. Time to go laugh at them!"
-          )
-
-          failure_embed = ESM::Test.messages.fourth.content
-          expect(failure_embed.description).to eq("#{user.mention}, you cannot add yourself to this territory")
+          expect(
+            ESM::Test.messages.find("Player attempted to add themselves to the territory. Time to go laugh at them!")
+          ).not_to be_nil
         end
 
         it "handles InvalidAdd_Owner" do
-          territory.owner_uid = user.steam_uid
+          territory.owner_uid = second_user.steam_uid
           territory.save!
 
           execute!(server_id: server.server_id, territory_id: territory.encoded_id, target: second_user.steam_uid)
@@ -351,10 +357,11 @@ describe ESM::Command::Server::Add, category: "command" do
           expect(command.request&.respond(true)).to be_truthy
           wait_for { ESM::Test.messages.size }.to eq(3)
 
-          log_embed = ESM::Test.messages.third.content
-          expect(log_embed.description).to eq(
-            "#{user.mention}, you are the owner of this territory which automatically makes you a member of this territory, silly :stuck_out_tongue_winking_eye:"
-          )
+          expect(
+            ESM::Test.messages.find(
+              "#{user.mention}, the Target is the owner of this territory which automatically makes them a member of this territory, silly :stuck_out_tongue_winking_eye:"
+            )
+          ).not_to be_nil
         end
 
         it "handles InvalidAdd_Exists" do
@@ -370,10 +377,9 @@ describe ESM::Command::Server::Add, category: "command" do
           expect(command.request&.respond(true)).to be_truthy
           wait_for { ESM::Test.messages.size }.to eq(3)
 
-          log_embed = ESM::Test.messages.third.content
-          expect(log_embed.description).to eq(
-            "#{user.mention}, this Player already has build rights"
-          )
+          expect(
+            ESM::Test.messages.find("#{user.mention}, this Player already has build rights")
+          ).not_to be_nil
         end
       end
     end
