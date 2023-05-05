@@ -60,7 +60,13 @@ RSpec.configure do |config|
     end
   end
 
-  config.after(:context) do
+  config.before(:context, :territory_admin_bypass) do
+    before_connection do
+      community.update!(territory_admin_ids: [community.everyone_role_id])
+    end
+  end
+
+  config.after(:context, :territory_admin_bypass) do
     ESM::Test.callbacks.remove_all_callbacks!
   end
 end
