@@ -42,15 +42,15 @@ module ESM
     attribute :radius, :float
     attribute :level, :integer
     attribute :flag_texture, :string
-    attribute :flag_stolen, :boolean
+    attribute :flag_stolen, :boolean, default: false
     attribute :flag_stolen_by_uid, :string
     attribute :flag_stolen_at, :datetime
-    attribute :created_at, :datetime
-    attribute :last_paid_at, :datetime
-    attribute :xm8_protectionmoney_notified, :boolean
+    attribute :created_at, :datetime, default: -> { Time.current }
+    attribute :last_paid_at, :datetime, default: -> { Time.current }
+    attribute :xm8_protectionmoney_notified, :boolean, default: false
     attribute :build_rights, :json
     attribute :moderators, :json
-    attribute :esm_payment_counter, :integer
+    attribute :esm_payment_counter, :integer, default: 0
     attribute :deleted_at, :datetime
 
     after_save :update_arma
