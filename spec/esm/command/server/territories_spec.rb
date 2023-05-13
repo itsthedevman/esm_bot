@@ -66,7 +66,7 @@ describe ESM::Command::Server::Territories, category: "command" do
       expect(ESM::Test.messages.size).to eq(response.size)
 
       ESM::Test.messages.map(&:second).each_with_index do |embed, index|
-        territory = ESM::Arma::Territory.new(server: server, territory: response[index])
+        territory = ESM::Exile::Territory.new(server: server, territory: response[index])
 
         expect(embed.title).to eq("Territory \"#{territory.name}\"")
         expect(embed.thumbnail.url).to eq(territory.flag_path)

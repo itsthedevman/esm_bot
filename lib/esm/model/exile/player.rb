@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
 module ESM
-  module Arma
+  module Exile
     class Player
-      def initialize(server:, player:)
+      def initialize(server:, player_data:)
         @server = server
-        @player = player
+        @player = player_data
 
         # If the player is dead, not all information is returned.
         normalize

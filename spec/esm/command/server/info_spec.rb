@@ -123,7 +123,7 @@ describe ESM::Command::Server::Info, category: "command" do
       expect(ESM::Test.messages.size).to eq(1)
       embed = ESM::Test.messages.first.second
 
-      territory = ESM::Arma::Territory.new(server: server, territory: response)
+      territory = ESM::Exile::Territory.new(server: server, territory: response)
 
       expect(embed.title).to eq("Territory \"#{territory.name}\"")
       expect(embed.thumbnail.url).to eq(territory.flag_path)
