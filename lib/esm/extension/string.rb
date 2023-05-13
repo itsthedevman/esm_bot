@@ -12,6 +12,10 @@ class String
     ESM::JSON.parse(self, as_ostruct: true)
   end
 
+  def to_struct
+    to_h.to_struct
+  end
+
   def to_h
     ESM::JSON.parse(self)
   end
