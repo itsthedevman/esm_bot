@@ -248,6 +248,27 @@ module ESM
           target_server.connection.send_message(outgoing_message, send_opts)
         end
 
+        #
+        # Shorthand method for sending a query message to Arma
+        #
+        # @param name [String, Symbol] The name of the query
+        # @param **arguments [Hash] The query arguments
+        #
+        # @return [ESM::Message] The outbound message
+        #
+        def query_arma(name, **arguments)
+          send_to_arma(
+            type: :query,
+            data: {
+              type: :query,
+              content: {
+                name: name,
+                arguments: arguments
+              }
+            }
+          )
+        end
+
         # Convenience method for replying back to the event's channel
         def reply(message)
           ESM.bot.deliver(message, to: current_channel, replying_to: @event&.message)
