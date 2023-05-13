@@ -5,49 +5,52 @@ module ESM
     class Player
       def initialize(server:, player_data:)
         @server = server
-        @player = player_data
+        @data = player_data
+        @alive = false
 
         # If the player is dead, not all information is returned.
         normalize
       end
 
       def name
-        @player.name
+        @data.name
+      end
+
+      def alive?
+        @alive
       end
 
       # Arma stores the health as 0 (full) to 1 (dead)
       def damage
-        (100 - (@player.damage * 100)).round(2)
+        (100 - (@data.damage * 100)).round(2)
       end
 
       def hunger
-        @player.hunger.round(2)
+        @data.hunger.round(2)
       end
 
       def thirst
-        @player.thirst.round(2)
+        @data.thirst.round(2)
       end
 
       def money
-        @player.money
+        @data.money
       end
 
       def locker
-        @player.locker
+        @data.locker
       end
 
       def respect
-        @player.score
+        @data.score
       end
 
-      # Apparently some databases had nil values...
       def kills
-        @player.kills
+        @data.kills
       end
 
-      # Apparently some databases had nil values...
       def deaths
-        @player.deaths
+        @data.deaths
       end
 
       def kd_ratio
@@ -58,7 +61,11 @@ module ESM
       end
 
       def territories
-        @territories ||= @player.territories.to_h
+        @territories ||= begin
+          territories = @data.territories
+          territories = territories.to_a if territories.is_a?(String)
+          territories
+        end
       end
 
       def to_embed
@@ -77,26 +84,34 @@ module ESM
       # Alive players return all of these fields.
       # Dead players return: locker, score, name, kills, deaths, territories
       def normalize
-        # If damage is nil, the player is dead (1)
-        @player.damage ||= 1
-        @player.hunger ||= 0
-        @player.thirst ||= 0
-        @player.kills ||= 0
-        @player.deaths ||= 0
-        @player.money ||= 0
-        @player.territories ||= {}
+        @alive = false if @data.damage.nil?
+        @data.damage ||= 1
+        @data.hunger ||= 0
+        @data.thirst ||= 0
+        @data.kills ||= 0
+        @data.deaths ||= 0
+        @data.money ||= 0
+        @data.territories ||= []
       end
 
       def add_general_field(embed)
-        embed.add_field(
-          name: "__#{I18n.t(:general)}__",
-          value: [
-            "**#{I18n.t(:health)}:**\n#{damage}%\n",
-            "**#{I18n.t(:hunger)}:**\n#{hunger}%\n",
-            "**#{I18n.t(:thirst)}:**\n#{thirst}%\n"
-          ].join("\n"),
-          inline: true
-        )
+        if alive?
+          embed.add_field(
+            name: "__#{I18n.t(:general)}__",
+            value: [
+              "**#{I18n.t(:health)}:**\n#{damage}%\n",
+              "**#{I18n.t(:hunger)}:**\n#{hunger}%\n",
+              "**#{I18n.t(:thirst)}:**\n#{thirst}%\n"
+            ].join("\n"),
+            inline: true
+          )
+        else
+          embed.add_field(
+            name: "__#{I18n.t(:general)}__",
+            value: I18n.t(:you_are_dead),
+            inline: true
+          )
+        end
       end
 
       def add_currency_field(embed)
@@ -124,9 +139,16 @@ module ESM
       end
 
       def add_territories_field(embed)
+        converter =
+          if @server.v2?
+            ->(territory) { "**#{territory.name}**: `#{territory.id}`" }
+          else
+            ->(name, id) { "**#{name}**: `#{id}`" }
+          end
+
         embed.add_field(
           name: I18n.t("territories"),
-          value: territories.format(join_with: "\n") { |name, id| "**#{name}**: `#{id}`" }
+          value: territories.format(join_with: "\n", &converter)
         )
       end
     end
