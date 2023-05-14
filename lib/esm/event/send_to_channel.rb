@@ -65,7 +65,7 @@ module ESM
             value =
               if field[:value].is_a?(Hash)
                 field[:value].format(join_with: "\n") do |key, value|
-                  "#{key.humanize(keep_id_suffix: true)}: #{value}"
+                  "**#{key.humanize(keep_id_suffix: true)}:** #{value}"
                 end
               else
                 field[:value].to_s
