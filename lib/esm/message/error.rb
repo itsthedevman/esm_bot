@@ -30,7 +30,8 @@ module ESM
             server_id: message.attributes.server_id,
             type: message.type,
             data_type: message.data_type,
-            mdata_type: message.metadata_type
+            mdata_type: message.metadata_type,
+            data_territory_id: message.data.territory&.encoded&.id
           }
 
           # Add the data and metadata to the replacements
