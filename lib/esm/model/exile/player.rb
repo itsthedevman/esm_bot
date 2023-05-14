@@ -6,7 +6,7 @@ module ESM
       def initialize(server:, player_data:)
         @server = server
         @data = player_data
-        @alive = false
+        @alive = true
 
         # If the player is dead, not all information is returned.
         normalize
@@ -64,7 +64,7 @@ module ESM
         @territories ||= begin
           territories = @data.territories
           territories = territories.to_a if territories.is_a?(String)
-          territories
+          territories.sort_by { |t| t.name.downcase }
         end
       end
 
@@ -108,8 +108,7 @@ module ESM
         else
           embed.add_field(
             name: "__#{I18n.t(:general)}__",
-            value: I18n.t(:you_are_dead),
-            inline: true
+            value: "**#{I18n.t(:you_are_dead)}**"
           )
         end
       end
@@ -147,7 +146,7 @@ module ESM
           end
 
         embed.add_field(
-          name: I18n.t("territories"),
+          name: "__#{I18n.t("territories")}__",
           value: territories.format(join_with: "\n", &converter)
         )
       end
