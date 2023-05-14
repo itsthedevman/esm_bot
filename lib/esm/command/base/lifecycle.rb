@@ -190,7 +190,7 @@ module ESM
             return
           when StandardError
             uuid = SecureRandom.uuid
-            ESM.logger.error("#{self.class}##{__method__}") { ESM::JSON.pretty_generate(uuid: uuid, message: error.message, backtrace: error.backtrace) }
+            error!(uuid: uuid, message: error.message, backtrace: error.backtrace)
 
             message = ESM::Embed.build(:error, description: I18n.t("exceptions.system", error_code: uuid))
           end

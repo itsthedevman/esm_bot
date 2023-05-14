@@ -22,12 +22,16 @@ default: &default
     websocket_connection_overseer:
       check_every: 3
 
+    # ESM::Bot::DeliveryOverseer
+    bot_delivery_overseer:
+      check_every: 0.1
+
 development:
-  <<: *default
+  !!merge <<: *default
   prefix: "~"
 
 test:
-  <<: *default
+  !!merge <<: *default
   prefix: "~"
   loops:
     # ESM::Request::Overseer
@@ -68,5 +72,5 @@ test:
 
 
 production:
-  <<: *default
+  !!merge <<: *default
   prefix: "!"
