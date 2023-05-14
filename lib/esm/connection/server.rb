@@ -283,6 +283,12 @@ module ESM
 
         connection = @connections[server_uuid]
         connection&.on_message(incoming_message, outgoing_message)
+      rescue => e
+        if (command = outgoing_message&.command)
+          command.handle_error(e)
+        else
+          raise e # Bubble up to #on_inbound
+        end
       end
 
       def on_disconnect(request)
