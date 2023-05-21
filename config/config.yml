@@ -48,6 +48,10 @@ test:
     # ESM::Websocket::Connection::Overseer
     websocket_connection_overseer:
       check_every: 0.5
+      
+    # ESM::Bot::DeliveryOverseer
+    bot_delivery_overseer:
+      check_every: 0.1
 
   # ESM::Request::Overseer
   request_overseer:

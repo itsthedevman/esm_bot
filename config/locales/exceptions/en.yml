@@ -92,7 +92,7 @@ en:
     bad_amount: "I'm sorry %{user}, but you simply cannot gamble nothing."
 
     # server_territories
-    no_server_territories: "I'm sorry %{user}, it doesn't appear to be any territories on this server"
+    no_server_territories: "Hey %{user}, I was unable to find any territories on `%{server_id}`"
 
     # set_id
     minimum_characters: "I'm sorry %{user}, the new territory ID must be at least 3 characters long"

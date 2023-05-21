@@ -73,7 +73,7 @@ module ESM
         end
 
         def check_for_no_territories!
-          check_failed!(:no_server_territories, user: current_user.mention) if @territories.blank?
+          check_failed!(:no_server_territories, user: current_user.mention, server_id: target_server.server_id) if @territories.blank?
         end
       end
     end
