@@ -66,7 +66,9 @@ module ESM
             message.add_error("code", "message_undeliverable")
             message.on_error(nil)
           end
-
+        rescue => e
+          error!(error: e)
+        ensure
           remove(id)
         end
       end
@@ -84,10 +86,9 @@ module ESM
             message.add_error("code", "message_undeliverable")
             message.on_error(nil)
           end
-
-          remove(id)
         rescue => e
           error!(error: e)
+        ensure
           remove(id)
         end
       end

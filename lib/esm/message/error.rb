@@ -31,7 +31,7 @@ module ESM
             type: message.type,
             data_type: message.data_type,
             mdata_type: message.metadata_type,
-            data_territory_id: message.data.territory&.encoded&.id
+            data_territory_id: message.data_attributes[:content].dig(:territory, :encoded, :id)
           }
 
           # Add the data and metadata to the replacements

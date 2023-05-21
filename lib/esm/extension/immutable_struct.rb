@@ -6,6 +6,7 @@ class ImmutableStruct < Data
   end
 
   alias_method :to_hash, :to_h
+  alias_method :values, :deconstruct
 
   def ==(other)
     to_h == other&.to_h
