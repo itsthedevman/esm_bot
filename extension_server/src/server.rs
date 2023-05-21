@@ -211,14 +211,9 @@ async fn routing_thread(handler: Handler, mut receiver: UnboundedReceiver<Server
                     };
 
                     info!(
-                        "[on_message] Sending to {server_id} ({address}) with {status} {message:?}",
+                        "[on_message] {address} - {server_id} - {message}",
                         address = endpoint.addr(),
-                        server_id = client.server_uuid,
-                        status = if message.errors.is_empty() {
-                            "success"
-                        } else {
-                            "failure"
-                        }
+                        server_id = client.server_uuid
                     );
 
                     if let Err(e) = BotRequest::send(message, Some(client.server_uuid)) {
