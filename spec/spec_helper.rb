@@ -36,6 +36,8 @@ RSpec.configure do |config|
   config.around(:each) do |example|
     DatabaseCleaner.cleaning do
       ESM::Test.reset!
+
+      # Ensure the server is paused. This can be resumed on demand (see spec_context/connection_context.rb)
       ESM::Connection::Server.pause
 
       debug!(
@@ -47,17 +49,18 @@ RSpec.configure do |config|
       example.run
 
       # Ensure every message is either replied to or timed out
+      connection_server = ESM::Connection::Server.instance
       if example.metadata[:requires_connection]
         wait_for {
-          ESM::Connection::Server.instance.message_overseer.size
-        }.to eq(0)
+          connection_server.message_overseer.size
+        }.to(eq(0), ESM::JSON.pretty_generate(connection_server.message_overseer.mailbox))
       end
 
+      # Pause the server in case it was started in the test
       ESM::Connection::Server.pause
 
-      server = ESM::Connection::Server.instance
-      server&.disconnect_all!
-      server&.message_overseer&.remove_all!
+      connection_server&.disconnect_all!
+      connection_server&.message_overseer&.remove_all!
 
       ESM::Websocket.remove_all_connections!
     end
