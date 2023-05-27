@@ -233,9 +233,10 @@ module ESM
             end
 
             outgoing_message[:type] = :arma unless outgoing_message.key?(:type)
-
             outgoing_message = ESM::Message.from_hash(outgoing_message)
-            outgoing_message.add_callback(:on_response) do |incoming_message|
+
+            # This is how the message gets back to the command
+            outgoing_message.add_callback(:on_response, on_instance: self) do |incoming_message|
               on_response(incoming_message, outgoing_message)
             end
           end
@@ -244,7 +245,7 @@ module ESM
           outgoing_message.add_attribute(:command, self)
           outgoing_message.apply_command_metadata
 
-          target_server.connection.send_message(outgoing_message, send_opts)
+          target_server.send_message(outgoing_message, send_opts)
         end
 
         #

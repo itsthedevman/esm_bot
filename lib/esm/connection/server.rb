@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module ESM
-  class Connection
+  module Connection
     class Server
       ################################
       # Class methods
@@ -22,22 +22,15 @@ module ESM
           @instance.stop
           @instance = nil
         end
-
-        def connection(server_uuid)
-          return if @instance.nil?
-
-          @instance.connections[server_uuid]
-        end
       end
 
       ################################
       # Instance methods
       ################################
 
-      attr_reader :server, :connections, :message_overseer
+      attr_reader :server, :message_overseer
 
       def initialize
-        @connections = {} # By server_uuid
         @mutex = Mutex.new
         @redis = Redis.new(ESM::REDIS_OPTS)
         @message_overseer = ESM::Connection::MessageOverseer.new
@@ -208,6 +201,15 @@ module ESM
         @mutex.synchronize { @server_ping_received = value }
       end
 
+      def on_ping
+        self.server_ping_received = true
+
+        @thread_health_check.join
+        health_check
+
+        __send_internal({type: "pong"})
+      end
+
       def tcp_server_alive=(value)
         @mutex.synchronize { @tcp_server_alive = value }
       end
@@ -257,13 +259,11 @@ module ESM
       def on_connect(server_uuid, message)
         info!(server_uuid: server_uuid, incoming_message: message.to_h)
 
-        connection = ESM::Connection.new(self, server_uuid)
+        server = ESM::Server.find_by_uuid(server_uuid)
+        return error!(error: "Server does not exist", uuid: server_uuid) if server.nil?
+        return server.community.log_event(:error, message.errors.join("\n")) if message.errors?
 
-        return error!(error: "Server does not exist", uuid: server_uuid) if connection.server.nil?
-        return connection.server.community.log_event(:error, message.errors.join("\n")) if message.errors?
-
-        @connections[server_uuid] = connection
-        connection.on_open(message)
+        ESM::Event::ServerInitialization.new(server, message).run!
       end
 
       def on_message(server_uuid, incoming_message)
@@ -281,8 +281,14 @@ module ESM
           return
         end
 
-        connection = @connections[server_uuid]
-        connection&.on_message(incoming_message, outgoing_message)
+        # Currently, :send_to_channel is the only inbound event. If adding another, convert this code
+        if incoming_message.type == :event && incoming_message.data_type == :send_to_channel
+          server = ESM::Server.find_by_uuid(server_uuid)
+          ESM::Event::SendToChannel.new(server, incoming_message).run!
+          return
+        end
+
+        outgoing_message&.on_response(incoming_message)
       rescue => e
         if (command = outgoing_message&.command)
           command.handle_error(e)
@@ -292,22 +298,17 @@ module ESM
       end
 
       def on_disconnect(request)
-        server_uuid = request[:content]
-        info!(server_uuid: server_uuid)
+        log_message = {server_uuid: server_uuid}
+        server = ESM::Server.find_by_uuid(request[:content])
 
-        connection = @connections.delete(server_uuid)
-        return if connection.nil?
+        if server
+          log_message[:name] = server.server_name
+          log_message[:server_id] = server.server_id
+        end
 
-        connection.on_close
-      end
+        info!(log_message)
 
-      def on_ping
-        self.server_ping_received = true
-
-        @thread_health_check.join
-        health_check
-
-        __send_internal({type: "pong"})
+        server&.metadata&.clear!
       end
     end
   end

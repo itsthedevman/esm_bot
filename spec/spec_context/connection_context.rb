@@ -2,10 +2,10 @@ RSpec.shared_context("connection") do
   let!(:community) { ESM::Test.community }
   let!(:user) { ESM::Test.user }
   let(:server) { ESM::Test.server }
-  let(:connection) { server.connection }
+  let(:connection_server) { ESM::Connection::Server.instance }
 
   def execute_sqf!(code)
-    ESM::Test.execute_sqf!(connection, code, steam_uid: user.steam_uid)
+    ESM::Test.execute_sqf!(server, code, steam_uid: user.steam_uid)
   end
 
   before(:each) do |example|
@@ -14,8 +14,8 @@ RSpec.shared_context("connection") do
     ESM::Test.callbacks.run_callback(:before_connection, on_instance: self)
     ESM::Connection::Server.resume
 
-    wait_for { ESM::Connection::Server.instance&.tcp_server_alive? }.to be(true)
-    wait_for { server.connected? }.to be(true), "esm_arma never connected. From the esm_arma repo, please run `bin/bot_testing`"
+    wait_for { connection_server&.tcp_server_alive? }.to be(true)
+    wait_for { server.reload.connected? }.to be(true), "esm_arma never connected. From the esm_arma repo, please run `bin/bot_testing`"
 
     ESM::Test.outbound_server_messages.clear
 
@@ -26,7 +26,7 @@ RSpec.shared_context("connection") do
 
     users.each do |user|
       # Creates a user on the server with the same steam_uid
-      allow(user).to receive(:connect) { |**attrs| spawn_test_user(user, on: connection, **attrs) }
+      allow(user).to receive(:connect) { |**attrs| spawn_test_user(user, on: server, **attrs) }
     end
   end
 
@@ -57,7 +57,5 @@ RSpec.shared_context("connection") do
     end
 
     execute_sqf!(sqf) if sqf.present?
-
-    ESM::Connection::Server.pause
   end
 end

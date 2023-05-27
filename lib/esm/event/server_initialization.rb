@@ -40,10 +40,9 @@ module ESM
 
       attr_reader :data
 
-      def initialize(connection, message)
+      def initialize(server, message)
         @message = message
-        @connection = connection
-        @server = connection.server
+        @server = server
         @community = @server.community
         @discord_server = @community.discord_server
       end
@@ -81,7 +80,7 @@ module ESM
         @server.update!(
           server_name: @message.data.server_name,
           server_start_time: @message.data.server_start_time.utc,
-          server_version: @connection.version,
+          server_version: Semantic::Version.new(@message.data.extension_version),
           disconnected_at: nil
         )
       end
@@ -159,15 +158,15 @@ module ESM
 
       def send_response
         message = ESM::Message.event.set_data("post_init", @data)
-        message.add_callback(:on_response) do |_incoming|
+        message.add_callback(:on_response, on_instance: self) do |_incoming|
           # Trigger a connect notification
-          ESM::Notifications.trigger("server_on_connect", server: @connection.server)
+          ESM::Notifications.trigger("server_on_connect", server: @server)
 
           # Set the connection to be available for commands
-          @connection.initialized = true
+          @server.metadata.initialized = true
         end
 
-        @connection.send_message(message)
+        @server.send_message(message)
       end
     end
   end

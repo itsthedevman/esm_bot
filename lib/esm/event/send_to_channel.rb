@@ -3,9 +3,8 @@
 module ESM
   module Event
     class SendToChannel
-      def initialize(connection, message)
-        @connection = connection
-        @server = connection.server
+      def initialize(server, message)
+        @server = server
         @message = message
       end
 
