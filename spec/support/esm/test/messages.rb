@@ -28,8 +28,8 @@ module ESM
         content
       end
 
-      def find(needle)
-        super do |message|
+      def retrieve(needle)
+        find do |message|
           content = message.content
           if content.is_a?(ESM::Embed)
             content.title&.match?(needle) || content.description&.match?(needle)

@@ -101,7 +101,7 @@ describe ESM::Command::Server::Me, category: "command" do
 
         embed = ESM::Test.messages.first.content
         expect(embed.fields.size).to eq(4)
-        expect(embed.fields[3].name).to eq("Territories")
+        expect(embed.fields[3].name).to eq("__Territories__")
 
         territories.each do |territory|
           expect(embed.fields[3].value).to include(territory.encoded_id, territory.name)

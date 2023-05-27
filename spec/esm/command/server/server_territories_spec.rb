@@ -114,7 +114,7 @@ describe ESM::Command::Server::ServerTerritories, category: "command" do
         ESM::ExileTerritory.delete_all
       end
 
-      let(:territories) do
+      let!(:territories) do
         5.times.map do
           owner_uid = ESM::Test.steam_uid
           create(
@@ -132,7 +132,9 @@ describe ESM::Command::Server::ServerTerritories, category: "command" do
       # 2     - Top border (Table)
       # 3     - Header
       # 4     - Header separator
-      # -1    - Bottom border (table)
+      # -3    - Bottom border (table)
+      # -2    - Code block
+      # -1    - End
       let(:printed_territory_lines) { ESM::Test.messages.first.content.split("\n")[4..-3] }
 
       it "returns all of territories encoded IDs, names, and owner UIDs - sorted by territory name" do
