@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module ESM
-  class Connection
+  module Connection
     class MessageOverseer
       Envelope = Struct.new(:message, :expires_at) do
         delegate :delivered?, to: :message
@@ -11,10 +11,9 @@ module ESM
         end
       end
 
-      attr_reader :mailbox if ESM.env.test?
-
       def initialize
         @mailbox = {}
+        @mutex = Mutex.new
 
         check_every = ESM.config.loops.connection_message_overseer.check_every
         @thread = Thread.new do
@@ -26,7 +25,7 @@ module ESM
       end
 
       def size
-        @mailbox.size
+        @mutex.synchronize { @mailbox.size }
       end
 
       #
@@ -37,7 +36,7 @@ module ESM
       #
       def watch(message, expires_at: 10.seconds.from_now)
         envelope = Envelope.new(message, expires_at)
-        @mailbox[message.id] = envelope
+        @mutex.synchronize { @mailbox[message.id] = envelope }
       end
 
       #
@@ -55,21 +54,22 @@ module ESM
       end
 
       def remove(id)
-        @mailbox.delete(id)
+        @mutex.synchronize { @mailbox.delete(id) }
       end
 
       def remove_all!(with_error: false)
-        @mailbox.each do |id, envelope|
-          message = envelope.message
+        @mutex.synchronize do
+          @mailbox.each do |id, envelope|
+            remove(id)
 
-          if with_error
+            next unless with_error
+
+            message = envelope.message
             message.add_error("code", "message_undeliverable")
             message.on_error(nil)
+          rescue => e
+            error!(error: e)
           end
-        rescue => e
-          error!(error: e)
-        ensure
-          remove(id)
         end
       end
 
@@ -77,19 +77,16 @@ module ESM
 
       def check_messages
         # Hey look, I'm the government
-        @mailbox.each do |id, envelope|
-          next if !envelope.undeliverable?
+        messages = @mutex.synchronize { @mailbox.extract! { |_id, envelope| envelope.undeliverable? } }
 
-          # Don't skip - The envelope needs to be removed
-          if !envelope.delivered?
-            message = envelope.message
-            message.add_error("code", "message_undeliverable")
-            message.on_error(nil)
-          end
+        messages.each do |id, envelope|
+          next unless envelope.delivered?
+
+          message = envelope.message
+          message.add_error("code", "message_undeliverable")
+          message.on_error(nil)
         rescue => e
           error!(error: e)
-        ensure
-          remove(id)
         end
       end
     end
