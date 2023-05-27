@@ -298,17 +298,12 @@ module ESM
       end
 
       def on_disconnect(request)
-        log_message = {server_uuid: server_uuid}
-        server = ESM::Server.find_by_uuid(request[:content])
+        server_uuid = request[:content]
 
-        if server
-          log_message[:name] = server.server_name
-          log_message[:server_id] = server.server_id
-        end
+        server = ESM::Server.find_by_uuid(server_uuid)
+        server.metadata.clear!
 
-        info!(log_message)
-
-        server&.metadata&.clear!
+        info!(uuid: server.uuid, name: server.server_name, server_id: server.server_id)
       end
     end
   end
