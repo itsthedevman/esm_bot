@@ -9,7 +9,8 @@ module ESM
         def execute(event)
           if event.is_a?(Discordrb::Commands::CommandEvent)
             # The event has to be stored before argument parsing because of callbacks referencing event data
-            self.event = event
+            # Still have to pass the even through to from_discord for V1
+            @event = event
             arguments.parse!(event)
 
             # V1
@@ -20,9 +21,13 @@ module ESM
                 "#{self.class}V1".constantize.new
               end
 
-            command.send(:from_discord, event, arguments)
+            timers.time!(:from_discord) do
+              command.send(:from_discord, event, arguments)
+            end
           else
-            from_server(event)
+            timers.time!(:from_server) do
+              from_server(event)
+            end
           end
         rescue => e
           if command
@@ -30,12 +35,15 @@ module ESM
           else
             handle_error(e)
           end
+        ensure
+          timers.stop_all!
+
+          nil
         end
 
         def from_discord(discord_event, arguments)
-          self.event = discord_event
-          self.executed_at = DateTime.now
-          self.arguments = arguments
+          @event = discord_event
+          @arguments = arguments
           permissions.load
 
           checks.text_only!
@@ -47,7 +55,11 @@ module ESM
           ESM::Notifications.trigger("command_from_discord", command: self)
           checks.run_all!
 
-          result = on_execute
+          result = nil
+          timers.time!(:on_execute) do
+            result = on_execute
+          end
+
           create_or_update_cooldown
 
           # This just tracks how many times a command is used
@@ -62,7 +74,8 @@ module ESM
           @request = request
 
           # Initialize our command from the request
-          @arguments.from_hash(request.command_arguments) if request.command_arguments.present?
+          arguments.from_hash(request.command_arguments) if request.command_arguments.present?
+
           @current_channel = ESM.bot.channel(request.requested_from_channel_id)
           @current_user = request.requestor.discord_user
 
@@ -74,6 +87,9 @@ module ESM
 
             request_declined
           end
+        end
+
+        def on_execute(_incoming_message, _outgoing_message)
         end
 
         def on_response(_incoming_message, _outgoing_message)
@@ -93,7 +109,7 @@ module ESM
             # requestor_user_id: current_user.esm_user.id,
             query = ESM::Request.where(requestee_user_id: requestee.esm_user.id, command_name: @name)
 
-            @arguments.to_h.each do |name, value|
+            arguments.to_h.each do |name, value|
               query = query.where("command_arguments->>'#{name}' = ?", value)
             end
 
@@ -108,7 +124,7 @@ module ESM
               requestee_user_id: to.esm_user.id,
               requested_from_channel_id: current_channel.id.to_s,
               command_name: @name,
-              command_arguments: @arguments.to_h
+              command_arguments: arguments.to_h
             )
 
           send_request_message(description: description, target: to)
@@ -148,7 +164,7 @@ module ESM
           return if skip_flags.include?(:cooldown)
 
           new_cooldown = current_cooldown_query.first_or_create
-          new_cooldown.update_expiry!(@executed_at, @permissions.cooldown_time)
+          new_cooldown.update_expiry!(timers.on_execute.started_at, permissions.cooldown_time)
 
           @current_cooldown = new_cooldown
         end
@@ -193,7 +209,7 @@ module ESM
             message = ESM::Embed.build(:error, description: I18n.t("exceptions.system", error_code: uuid))
           end
 
-          ESM.bot.deliver(message, to: @event&.channel)
+          ESM.bot.deliver(message, to: event&.channel)
         end
       end
     end

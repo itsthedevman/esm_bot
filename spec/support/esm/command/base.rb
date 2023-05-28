@@ -1,7 +1,7 @@
 module ESM
   module Command
     class Base
-      attr_writer :limit_to, :executed_at, :requires
+      attr_writer :limit_to, :requires
 
       # Returns a valid command string for execution.
       #
