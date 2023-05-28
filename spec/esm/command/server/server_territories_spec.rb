@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
 describe ESM::Command::Server::ServerTerritories, category: "command" do
-  let!(:command) { ESM::Command::Server::ServerTerritories.new }
-
   describe "V1" do
+    let!(:command) { ESM::Command::Server::ServerTerritories.new }
+
     it "should be valid" do
       expect(command).not_to be_nil
     end
@@ -48,8 +48,7 @@ describe ESM::Command::Server::ServerTerritories, category: "command" do
 
         expect { request = command.execute(event) }.not_to raise_error
         expect(request).not_to be_nil
-        wait_for { connection.requests }.to be_blank
-        expect(ESM::Test.messages.size).to be > 3
+        wait_for { ESM::Test.messages.size }.to be > 3
       end
 
       it "should return (Sorted by territory name)" do
@@ -114,7 +113,7 @@ describe ESM::Command::Server::ServerTerritories, category: "command" do
         ESM::ExileTerritory.delete_all
       end
 
-      let!(:territories) do
+      let(:territories) do
         5.times.map do
           owner_uid = ESM::Test.steam_uid
           create(
@@ -140,7 +139,7 @@ describe ESM::Command::Server::ServerTerritories, category: "command" do
       it "returns all of territories encoded IDs, names, and owner UIDs - sorted by territory name" do
         territories.sort_by!(&:name)
         execute!(server_id: server.server_id)
-        wait_for { ESM::Test.messages }.not_to be_empty
+        wait_for { command.timers.on_response.finished? }.to be true
 
         # This tests the printed data on a per index bases. Since territories is sorted, each line should match
         printed_territory_lines.each_with_index do |line, index|
@@ -152,7 +151,7 @@ describe ESM::Command::Server::ServerTerritories, category: "command" do
       it "returns the territories sorted by id" do
         territories.sort_by!(&:encoded_id)
         execute!(server_id: server.server_id, order_by: "id")
-        wait_for { ESM::Test.messages }.not_to be_empty
+        wait_for { command.timers.on_response.finished? }.to be true
 
         # This tests the printed data on a per index bases. Since territories is sorted, each line should match
         printed_territory_lines.each_with_index do |line, index|
@@ -164,7 +163,7 @@ describe ESM::Command::Server::ServerTerritories, category: "command" do
       it "returns the territories sorted by owner uid" do
         territories.sort_by!(&:owner_uid)
         execute!(server_id: server.server_id, order_by: "owner_uid")
-        wait_for { ESM::Test.messages }.not_to be_empty
+        wait_for { command.timers.on_response.finished? }.to be true
 
         # This tests the printed data on a per index bases. Since territories is sorted, each line should match
         printed_territory_lines.each_with_index do |line, index|
