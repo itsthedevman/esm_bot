@@ -53,7 +53,7 @@ RSpec.configure do |config|
       if example.metadata[:requires_connection]
         wait_for {
           connection_server.message_overseer.size
-        }.to(eq(0), ESM::JSON.pretty_generate(connection_server.message_overseer.mailbox))
+        }.to(eq(0), connection_server.message_overseer.mailbox.to_s)
       end
 
       # Pause the server in case it was started in the test

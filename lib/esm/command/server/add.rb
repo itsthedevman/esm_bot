@@ -22,9 +22,9 @@ module ESM
           return request_accepted if same_user?
 
           # Checks for a registered target user. This also keeps people from adding via steam_uid only
-          @checks.registered_target_user!
+          checks.registered_target_user!
+          checks.pending_request!
 
-          @checks.pending_request!
           add_request(
             to: target_user,
             description: I18n.t(
