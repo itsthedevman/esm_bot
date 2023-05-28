@@ -3,7 +3,7 @@
 module ESM
   module Connection
     class MessageOverseer
-      attr_reader :mailbox if ESM.env.test?
+      attr_reader :mailbox
     end
   end
 end
