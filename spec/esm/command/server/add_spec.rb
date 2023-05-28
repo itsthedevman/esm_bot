@@ -62,6 +62,7 @@ describe ESM::Command::Server::Add, category: "command" do
 
         event = CommandEvent.create(command_statement, user: user, channel_type: :dm)
         expect { command.execute(event) }.not_to raise_error
+        wait_for { ESM::Test.messages.size }.to eq(2)
 
         embed = ESM::Test.messages.first.second
 
@@ -82,7 +83,7 @@ describe ESM::Command::Server::Add, category: "command" do
         ESM::Test.messages.clear
 
         # Wait for the server to respond
-        wait_for { connection.requests }.to be_blank
+        wait_for { ESM::Test.messages.size }.to eq(2)
 
         expect(ESM::Test.messages.size).to eq(2)
       end
@@ -101,7 +102,7 @@ describe ESM::Command::Server::Add, category: "command" do
         ESM::Test.messages.clear
 
         # Wait for the server to respond
-        wait_for { connection.requests }.to be_blank
+        wait_for { ESM::Test.messages.size }.to eq(1)
 
         expect(ESM::Test.messages.size).to eq(1)
       end
@@ -149,14 +150,9 @@ describe ESM::Command::Server::Add, category: "command" do
 
       it "adds the user and logs to Discord" do
         execute!(server_id: server.server_id, territory_id: territory.encoded_id, target: second_user.steam_uid)
-        wait_for { ESM::Test.messages }.not_to be_empty
 
-        # Checks for requestors message
-        message = ESM::Test.messages.first
-        expect(message).not_to be_nil
-
-        # Checks for requestees message
-        expect(ESM::Test.messages.size).to eq(2)
+        # Initial request and the notice
+        wait_for { ESM::Test.messages.size }.to eq(2)
 
         # Process the request
         request = command.request
@@ -174,17 +170,17 @@ describe ESM::Command::Server::Add, category: "command" do
 
         # The last messages are not always in order...
         expect(
-          ESM::Test.messages.find(/you've been added to `#{territory.encoded_id}` successfully/i)
+          ESM::Test.messages.retrieve(/you've been added to `#{territory.encoded_id}` successfully/i)
         ).not_to be_nil
 
         expect(
-          ESM::Test.messages.find(
+          ESM::Test.messages.retrieve(
             /#{second_user.distinct} has been added to territory `#{territory.encoded_id}`/
           )
         ).not_to be_nil
 
         # Admin log on the community's discord server
-        log_message = ESM::Test.messages.find("Player added Target to territory")
+        log_message = ESM::Test.messages.retrieve("Player added Target to territory")
         expect(log_message).not_to be_nil
         expect(log_message.destination.id.to_s).to eq(community.logging_channel_id)
 
@@ -194,15 +190,15 @@ describe ESM::Command::Server::Add, category: "command" do
         [
           {
             name: "Territory",
-            value: "ID: #{territory.encoded_id}\nName: #{territory.name}"
+            value: "**ID:** #{territory.encoded_id}\n**Name:** #{territory.name}"
           },
           {
             name: "Player",
-            value: "Discord ID: #{user.discord_id}\nSteam UID: #{user.steam_uid}\nDiscord name: #{user.discord_username}\nDiscord mention: #{user.mention}"
+            value: "**Discord ID:** #{user.discord_id}\n**Steam UID:** #{user.steam_uid}\n**Discord name:** #{user.discord_username}\n**Discord mention:** #{user.mention}"
           },
           {
             name: "Target",
-            value: "Discord ID: #{second_user.discord_id}\nSteam UID: #{second_user.steam_uid}\nDiscord name: #{second_user.discord_username}\nDiscord mention: #{second_user.mention}"
+            value: "**Discord ID:** #{second_user.discord_id}\n**Steam UID:** #{second_user.steam_uid}\n**Discord name:** #{second_user.discord_username}\n**Discord mention:** #{second_user.mention}"
           }
         ].each_with_index do |test_field, i|
           field = log_embed.fields[i]
@@ -233,7 +229,7 @@ describe ESM::Command::Server::Add, category: "command" do
         wait_for { ESM::Test.messages.size }.to eq(5)
 
         expect(
-          ESM::Test.messages.find(/you've been added to `#{territory.encoded_id}` successfully/i)
+          ESM::Test.messages.retrieve(/you've been added to `#{territory.encoded_id}` successfully/i)
         ).not_to be_nil
       end
 
@@ -250,13 +246,13 @@ describe ESM::Command::Server::Add, category: "command" do
         wait_for { ESM::Test.messages.size }.to eq(2)
 
         expect(
-          ESM::Test.messages.find(/you've been added to `#{territory.encoded_id}` successfully/i)
+          ESM::Test.messages.retrieve(/you've been added to `#{territory.encoded_id}` successfully/i)
         ).not_to be_nil
       end
 
       it "does not allow adding a Steam UID that hasn't been registered with ESM" do
         second_user_steam_uid = second_user.steam_uid
-        second_user.update(steam_uid: "")
+        second_user.update!(steam_uid: "")
 
         expect {
           execute!(
@@ -285,13 +281,13 @@ describe ESM::Command::Server::Add, category: "command" do
           wait_for { ESM::Test.messages.size }.to eq(4)
 
           expect(
-            ESM::Test.messages.find(
+            ESM::Test.messages.retrieve(
               "Player attempted to add Target to territory, but the territory flag was not found in game"
             )
           ).not_to be_nil
 
           expect(
-            ESM::Test.messages.find(/i was unable to find a territory with the ID of `#{territory.encoded_id}`/i)
+            ESM::Test.messages.retrieve(/i was unable to find a territory with the ID of `#{territory.encoded_id}`/i)
           ).not_to be_nil
         end
 
@@ -309,11 +305,11 @@ describe ESM::Command::Server::Add, category: "command" do
           wait_for { ESM::Test.messages.size }.to eq(4)
 
           expect(
-            ESM::Test.messages.find("Player attempted to add Target to territory, but Player does not have permission")
+            ESM::Test.messages.retrieve("Player attempted to add Target to territory, but Player does not have permission")
           ).not_to be_nil
 
           expect(
-            ESM::Test.messages.find(
+            ESM::Test.messages.retrieve(
               "#{user.mention}, you do not have permission to add people to `#{territory.encoded_id}`"
             )
           ).not_to be_nil
@@ -328,11 +324,11 @@ describe ESM::Command::Server::Add, category: "command" do
           wait_for { ESM::Test.messages.size }.to eq(2)
 
           expect(
-            ESM::Test.messages.find("#{user.mention}, you cannot add yourself to this territory")
+            ESM::Test.messages.retrieve("#{user.mention}, you cannot add yourself to this territory")
           ).not_to be_nil
 
           expect(
-            ESM::Test.messages.find("Player attempted to add themselves to the territory. Time to go laugh at them!")
+            ESM::Test.messages.retrieve("Player attempted to add themselves to the territory. Time to go laugh at them!")
           ).not_to be_nil
         end
 
@@ -350,7 +346,7 @@ describe ESM::Command::Server::Add, category: "command" do
           wait_for { ESM::Test.messages.size }.to eq(3)
 
           expect(
-            ESM::Test.messages.find(
+            ESM::Test.messages.retrieve(
               "#{user.mention}, the Target is the owner of this territory which automatically makes them a member of this territory, silly :stuck_out_tongue_winking_eye:"
             )
           ).not_to be_nil
@@ -370,7 +366,7 @@ describe ESM::Command::Server::Add, category: "command" do
           wait_for { ESM::Test.messages.size }.to eq(3)
 
           expect(
-            ESM::Test.messages.find("#{user.mention}, this Player already has build rights")
+            ESM::Test.messages.retrieve("#{user.mention}, this Player already has build rights")
           ).not_to be_nil
         end
       end
