@@ -6,7 +6,7 @@ module ESM
       module Lifecycle
         # The entry point for a command
         # @note Do not handle exceptions anywhere in this commands lifecycle
-        def execute(event, ...)
+        def execute(event)
           if event.is_a?(Discordrb::Commands::CommandEvent)
             # The event has to be stored before argument parsing because of callbacks referencing event data
             self.event = event
@@ -26,9 +26,9 @@ module ESM
           end
         rescue => e
           if command
-            command.send(:handle_error, e, ...)
+            command.send(:handle_error, e)
           else
-            handle_error(e, ...)
+            handle_error(e)
           end
         end
 
@@ -177,9 +177,8 @@ module ESM
           query
         end
 
-        def handle_error(error, raise_error: ESM.env.test?)
+        def handle_error(error)
           message = nil
-
           case error
           when ESM::Exception::CheckFailure, ESM::Exception::FailedArgumentParse
             message = error.data
