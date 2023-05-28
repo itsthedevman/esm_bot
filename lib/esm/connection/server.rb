@@ -291,7 +291,7 @@ module ESM
         outgoing_message&.on_response(incoming_message)
       rescue => e
         if (command = outgoing_message&.command)
-          command.handle_error(e)
+          command.handle_error(e, raise_error: false) # Force not raising errors for every env
         else
           raise e # Bubble up to #on_inbound
         end

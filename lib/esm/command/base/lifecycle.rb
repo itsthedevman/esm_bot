@@ -177,7 +177,9 @@ module ESM
           query
         end
 
-        def handle_error(error)
+        def handle_error(error, raise_error: ESM.env.test?)
+          raise error if raise_error # Mainly for tests
+
           message = nil
           case error
           when ESM::Exception::CheckFailure, ESM::Exception::FailedArgumentParse
