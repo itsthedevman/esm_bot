@@ -60,7 +60,7 @@ module ESM
       def remove_all!(with_error: false)
         @mutex.synchronize do
           @mailbox.each do |id, envelope|
-            remove(id)
+            @mailbox.delete(id)
 
             next unless with_error
 
