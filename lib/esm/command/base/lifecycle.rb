@@ -7,6 +7,8 @@ module ESM
         # The entry point for a command
         # @note Do not handle exceptions anywhere in this commands lifecycle
         def execute(event)
+          command = self
+
           if event.is_a?(Discordrb::Commands::CommandEvent)
             # The event has to be stored before argument parsing because of callbacks referencing event data
             # Still have to pass the even through to from_discord for V1
@@ -29,16 +31,13 @@ module ESM
               from_server(event)
             end
           end
-        rescue => e
-          if command
-            command.send(:handle_error, e)
-          else
-            handle_error(e)
-          end
-        ensure
-          timers.stop_all!
 
-          nil
+          command
+        rescue => e
+          command.send(:handle_error, e)
+          command
+        ensure
+          command.timers.stop_all!
         end
 
         def from_discord(discord_event, arguments)
