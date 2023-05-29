@@ -3,7 +3,7 @@
 FactoryBot.define do
   factory :exile_territory, class: "ESM::ExileTerritory" do
     server_id {}
-    name { Faker::FunnyName.name }
+    name { "ExileTerritory - #{Faker::FunnyName.name}" }
     position_x { Faker::Number.between(from: 1, to: 1000) }
     position_y { Faker::Number.between(from: 1, to: 1000) }
     position_z { Faker::Number.between(from: 1, to: 20) }
