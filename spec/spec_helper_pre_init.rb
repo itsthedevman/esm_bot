@@ -10,7 +10,7 @@ end
 require "bundler/setup"
 require "awesome_print"
 require "colorize"
-require "database_cleaner"
+require "database_cleaner/active_record"
 require "pry"
 require "factory_bot"
 require "faker"
