@@ -69,7 +69,7 @@ module ESM
       callbacks = __callbacks[callback_name.to_sym]
       return true if callbacks.blank?
 
-      callbacks.reject! { |callback| callback == method_name.to_sym }
+      callbacks.reject! { |callback| callback[:code] == method_name.to_sym }
     end
 
     def remove_all_callbacks!
