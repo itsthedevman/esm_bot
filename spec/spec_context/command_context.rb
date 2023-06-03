@@ -48,4 +48,8 @@ RSpec.shared_context("command") do
       command.execute(event)
     end
   end
+
+  def wait_for_completion!(event = :on_execute)
+    wait_for { command.timers.public_send(event.to_sym).finished? }.to be(true)
+  end
 end
