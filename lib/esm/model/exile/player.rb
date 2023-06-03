@@ -63,7 +63,13 @@ module ESM
       def territories
         @territories ||= begin
           territories = @data.territories
-          territories = territories.to_a if territories.is_a?(String)
+
+          # V1 - Wtf? Why did I send this as a hash?? And using the name as the key?? lol
+          if territories.is_a?(OpenStruct)
+            territory = ImmutableStruct.define(:id, :name)
+            territories = territories.map { |name, id| territory.new(id, name) }
+          end
+
           territories.sort_by { |t| t.name.downcase }
         end
       end
@@ -138,16 +144,9 @@ module ESM
       end
 
       def add_territories_field(embed)
-        converter =
-          if @server.v2?
-            ->(territory) { "**#{territory.name}**: `#{territory.id}`" }
-          else
-            ->(name, id) { "**#{name}**: `#{id}`" }
-          end
-
         embed.add_field(
           name: "__#{I18n.t("territories")}__",
-          value: territories.format(join_with: "\n", &converter)
+          value: territories.format(join_with: "\n") { |territory| "**#{territory.name}**: `#{territory.id}`" }
         )
       end
     end
