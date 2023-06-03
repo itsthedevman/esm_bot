@@ -60,7 +60,7 @@ describe ESM::Command::Server::ServerTerritories, category: "command" do
 
         expect(request).not_to be_nil
         wait_for { connection.requests }.to be_blank
-        expect(ESM::Test.messages.size).to be > 3
+        wait_for { ESM::Test.messages.size }.to be > 3
         expect(response).to eq(request.response.sort_by(&:territory_name))
       end
 
@@ -73,7 +73,7 @@ describe ESM::Command::Server::ServerTerritories, category: "command" do
 
         expect(request).not_to be_nil
         wait_for { connection.requests }.to be_blank
-        expect(ESM::Test.messages.size).to be > 3
+        wait_for { ESM::Test.messages.size }.to be > 3
         expect(response).to eq(request.response.sort_by(&:owner_uid))
       end
 
@@ -86,8 +86,8 @@ describe ESM::Command::Server::ServerTerritories, category: "command" do
         expect { request = command.execute(event) }.not_to raise_error
         expect(request).not_to be_nil
         wait_for { connection.requests }.to be_blank
-        expect(ESM::Test.messages.size).to eq(1)
-        expect(ESM::Test.messages.first.second.description).to match(/it doesn't appear to be any territories on this server/i)
+        wait_for { ESM::Test.messages.size }.to eq(1)
+        expect(ESM::Test.messages.first.second.description).to eq("Hey #{user.mention}, I was unable to find any territories on `#{server.server_id}`")
       end
     end
   end

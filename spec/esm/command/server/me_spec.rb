@@ -53,7 +53,7 @@ describe ESM::Command::Server::Me, category: "command" do
 
         if server_response.territories.present?
           expect(embed.fields.size).to eq(4)
-          expect(embed.fields[3].name).to eq("Territories")
+          expect(embed.fields[3].name).to eq("__Territories__")
           expect(embed.fields[3].value).not_to be_blank
         end
       end
@@ -135,7 +135,7 @@ describe ESM::Command::Server::Me, category: "command" do
 
         embed = ESM::Test.messages.first.content
         expect(embed.description).to match(
-          "Hey #{user.mention}, you **need to join** `#{server.server_id}` first before you can run **any** commands on it"
+          "Hey #{user.mention}, you **need to join** `#{server.server_id}` first before you can run commands on it"
         )
       end
     end
