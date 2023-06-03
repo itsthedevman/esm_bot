@@ -6,7 +6,7 @@ module ESM
       Envelope = Struct.new(:message, :expires_at) do
         delegate :delivered?, to: :message
 
-        def undeliverable?
+        def expired?
           expires_at <= ::Time.now
         end
       end
@@ -19,7 +19,7 @@ module ESM
         @thread = Thread.new do
           loop do
             check_messages
-            sleep(ESM.env.test? ? 0.5 : check_every)
+            sleep(check_every)
           end
         end
       end
@@ -61,7 +61,6 @@ module ESM
         @mutex.synchronize do
           @mailbox.each do |id, envelope|
             @mailbox.delete(id)
-
             next unless with_error
 
             message = envelope.message
@@ -76,13 +75,21 @@ module ESM
       private
 
       def check_messages
-        # Hey look, I'm the government
-        messages = @mutex.synchronize { @mailbox.extract! { |_id, envelope| envelope.undeliverable? } }
+        messages = []
 
-        messages.each do |id, envelope|
-          next unless envelope.delivered?
+        @mutex.synchronize do
+          # Hey look, I'm the government
+          @mailbox.each do |id, envelope|
+            next unless envelope.expired?
 
-          message = envelope.message
+            @mailbox.delete(id)
+            messages << envelope.message
+          end
+        end
+
+        messages.each do |message|
+          next if message.delivered?
+
           message.add_error("code", "message_undeliverable")
           message.on_error(nil)
         rescue => e
