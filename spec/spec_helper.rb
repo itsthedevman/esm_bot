@@ -21,8 +21,7 @@ RSpec.configure do |config|
 
   config.before :suite do
     FactoryBot.find_definitions
-    DatabaseCleaner.clean_with :deletion
-    DatabaseCleaner.strategy = :deletion
+    DatabaseCleaner.strategy = :truncation
 
     # Build script generates territories
     ESM::ExileTerritory.delete_all
