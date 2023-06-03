@@ -171,7 +171,7 @@ module ESM
       # @note: The result is ran through a JSON parser during the communication process. The type may not be what you expect, but it will be consistent
       #
       def execute_sqf!(server, code, steam_uid: nil)
-        message = ESM::Message.arma.set_data(:sqf, {execute_on: "server", code: ESM::Arma::Sqf.minify(code)})
+        message = ESM::Message.arma.set_data(:sqf, {execute_on: "server", code: code})
 
         message.add_attribute(
           :command, {

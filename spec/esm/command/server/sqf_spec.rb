@@ -105,7 +105,7 @@ describe ESM::Command::Server::Sqf, category: "command", v2: true do
 
       result_embed = message.content
       expect(result_embed.description).to eq(
-        "Hey #{user.mention}, `#{second_user.mention}` must be spawned into `#{server.server_id}` before you can execute code on them"
+        "Hey #{user.mention}, #{second_user.mention} **needs to join** `#{server.server_id}` before you can execute code on them"
       )
     end
 
@@ -126,39 +126,7 @@ describe ESM::Command::Server::Sqf, category: "command", v2: true do
 
       result_embed = message.content
       expect(result_embed.description).to eq(
-        "Hey #{user.mention}, `#{steam_uid}` must be spawned into `#{server.server_id}` before you can execute code on them"
-      )
-    end
-
-    it "minifies the code" do
-      execute!(
-        server_id: server.server_id,
-        target: "server",
-        code_to_execute: <<~SQF
-          if (true) exitWith
-          {
-            false
-          };
-        SQF
-      )
-
-      wait_for { ESM::Test.messages }.not_to be_empty
-
-      outgoing_message = ESM::Test.outbound_server_messages.first.content
-      expect(outgoing_message.data.code).to eq("if(true)exitWith{false};")
-
-      message = ESM::Test.messages.first
-      expect(message).not_to be_nil
-
-      result_embed = message.content
-      expect(result_embed.description).to eq(
-        command.t(
-          "responses.server_with_result",
-          server_id: server.server_id,
-          result: "false",
-          result_type: "BOOL",
-          user: user.mention
-        )
+        "Hey #{user.mention}, #{steam_uid} **needs to join** `#{server.server_id}` before you can execute code on them"
       )
     end
   end
