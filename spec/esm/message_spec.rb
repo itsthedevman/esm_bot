@@ -102,8 +102,13 @@ describe ESM::Message, v2: true do
     end
 
     it "handles codes" do
+      message.add_error(:code, "test")
+      message.add_callback(:on_error) do |_|
+        raise message.errors.first.to_s(message)
+      end
+
       expect {
-        message.add_error(:code, "test").send(:on_error, nil)
+        message.on_error(nil)
       }.to raise_error do |error|
         expect(error.message).to eq(
           # See config/locales/exceptions/en.yml -> exceptions.extension.test
@@ -113,8 +118,13 @@ describe ESM::Message, v2: true do
     end
 
     it "handles messages" do
+      message.add_error("message", "Hello World")
+      message.add_callback(:on_error) do |_|
+        raise message.errors.first.to_s(message)
+      end
+
       expect {
-        message.add_error("message", "Hello World").send(:on_error, nil)
+        message.on_error(nil)
       }.to raise_error do |error|
         expect(error.message).to eq("Hello World")
       end

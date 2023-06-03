@@ -5,13 +5,14 @@ describe ESM::Event::SendToChannel, v2: true, requires_connection: true do
 
   after :each do
     community.update!(logging_channel_id: nil)
-    ESM::Connection::Server.instance.message_overseer.remove_all!
+    connection_server.message_overseer.remove_all!
   end
 
   it "sends a message" do
     inbound_message = ESM::Message.event.set_data(:send_to_channel, {id: ESM::Test.channel.id.to_s, content: Faker::String.random})
 
-    described_class.new(connection, inbound_message).run!
+    described_class.new(server, inbound_message).run!
+    wait_for { ESM::Test.messages }.not_to be_blank
 
     message = ESM::Test.messages.first
     expect(message).not_to be_nil
@@ -30,7 +31,8 @@ describe ESM::Event::SendToChannel, v2: true, requires_connection: true do
 
     inbound_message = ESM::Message.event.set_data(:send_to_channel, {id: ESM::Test.channel.id.to_s, content: embed_hash.to_json})
 
-    described_class.new(connection, inbound_message).run!
+    described_class.new(server, inbound_message).run!
+    wait_for { ESM::Test.messages }.not_to be_blank
 
     message = ESM::Test.messages.first
     expect(message).not_to be_nil
@@ -55,7 +57,8 @@ describe ESM::Event::SendToChannel, v2: true, requires_connection: true do
   it "only allows sending messages to that community's discord channels", :error_testing do
     inbound_message = ESM::Message.event.set_data(:send_to_channel, {id: "THIS CHANNEL CANNOT EXIST", content: ""})
 
-    described_class.new(connection, inbound_message).run!
+    described_class.new(server, inbound_message).run!
+    wait_for { ESM::Test.messages }.not_to be_blank
 
     message = ESM::Test.messages.first
     expect(message).not_to be_nil
@@ -74,7 +77,8 @@ describe ESM::Event::SendToChannel, v2: true, requires_connection: true do
       :send_to_channel, {id: ESM::Test.channel.id.to_s, content: embed_hash.to_json}
     )
 
-    described_class.new(connection, inbound_message).run!
+    described_class.new(server, inbound_message).run!
+    wait_for { ESM::Test.messages }.not_to be_blank
 
     message = ESM::Test.messages.first
     expect(message).not_to be_nil
@@ -88,7 +92,7 @@ describe ESM::Event::SendToChannel, v2: true, requires_connection: true do
     expect(embed_field).not_to be_nil
     expect(hash_field).not_to be_nil
 
-    expect(embed_field.value).to eql("Discord ID: discord_id_1\nSteam UID: steam_uid_2\nUser name: user_name_3")
+    expect(embed_field.value).to eql("**Discord ID:** discord_id_1\n**Steam UID:** steam_uid_2\n**User name:** user_name_3")
   end
 
   it "logs when there is an error"
