@@ -20,5 +20,11 @@ FactoryBot.define do
       flag_stolen_by_uid { ESM::Test.steam_uid }
       flag_stolen_at { Time.current }
     end
+
+    before :create do |territory|
+      next if ESM::ExileAccount.where(uid: territory.owner_uid).any?
+
+      create(:exile_account, uid: territory.owner_uid)
+    end
   end
 end
