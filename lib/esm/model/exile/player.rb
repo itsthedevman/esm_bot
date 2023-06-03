@@ -65,9 +65,9 @@ module ESM
           territories = @data.territories
 
           # V1 - Wtf? Why did I send this as a hash?? And using the name as the key?? lol
-          if territories.is_a?(OpenStruct)
+          if territories.is_a?(String)
             territory = ImmutableStruct.define(:id, :name)
-            territories = territories.map { |name, id| territory.new(id, name) }
+            territories = territories.to_h.map { |name, id| territory.new(id, name) }
           end
 
           territories.sort_by { |t| t.name.downcase }
@@ -90,7 +90,7 @@ module ESM
       # Alive players return all of these fields.
       # Dead players return: locker, score, name, kills, deaths, territories
       def normalize
-        @alive = false if @data.damage.nil?
+        @alive = false if @data.damage.nil? || @data.damage == 1
         @data.damage ||= 1
         @data.hunger ||= 0
         @data.thirst ||= 0
@@ -120,15 +120,13 @@ module ESM
       end
 
       def add_currency_field(embed)
-        embed.add_field(
-          name: "__#{I18n.t(:currency)}__",
-          value: [
-            "**#{I18n.t(:money)}:**\n#{money.to_poptab}\n",
-            "**#{I18n.t(:locker)}:**\n#{locker.to_poptab}\n",
-            "**#{I18n.t(:respect)}:**\n#{respect.to_readable}\n"
-          ].join("\n"),
-          inline: true
-        )
+        values = [
+          "**#{I18n.t(:money)}:**\n#{alive? ? money.to_poptab : "**#{I18n.t(:you_are_dead)}**"}\n",
+          "**#{I18n.t(:locker)}:**\n#{locker.to_poptab}\n",
+          "**#{I18n.t(:respect)}:**\n#{respect.to_readable}\n"
+        ]
+
+        embed.add_field(name: "__#{I18n.t(:currency)}__", value: values.join("\n"), inline: true)
       end
 
       def add_scoreboard_field(embed)
