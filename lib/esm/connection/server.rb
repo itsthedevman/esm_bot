@@ -41,7 +41,7 @@ module ESM
 
         self.tcp_server_alive = false
         self.server_ping_received = false
-        refresh_keys
+
         health_check
         delegate_inbound_messages
         process_inbound_messages
@@ -130,18 +130,6 @@ module ESM
 
       def __send_internal(request)
         @redis.rpush("bot_outbound", request.to_json)
-      end
-
-      # Store all of the server_uuids and their keys in redis.
-      # This will allow the TCPServer to quickly pull a key by a server_uuid to decrypt messages
-      def refresh_keys
-        @redis.del("server_keys")
-
-        server_keys = ESM::Server.all.pluck(:uuid, :server_key)
-        return if server_keys.blank?
-
-        # Store the data in Redis
-        @redis.hmset("server_keys", *server_keys)
       end
 
       def delegate_inbound_messages

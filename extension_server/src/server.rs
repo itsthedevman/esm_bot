@@ -97,7 +97,9 @@ async fn routing_thread(handler: Handler, mut receiver: UnboundedReceiver<Server
                     if let Err(e) = client.send_message(&handler, message.as_mut()).await {
                         error!("{e}");
 
-                        let message = Message::new().set_id(message.id).add_error_code("client_not_connected");
+                        let message = Message::new()
+                            .set_id(message.id)
+                            .add_error_code("client_not_connected");
                         if let Err(e) = BotRequest::send(message, Some(server_uuid)) {
                             error!("[send] {} - Failed to send error - {e}", server_uuid);
                         }

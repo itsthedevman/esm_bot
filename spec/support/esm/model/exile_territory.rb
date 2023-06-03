@@ -161,9 +161,10 @@ module ESM
         _flagObject setVariable ["ExileTerritoryMaintenanceDue", #{7.days.from_now.to_s.quoted}];
         _flagObject setVariable ["ExileTerritoryNumberOfConstructions", 0, true];
         _flagObject setVariable ["ExileRadiusShown", false, true];
-        _flagObject setVariable ["ExileFlagStolen", #{flag_stolen},true];
+        _flagObject setVariable ["ExileFlagStolen", #{flag_stolen}, true];
         _flagObject setVariable ["ExileFlagTexture", #{flag_texture.quoted}];
       SQF
+
       ESM::Test.execute_sqf!(server, sqf, steam_uid: owner_uid)
     end
   end

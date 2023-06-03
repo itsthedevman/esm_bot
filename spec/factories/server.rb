@@ -39,7 +39,7 @@ FactoryBot.define do
       server.save!
 
       # Store the server key so the build tool can pick it up and write it
-      Redis.new.set("server_key", server.token.to_json)
+      ESM.redis.set("server_key", server.token.to_json)
     end
 
     factory :esm_malden do

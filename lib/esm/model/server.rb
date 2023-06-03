@@ -158,7 +158,6 @@ module ESM
       return if server_key.present?
 
       self.server_key = Array.new(64).map { KEY_CHARS.sample }.join
-      ESM.redis.hmset("server_keys", [uuid, server_key])
     end
 
     def create_server_setting
