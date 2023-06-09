@@ -18,6 +18,8 @@ module ESM
     has_many :logs, class_name: "Log", foreign_key: "requestors_user_id", dependent: :destroy
     has_many :my_requests, foreign_key: :requestor_user_id, class_name: "Request", dependent: :destroy
     has_many :pending_requests, foreign_key: :requestee_user_id, class_name: "Request", dependent: :destroy
+    has_many :user_aliases, dependent: :destroy
+    has_one :user_default, dependent: :destroy
     has_many :user_gamble_stats, dependent: :destroy
     has_many :user_notification_preferences, dependent: :destroy
     has_many :user_notification_routes, dependent: :destroy
