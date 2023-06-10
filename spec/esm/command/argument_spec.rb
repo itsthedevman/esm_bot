@@ -195,12 +195,38 @@ describe ESM::Command::Argument do
     describe "community_id modifier" do
       let!(:argument) { described_class.new(:community_id, {}) }
 
-      it "auto-fills" do
+      it "returns the user's alias" do
+        command.current_user.id_aliases.create!(community: community, value: "c")
+
+        argument.parse("c c c", command)
+        expect(argument.invalid?).to be(false)
+        expect(argument.content).to eq(community.community_id)
+      end
+
+      it "returns the auto-filled community ID" do
         # You can omit the community ID
         argument.parse("", command)
 
         expect(argument.invalid?).to be(false)
         expect(argument.content).to eq(community.community_id)
+      end
+
+      it "returns the user's default if nothing was provided" do
+        command.current_user.id_defaults.update!(community: community)
+
+        argument.parse("", command)
+
+        expect(argument.invalid?).to be(false)
+        expect(argument.content).to eq(community.community_id)
+      end
+
+      it "returns nil if not in a text channel and nothing was provided" do
+        command.event = pm_event
+
+        argument.parse("", command)
+
+        expect(argument.invalid?).to be(true)
+        expect(argument.content).to be(nil)
       end
     end
 

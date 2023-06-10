@@ -17,5 +17,9 @@ module ESM
     def self.find_server_alias(value)
       where(value: value).where.not(server_id: nil).first
     end
+
+    def self.find_community_alias(value)
+      where(value: value).where.not(community_id: nil).first
+    end
   end
 end

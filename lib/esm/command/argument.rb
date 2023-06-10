@@ -8,12 +8,31 @@ module ESM
           regex: ESM::Regex::COMMUNITY_ID_OPTIONAL,
           description: "default_arguments.community_id",
           modifier: lambda do |argument|
-            # User alias
-            # User default
-            return if argument.content.present?
-            return unless current_channel.text?
+            if argument.content.present?
+              # User alias
+              if (id_alias = current_user.id_aliases.find_community_alias(argument.content))
+                argument.content = id_alias.community.community_id
+                return
+              end
 
-            argument.content = current_community.community_id
+              return # Keep whatever was given - it'll be validated later
+            end
+
+            # Nothing was provided for this argument
+            # Attempt to find and use a default
+
+            # User default
+            if current_user.id_defaults.community_id
+              argument.content = current_user.id_defaults.community.community_id
+              return
+            end
+
+            # Community autofill
+            if current_channel.text?
+              argument.content = current_community.community_id
+            end
+
+            # Nothing was provided and there was no default - it'll be validated later
           end
         },
         target: {
@@ -69,7 +88,7 @@ module ESM
               return
             end
 
-            # Nothing was provided - it'll be validated later
+            # Nothing was provided and there was no default - it'll be validated later
           end
         },
         territory_id: {
