@@ -5,6 +5,12 @@ describe ESM::User do
   let!(:discord_user) { esm_user.discord_user }
   let(:unregistered_user) { ESM::Test.user(:unregistered) }
 
+  it "create a UserDefault" do
+    expect(esm_user.user_default).not_to be(nil)
+    expect(esm_user.user_default.server_id).to be(nil)
+    expect(esm_user.user_default.community_id).to be(nil)
+  end
+
   describe "#discord_user" do
     it "returns the discord user" do
       expect(discord_user).not_to be_nil

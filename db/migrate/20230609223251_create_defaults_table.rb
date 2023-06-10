@@ -12,7 +12,7 @@ class CreateDefaultsTable < ActiveRecord::Migration[6.1]
 
     create_table :user_defaults, if_not_exists: true do |t|
       t.belongs_to :user, index: true, foreign_key: true
-      t.references :community, index: true, foreign_key: true
+      t.references :community, index: true, foreign_key: true, null: true
       t.references :server, index: true, foreign_key: true, null: true
     end
 

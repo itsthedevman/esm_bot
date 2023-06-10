@@ -3,6 +3,7 @@
 module ESM
   class User < ApplicationRecord
     after_create :create_user_steam_data
+    after_create :create_user_default
 
     attribute :discord_id, :string
     attribute :discord_username, :string
