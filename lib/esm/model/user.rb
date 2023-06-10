@@ -3,7 +3,7 @@
 module ESM
   class User < ApplicationRecord
     after_create :create_user_steam_data
-    after_create :create_user_default
+    after_create :create_id_defaults
 
     attribute :discord_id, :string
     attribute :discord_username, :string
@@ -16,11 +16,11 @@ module ESM
     attribute :updated_at, :datetime
 
     has_many :cooldowns, dependent: :nullify
+    has_many :id_aliases, class_name: "UserAlias", dependent: :destroy
+    has_one :id_defaults, class_name: "UserDefault", dependent: :destroy
     has_many :logs, class_name: "Log", foreign_key: "requestors_user_id", dependent: :destroy
     has_many :my_requests, foreign_key: :requestor_user_id, class_name: "Request", dependent: :destroy
     has_many :pending_requests, foreign_key: :requestee_user_id, class_name: "Request", dependent: :destroy
-    has_many :user_aliases, dependent: :destroy
-    has_one :user_default, dependent: :destroy
     has_many :user_gamble_stats, dependent: :destroy
     has_many :user_notification_preferences, dependent: :destroy
     has_many :user_notification_routes, dependent: :destroy
@@ -108,7 +108,6 @@ module ESM
         end
 
         # Save some data for later consumption
-        discord_user.steam_uid = steam_uid
         discord_user.esm_user = self
 
         discord_user

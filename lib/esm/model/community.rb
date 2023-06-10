@@ -25,8 +25,8 @@ module ESM
     attribute :deleted_at, :datetime
 
     has_many :command_configurations, dependent: :destroy
-    has_many :community_defaults, dependent: :destroy
     has_many :cooldowns, dependent: :destroy
+    has_many :id_defaults, class_name: "CommunityDefault", dependent: :destroy
     has_many :notifications, dependent: :destroy
     has_many :servers, dependent: :destroy
     has_many :user_aliases, dependent: :nullify

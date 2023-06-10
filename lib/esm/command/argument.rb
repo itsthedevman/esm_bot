@@ -8,6 +8,8 @@ module ESM
           regex: ESM::Regex::COMMUNITY_ID_OPTIONAL,
           description: "default_arguments.community_id",
           modifier: lambda do |argument|
+            # User alias
+            # User default
             return if argument.content.present?
             return unless current_channel.text?
 
@@ -23,16 +25,44 @@ module ESM
           description: "default_arguments.server_id",
           preserve: true,
           modifier: lambda do |argument|
-            return if argument.content.blank? # Nothing was provided
+            if argument.content.blank?
+              # Community Defaults
+              if current_channel.text?
+                # Channel default
+                channel_default = current_community.id_defaults.for_channel(current_channel)
+                if channel_default&.server_id
+                  argument.content = channel_default.server.server_id
+                  return
+                end
 
-            # 1. User provided - Starts with a community ID
+                # Global default
+                global_default = current_community.id_defaults.global
+                if global_default&.server_id
+                  argument.content = global_default.server.server_id
+                  return
+                end
+              end
+
+              # User default
+              if current_user.id_defaults.server_id
+                argument.content = current_user.id_defaults.server.server_id
+                return
+              end
+
+              # Nothing was provided
+              return
+            end
+
+            # User provided - Starts with a community ID
             return if argument.content.match("^#{ESM::Regex::COMMUNITY_ID_OPTIONAL.source}_")
 
-            # 2. Community channel default
-            # 3. Community global default
-            # 4. User alias
-            # 5. User default
-            # 6. Community autofill
+            # User alias
+            if (id_alias = current_user.id_aliases.find_server_alias(argument.content))
+              argument.content = id_alias.server.server_id
+              return
+            end
+
+            # Community autofill
             return unless current_channel.text?
 
             # Add the community ID to the front of the match
@@ -83,8 +113,6 @@ module ESM
             content: content
           }
         )
-
-
       end
 
       def regex

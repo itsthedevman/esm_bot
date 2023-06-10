@@ -179,37 +179,95 @@ describe ESM::Command::Argument do
   end
 
   describe "#parse" do
-    let!(:community) { ESM::Test.community }
-    let!(:server) { ESM::Test.server }
     let!(:user) { ESM::Test.user }
+    let!(:server) { ESM::Test.server }
+    let(:second_server) { ESM::Test.second_server }
     let!(:command) { ESM::Command::Test::CommunityAndServerCommand.new }
     let!(:command_statement) { command.statement }
-    let!(:event) { CommandEvent.create(command_statement, user: user, channel_type: :text) }
+    let(:text_event) { CommandEvent.create(command_statement, user: user, channel_type: :text) }
+    let(:pm_event) { CommandEvent.create(command_statement, user: user, channel_type: :pm) }
+    let(:community) { command.current_community } # Only call in tests
 
     before :each do
-      command.event = event
+      command.event = text_event
     end
 
-    it "autofills (server_id)" do
-      container = ESM::Command::ArgumentContainer.new(command, [[:server_id, {}]])
-      argument = container.first
+    describe "community_id modifier" do
+      let!(:argument) { described_class.new(:community_id, {}) }
 
-      # Using the server_name part of the server_id
-      argument.parse(server.server_id.split("_").second, command)
+      it "auto-fills" do
+        # You can omit the community ID
+        argument.parse("", command)
 
-      expect(argument.invalid?).to be(false)
-      expect(argument.content).to eq(server.server_id)
+        expect(argument.invalid?).to be(false)
+        expect(argument.content).to eq(community.community_id)
+      end
     end
 
-    it "autofills (community_id)" do
-      container = ESM::Command::ArgumentContainer.new(command, [[:community_id, {}]])
-      argument = container.first
+    describe "server_id modifier" do
+      let!(:argument) { described_class.new(:server_id, {}) }
 
-      # You can omit the community ID
-      argument.parse("", command)
+      # No content was provided for server_id
+      it "returns the community's channel default if in a text channel and nothing was provided" do
+        # Channel takes precedence over the global
+        community.id_defaults.create!(server: second_server)
+        community.id_defaults.create!(server: server, channel_id: text_event.channel.id.to_s)
 
-      expect(argument.invalid?).to be(false)
-      expect(argument.content).to eq(community.community_id)
+        argument.parse("", command)
+
+        expect(argument.invalid?).to be(false)
+        expect(argument.content).to eq(server.server_id)
+      end
+
+      it "returns the community's global default if in a text channel and nothing was provided" do
+        community.id_defaults.create!(server: second_server)
+
+        argument.parse("", command)
+
+        expect(argument.invalid?).to be(false)
+        expect(argument.content).to eq(second_server.server_id)
+      end
+
+      it "returns the user's default if nothing was provided" do
+        command.current_user.id_defaults.update!(server: server)
+
+        argument.parse("", command)
+
+        expect(argument.invalid?).to be(false)
+        expect(argument.content).to eq(server.server_id)
+      end
+
+      it "returns nil if not in a text channel and nothing was provided" do
+        command.event = pm_event
+
+        argument.parse("", command)
+
+        expect(argument.invalid?).to be(true)
+        expect(argument.content).to be(nil)
+      end
+
+      # Content was provided for server_id
+      it "returns the existing content because the user provided a complete server_id" do
+        argument.parse(server.server_id, command)
+        expect(argument.invalid?).to be(false)
+        expect(argument.content).to eq(server.server_id)
+      end
+
+      it "returns the user's alias" do
+        command.current_user.id_aliases.create!(server: server, value: "a")
+
+        argument.parse("a a a", command)
+        expect(argument.invalid?).to be(false)
+        expect(argument.content).to eq(server.server_id)
+      end
+
+      it "returns the auto-filled community section because the server section was provided" do
+        # Using the server_name part of the server_id
+        argument.parse(server.server_id.split("_").second, command)
+
+        expect(argument.invalid?).to be(false)
+        expect(argument.content).to eq(server.server_id)
+      end
     end
   end
 end
