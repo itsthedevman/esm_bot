@@ -105,7 +105,7 @@ describe ESM::Command::Server::Info, category: "command" do
 
       field = embed.fields.second
       expect(field.name).to match(/currency/i)
-      expect(field.value).to match(/money.+poptabs.+locker.+poptabs.+respect.+/im)
+      expect(field.value).to match(/money.+you are dead.+locker.+poptabs.+respect.+/im)
 
       field = embed.fields.third
       expect(field.name).to match(/scoreboard/i)

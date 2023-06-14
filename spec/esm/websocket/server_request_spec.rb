@@ -22,8 +22,7 @@ describe ESM::Websocket::ServerRequest do
       _integer: "1",
       _preserve: "PRESERVE",
       _display_as: "display_as",
-      _default: "default",
-      _multiline: "multi\nline"
+      _default: "default"
     )
 
     event = CommandEvent.create(command_statement, user: user)

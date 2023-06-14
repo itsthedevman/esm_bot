@@ -11,7 +11,7 @@ module ESM
     STEAM_UID = /\d{17}/
     STEAM_UID_ONLY = /^#{STEAM_UID.source}$/
     TARGET = /#{DISCORD_TAG.source}|#{DISCORD_ID.source}|#{STEAM_UID.source}/
-    SERVER_ID_OPTIONAL_COMMUNITY = /(?:[^\s]+_)*[^\s]+/
+    SERVER_ID_OPTIONAL_COMMUNITY = /(?:[^\s]+_)?[^\s]+/
     SERVER_ID = /[^\s]+_[^\s]+/
     SERVER_ID_ONLY = /^#{SERVER_ID.source}$/
     TERRITORY_ID = /\w+/

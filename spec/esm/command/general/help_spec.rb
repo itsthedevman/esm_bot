@@ -8,7 +8,7 @@ describe ESM::Command::General::Help, category: "command" do
   end
 
   it "has 1 argument" do
-    expect(command.arguments.size).to eql(1)
+    expect(command.arguments.size).to eq(1)
   end
 
   it "has a description" do

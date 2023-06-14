@@ -1,260 +1,139 @@
 # frozen_string_literal: true
 
 describe ESM::Command::ArgumentContainer do
-  # Note: This requires ESM everything
-  let!(:command) { ESM::Command::Test::BaseV1.new }
-  let!(:community) { create(:esm_community) }
-  let!(:server) { create(:server, community_id: community.id) }
-  let!(:user) { create(:user) }
-  let!(:container) { command.arguments }
-  let(:event) { CommandEvent.create(command_statement, user: user) }
+  include_context "command"
 
-  let!(:command_statement) do
-    command.statement(
-      community_id: community.community_id,
-      server_id: server.server_id,
-      target: user.discord_id,
-      _integer: "1",
-      _preserve: "PRESERVE",
-      _display_as: "display_as",
-      _default: "default",
-      _multiline: "multi\nline"
-    )
-  end
+  context "parses and stores the text with respect to its case" do
+    let(:command_class) { ESM::Command::Test::ArgumentPreserveCase }
 
-  it "has #{ESM::Command::Test::BaseV1::ARGUMENT_COUNT} arguments" do
-    expect(container.size).to eq(ESM::Command::Test::BaseV1::ARGUMENT_COUNT)
-  end
-
-  describe "Valid Argument Container (Preserve)" do
-    before :each do
-      expect(event).not_to be_nil
-      expect { container.parse!(event.content) }.not_to raise_error
-    end
-
-    it "has #{ESM::Command::Test::BaseV1::ARGUMENT_COUNT} matches" do
-      expect(container.matches.size).to eq(ESM::Command::Test::BaseV1::ARGUMENT_COUNT)
-    end
-
-    it "preserves the case" do
-      expect(container._preserve).to eq("PRESERVE")
+    specify do
+      execute!(input: "Hello World!")
+      expect(command.arguments.input).to eq("Hello World!")
     end
   end
 
-  describe "Invalid Argument Container (Raises error/forgotten arguments)" do
-    let!(:command_statement) do
-      command.statement(
-        community_id: community.community_id,
-        server_id: server.server_id,
-        target: user.discord_id,
-        _integer: "1"
-      )
-    end
+  context "parses and stores the text as lowercase" do
+    let(:command_class) { ESM::Command::Test::ArgumentIgnoreCase }
 
-    it "has a valid event" do
-      expect(event).not_to be_nil
+    specify do
+      execute!(input: "Hello World!")
+      expect(command.arguments.input).to eq("hello world!")
     end
+  end
 
-    it "raises an error with a embed" do
-      expect { container.parse!(event.content) }.not_to raise_error
-      expect { container.validate! }.to raise_error do |error|
+  context "raises an error with an embed when an required argument is missing" do
+    let(:command_class) { ESM::Command::Test::ArgumentRequired }
+
+    specify do
+      expect { execute!(fail_on_raise: false) }.to raise_error(ESM::Exception::FailedArgumentParse) do |error|
         embed = error.data
 
-        expect(embed.title).to eql("**Missing argument `<_preserve>` for `#{ESM.config.prefix}base`**")
-        expect(embed.description).to match(/```.+base #{community.community_id} #{server.server_id} #{user.discord_id} 1 <_preserve> <sa_yalpsid> not_default <\?_multiline> ```/)
-        expect(embed.fields.size).to eql(1)
-        expect(embed.fields.first.name).to eql("Arguments:")
-        expect(embed.fields.first.value).to eql(ESM::Command::Test::BaseV1::COMMAND_AS_STRING)
-        expect(embed.footer.text).to match(/for more information, send me `.+help base`/i)
+        expect(embed.title).to eq("**Missing argument `<input>` for `~argument_required`**")
+        expect(embed.description).to eq("```~argument_required <input>```")
+
+        argument_field = embed.fields.first
+        expect(argument_field.name).to eq("Arguments:")
+        expect(argument_field.value).to eq("**`<input>`**\nThis argument is required.")
+
+        expect(embed.footer.text).to eq("For more information, send me `~help argument_required`")
       end
     end
   end
 
-  describe "Valid Argument Container (Do not preserve)" do
-    let!(:command_statement) do
-      command.statement(
-        community_id: community.community_id,
-        server_id: server.server_id,
-        target: user.discord_id,
-        _integer: "1",
-        _preserve: "PRESERVE",
-        _display_as: "DISPLAY_AS"
+  context "parses and type casts the value" do
+    let(:command_class) { ESM::Command::Test::ArgumentTypeCast }
+
+    it "to string, integer, float, json, and symbol" do
+      execute!(
+        string: "String Argument",
+        integer: "1",
+        float: "2.4443",
+        json: {foo: true, bar: [1, 2, 3]}.to_json,
+        symbol: "symbol_argument"
       )
-    end
 
-    before :each do
-      expect(event).not_to be_nil
-      expect { container.parse!(event.content) }.not_to raise_error
-    end
-
-    it "has #{ESM::Command::Test::BaseV1::ARGUMENT_COUNT} matches" do
-      expect(container.matches.size).to eq(ESM::Command::Test::BaseV1::ARGUMENT_COUNT)
-    end
-
-    it "does not preserve the case" do
-      expect(container._display_as).to eq("display_as")
+      expect(command.arguments.string).to eq("string argument")
+      expect(command.arguments.integer).to eq(1)
+      expect(command.arguments.float).to eq(2.4443)
+      expect(command.arguments.json).to eq({foo: true, bar: [1, 2, 3]})
+      expect(command.arguments.symbol).to eq(:symbol_argument)
     end
   end
 
-  describe "Valid Argument Container (Multiline/Preserve Case)" do
-    let!(:command_statement) do
-      command.statement(
-        community_id: community.community_id,
-        server_id: server.server_id,
-        target: user.discord_id,
-        _integer: "1",
-        _preserve: "PRESERVE",
-        _display_as: "DISPLAY_AS",
-        _default: "DEFAULT",
-        _multiline: "MULTI\nLINE"
-      )
-    end
+  context "parses and does not use the default because there was a value provided" do
+    let(:command_class) { ESM::Command::Test::ArgumentDefault }
 
-    before :each do
-      expect(event).not_to be_nil
-      expect { container.parse!(event.content) }.not_to raise_error
-    end
-
-    it "has #{ESM::Command::Test::BaseV1::ARGUMENT_COUNT} matches" do
-      expect(container.matches.size).to eq(ESM::Command::Test::BaseV1::ARGUMENT_COUNT)
-    end
-
-    it "includes the new lines and preserve case" do
-      expect(container._multiline).to eq("MULTI\nLINE")
+    specify do
+      execute!(input: "success from input!") # input argument provided, no default
+      expect(command.arguments.input).to eq("success from input!")
     end
   end
 
-  describe "Valid Argument Container (Type)" do
-    let!(:command_statement) do
-      command.statement(
-        community_id: community.community_id,
-        server_id: server.server_id,
-        target: user.discord_id,
-        _integer: "1",
-        _preserve: "PRESERVE",
-        _display_as: "display_as",
-        _default: "default",
-        _multiline: "multi\nline"
-      )
-    end
+  context "parses and uses the default because no value was provided" do
+    let(:command_class) { ESM::Command::Test::ArgumentDefault }
 
-    before :each do
-      expect(event).not_to be_nil
-      expect { container.parse!(event.content) }.not_to raise_error
-    end
-
-    it "has #{ESM::Command::Test::BaseV1::ARGUMENT_COUNT} matches" do
-      expect(container.matches.size).to eq(ESM::Command::Test::BaseV1::ARGUMENT_COUNT)
-    end
-
-    it "is type int" do
-      expect(container._integer).to be_a(Integer)
-    end
-
-    it "equals 1" do
-      expect(container._integer).to eq(1)
+    specify do
+      execute! # input argument not provided, use default
+      expect(command.arguments.input).to eq("default success!")
     end
   end
 
-  describe "Valid Argument Container (Default/provided)" do
-    let!(:command_statement) do
-      command.statement(
-        community_id: community.community_id,
-        server_id: server.server_id,
-        target: user.discord_id,
-        _integer: "1",
-        _preserve: "PRESERVE",
-        _display_as: "display_as",
-        _default: "default",
-        _multiline: "multi\nline"
-      )
-    end
+  context "properly extracts command aliases when parsing" do
+    let(:command_class) { ESM::Command::Test::ArgumentAlias }
 
-    before :each do
-      expect(event).not_to be_nil
-      expect { container.parse!(event.content) }.not_to raise_error
-    end
-
-    it "has #{ESM::Command::Test::BaseV1::ARGUMENT_COUNT} matches" do
-      expect(container.matches.size).to eq(ESM::Command::Test::BaseV1::ARGUMENT_COUNT)
-    end
-
-    it "does not use the default value" do
-      expect(container._default).to eq("default")
+    specify do
+      # The bot will not find the command if this alias does not exist
+      execute!(command_name: "alias_argument")
     end
   end
 
-  describe "Valid Argument Container (Default/Empty)" do
-    let!(:command_statement) do
-      command.statement(
-        community_id: community.community_id,
-        server_id: server.server_id,
-        target: user.discord_id,
-        _integer: "1",
-        _preserve: "PRESERVE",
-        _display_as: "display_as"
-      )
-    end
+  context "returns all command argument descriptions" do
+    let(:command_class) { ESM::Command::Test::ArgumentDescriptions }
 
-    before :each do
-      expect(event).not_to be_nil
-      expect { container.parse!(event.content) }.not_to raise_error
-    end
-
-    it "has #{ESM::Command::Test::BaseV1::ARGUMENT_COUNT} matches" do
-      expect(container.matches.size).to eq(ESM::Command::Test::BaseV1::ARGUMENT_COUNT)
-    end
-
-    it "does not use the default value" do
-      expect(container._default).to eq("not_default")
-    end
-  end
-
-  it "#to_s" do
-    expect(container.to_s).to eq(ESM::Command::Test::BaseV1::COMMAND_AS_STRING)
-  end
-
-  describe "#clear!" do
-    before :each do
-      expect(event).not_to be_nil
-      expect { container.parse!(event.content) }.not_to raise_error
-    end
-
-    it "clear the values of all arguments" do
-      expect(container.map(&:content).reject(&:nil?)).not_to be_empty
-      container.clear!
-      expect(container.map(&:content).reject(&:nil?)).to be_empty
+    specify "and are valid" do
+      expect(command.arguments.to_s).to eq(command.argument_descriptions)
     end
   end
 
   describe "#to_h" do
-    before :each do
-      expect(event).not_to be_nil
-      expect { container.parse!(event.content) }.not_to raise_error
-    end
+    let(:command_class) { ESM::Command::Test::ArgumentTypeCast }
 
-    it "has all attributes and values" do
-      hash = container.to_h
-      expect(hash.keys).to match_array(container.map(&:name))
-      expect(hash.values).to match_array(container.map(&:content))
+    specify "converts correctly" do
+      execute!(
+        string: "String Argument",
+        integer: "1",
+        float: "2.4443",
+        json: {foo: true, bar: [1, 2, 3]}.to_json,
+        symbol: "symbol_argument"
+      )
+
+      hash = command.arguments.to_h
+      expect(hash.keys).to match_array([:string, :integer, :float, :json, :symbol])
+      expect(hash.values).to match_array([
+        "string argument",
+        1,
+        2.4443,
+        {foo: true, bar: [1, 2, 3]},
+        :symbol_argument
+      ])
     end
   end
 
-  describe "Aliases" do
-    let!(:command_statement) do
-      command.statement(
-        _use_alias: "base1",
-        community_id: "esm",
-        server_id: "esm_malden",
-        target: "137709767954137088",
-        _integer: "1",
-        _preserve: "PRESERVE",
-        _display_as: "display_as"
-      )
-    end
+  describe "#clear!" do
+    let(:command_class) { ESM::Command::Test::ArgumentTypeCast }
 
-    it "properly slices out alias correctly" do
-      expect { container.parse!(event.content) }.not_to raise_error
+    specify do
+      execute!(
+        string: "String Argument",
+        integer: "1",
+        float: "2.4443",
+        json: {foo: true, bar: [1, 2, 3]}.to_json,
+        symbol: "symbol_argument"
+      )
+
+      expect(command.arguments.map(&:content).reject(&:nil?)).not_to be_empty
+      command.arguments.clear!
+      expect(command.arguments.map(&:content).reject(&:nil?)).to be_empty
     end
   end
 end

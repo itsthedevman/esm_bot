@@ -60,7 +60,7 @@ describe ESM::Command::Base do
     end
 
     it "has proper usage" do
-      expect(command.usage).to match(/.+base <community_id> <server_id> <target> <_integer> <_preserve> <sa_yalpsid> <\?_default> <\?_multiline>/i)
+      expect(command.usage).to match(/.+base <community_id> <server_id> <target> <_integer> <_preserve> <sa_yalpsid> <\?_default>/i)
     end
   end
 

@@ -19,7 +19,7 @@ module ESM
 
         argument :server_id
         argument :target, description: "commands.sqf_v1.arguments.execution_target", default: nil, display_as: :execution_target
-        argument :code_to_execute, regex: /[\s\S]+/, description: "commands.sqf_v1.arguments.code_to_execute", preserve: true, multiline: true
+        argument :code_to_execute, regex: /[\s\S]+/, description: "commands.sqf_v1.arguments.code_to_execute", preserve: true
 
         def on_execute
           @checks.owned_server!

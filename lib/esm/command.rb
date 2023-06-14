@@ -119,7 +119,7 @@ module ESM
     def self.configurations
       @configurations ||=
         ESM::Command.all.map do |command|
-          cooldown_default = command.defines.cooldown_time.default
+          cooldown_default = command.defines.cooldown_time&.default || 2.seconds
 
           case cooldown_default
           when Enumerator, Integer
@@ -134,12 +134,12 @@ module ESM
 
           {
             command_name: command.name,
-            enabled: command.defines.enabled.default,
+            enabled: command.defines.enabled&.default || true,
             cooldown_quantity: cooldown_quantity,
             cooldown_type: cooldown_type,
-            allowed_in_text_channels: command.defines.allowed_in_text_channels.default,
-            whitelist_enabled: command.defines.whitelist_enabled.default,
-            whitelisted_role_ids: command.defines.whitelisted_role_ids.default
+            allowed_in_text_channels: command.defines.allowed_in_text_channels&.default || true,
+            whitelist_enabled: command.defines.whitelist_enabled&.default || command.type == :admin,
+            whitelisted_role_ids: command.defines.whitelisted_role_ids&.default || []
           }
         end
     end

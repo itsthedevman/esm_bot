@@ -126,7 +126,7 @@ describe ESM::Command::Server::Add, category: "command" do
     include_examples "validate_command"
 
     it "is an player command" do
-      expect(command.type).to eql(:player)
+      expect(command.type).to eq(:player)
     end
 
     it "requires registration" do

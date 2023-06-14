@@ -11,7 +11,7 @@ module ESM
       #   ESM::Command::ArgumentCommand.statement(argument_1: "foo", argument_2: "bar") -> !argumentcommand foo bar
       def statement(**flags)
         # Can't use distinct here - 2020-03-10
-        command_statement = "#{prefix}#{flags[:_use_alias] || name}"
+        command_statement = "#{prefix}#{flags[:command_name] || name}"
 
         # !birb, !doggo, etc.
         return command_statement if @arguments.empty?

@@ -17,13 +17,13 @@ module ESM
 
         argument :server_id
         argument :target
-        argument :type, regex: /^m(?:oney)?|^r(?:espect)?|^l(?:ocker)?|^h(?:eal)?|^k(?:ill)?/, description: "commands.player.arguments.type"
+        argument :type, regex: /m(?:oney)?|r(?:espect)?|l(?:ocker)?|h(?:eal)?|k(?:ill)?/, description: "commands.player.arguments.type"
         argument(
           :value,
           regex: /-?\d+/,
           description: "commands.player.arguments.value",
           modifier: lambda do |argument|
-            return unless arguments.type&.match(/^h(?:eal)?|^k(?:ill)?/i)
+            return unless arguments.type&.match(/h(?:eal)?|k(?:ill)?/i)
 
             # The types `heal` and `kill` don't require the value argument.
             # This is done this way because setting `content` to have a default of nil makes the help text confusing

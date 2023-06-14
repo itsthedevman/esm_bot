@@ -14,7 +14,7 @@ module ESM
         define :allowed_in_text_channels, modifiable: false, default: true
         define :cooldown_time, modifiable: false, default: 2.seconds
 
-        argument :code, regex: /.*/, preserve: true, multiline: true, description: "Code to execute"
+        argument :code, regex: /.*/, preserve: true, description: "Code to execute"
 
         def on_execute
           response = eval @arguments.code # rubocop:disable Security/Eval

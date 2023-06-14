@@ -5,7 +5,7 @@ describe ESM::Command::Server::Sqf, category: "command", v2: true do
   include_examples "validate_command"
 
   it "is an admin command" do
-    expect(command.type).to eql(:admin)
+    expect(command.type).to eq(:admin)
   end
 
   it "requires registration" do

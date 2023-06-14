@@ -97,7 +97,7 @@ describe ESM::Command::Server::ServerTerritories, category: "command" do
     include_examples "validate_command"
 
     it "is an admin command" do
-      expect(command.type).to eql(:admin)
+      expect(command.type).to eq(:admin)
     end
 
     it "requires registration" do
