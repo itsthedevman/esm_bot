@@ -47,6 +47,7 @@ module ESM
 
           checks.text_only!
           checks.dm_only!
+          checks.player_mode!
           checks.permissions!
 
           arguments.validate!

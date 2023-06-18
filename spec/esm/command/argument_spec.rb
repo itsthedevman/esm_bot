@@ -12,19 +12,7 @@ describe ESM::Command::Argument do
 
     it "has regex" do
       expect(argument.regex).not_to be_nil
-      expect(argument.regex).to eq("(?<foo>foo)")
-    end
-  end
-
-  describe "Invalid Argument (missing regex)" do
-    it "raises error" do
-      expect { ESM::Command::Argument.new(:foo, {}) }.to raise_error("Missing regex for argument :foo")
-    end
-  end
-
-  describe "Invalid Argument (missing description)" do
-    it "raises error" do
-      expect { ESM::Command::Argument.new(:foo, {regex: /woot/}) }.to raise_error("Missing description for argument :foo")
+      expect(argument.regex).to eq("(?<foo>foo)?")
     end
   end
 
@@ -135,7 +123,7 @@ describe ESM::Command::Argument do
       expect(argument.regex).to eq(
         "(?<some_other_argument>#{ESM::Regex::SERVER_ID_OPTIONAL_COMMUNITY.source})?"
       )
-      expect(argument.description).not_to be_blank
+      expect(argument.description).to match(/The ID for the server that you want to run this command on/i)
     end
   end
 

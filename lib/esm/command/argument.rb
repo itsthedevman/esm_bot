@@ -8,6 +8,7 @@ module ESM
         territory_id: {regex: ESM::Regex::TERRITORY_ID},
         community_id: {
           regex: ESM::Regex::COMMUNITY_ID,
+          description: "commands.arguments.community_id",
           preserve: true,
           default: nil,
           optional_text: "This argument may be excluded if a community is set as a default for you, or the Discord community if you are using this command in a text channel",
@@ -41,6 +42,7 @@ module ESM
         },
         server_id: {
           regex: ESM::Regex::SERVER_ID_OPTIONAL_COMMUNITY,
+          description: "commands.arguments.server_id",
           preserve: true,
           default: nil,
           optional_text: "This argument may be excluded if a server is set as a default for you, or the Discord community if you are using this command in a text channel",
@@ -173,12 +175,12 @@ module ESM
         # Defaults the description path to be commands.<name>.arguments.<name>
         if description_path.blank?
           description_path = "commands"
-          description_path += ".#{command.name}" if command && !DEFAULTS.key?(name)
+          description_path += ".#{command.name}" if command
           description_path += ".arguments.#{name}"
         end
 
         # Call I18n with the name of the translation and pass the prefix into the translation by default
-        description = I18n.send(
+        localized_description = I18n.send(
           :translate,
           description_path,
           prefix: command&.prefix || ESM.config.prefix || "!",
@@ -186,10 +188,10 @@ module ESM
         )
 
         # Allows not having to provide an I18n path as the description
-        if opts[:description].present? && (description.blank? || description.starts_with?("translation missing"))
+        if (localized_description.blank? || localized_description.starts_with?("translation missing")) && opts[:description].present?
           opts[:description]
         else
-          description
+          localized_description
         end
       end
 
