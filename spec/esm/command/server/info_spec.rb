@@ -29,22 +29,6 @@ describe ESM::Command::Server::Info, category: "command" do
     let(:connection) { ESM::Websocket.connections[server.server_id] }
     let(:response) { command.response }
 
-    def build_fields(values)
-      output = []
-      temp = ""
-      values.each do |value|
-        value += "\n"
-
-        if temp.size + value.size >= ESM::Embed::Limit::FIELD_VALUE_LENGTH_MAX
-          output << temp
-          temp = ""
-        end
-
-        temp += value
-      end
-      output << temp
-    end
-
     before :each do
       grant_command_access!(community, "info")
 
@@ -162,14 +146,22 @@ describe ESM::Command::Server::Info, category: "command" do
         expect(embed_field.value).to eq(field[:value].to_s)
       end
 
-      moderator_fields = build_fields(territory.moderators)
+      moderator_fields = ESM::Embed.new
+        .add_field(value: territory.moderators)
+        .fields
+        .map(&:value)
+
       moderator_fields.each do |moderator_field|
         field = embed.fields.shift
         expect(field.name).to match(/moderator/i)
         expect(field.value).to eq(moderator_field)
       end
 
-      builder_fields = build_fields(territory.builders)
+      builder_fields = ESM::Embed.new
+        .add_field(value: territory.builders)
+        .fields
+        .map(&:value)
+
       builder_fields.each do |builder_field|
         field = embed.fields.shift
         expect(field.name).to match(/build rights/i)

@@ -38,7 +38,7 @@ module ESM
         def getting_started
           embed =
             ESM::Embed.build do |e|
-              e.title = I18n.t("commands.help.getting_started.title", user: @event.author.username)
+              e.title = I18n.t("commands.help.getting_started.title", user: current_user.username)
 
               commands_by_type = ESM::Command.by_type
               e.description = I18n.t(
@@ -117,7 +117,7 @@ module ESM
         # Return an array so ESM::Embed field logic will handle overflow correctly
         def format_commands(commands)
           commands.map do |command|
-            "**`#{prefix}#{command.name}`**\n#{command.description(prefix)}\n"
+            "**`#{prefix}#{command.name}`**\n#{command.description(prefix)}"
           end
         end
 
@@ -153,7 +153,7 @@ module ESM
               if command.arguments.present?
                 e.add_field(
                   name: I18n.t("commands.help.command.arguments"),
-                  value: command.arguments.to_s
+                  value: command.arguments.map { |argument| argument.help_documentation(command) }
                 )
               end
 

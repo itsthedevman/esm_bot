@@ -20,6 +20,7 @@ module ESM
         define :cooldown_time, modifiable: true, default: 2.seconds
 
         argument :target, default: nil
+        
         argument(
           :command_name,
           regex: /\w+/,

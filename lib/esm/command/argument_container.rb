@@ -26,16 +26,8 @@ module ESM
         # Combine all of the argument regex together into one so the entire thing can be tested
         # against the content. This used to be done on a per argument basis, but it made server/community defaulting
         # impossible
-        argument_regex = format(join_with: "\\s+", &:regex)
-        argument_regex = /\s*#{argument_regex}\s*/im
+        argument_regex = /#{format(&:regex)}/im
         matches = content.match(argument_regex)&.named_captures || {}
-
-        debug!(
-          command_name: command.name,
-          input: content,
-          regex: argument_regex.source,
-          matches: matches
-        )
 
         # Loop through the arguments, grabbing the capture if it exists
         each do |argument|
@@ -47,6 +39,15 @@ module ESM
           # Create a getter on our container
           create_getter(argument)
         end
+
+        debug!(
+          command_name: command.name,
+          input: content,
+          regex: argument_regex.source,
+          matches: matches
+        )
+
+        self
       end
 
       def validate!
@@ -56,16 +57,7 @@ module ESM
       def to_s
         return "" if empty?
 
-        format(join_with: "\n\n") do |argument|
-          output = ["**`#{argument}`**"]
-
-          if (description = argument.description(command)) && description.present?
-            output << "#{description}."
-          end
-
-          output << "**Note:** #{argument.optional_text}" if argument.optional_text?
-          output.join("\n")
-        end
+        format(join_with: "\n\n") { |argument| argument.help_documentation(command) }
       end
 
       def clear!
@@ -112,8 +104,8 @@ module ESM
             e.description = "```#{command.distinct} #{build_error_description}```"
 
             e.add_field(
-              name: "Arguments:",
-              value: to_s
+              name: "Arguments",
+              value: map { |argument| argument.help_documentation(command) }
             )
 
             e.footer = "For more information, send me `#{command.prefix}help #{command.name}`"

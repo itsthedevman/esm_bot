@@ -7,8 +7,8 @@ describe ESM::Command::ArgumentContainer do
     let(:command_class) { ESM::Command::Test::ArgumentPreserveCase }
 
     specify do
-      execute!(input: "Hello World!")
-      expect(command.arguments.input).to eq("Hello World!")
+      execute!(input: "Hello!")
+      expect(command.arguments.input).to eq("Hello!")
     end
   end
 
@@ -16,8 +16,8 @@ describe ESM::Command::ArgumentContainer do
     let(:command_class) { ESM::Command::Test::ArgumentIgnoreCase }
 
     specify do
-      execute!(input: "Hello World!")
-      expect(command.arguments.input).to eq("hello world!")
+      execute!(input: "World!")
+      expect(command.arguments.input).to eq("world!")
     end
   end
 
@@ -32,7 +32,7 @@ describe ESM::Command::ArgumentContainer do
         expect(embed.description).to eq("```~argument_required <input>```")
 
         argument_field = embed.fields.first
-        expect(argument_field.name).to eq("Arguments:")
+        expect(argument_field.name).to eq("Arguments")
         expect(argument_field.value).to eq("**`<input>`**\nThis argument is required.")
 
         expect(embed.footer.text).to eq("For more information, send me `~help argument_required`")
@@ -45,14 +45,14 @@ describe ESM::Command::ArgumentContainer do
 
     it "to string, integer, float, json, and symbol" do
       execute!(
-        string: "String Argument",
+        string: "String_Argument",
         integer: "1",
         float: "2.4443",
         json: {foo: true, bar: [1, 2, 3]}.to_json,
         symbol: "symbol_argument"
       )
 
-      expect(command.arguments.string).to eq("string argument")
+      expect(command.arguments.string).to eq("string_argument")
       expect(command.arguments.integer).to eq(1)
       expect(command.arguments.float).to eq(2.4443)
       expect(command.arguments.json).to eq({foo: true, bar: [1, 2, 3]})
@@ -64,8 +64,8 @@ describe ESM::Command::ArgumentContainer do
     let(:command_class) { ESM::Command::Test::ArgumentDefault }
 
     specify do
-      execute!(input: "success from input!") # input argument provided, no default
-      expect(command.arguments.input).to eq("success from input!")
+      execute!(input: "success_from_input!") # input argument provided, no default
+      expect(command.arguments.input).to eq("success_from_input!")
     end
   end
 
@@ -100,7 +100,7 @@ describe ESM::Command::ArgumentContainer do
 
     specify "converts correctly" do
       execute!(
-        string: "String Argument",
+        string: "String_Argument",
         integer: "1",
         float: "2.4443",
         json: {foo: true, bar: [1, 2, 3]}.to_json,
@@ -110,7 +110,7 @@ describe ESM::Command::ArgumentContainer do
       hash = command.arguments.to_h
       expect(hash.keys).to match_array([:string, :integer, :float, :json, :symbol])
       expect(hash.values).to match_array([
-        "string argument",
+        "string_argument",
         1,
         2.4443,
         {foo: true, bar: [1, 2, 3]},
@@ -124,7 +124,7 @@ describe ESM::Command::ArgumentContainer do
 
     specify do
       execute!(
-        string: "String Argument",
+        string: "String_Argument",
         integer: "1",
         float: "2.4443",
         json: {foo: true, bar: [1, 2, 3]}.to_json,

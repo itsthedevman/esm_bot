@@ -12,7 +12,7 @@ describe ESM::Command::Argument do
 
     it "has regex" do
       expect(argument.regex).not_to be_nil
-      expect(argument.regex).to eq("(?<foo>foo)?")
+      expect(argument.regex).to eq("(?<foo>\\s+(?:foo))?")
     end
   end
 
@@ -109,7 +109,7 @@ describe ESM::Command::Argument do
       argument = ESM::Command::Argument.new(:server_id, {})
 
       expect(argument.regex).to eq(
-        "(?<server_id>#{ESM::Regex::SERVER_ID_OPTIONAL_COMMUNITY.source})?"
+        "(?<server_id>\\s+(?:#{ESM::Regex::SERVER_ID_OPTIONAL_COMMUNITY.source}))?"
       )
 
       expect(argument.description).not_to be_blank
@@ -121,7 +121,7 @@ describe ESM::Command::Argument do
       argument = ESM::Command::Argument.new(:some_other_argument, {template: :server_id})
       expect(argument.name).to eq(:some_other_argument)
       expect(argument.regex).to eq(
-        "(?<some_other_argument>#{ESM::Regex::SERVER_ID_OPTIONAL_COMMUNITY.source})?"
+        "(?<some_other_argument>\\s+(?:#{ESM::Regex::SERVER_ID_OPTIONAL_COMMUNITY.source}))?"
       )
       expect(argument.description).to match(/The ID for the server that you want to run this command on/i)
     end

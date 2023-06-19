@@ -17,11 +17,11 @@ module ESM
 
         argument :server_id
         argument :target
-        argument :type, regex: /m(?:oney)?|r(?:espect)?|l(?:ocker)?|h(?:eal)?|k(?:ill)?/, description: "commands.player.arguments.type"
+        argument :type, regex: /m(?:oney)?|r(?:espect)?|l(?:ocker)?|h(?:eal)?|k(?:ill)?/
         argument(
           :value,
           regex: /-?\d+/,
-          description: "commands.player.arguments.value",
+          type: :integer,
           modifier: lambda do |argument|
             return unless arguments.type&.match(/h(?:eal)?|k(?:ill)?/i)
 

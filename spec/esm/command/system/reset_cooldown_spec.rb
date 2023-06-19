@@ -28,8 +28,9 @@ describe ESM::Command::System::ResetCooldown, category: "command" do
     let(:second_user) { ESM::Test.user }
     let!(:target_regex) { ESM::Regex::TARGET.source }
 
-    let(:cooldown_one) do
-      ESM::Cooldown.create!(
+    let!(:cooldown_one) do
+      create(
+        :cooldown,
         user_id: second_user.id,
         community_id: community.id,
         server_id: server.id,
@@ -40,8 +41,9 @@ describe ESM::Command::System::ResetCooldown, category: "command" do
       )
     end
 
-    let(:cooldown_two) do
-      ESM::Cooldown.create!(
+    let!(:cooldown_two) do
+      create(
+        :cooldown,
         user_id: second_user.id,
         community_id: community.id,
         server_id: second_server.id,
@@ -54,14 +56,15 @@ describe ESM::Command::System::ResetCooldown, category: "command" do
 
     before :each do
       # Grant everyone access to use this command
-      configuration = community.command_configurations.where(command_name: "reset_cooldown").first
-      configuration.update(whitelist_enabled: false)
+      grant_command_access!(community, "reset_cooldown")
 
       # Force the configuration to be correct
-      community.command_configurations.where(command_name: "me").update(cooldown_type: "minutes", cooldown_quantity: 5)
+      community.command_configurations
+        .where(command_name: "me")
+        .update_all(cooldown_type: "minutes", cooldown_quantity: 5)
 
-      expect(cooldown_one.reload.active?).to be(true)
-      expect(cooldown_two.reload.active?).to be(true)
+      expect(cooldown_one.active?).to be(true)
+      expect(cooldown_two.active?).to be(true)
     end
 
     it "!reset_cooldown <target>" do
@@ -240,3 +243,4 @@ describe ESM::Command::System::ResetCooldown, category: "command" do
     end
   end
 end
+

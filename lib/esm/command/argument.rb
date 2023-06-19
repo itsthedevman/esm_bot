@@ -4,8 +4,8 @@ module ESM
   module Command
     class Argument
       DEFAULTS = {
-        target: {regex: ESM::Regex::TARGET},
-        territory_id: {regex: ESM::Regex::TERRITORY_ID},
+        target: {regex: ESM::Regex::TARGET, description: "commands.arguments.target"},
+        territory_id: {regex: ESM::Regex::TERRITORY_ID, description: "commands.arguments.territory_id"},
         community_id: {
           regex: ESM::Regex::COMMUNITY_ID,
           description: "commands.arguments.community_id",
@@ -126,9 +126,9 @@ module ESM
         )
       end
 
-      # All arguments are optional in regex.
+      # The regex must be optional and must handle the whitespace
       def regex
-        @regex ||= "(?<#{name}>#{opts[:regex]&.source || ".+"})?"
+        @regex ||= /(?<#{name}>\s+(?:#{opts[:regex]&.source || "\\S+"}))?/.source
       end
 
       def preserve_case?
@@ -167,6 +167,10 @@ module ESM
       # Allows content to be nil if not required
       def invalid?
         required? && content.nil?
+      end
+
+      def optional!
+        opts[:default] = nil
       end
 
       def description(command = nil)
@@ -221,16 +225,33 @@ module ESM
         "<#{"?" if default?}#{name}>"
       end
 
+      def help_documentation(command = nil)
+        output = ["**`#{self}`**"]
+
+        if (result = description(command)) && result.present?
+          output << "#{result}."
+        end
+
+        output << "**Note:** #{optional_text}" if optional_text?
+        output.join("\n")
+      end
+
       private
 
       def load_options(opts)
         argument_name = (opts[:template] || name).to_sym
 
-        if DEFAULTS.key?(argument_name)
-          DEFAULTS[argument_name].merge(opts)
-        else
-          opts
-        end
+        opts =
+          if DEFAULTS.key?(argument_name)
+            DEFAULTS[argument_name].merge(opts)
+          else
+            opts
+          end
+
+        opts[:preserve] ||= false
+        opts[:type] ||= :string
+        opts[:display_as] ||= name.to_s
+        opts
       end
 
       def format(value)
@@ -247,6 +268,8 @@ module ESM
       end
 
       def cast_to_type(value)
+        return if value.nil?
+
         case type
         when :integer
           value.to_i
