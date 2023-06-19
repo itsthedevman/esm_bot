@@ -1,4 +1,3 @@
----
 en:
   commands:
     help:
@@ -51,19 +50,9 @@ en:
           privacy:
             name: "**Privacy Policy**"
             value: |-
-              Hi, ESM's developer here.
-
-              Your privacy is important and I want to make sure you are aware of what information ESM has access to.
-              In short, when you use ESM, I have access to the following information:
-
-                - Your public Discord information
-                - Your public Steam information when you register on my website
-                - Your Discord message's content when you execute a command
-                - Your game data stored on an Arma 3 Exile server
-                - Any information inputted on my website
-
-              **This information is used for the functionality and maintenance of ESM only**.
-              Please read the full privacy policy for more details: https://www.esmbot.com/wiki/privacy
+              By using ESM or any of its services, you are agreeing to its [Privacy Policy](https://www.esmbot.com/wiki/privacy).
+              _TL;DR - it is one of those "no duh" type of policies:
+              ESM has access to your publicly accessible Discord and Steam information, and information you provide ESM and its services. Your information is used for the functionality of the bot only._
       commands:
         player:
           title: Player Commands
@@ -73,16 +62,14 @@ en:
             More information about a particular command can be found by using the `%{prefix}help command_name` command. For example: `%{prefix}help servers`
         admin:
           title: Admin Commands
-          description: These commands are locked by default and may only be used by
-            a community's admins and the whitelisted roles.
+          description: These commands are locked by default and may only be used by a community's admins and the whitelisted roles.
         development:
           title: Development Commands
           description: These commands are only available in development mode.
       command:
         title: "`%{prefix}%{name}` Documentation"
         note: "**Note:**"
-        limited_to: This command is available only in a %{channel_type} channel with
-          me.
+        limited_to: This command is available only in a %{channel_type} channel with me.
         whitelist_enabled: This command may be available only to certain roles.
         usage: "**__Usage__**"
         aliases:
