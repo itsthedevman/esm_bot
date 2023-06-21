@@ -14,9 +14,12 @@ module ESM
         define :allowed_in_text_channels, modifiable: false, default: true
         define :cooldown_time, modifiable: false, default: 2.seconds
 
-        argument :code, regex: /.*/, preserve: true, multiline: true, description: "Code to execute"
+        argument :code, regex: /.*/, preserve: true, description: "Code to execute"
 
         def on_execute
+          code = arguments.code
+          return binding.pry if code == "bd" && ESM.env.development? # standard:disable Lint/Debugger
+
           response = eval @arguments.code # rubocop:disable Security/Eval
           reply("Input:\n```ruby\n#{@arguments.code}\n```\nOutput:\n```ruby\n#{response}\n```")
         rescue => e

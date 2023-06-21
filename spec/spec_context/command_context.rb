@@ -1,7 +1,7 @@
 RSpec.shared_context("command") do
-  let!(:command) { (respond_to?(:command_class) ? command_class : described_class).new }
   let!(:community) { ESM::Test.community }
   let!(:user) { ESM::Test.user }
+  let(:command) { (respond_to?(:command_class) ? command_class : described_class).new }
   let(:server) { ESM::Test.server }
   let(:second_user) { ESM::Test.user }
 

@@ -134,4 +134,8 @@ ESM::Server.create!(
   ESM::UserNotificationPreference.create!(user_id: user.id, server_id: server.id)
 end
 
+ESM::UserDefault.where(user_id: 1).update_all(server_id: server.id, community_id: community.id)
+ESM::UserAlias.create!(user_id: 1, server_id: server.id, value: "s")
+ESM::UserAlias.create!(user_id: 1, community_id: community.id, value: "c")
+
 Redis.new.set("server_key", server.token.to_json)

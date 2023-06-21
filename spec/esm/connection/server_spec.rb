@@ -14,7 +14,7 @@ describe ESM::Connection::Server, v2: true do
 
       # Remove the default callback and set a new one
       outgoing_message.add_callback(:on_error) do |incoming|
-        expect(errors.first.to_h).to eql({type: :code, content: "default"})
+        expect(errors.first.to_h).to eq({type: :code, content: "default"})
       end
 
       # The overseer needs to know about this message

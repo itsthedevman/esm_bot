@@ -4,8 +4,7 @@ module ESM
   module Command
     module Test
       class BaseV1 < ESM::Command::Base
-        ARGUMENT_COUNT = 8
-        COMMAND_AS_STRING = "**`<community_id>`**\nThe community ID for the community that you want to run this command on. Community IDs are often 3 to 4 characters long and can be found by using the `~id` command on that community's discord.\n\n**`<server_id>`**\nThe ID for the server that you want to run this command on. Server IDs are composed of a community ID and a custom name, separated by an underscore.\nFor example: `esm_malden`, `esm_tanoa`, and `esm_some_awesome_server`.\n\n**`<target>`**\nA user that you want to run this command on. This argument accepts any of the following:\nA Discord mention, e.g. `@Bryan`\nA Discord ID, e.g. `137709767954137088`\nor a Steam 64 ID (Steam UID), e.g. `76561198037177305`.\n\n**`<_integer>`**\none.\n\n**`<_preserve>`**\ntwo.\n\n**`<sa_yalpsid>`**\nthree.\n\n**`<?_default>`**\ndefault.\n**Note:** This argument is optional and it defaults to `not_default`. \n\n**`<?_multiline>`**\nwild.\n**Note:** This argument is optional. \n\n"
+        ARGUMENT_COUNT = 7
 
         set_type :player
         register_aliases :base1, :base2
@@ -27,7 +26,6 @@ module ESM
 
         # Leave these at the end
         argument :_default, regex: /default/, description: "test_base._default", default: "not_default"
-        argument :_multiline, regex: /multi\s+line/, description: "test_base._multiline", default: nil, preserve: true, multiline: true
 
         def on_execute
           "discord"

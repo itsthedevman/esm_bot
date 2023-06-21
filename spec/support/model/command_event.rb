@@ -2,10 +2,6 @@
 
 class CommandEvent
   def self.create(content, user:, channel_type: :text, channel: nil, guild: nil)
-    # This command is expensive in the terms of requests to Discord.
-    # The bot can only send 50 requests per second
-    # sleep(0.05)
-
     if channel_type == :text
       channel_id =
         if channel

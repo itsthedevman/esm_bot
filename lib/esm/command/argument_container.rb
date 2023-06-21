@@ -21,12 +21,33 @@ module ESM
         clear!
 
         # Remove the prefix and command name from the message
-        message = extract_argument_string(content)
+        content = extract_argument_string(content)
 
-        # Loop through each match
+        # Combine all of the argument regex together into one so the entire thing can be tested
+        # against the content. This used to be done on a per argument basis, but it made server/community defaulting
+        # impossible
+        argument_regex = /#{format(&:regex)}/im
+        matches = content.match(argument_regex)&.named_captures || {}
+
+        # Loop through the arguments, grabbing the capture if it exists
         each do |argument|
-          parse_and_remove!(message, argument)
+          argument.store(matches[argument.name.to_s], command)
+
+          # Store the match
+          @matches << argument.content
+
+          # Create a getter on our container
+          create_getter(argument)
         end
+
+        debug!(
+          command_name: command.name,
+          input: content,
+          regex: argument_regex.source,
+          matches: matches
+        )
+
+        self
       end
 
       def validate!
@@ -34,18 +55,9 @@ module ESM
       end
 
       def to_s
-        return "" if blank?
+        return "" if empty?
 
-        self.format do |argument|
-          output = "**`#{argument}`**\n"
-
-          # Only add the period to optional if there is no default
-          output += "#{argument.description(command.prefix)}."
-          output += "\n**Note:** This argument is optional#{argument.default? ? "" : ". "}" if !argument.required?
-          output += " and it defaults to `#{argument.default}`. " if argument.default?
-
-          output + "\n\n"
-        end
+        format(join_with: "\n\n") { |argument| argument.help_documentation(command) }
       end
 
       def clear!
@@ -92,8 +104,8 @@ module ESM
             e.description = "```#{command.distinct} #{build_error_description}```"
 
             e.add_field(
-              name: "Arguments:",
-              value: to_s
+              name: "Arguments",
+              value: map { |argument| argument.help_documentation(command) }
             )
 
             e.footer = "For more information, send me `#{command.prefix}help #{command.name}`"
@@ -103,19 +115,6 @@ module ESM
       end
 
       private
-
-      def parse_and_remove!(message, argument)
-        argument.parse(message, command)
-
-        # Store the match
-        @matches << argument.content
-
-        # Create a getter on our container
-        create_getter(argument)
-
-        # Now we need to return the message without our match
-        message.sub!(argument.match, "").strip! unless argument.content.nil? || argument.skip_removal?
-      end
 
       def create_getter(argument)
         # Creates a method on this instance that returns the value of the argument
@@ -129,7 +128,7 @@ module ESM
         # but replacing out arguments, already captured by the container, with their values
         # !test <foo> <bar>
         # !test foo <bar>
-        self.format { |argument| "#{argument.content || argument} " }
+        format(join_with: " ") { |argument| argument.content || argument }
       end
 
       # Aliases may be of different lengths, this accounts for the different lengths when parsing the command string
@@ -145,7 +144,6 @@ module ESM
           end
 
         # Remove the prefix and alias.
-        # Note: We're not caring about the prefix for this.
         content.sub(/#{command.prefix}#{command_alias}/i, "")
       end
     end

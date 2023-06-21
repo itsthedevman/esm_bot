@@ -2,7 +2,7 @@
 
 # Set to zero for indefinite
 SPEC_TIMEOUT_SECONDS = 3
-LOG_LEVEL = :warn
+LOG_LEVEL = :debug
 
 RSpec.configure do |config|
   require_relative "./spec_helper_pre_init"

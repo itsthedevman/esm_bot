@@ -44,7 +44,7 @@ module ESM
         argument :server_id
 
         # In order to utilize the `#target_user` logic, the argument must have a name as target.
-        argument :target, regex: /.+/, description: "commands.logs.arguments.query", multiline: true, display_as: :query
+        argument :target, regex: /.+/, description: "commands.logs.arguments.query", display_as: :query
 
         def on_execute
           query = ""

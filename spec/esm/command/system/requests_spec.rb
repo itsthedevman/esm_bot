@@ -6,7 +6,7 @@ describe ESM::Command::System::Requests, category: "command" do
   end
 
   it "has 0 arguments" do
-    expect(command.arguments.size).to eql(0)
+    expect(command.arguments.size).to eq(0)
   end
 
   it "has a description" do

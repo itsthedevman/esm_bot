@@ -47,6 +47,7 @@ module ESM
 
           checks.text_only!
           checks.dm_only!
+          checks.player_mode!
           checks.permissions!
 
           arguments.validate!
@@ -88,7 +89,7 @@ module ESM
           end
         end
 
-        def on_execute(_incoming_message, _outgoing_message)
+        def on_execute
         end
 
         def on_response(_incoming_message, _outgoing_message)

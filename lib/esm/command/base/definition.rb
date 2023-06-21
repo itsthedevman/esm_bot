@@ -111,7 +111,7 @@ module ESM
         attr_reader :category, :type, :aliases, :limit_to,
           :requires, :response, :cooldown_time,
           :defines, :permissions, :checks, :skip_flags,
-          :timers, :event, :arguments
+          :timers, :event, :arguments, :argument_names
 
         attr_writer :current_community # Used in commands/general/help.rb
 
@@ -121,6 +121,7 @@ module ESM
           @name = attributes.name
           @category = attributes.category
           @aliases = attributes.aliases
+          @argument_names = attributes.arguments.map(&:first)
           @arguments = ESM::Command::ArgumentContainer.new(self, attributes.arguments)
           @type = attributes.type
           @limit_to = attributes.limit_to

@@ -26,7 +26,6 @@ module ESM
         def run_all!
           dev_only!
           registered!
-          player_mode!
 
           nil_targets!
           different_community!

@@ -119,7 +119,7 @@ module ESM
     def self.configurations
       @configurations ||=
         ESM::Command.all.map do |command|
-          cooldown_default = command.defines.cooldown_time.default
+          cooldown_default = command.defines.cooldown_time&.default || 2.seconds
 
           case cooldown_default
           when Enumerator, Integer
@@ -132,14 +132,44 @@ module ESM
             raise TypeError, "Invalid type \"#{cooldown_default.class}\" detected for command #{command.name}'s default cooldown"
           end
 
+          # Written this way because the defaults can be `false` and `false || true` will always be `true`
+          enabled =
+            if (define = command.defines.enabled)
+              define.default
+            else
+              true
+            end
+
+          allowed_in_text_channels =
+            if (define = command.defines.allowed_in_text_channels)
+              define.default
+            else
+              true
+            end
+
+          whitelist_enabled =
+            if (define = command.defines.whitelist_enabled)
+              define.default
+            else
+              command.type == :admin
+            end
+
+          # Except this one, but it just looks nice this way
+          whitelisted_role_ids =
+            if (define = command.defines.whitelisted_role_ids)
+              define.default
+            else
+              []
+            end
+
           {
             command_name: command.name,
-            enabled: command.defines.enabled.default,
+            enabled: enabled,
             cooldown_quantity: cooldown_quantity,
             cooldown_type: cooldown_type,
-            allowed_in_text_channels: command.defines.allowed_in_text_channels.default,
-            whitelist_enabled: command.defines.whitelist_enabled.default,
-            whitelisted_role_ids: command.defines.whitelisted_role_ids.default
+            allowed_in_text_channels: allowed_in_text_channels,
+            whitelist_enabled: whitelist_enabled,
+            whitelisted_role_ids: whitelisted_role_ids
           }
         end
     end

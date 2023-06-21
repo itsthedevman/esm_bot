@@ -27,22 +27,6 @@ describe ESM::Command::Server::Territories, category: "command" do
     let(:connection) { ESM::Websocket.connections[server.server_id] }
     let(:response) { command.response }
 
-    def build_fields(values)
-      output = []
-      temp = ""
-      values.each do |value|
-        value += "\n"
-
-        if temp.size + value.size >= ESM::Embed::Limit::FIELD_VALUE_LENGTH_MAX
-          output << temp
-          temp = ""
-        end
-
-        temp += value
-      end
-      output << temp
-    end
-
     before :each do
       wait_for { wsc.connected? }.to be(true)
 
@@ -105,17 +89,37 @@ describe ESM::Command::Server::Territories, category: "command" do
           expect(embed_field.value).to eq(field[:value].to_s)
         end
 
-        moderator_fields = build_fields(territory.moderators)
-        moderator_fields.each do |moderator_field|
+        moderator_fields = ESM::Embed.new
+          .add_field(value: territory.moderators)
+          .fields
+          .map(&:value)
+
+        moderator_fields.each_with_index do |moderator_field, index|
           field = embed.fields.shift
-          expect(field.name).to match(/moderator/i)
+
+          if index.zero?
+            expect(field.name).to match(/moderator/i)
+          else
+            expect(field.name).to eq(ESM::Embed::EMPTY_SPACE)
+          end
+
           expect(field.value).to eq(moderator_field)
         end
 
-        builder_fields = build_fields(territory.builders)
-        builder_fields.each do |builder_field|
+        builder_fields = ESM::Embed.new
+          .add_field(value: territory.builders)
+          .fields
+          .map(&:value)
+
+        builder_fields.each_with_index do |builder_field, index|
           field = embed.fields.shift
-          expect(field.name).to match(/build rights/i)
+
+          if index.zero?
+            expect(field.name).to match(/build rights/i)
+          else
+            expect(field.name).to eq(ESM::Embed::EMPTY_SPACE)
+          end
+
           expect(field.value).to eq(builder_field)
         end
       end

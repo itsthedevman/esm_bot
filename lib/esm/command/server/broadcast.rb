@@ -31,7 +31,7 @@ module ESM
           end
         )
 
-        argument :message, regex: /(.|[\r\n])+/, description: "commands.broadcast.arguments.message", preserve: true, multiline: true
+        argument :message, regex: /(.|[\r\n])+/, description: "commands.broadcast.arguments.message", preserve: true
 
         def on_execute
           check_for_message_length!

@@ -14,6 +14,8 @@ module ESM
 
           community = @command.target_community || @command.current_community
           if community.nil?
+            # Performing a validation check on these arguments because this happens before the command
+            # does the validation
             argument = @command.arguments.get(:server_id) || @command.arguments.get(:community_id)
             @command.arguments.invalid_argument!(argument) if argument&.invalid?
           end
@@ -31,7 +33,7 @@ module ESM
             # Calls .seconds, .days, .months, etc
             @config.cooldown_quantity.send(@config.cooldown_type)
           else
-            @command.defines.cooldown_time.default
+            @command.defines.cooldown_time&.default || 2.seconds
           end
         end
 
@@ -39,7 +41,7 @@ module ESM
           if config_present?
             @config.enabled?
           else
-            @command.defines.enabled.default
+            @command.defines.enabled&.default || true
           end
         end
 
@@ -52,7 +54,13 @@ module ESM
         end
 
         def whitelisted?
-          whitelist_enabled = config_present? ? @config.whitelist_enabled? : @command.defines.whitelist_enabled.default
+          whitelist_enabled =
+            if config_present?
+              @config.whitelist_enabled?
+            else
+              @command.defines.whitelist_enabled&.default || @command.type == :admin
+            end
+
           return true if !whitelist_enabled
 
           community = @command.target_community || @command.current_community
@@ -62,7 +70,13 @@ module ESM
           guild_member = @command.current_user.on(server)
           return false if guild_member.nil?
 
-          whitelisted_role_ids = config_present? ? @config.whitelisted_role_ids : @command.defines.whitelisted_role_ids.default
+          whitelisted_role_ids =
+            if config_present?
+              @config.whitelisted_role_ids
+            else
+              @command.defines.whitelisted_role_ids&.default || []
+            end
+
           return true if guild_member.permission?(:administrator)
           return false if whitelisted_role_ids.empty?
 
@@ -77,7 +91,7 @@ module ESM
           if config_present?
             @config.allowed_in_text_channels?
           else
-            @command.defines.allowed_in_text_channels.default
+            @command.defines.allowed_in_text_channels&.default || true
           end
         end
 

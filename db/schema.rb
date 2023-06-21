@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2023_05_13_235724) do
+ActiveRecord::Schema.define(version: 2023_06_09_223251) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -93,6 +93,15 @@ ActiveRecord::Schema.define(version: 2023_05_13_235724) do
     t.index ["community_id"], name: "index_communities_on_community_id", unique: true
     t.index ["deleted_at"], name: "index_communities_on_deleted_at"
     t.index ["guild_id"], name: "index_communities_on_guild_id", unique: true
+  end
+
+  create_table "community_defaults", force: :cascade do |t|
+    t.bigint "community_id"
+    t.bigint "server_id"
+    t.string "channel_id"
+    t.index ["community_id", "channel_id"], name: "index_community_defaults_on_community_id_and_channel_id"
+    t.index ["community_id"], name: "index_community_defaults_on_community_id"
+    t.index ["server_id"], name: "index_community_defaults_on_server_id"
   end
 
   create_table "cooldowns", force: :cascade do |t|
@@ -280,6 +289,27 @@ ActiveRecord::Schema.define(version: 2023_05_13_235724) do
     t.index ["uuid"], name: "index_uploads_on_uuid"
   end
 
+  create_table "user_aliases", force: :cascade do |t|
+    t.bigint "user_id"
+    t.bigint "community_id"
+    t.bigint "server_id"
+    t.string "value", null: false
+    t.index ["community_id"], name: "index_user_aliases_on_community_id"
+    t.index ["server_id"], name: "index_user_aliases_on_server_id"
+    t.index ["user_id", "community_id", "value"], name: "index_user_aliases_on_user_id_and_community_id_and_value", unique: true
+    t.index ["user_id", "server_id", "value"], name: "index_user_aliases_on_user_id_and_server_id_and_value", unique: true
+    t.index ["user_id"], name: "index_user_aliases_on_user_id"
+  end
+
+  create_table "user_defaults", force: :cascade do |t|
+    t.bigint "user_id"
+    t.bigint "community_id"
+    t.bigint "server_id"
+    t.index ["community_id"], name: "index_user_defaults_on_community_id"
+    t.index ["server_id"], name: "index_user_defaults_on_server_id"
+    t.index ["user_id"], name: "index_user_defaults_on_user_id"
+  end
+
   create_table "user_gamble_stats", force: :cascade do |t|
     t.integer "user_id", null: false
     t.integer "server_id", null: false
@@ -360,6 +390,8 @@ ActiveRecord::Schema.define(version: 2023_05_13_235724) do
   end
 
   add_foreign_key "command_configurations", "communities", on_delete: :cascade
+  add_foreign_key "community_defaults", "communities"
+  add_foreign_key "community_defaults", "servers"
   add_foreign_key "cooldowns", "communities", on_delete: :cascade
   add_foreign_key "cooldowns", "servers", on_delete: :cascade
   add_foreign_key "cooldowns", "users", on_delete: :nullify
@@ -372,6 +404,12 @@ ActiveRecord::Schema.define(version: 2023_05_13_235724) do
   add_foreign_key "server_settings", "servers", on_delete: :cascade
   add_foreign_key "servers", "communities", on_delete: :cascade
   add_foreign_key "territories", "servers", on_delete: :cascade
+  add_foreign_key "user_aliases", "communities"
+  add_foreign_key "user_aliases", "servers"
+  add_foreign_key "user_aliases", "users"
+  add_foreign_key "user_defaults", "communities"
+  add_foreign_key "user_defaults", "servers"
+  add_foreign_key "user_defaults", "users"
   add_foreign_key "user_gamble_stats", "servers", on_delete: :cascade
   add_foreign_key "user_gamble_stats", "users", on_delete: :cascade
   add_foreign_key "user_notification_preferences", "servers", on_delete: :cascade

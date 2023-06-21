@@ -33,6 +33,8 @@ module ESM
     has_many :user_notification_preferences, dependent: :destroy
     has_many :user_notification_routes, dependent: :destroy, foreign_key: :source_server_id
 
+    scope :by_server_id_fuzzy, ->(id) { where("server_id ilike ?", "%#{id}%") }
+
     def self.find_by_server_id(id)
       includes(:community).order(:server_id).where("server_id ilike ?", id).first
     end

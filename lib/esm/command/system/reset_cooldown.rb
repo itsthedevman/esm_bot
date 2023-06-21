@@ -20,6 +20,7 @@ module ESM
         define :cooldown_time, modifiable: true, default: 2.seconds
 
         argument :target, default: nil
+        
         argument(
           :command_name,
           regex: /\w+/,
@@ -30,7 +31,6 @@ module ESM
             return if ESM::Command.include?(argument.content)
 
             # This allows "passing" the value for the command_name argument onto the server_id argument.
-            argument.skip_removal = true
             argument.content = nil
           end
         )

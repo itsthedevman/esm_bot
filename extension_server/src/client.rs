@@ -125,7 +125,7 @@ impl Client {
     }
 
     pub fn disconnect(&self, handler: &Handler) {
-        debug!("[disconnect] {} - {}", self.host(), self.server_uuid);
+        trace!("[disconnect] {} - {}", self.host(), self.server_uuid);
         handler.network().remove(self.resource_id);
     }
 
