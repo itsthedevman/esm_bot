@@ -6,7 +6,7 @@ module ESM
     module Server
       class Uptime < ESM::Command::Base
         set_type :player
-        register_aliases :up, :up_time
+
 
         define :enabled, modifiable: true, default: true
         define :whitelist_enabled, modifiable: true, default: false

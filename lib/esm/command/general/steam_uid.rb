@@ -6,7 +6,7 @@ module ESM
     module General
       class SteamUid < ESM::Command::Base
         set_type :player
-        register_aliases :uid
+
         requires :registration
 
         define :enabled, modifiable: false, default: true

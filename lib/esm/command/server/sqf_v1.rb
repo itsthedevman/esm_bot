@@ -6,7 +6,7 @@ module ESM
     module Server
       class SqfV1 < ESM::Command::Base
         set_type :admin
-        register_aliases :exec, :execute
+
         limit_to :text
         requires :registration
         skip_check :connected_server

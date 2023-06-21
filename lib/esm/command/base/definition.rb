@@ -63,9 +63,6 @@ module ESM
             I18n.t("commands.#{@command_name}.description", prefix: prefix, default: "")
           end
 
-          def register_aliases(*aliases)
-            @aliases = aliases
-          end
 
           def set_type(type)
             @type = type

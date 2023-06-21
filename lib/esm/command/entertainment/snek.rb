@@ -5,7 +5,7 @@ module ESM
     module Entertainment
       class Snek < ESM::Command::Base
         set_type :player
-        register_aliases :snake, :nope_rope, :danger_noodle
+
 
         define :enabled, modifiable: false, default: true
         define :whitelist_enabled, modifiable: false, default: false

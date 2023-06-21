@@ -6,7 +6,6 @@ module ESM
     module System
       class ResetCooldown < ESM::Command::Base
         set_type :admin
-        register_aliases :resetcooldown
         limit_to :text
         requires :registration
 
@@ -20,7 +19,7 @@ module ESM
         define :cooldown_time, modifiable: true, default: 2.seconds
 
         argument :target, default: nil
-        
+
         argument(
           :command_name,
           regex: /\w+/,

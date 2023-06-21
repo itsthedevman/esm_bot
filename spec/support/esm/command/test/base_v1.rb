@@ -7,7 +7,6 @@ module ESM
         ARGUMENT_COUNT = 7
 
         set_type :player
-        register_aliases :base1, :base2
 
         requires :registration
 

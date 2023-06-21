@@ -7,7 +7,7 @@ module ESM
         has_v1_variant!
 
         set_type :admin
-        register_aliases :exec, :execute
+
         limit_to :text
         requires :registration
 

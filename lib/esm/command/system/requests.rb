@@ -5,7 +5,7 @@ module ESM
     module System
       class Requests < ESM::Command::Base
         set_type :player
-        register_aliases :pending_requests
+
         limit_to :dm
 
         define :enabled, modifiable: true, default: true

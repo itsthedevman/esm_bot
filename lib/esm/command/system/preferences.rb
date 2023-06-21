@@ -20,7 +20,7 @@ module ESM
         ].freeze
 
         set_type :player
-        register_aliases :notif
+
         limit_to :dm
         requires :registration
 

@@ -5,7 +5,7 @@ module ESM
     module Entertainment
       class Meow < ESM::Command::Base
         set_type :player
-        register_aliases :cat, :kitty, :feline
+
 
         define :enabled, modifiable: false, default: true
         define :whitelist_enabled, modifiable: false, default: false

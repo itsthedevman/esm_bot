@@ -5,7 +5,7 @@ module ESM
     module Server
       class ServerTerritories < ESM::Command::Base
         set_type :admin
-        register_aliases :serverterritories, :allterritories, :all_territories
+
         limit_to :text
         requires :registration
 
