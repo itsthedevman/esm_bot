@@ -60,5 +60,4 @@ ESM.initialize_logger
 ESM.initialize_steam
 ESM.initialize_redis
 
-ESM::Notifications.subscribe
 ESM::Arma::ClassLookup.cache

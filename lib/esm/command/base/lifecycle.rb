@@ -51,7 +51,7 @@ module ESM
 
           arguments.validate!
 
-          ESM::Notifications.trigger("command_from_discord", command: self)
+          info!(to_h)
           check_run_all!
 
           result = nil

@@ -90,7 +90,8 @@ module ESM
     end
 
     def deliver!(request)
-      ESM::Notifications.trigger("websocket_server_deliver", request: request)
+      info!(request.to_h)
+
       @requests << request
 
       # Send the message
@@ -207,7 +208,18 @@ module ESM
       return if @closed
 
       EventMachine.cancel_timer(@ping_timer) if @ping_timer
-      ESM::Notifications.trigger("websocket_server_on_close", server: @server)
+
+      info!(bot_stopping: ESM.bot.stopping?, server_id: @server.server_id, uptime: @server.uptime)
+
+      message =
+        if ESM.bot.stopping?
+          I18n.t("server_disconnected_esm_stopping", server: @server.server_id, uptime: @server.uptime)
+        else
+          I18n.t("server_disconnected", server: @server.server_id, uptime: @server.uptime)
+        end
+
+      @server.community&.log_event(:reconnect, message)
+
       ESM::Websocket.remove_connection(self)
       @closed = true
     end

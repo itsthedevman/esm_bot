@@ -54,7 +54,15 @@ module ESM
             end
 
           # Logging
-          ESM::Notifications.trigger("command_check_failed", command: self, reason: message)
+          # This is triggered by system commands as well
+          if event
+            warn!(
+              author: "#{current_user.distinct} (#{current_user.discord_id})",
+              channel: "#{Discordrb::Channel::TYPE_NAMES[current_channel.type]} (#{current_channel.id})",
+              reason: message.is_a?(Embed) ? message.description : message,
+              command: to_h
+            )
+          end
 
           raise args[:exception_class] || ESM::Exception::CheckFailure, message
         end

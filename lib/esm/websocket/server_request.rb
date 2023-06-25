@@ -50,7 +50,8 @@ module ESM
         @request.response = @message.parameters
 
         # Logging
-        ESM::Notifications.trigger("command_from_server", command: @request.command, response: @message)
+        command = @request.command
+        info!(command: command.to_h, response: @message) if command&.event
 
         # We have an error from the DLL
         check_for_command_error!

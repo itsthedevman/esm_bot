@@ -107,7 +107,7 @@ module ESM
     end
 
     def esm_ready(_event)
-      ESM::Notifications.trigger("ready")
+      info!(status: @esm_status)
 
       @metadata = ESM::BotAttribute.first_or_create
 
@@ -127,7 +127,10 @@ module ESM
 
       # Sometimes the bot loses connection with Discord. Upon reconnect, the ready event will be triggered again.
       # Don't restart the websocket server again.
-      return if ready?
+      if ready?
+        warn!("ESM::Bot#esm_ready called after bot was ready")
+        return
+      end
 
       # Wait until the bot has connected before starting the websocket.
       # This is to avoid servers connecting before the bot is ready
@@ -141,6 +144,7 @@ module ESM
       ESM::Connection::Server.run!
 
       @esm_status = :ready
+      info!(status: @esm_status, invite_url: ESM.bot.invite_url(permission_bits: ESM::Bot::PERMISSION_BITS))
     end
 
     def esm_server_create(event)
@@ -243,7 +247,10 @@ module ESM
     end
 
     def __deliver(message, delivery_channel, embed_message: "", replying_to: nil)
-      ESM::Notifications.trigger("bot_deliver", message: message, channel: delivery_channel)
+      info!(
+        channel: "#{delivery_channel.name} (#{delivery_channel.id})",
+        message: message.is_a?(ESM::Embed) ? message.to_h : message
+      )
 
       if message.is_a?(ESM::Embed)
         # Send the embed
