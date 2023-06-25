@@ -16,7 +16,7 @@ module ESM
         argument :server_id
 
         def on_execute
-          deliver!(query: "list_territories", uid: current_user.esm_user.steam_uid)
+          deliver!(query: "list_territories", uid: current_user.steam_uid)
         end
 
         def on_response(_, _)

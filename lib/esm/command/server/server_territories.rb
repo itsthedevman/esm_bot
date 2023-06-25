@@ -19,7 +19,7 @@ module ESM
         argument :order_by, regex: /id|territory_name|owner_uid/, description: "commands.server_territories.arguments.order_by", default: :territory_name, type: :symbol
 
         def on_execute
-          @checks.owned_server!
+          check_owned_server!
 
           if v2_target_server?
             query_arma("all_territories")

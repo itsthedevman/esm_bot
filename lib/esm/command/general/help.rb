@@ -164,16 +164,6 @@ module ESM
                   value: command.example
                 )
               end
-
-              # Aliases
-              if command.aliases.present?
-                aliases = "```\n#{command.aliases.map { |a| "#{prefix}#{a}" }.join("\n")}\n```"
-
-                e.add_field(
-                  name: I18n.t("commands.help.command.aliases.name"),
-                  value: I18n.t("commands.help.command.aliases.value", aliases: aliases, prefix: prefix, name: command.name)
-                )
-              end
             end
 
           reply(embed)

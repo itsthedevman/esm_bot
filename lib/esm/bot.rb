@@ -35,14 +35,7 @@ module ESM
     ).keys.freeze
 
     def self.register_command(command_class)
-      ESM.bot&.command(command_class.name.to_sym, aliases: command_class.aliases) do |event|
-        # Execute the command.
-        # Threaded since I handle everything in the commands
-        Thread.new { command_class.new.execute(event) }
-
-        # Don't send anything back
-        nil
-      end
+      warn!(command_class: command_class)
     end
 
     attr_reader :config, :prefix, :metadata

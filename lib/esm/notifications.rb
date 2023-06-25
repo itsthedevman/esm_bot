@@ -49,8 +49,8 @@ module ESM
 
       ESM.logger.info(name) do
         ESM::JSON.pretty_generate(
-          author: "#{command.current_user.distinct} (#{command.current_user.id})",
-          channel: "#{Discordrb::Channel::TYPE_NAMES[command.event.channel.type]} (#{command.event.channel.id})",
+          author: "#{command.current_user.distinct} (#{command.current_user.discord_id})",
+          channel: "#{Discordrb::Channel::TYPE_NAMES[command.current_channel.type]} (#{command.current_channel.id})",
           command: command.to_h
         )
       end
@@ -65,8 +65,8 @@ module ESM
 
       ESM.logger.info(name) do
         ESM::JSON.pretty_generate(
-          author: "#{command.current_user.distinct} (#{command.current_user.id})",
-          channel: "#{Discordrb::Channel::TYPE_NAMES[command.event.channel.type]} (#{command.event.channel.id})",
+          author: "#{command.current_user.distinct} (#{command.current_user.discord_id})",
+          channel: "#{Discordrb::Channel::TYPE_NAMES[command.current_channel.type]} (#{command.current_channel.id})",
           reason: reason.is_a?(Embed) ? reason.description : reason,
           command: command.to_h
         )
@@ -82,8 +82,8 @@ module ESM
 
       ESM.logger.info(name) do
         JSON.pretty_generate(
-          author: "#{command.current_user.distinct} (#{command.current_user.id})",
-          channel: "#{Discordrb::Channel::TYPE_NAMES[command.event.channel.type]} (#{command.event.channel.id})",
+          author: "#{command.current_user.distinct} (#{command.current_user.discord_id})",
+          channel: "#{Discordrb::Channel::TYPE_NAMES[command.current_channel.type]} (#{command.current_channel.id})",
           response: payload[:response],
           command: command.to_h
         )

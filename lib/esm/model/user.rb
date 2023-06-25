@@ -15,6 +15,10 @@ module ESM
     attribute :created_at, :datetime
     attribute :updated_at, :datetime
 
+    alias_attribute :avatar_url, :discord_avatar
+    alias_attribute :distinct, :discord_username
+    alias_attribute :username, :discord_username
+
     has_many :cooldowns, dependent: :nullify
     has_many :id_aliases, class_name: "UserAlias", dependent: :destroy
     has_one :id_defaults, class_name: "UserDefault", dependent: :destroy
@@ -28,6 +32,8 @@ module ESM
 
     validates :discord_id, uniqueness: true, presence: true
     validates :steam_uid, uniqueness: true
+
+    delegate :on, to: :discord_user
 
     #########################
     # Public Methods
@@ -86,23 +92,20 @@ module ESM
       "<@#{discord_id}>"
     end
 
-    def distinct
-      "#{discord_username}##{discord_discriminator}"
-    end
-
     def discord_user
-      @discord_user ||= lambda do
+      @discord_user ||= begin
+        return if discord_id.nil?
+
         discord_user = ESM.bot.user(discord_id)
         return if discord_user.nil?
 
         # Keep the discord user data up-to-date
-        incoming_attributes = [discord_user.username, discord_user.discriminator, discord_user.avatar_url]
-        current_attributes = [discord_username, discord_discriminator, discord_avatar]
+        incoming_attributes = [discord_user.username, discord_user.avatar_url]
+        current_attributes = [discord_username, discord_avatar]
 
         if current_attributes != incoming_attributes
           update(
             discord_username: discord_user.username,
-            discord_discriminator: discord_user.discriminator,
             discord_avatar: discord_user.avatar_url
           )
         end
@@ -111,7 +114,7 @@ module ESM
         discord_user.esm_user = self
 
         discord_user
-      end.call
+      end
     end
 
     def discord_servers

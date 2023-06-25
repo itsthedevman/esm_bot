@@ -10,7 +10,7 @@ module ESM
         requires :registration
 
         # Skip checking for the server since this is not dependent on the server being online.
-        skip_check :connected_server
+        skip_action :connected_server
 
         define :enabled, modifiable: true, default: true
         define :whitelist_enabled, modifiable: true, default: true
@@ -37,9 +37,9 @@ module ESM
         argument :server_id, default: nil
 
         def on_execute
-          @checks.owned_server! if @arguments.server_id
+          check_owned_server! if @arguments.server_id
           check_for_valid_command!
-          @checks.registered_target_user! if target_user
+          check_registered_target_user! if target_user
 
           # Send the confirmation request
           reply(confirmation_embed)
@@ -98,7 +98,7 @@ module ESM
 
         def cooldown_query
           query = ESM::Cooldown.where(community_id: current_community.id)
-          query = query.or(ESM::Cooldown.where(user_id: target_user.esm_user.id, steam_uid: target_user.steam_uid)) if target_user
+          query = query.or(ESM::Cooldown.where(user_id: target_user.id, steam_uid: target_user.steam_uid)) if target_user
 
           # Check for command_name and/or server_id if we've been given one
           query = query.where(command_name: @arguments.command_name) if !@arguments.command_name.nil?

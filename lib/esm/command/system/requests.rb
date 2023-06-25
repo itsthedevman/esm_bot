@@ -15,7 +15,7 @@ module ESM
         define :cooldown_time, modifiable: true, default: 2.seconds
 
         def on_execute
-          requests = current_user.esm_user.pending_requests.select(:uuid, :uuid_short, :command_name, :requestor_user_id, :expires_at).order(:command_name)
+          requests = current_user.pending_requests.select(:uuid, :uuid_short, :command_name, :requestor_user_id, :expires_at).order(:command_name)
           return send_no_requests_message if requests.blank?
 
           embed = ESM::Embed.build do |e|
@@ -23,7 +23,7 @@ module ESM
 
             e.description = requests.map do |r|
               description = "`#{r.command_name}` - "
-              description += "#{r.requestor.distinct} - " if current_user.esm_user.id != r.requestor_user_id # Performance optimization, only query if needed
+              description += "#{r.requestor.distinct} - " if current_user.id != r.requestor_user_id # Performance optimization, only query if needed
 
               description + <<~STRING
                 Expires on #{r.expires_at}

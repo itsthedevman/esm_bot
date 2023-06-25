@@ -21,7 +21,7 @@ describe ESM::Websocket::ServerRequest do
       target: user.discord_id,
       _integer: "1",
       _preserve: "PRESERVE",
-      _display_as: "display_as",
+      _display_as: "display_name",
       _default: "default"
     )
 

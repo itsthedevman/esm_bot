@@ -17,7 +17,7 @@ module ESM
         argument :territory_id
 
         def on_execute
-          deliver!(function_name: "payTerritory", territory_id: @arguments.territory_id, uid: current_user.esm_user.steam_uid)
+          deliver!(function_name: "payTerritory", territory_id: @arguments.territory_id, uid: current_user.steam_uid)
         end
 
         def on_response(_, _)

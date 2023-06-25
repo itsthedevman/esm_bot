@@ -214,11 +214,11 @@
 			"# @param preserve [Boolean] Preserve the case when parsing this argument. Otherwise, the value is stored as lowercase (Optional. Default: false)",
 			"# @param default [Any] The default value for this argument if the user did not provide it",
 			"# @param type [Symbol] What type should this argument be stored as? Valid Options: :integer, :string, :float, :json (Optional. Default: :string)",
-			"# @param display_as [String, nil] What name should this argument have when displayed to the user. (Optional. Default: Name of argument)",
+			"# @param display_name [String, nil] What name should this argument have when displayed to the user. (Optional. Default: Name of argument)",
 			"# @param template [Symbol] The name of one of the templates to use for this command.",
 			"# @param modifier [Proc] Used as a callback after the argument has been parsed. Allows for modifying the internal value for auto-fill and defaults",
 			"# @param optional_text [String, nil] The text to display to let the user know if this argument is optional. (Optional)",
-			"argument :${1:name}, regex: /${2:regex}/, description: \"commands.$TM_FILENAME_BASE.arguments.${1:name}\", preserve: true, default: nil, type: nil, display_as: nil, template: nil, modifier: ->(argument) {}, optional_text: nil"
+			"argument :${1:name}, regex: /${2:regex}/, description: \"commands.$TM_FILENAME_BASE.arguments.${1:name}\", preserve: true, default: nil, type: nil, display_name: nil, template: nil, modifier: ->(argument) {}, optional_text: nil"
 		],
 		"description": "Creates a new command argument"
 	},

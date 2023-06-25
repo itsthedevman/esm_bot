@@ -9,7 +9,7 @@ module ESM
 
         limit_to :text
         requires :registration
-        skip_check :connected_server
+        skip_action :connected_server
 
         define :enabled, modifiable: true, default: true
         define :whitelist_enabled, modifiable: true, default: true
@@ -18,15 +18,15 @@ module ESM
         define :cooldown_time, modifiable: true, default: 2.seconds
 
         argument :server_id
-        argument :target, description: "commands.sqf_v1.arguments.execution_target", default: nil, display_as: :execution_target
+        argument :target, description: "commands.sqf_v1.arguments.execution_target", default: nil, display_name: :execution_target
         argument :code_to_execute, regex: /[\s\S]+/, description: "commands.sqf_v1.arguments.code_to_execute", preserve: true
 
         def on_execute
-          @checks.owned_server!
+          check_owned_server!
 
           execute_on =
             if target_user
-              @checks.registered_target_user! if target_user.is_a?(Discordrb::User)
+              check_registered_target_user! if target_user.is_a?(ESM::User)
 
               # Return their steam uid
               target_uid

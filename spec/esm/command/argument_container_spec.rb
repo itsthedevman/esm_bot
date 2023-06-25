@@ -78,15 +78,6 @@ describe ESM::Command::ArgumentContainer do
     end
   end
 
-  context "properly extracts command aliases when parsing" do
-    let(:command_class) { ESM::Command::Test::ArgumentAlias }
-
-    specify do
-      # The bot will not find the command if this alias does not exist
-      execute!(command_name: "alias_argument")
-    end
-  end
-
   context "returns all command argument descriptions" do
     let(:command_class) { ESM::Command::Test::ArgumentDescriptions }
 

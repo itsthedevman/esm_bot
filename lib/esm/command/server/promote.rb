@@ -20,7 +20,7 @@ module ESM
 
         def on_execute
           # Check for registered target_user
-          @checks.registered_target_user! if target_user.is_a?(Discordrb::User)
+          check_registered_target_user! if target_user.is_a?(ESM::User)
 
           deliver!(
             function_name: "promotePlayer",

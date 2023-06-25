@@ -22,7 +22,7 @@ module ESM
     def self.[](command_name)
       return if command_name.blank?
 
-      @all.find { |command| command_name == command.name || command.aliases.include?(command_name.to_sym) }
+      @all.find { |command| command_name == command.name }
     end
 
     # V1
@@ -40,13 +40,17 @@ module ESM
       @all = []
       @v1 = [] # V1
       @by_type = nil
-      @cache = []
+      cache = []
 
       ESM::Command::Base.subclasses.each do |command_class|
         if command_class.name.include?("v1") # V1
-          process_command_v1(command_class) # V1
+          @v1 << command_class # V1
         else
-          process_command(command_class)
+          # Tell the bot about our command
+          ESM::Bot.register_command(command_class)
+
+          # Cache Command
+          cache << cache(command_class)
         end
       end
 
@@ -54,27 +58,9 @@ module ESM
       @all.freeze
 
       # Run some jobs for command
-      RebuildCommandCacheJob.perform_async(@cache)
+      RebuildCommandCacheJob.perform_async(cache)
       SyncCommandConfigurationsJob.perform_async(nil)
       SyncCommandCountsJob.perform_async(nil)
-
-      # Free up the memory
-      @cache = nil
-    end
-
-    def self.process_command(command_class)
-      # Tell the bot about our command
-      ESM::Bot.register_command(command_class)
-
-      # Cache Command
-      cache(command_class)
-    end
-
-    # V1
-    def self.process_command_v1(command_class)
-      return if command_class.type.nil?
-
-      @v1 << command_class
     end
 
     def self.parse_command_name_from_path(command_path)
@@ -94,7 +80,7 @@ module ESM
       return if !TYPES.include?(command.type)
 
       # To be written to the DB in bulk
-      @cache << {
+      {
         command_name: command.name,
         command_type: command.type,
         command_category: command.category,
@@ -102,7 +88,6 @@ module ESM
         command_example: command.example,
         command_usage: command.arguments.map(&:to_s).join(" "),
         command_arguments: command.arguments.to_s,
-        command_aliases: command.aliases,
         command_defines: command.defines.to_h
       }
     end
@@ -118,7 +103,8 @@ module ESM
     #
     def self.configurations
       @configurations ||=
-        ESM::Command.all.map do |command|
+        ESM::Command.all.map do |command_class|
+          command = command_class.new
           cooldown_default = command.defines.cooldown_time&.default || 2.seconds
 
           case cooldown_default

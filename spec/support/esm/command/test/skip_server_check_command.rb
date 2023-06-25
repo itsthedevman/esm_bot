@@ -6,7 +6,7 @@ module ESM
       class SkipServerCheckCommand < ESM::Command::Base
         set_type :player
 
-        skip_check :connected_server
+        skip_action :connected_server
 
         define :enabled, modifiable: true, default: true
         define :whitelist_enabled, modifiable: true, default: false

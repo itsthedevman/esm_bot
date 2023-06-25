@@ -18,10 +18,10 @@ module ESM
         argument :target, default: nil
 
         def on_execute
-          @checks.registered_target_user! if target_user.is_a?(Discordrb::User)
+          check_registered_target_user! if target_user.is_a?(ESM::User)
 
           # Create a confirmation request to the requestee
-          @checks.pending_request!
+          check_pending_request!
           add_request(
             to: current_user,
             description: I18n.t(

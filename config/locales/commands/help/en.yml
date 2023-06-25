@@ -72,9 +72,6 @@ en:
         limited_to: This command is available only in a %{channel_type} channel with me.
         whitelist_enabled: This command may be available only to certain roles.
         usage: "**__Usage__**"
-        aliases:
-          name: "**__Aliases__**"
-          value: 'This command can also be accessed by the following aliases: %{aliases}'
         arguments: "**__Arguments__**"
         examples: "**__Examples__**"
       esm_history:

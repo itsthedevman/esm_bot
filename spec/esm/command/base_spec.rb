@@ -20,10 +20,6 @@ describe ESM::Command::Base do
       expect(command.category).to eq("test")
     end
 
-    it "has 2 aliases" do
-      expect(command.aliases.size).to eq(2)
-    end
-
     it "has #{ESM::Command::Test::BaseV1::ARGUMENT_COUNT} arguments" do
       expect(command.arguments.size).to eq(ESM::Command::Test::BaseV1::ARGUMENT_COUNT)
     end
@@ -87,7 +83,7 @@ describe ESM::Command::Base do
     it "has a valid user" do
       execute!
       expect(command.current_user).not_to be_nil
-      expect(command.current_user.id.to_s).to eq(user.discord_id)
+      expect(command.current_user.discord_id).to eq(user.discord_id)
     end
 
     it "creates" do
@@ -98,7 +94,7 @@ describe ESM::Command::Base do
 
       new_current_user = ESM::User.find_by_discord_id(discord_id)
       expect(new_current_user).not_to be(nil)
-      expect(command.current_user.id.to_s).to eq(new_current_user.discord_id)
+      expect(command.current_user.discord_id).to eq(new_current_user.discord_id)
     end
   end
 
@@ -177,7 +173,7 @@ describe ESM::Command::Base do
     it "is a valid user" do
       execute!(target: secondary_user.discord_id)
       expect(command.target_user).not_to be_nil
-      expect(command.target_user.id.to_s).to eq(secondary_user.discord_id)
+      expect(command.target_user.discord_id).to eq(secondary_user.discord_id)
     end
 
     it "is invalid" do
@@ -192,7 +188,7 @@ describe ESM::Command::Base do
 
       new_target_user = ESM::User.find_by_discord_id(discord_id)
       expect(new_target_user).not_to be(nil)
-      expect(command.target_user.id.to_s).to eq(new_target_user.discord_id)
+      expect(command.target_user.discord_id).to eq(new_target_user.discord_id)
     end
   end
 
@@ -408,7 +404,7 @@ describe ESM::Command::Base do
         target: user.discord_id,
         _integer: "1",
         _preserve: "PRESERVE",
-        _display_as: "display_as"
+        _display_as: "display_name"
       )
       event = CommandEvent.create(command_statement, channel_type: :text, user: user)
       expect { command.execute(event) }.not_to raise_error
@@ -420,7 +416,7 @@ describe ESM::Command::Base do
         target: user.discord_id,
         _integer: "1",
         _preserve: "PRESERVE",
-        _display_as: "display_as"
+        _display_as: "display_name"
       )
       event = CommandEvent.create(command_statement, channel_type: :dm, user: user)
       expect { command.execute(event) }.not_to raise_error
@@ -437,7 +433,7 @@ describe ESM::Command::Base do
         target: user.discord_id,
         _integer: "1",
         _preserve: "PRESERVE",
-        _display_as: "display_as"
+        _display_as: "display_name"
       )
       event = CommandEvent.create(command_statement, channel_type: :text, user: user)
       expect { command.execute(event) }.to raise_error(ESM::Exception::CheckFailure) do |error|
@@ -452,7 +448,7 @@ describe ESM::Command::Base do
         target: user.discord_id,
         _integer: "1",
         _preserve: "PRESERVE",
-        _display_as: "display_as"
+        _display_as: "display_name"
       )
       event = CommandEvent.create(command_statement, channel_type: :dm, user: user)
       expect { command.execute(event) }.not_to raise_error
@@ -471,7 +467,7 @@ describe ESM::Command::Base do
         target: user.discord_id,
         _integer: "1",
         _preserve: "PRESERVE",
-        _display_as: "display_as"
+        _display_as: "display_name"
       )
       event = CommandEvent.create(command_statement, channel_type: :text, user: user)
       expect { command.execute(event) }.not_to raise_error
@@ -483,7 +479,7 @@ describe ESM::Command::Base do
         target: user.discord_id,
         _integer: "1",
         _preserve: "PRESERVE",
-        _display_as: "display_as"
+        _display_as: "display_name"
       )
       event = CommandEvent.create(command_statement, channel_type: :dm, user: user)
       expect { command.execute(event) }.to raise_error(ESM::Exception::CheckFailure) do |error|
@@ -1050,7 +1046,7 @@ describe ESM::Command::Base do
     end
   end
 
-  describe "#skip_check" do
+  describe "#skip_action" do
     it "skips #check_for_connected_server!" do
       # Server is not connected here
       check_command = ESM::Command::Test::SkipServerCheckCommand.new

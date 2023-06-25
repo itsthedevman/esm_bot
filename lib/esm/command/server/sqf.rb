@@ -18,14 +18,14 @@ module ESM
         define :cooldown_time, modifiable: true, default: 2.seconds
 
         argument :server_id
-        argument :target, regex: /#{ESM::Regex::TARGET.source}|server|all|everyone/i, description: "commands.sqf.arguments.execution_target", default: nil, display_as: :execution_target
+        argument :target, regex: /#{ESM::Regex::TARGET.source}|server|all|everyone/i, description: "commands.sqf.arguments.execution_target", default: nil, display_name: :execution_target
         argument :code_to_execute, regex: /[\s\S]+/, description: "commands.sqf.arguments.code_to_execute", preserve: true
 
-        skip_check :nil_target_user
+        skip_action :nil_target_user
 
         def on_execute
-          @checks.owned_server!
-          @checks.registered_target_user! if target_user.is_a?(Discordrb::User)
+          check_owned_server!
+          check_registered_target_user! if target_user.is_a?(ESM::User)
 
           execute_on =
             case args.target

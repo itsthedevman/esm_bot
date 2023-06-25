@@ -12,9 +12,9 @@ module ESM
           default: nil,
           optional_text: "This has optional text"
 
-        argument :display_as,
+        argument :display_name,
           description: "This argument has a different display name",
-          display_as: :display_name
+          display_name: :display_name
 
         def argument_descriptions
           <<~STRING.chomp

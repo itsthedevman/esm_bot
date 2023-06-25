@@ -33,7 +33,7 @@ module ESM
         requires :registration
 
         # Since the argument is a modified target, the logic for nil_target_user will trigger
-        skip_check :nil_target_user
+        skip_action :nil_target_user
 
         define :enabled, modifiable: true, default: true
         define :whitelist_enabled, modifiable: true, default: true
@@ -44,14 +44,15 @@ module ESM
         argument :server_id
 
         # In order to utilize the `#target_user` logic, the argument must have a name as target.
-        argument :target, regex: /.+/, description: "commands.logs.arguments.query", display_as: :query
+        argument :target, regex: /.+/, description: "commands.logs.arguments.query", display_name: :query
 
         def on_execute
           query = ""
 
           # If the target was given, check to make sure they're registered and then set the steam_uid
           if target_user
-            @checks.registered_target_user! if target_user.is_a?(Discordrb::User)
+            check_registered_target_user! if target_user.is_a?(ESM::User)
+
             query = target_user.steam_uid
           else
             # Escape any regex in the "query"
@@ -72,7 +73,7 @@ module ESM
         def on_response(_, _)
           check_for_no_logs!
 
-          @log = ESM::Log.create!(server_id: target_server.id, search_text: @arguments.target, requestors_user_id: current_user.esm_user.id)
+          @log = ESM::Log.create!(server_id: target_server.id, search_text: @arguments.target, requestors_user_id: current_user.id)
 
           parse_logs
 

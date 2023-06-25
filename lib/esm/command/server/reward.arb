@@ -41,7 +41,7 @@ module ESM
         argument :reward_id, description: "commands.reward.arguments.reward_id", regex: ESM::Regex::REWARD_ID, default: nil
 
         # FOR DEV ONLY
-        # skip_check :cooldown, :connected_server
+        # skip_action :cooldown, :connected_server
 
         #
         # The entry point for when the bot first receives a command
@@ -223,7 +223,7 @@ module ESM
         end
 
         def check_for_in_progress!
-          return if !ESM.bot.waiting_for_reply?(user_id: current_user.id, channel_id: current_channel.id)
+          return if !ESM.bot.waiting_for_reply?(user_id: current_user.discord_id, channel_id: current_channel.id)
 
           raise_error!(:waiting_for_reply, user: current_user.mention, command_name: name)
         end
@@ -246,7 +246,7 @@ module ESM
 
         def await_for_reply
           Thread.new do
-            ESM.bot.wait_for_reply(user_id: current_user.id, channel_id: current_channel.id) { |event| on_reply(event) }
+            ESM.bot.wait_for_reply(user_id: current_user.discord_id, channel_id: current_channel.id) { |event| on_reply(event) }
           end
         end
 

@@ -15,7 +15,7 @@ module ESM
 
         def on_execute
           message =
-            if current_user.esm_user.registered?
+            if current_user.registered?
               already_registered_message
             else
               registration_message

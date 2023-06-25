@@ -13,7 +13,6 @@ module ESM
             # The event has to be stored before argument parsing because of callbacks referencing event data
             # Still have to pass the even through to from_discord for V1
             @event = event
-            arguments.parse!(event.content)
 
             # V1
             command =
@@ -24,7 +23,7 @@ module ESM
               end
 
             timers.time!(:from_discord) do
-              command.send(:from_discord, event, arguments)
+              command.send(:from_discord, event)
             end
           else
             timers.time!(:from_server) do
@@ -40,20 +39,20 @@ module ESM
           command.timers.stop_all!
         end
 
-        def from_discord(discord_event, arguments)
+        def from_discord(discord_event)
           @event = discord_event
-          @arguments = arguments
+          arguments.load(discord_event.options)
           permissions.load
 
-          checks.text_only!
-          checks.dm_only!
-          checks.player_mode!
-          checks.permissions!
+          check_text_only!
+          check_dm_only!
+          check_player_mode!
+          check_permissions!
 
           arguments.validate!
 
           ESM::Notifications.trigger("command_from_discord", command: self)
-          checks.run_all!
+          check_run_all!
 
           result = nil
           timers.time!(:on_execute) do
@@ -107,7 +106,7 @@ module ESM
 
             # Don't look for the requestor because multiple different people could attempt to invite them
             # requestor_user_id: current_user.esm_user.id,
-            query = ESM::Request.where(requestee_user_id: requestee.esm_user.id, command_name: @name)
+            query = ESM::Request.where(requestee_user_id: requestee.esm_user.id, command_name: command_name)
 
             arguments.to_h.each do |name, value|
               query = query.where("command_arguments->>'#{name}' = ?", value)
@@ -120,10 +119,10 @@ module ESM
         def add_request(to:, description: "")
           @request =
             ESM::Request.create!(
-              requestor_user_id: current_user.esm_user.id,
-              requestee_user_id: to.esm_user.id,
+              requestor_user_id: current_user.id,
+              requestee_user_id: to.id,
               requested_from_channel_id: current_channel.id.to_s,
-              command_name: @name,
+              command_name: command_name,
               command_arguments: arguments.to_h
             )
 
@@ -177,7 +176,7 @@ module ESM
             if registration_required?
               query.where(steam_uid: current_user.steam_uid)
             else
-              query.where(user_id: current_user.esm_user.id)
+              query.where(user_id: current_user.id)
             end
 
           # Check for the target_community

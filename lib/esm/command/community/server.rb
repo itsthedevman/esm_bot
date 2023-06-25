@@ -13,7 +13,7 @@ module ESM
         define :cooldown_time, modifiable: true, default: 2.seconds
 
         argument :server_id
-        skip_check :connected_server
+        skip_action :connected_server
 
         def on_execute
           embed =

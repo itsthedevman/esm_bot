@@ -16,7 +16,7 @@ module ESM
         argument :uuid, regex: /[0-9a-fA-F]{4}/, description: "commands.accept.arguments.uuid"
 
         def on_execute
-          request = current_user.esm_user.pending_requests.where(uuid_short: @arguments.uuid).first
+          request = current_user.pending_requests.where(uuid_short: @arguments.uuid).first
           check_for_request!(request)
           request.respond(true)
         end

@@ -4,104 +4,116 @@ module ESM
   module Command
     class Base
       module Helpers
-        # The user that executed the command
+        #
+        # The ESM representation of the user who executed the command
+        #
+        # @return [ESM::User]
+        #
         def current_user
-          return @current_user if defined?(@current_user) && @current_user.present?
-          return if event&.user.nil?
-
-          user = ESM::User.where(discord_id: event&.user&.id).first_or_initialize
-          user.update(
-            discord_username: event&.user&.name,
-            discord_discriminator: event&.user&.discriminator
-          )
-
-          # Save some cycles
-          discord_user = user.discord_user
-          discord_user.instance_variable_set(:@esm_user, user)
-
-          # Return back the modified discord user
-          @current_user = discord_user
+          @current_user ||= ESM::User.where(discord_id: event&.user&.id).first_or_initialize
         end
 
+        #
+        # The ESM representation of the Discord server the command was executed on
+        #
         # @return [ESM::Community, nil] The community the command was executed from. Nil if sent from Direct Message
+        #
         def current_community
-          return @current_community if defined?(@current_community) && @current_community.present?
-          return if event&.server.nil?
-
-          @current_community = ESM::Community.find_by_guild_id(event&.server&.id)
+          @current_community ||= ESM::Community.find_by_guild_id(event&.server&.id)
         end
 
-        # @return [ESM::Cooldown] The cooldown for this command and user
+        #
+        # The cooldown for this command
+        #
+        # @return [ESM::Cooldown]
+        #
         def current_cooldown
           @current_cooldown ||= current_cooldown_query.first
         end
 
+        #
+        # The Discord channel this command was executed in
+        #
+        # @return [Discordrb::Channel]
+        #
         def current_channel
           @current_channel ||= event&.channel
         end
 
+        #
+        # The ESM representation of a community's Arma 3 Server
+        #
         # @return [ESM::Server, nil] The server that the command was executed for
+        #
         def target_server
-          @target_server ||= begin
-            return nil if arguments.server_id.blank?
+          @target_server ||= ESM::Server.find_by_server_id(arguments.server_id) if arguments.server_id
+        end
 
-            ESM::Server.find_by_server_id(arguments.server_id)
+        #
+        # The ESM representation of a Discord server that is the target of this command
+        #
+        # @return [ESM::Community, nil] The community that the command was executed for
+        #
+        def target_community
+          @target_community ||= begin
+            return ESM::Community.find_by_community_id(arguments.community_id) if arguments.community_id
+
+            target_server&.community
           end
         end
 
-        # @return [ESM::Community, nil] The community that the command was executed for
-        def target_community
-          @target_community ||= lambda do
-            return ESM::Community.find_by_community_id(arguments.community_id) if arguments.community_id.present?
-
-            target_server&.community
-          end.call
-        end
-
+        #
+        # The ESM representation of a Discord user that is the target of this command
+        #
         # @return [ESM::User, nil] The user that the command was executed against
+        #
         def target_user
-          return @target_user if defined?(@target_user) && @target_user.present?
-          return if arguments.target.nil?
+          @target_user ||= begin
+            return if arguments.target.nil?
 
-          # Store for later
-          target = arguments.target
+            # This could be a steam_uid, discord id, or mention
+            target = arguments.target
 
-          # Attempt to parse first. Target could be steam_uid, discord id, or mention
-          user = ESM::User.parse(target)
+            # Attempt to parse first
+            user = ESM::User.parse(target)
 
-          # No user was found. Don't create a user from a steam UID
-          #   target is a steam_uid WITHOUT a db user. -> Exit early. Use a placeholder user
-          return @target_user = ESM::TargetUser.new(target) if user.nil? && target.steam_uid?
+            # No user was found. Don't create a user from a steam UID
+            #   target is a steam_uid WITHOUT a db user. -> Exit early. Use a placeholder user
+            if user.nil? && target.steam_uid?
+              @target_user = ESM::User::Ephemeral.new(target)
+              return
+            end
 
-          # Past this point:
-          #   target is a steam_uid WITH a db user -> Continue
-          #   target is a discord ID or discord mention WITH a db user -> Continue
-          #   target is a discord ID or discord mention WITHOUT a db user -> Continue, we'll create a user
+            # Past this point:
+            #   target is a steam_uid WITH a db user -> Continue
+            #   target is a discord ID or discord mention WITH a db user -> Continue
+            #   target is a discord ID or discord mention WITHOUT a db user -> Continue, we'll create a user
 
-          # Remove the tag bits if applicable
-          target.gsub!(/[<@!&>]/, "") if ESM::Regex::DISCORD_TAG_ONLY.match(target)
+            # Remove the tag bits if applicable
+            target.gsub!(/[<@!&>]/, "") if ESM::Regex::DISCORD_TAG_ONLY.match(target)
 
-          # Get the discord user from the ID or the previous db entry
-          discord_user = user.nil? ? ESM.bot.user(target) : user.discord_user
+            # Get the discord user from the ID or the previous db entry
+            discord_user = user.nil? ? ESM.bot.user(target) : user.discord_user
 
-          # Nothing we can do if we don't have a discord user
-          return if discord_user.nil?
+            # Nothing we can do if we don't have a discord user
+            return if discord_user.nil?
 
-          # Create the user if its nil
-          user = ESM::User.new(discord_id: target) if user.nil?
-          user.update(discord_username: discord_user.name, discord_discriminator: discord_user.discriminator)
+            # Create the user if its nil
+            user = ESM::User.new(discord_id: target) if user.nil?
+            user.update(discord_username: discord_user.username, discord_avatar: discord_user.avatar_url)
 
-          # Save some cycles
-          discord_user.instance_variable_set(:@esm_user, user)
-
-          # Return back the modified discord user
-          @target_user = discord_user
+            # Save some cycles
+            user.instance_variable_set(:@discord_user, discord_user)
+            @target_user = user
+          end
         end
 
-        # Sometimes we're given a steamUID that may not be linked to a discord user
+        #
+        # Sometimes we're given a steam UID that may not be linked to a discord user
         # But, the command can work without the registered part.
         #
         # @return [String, nil] The steam uid from given argument or the steam uid registered to the target_user (which may be nil)
+        #
         def target_uid
           return if arguments.target.nil?
 
@@ -110,33 +122,81 @@ module ESM
           end.call
         end
 
-        # @return [Boolean] If the current user is the target user.
+        #
+        # The community, in which this command is being executed, command permissions
+        #
+        # @return [ESM::CommandConfiguration, nil]
+        #
+        def community_permissions
+          @community_permissions ||= begin
+            community = target_community || current_community
+            return unless community
+
+            community.command_configurations.where(command_name: name).first
+          end
+        end
+
+        #
+        # Is the current_user also the target_user?
+        #
+        # @return [Boolean]
+        #
         def same_user?
           return false if target_user.nil?
 
           current_user.steam_uid == target_user.steam_uid
         end
 
+        #
+        # Is the command limited to Direct Messages?
+        #
+        # @return [Boolean]
+        #
         def dm_only?
           @limit_to == :dm
         end
 
+        #
+        # Is the command limited to text channels?
+        #
+        # @return [Boolean]
+        #
         def text_only?
           @limit_to == :text
         end
 
+        #
+        # Is the command limited to developers only?
+        #
+        # @return [Boolean]
+        #
         def dev_only?
-          @requires.include?(:dev)
+          requires.dev?
         end
 
+        #
+        # Does the command require registration?
+        #
+        # @return [Boolean]
+        #
         def registration_required?
-          @requires.include?(:registration)
+          requires.registration?
         end
 
+        #
+        # Does this command have a whitelist enabled?
+        #
+        # @return [Boolean]
+        #
         def whitelist_enabled?
           @whitelist_enabled || false
         end
 
+        #
+        # Is this command on cooldown?
+        #
+        # @return [Boolean]
+        #
         def on_cooldown?
           # We've never used this command with these arguments before
           return false if current_cooldown.nil?

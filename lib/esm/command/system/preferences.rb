@@ -25,7 +25,7 @@ module ESM
         requires :registration
 
         # This command is not dependent on the server being connected
-        skip_check :connected_server
+        skip_action :connected_server
 
         define :enabled, modifiable: false, default: true
         define :whitelist_enabled, modifiable: false, default: false
@@ -61,7 +61,7 @@ module ESM
         end
 
         def preference
-          @preference ||= ESM::UserNotificationPreference.where(user_id: current_user.esm_user.id, server_id: target_server.id).first_or_create
+          @preference ||= ESM::UserNotificationPreference.where(user_id: current_user.id, server_id: target_server.id).first_or_create
         end
 
         def allowed?

@@ -7,133 +7,100 @@ module ESM
       module Definition
         extend ActiveSupport::Concern
 
-        ATTRIBUTES = ImmutableStruct.define(*%i[
-          name
-          category
-          aliases
-          arguments
-          type
-          limit_to
-          defines
-          requires
-          skipped_checks
-        ])
-        private_constant :ATTRIBUTES
+        class Define < ImmutableStruct.define(:modifiable, :default)
+          def initialize(modifiable: true, default: nil)
+            super(modifiable: modifiable, default: default)
+          end
+
+          def modifiable?
+            modifiable
+          end
+        end
+
+        included do
+          class_attribute :arguments
+          class_attribute :type
+          class_attribute :limited_to
+          class_attribute :defines
+          class_attribute :requirements
+          class_attribute :skipped_actions
+          class_attribute :has_v1_variant
+        end
 
         class_methods do
-          attr_reader :defines, :type, :category, :aliases
-
-          def name
-            return @command_name if !@command_name.nil?
-
-            super
+          # ESM::Command::Server::SetId => set_id
+          def command_name
+            @command_name ||= name.demodulize.underscore.downcase.sub("_v1", "")
           end
 
-          def inherited(child_class)
-            child_class.reset_variables!
-            super
+          # ESM::Command::System::Accept => system
+          def category
+            @category ||= module_parent.name.demodulize.downcase
           end
 
-          def reset_variables!
-            @aliases = []
-            @arguments = []
-            @type = nil
-            @limit_to = nil
-            @defines = OpenStruct.new
-            @requires = []
-            @skipped_checks = Set.new
-            @has_v1_variant = false
-
-            # ESM::Command::System::Accept => system
-            @category = module_parent.name.demodulize.downcase
-
-            # ESM::Command::Server::SetId => set_id
-            @command_name = name.demodulize.underscore.downcase
+          def argument(name, type = :string, **opts)
+            arguments[name] = Argument.new(name, type, **opts.merge(command_name: command_name))
           end
-
-          def argument(name, opts = {})
-            @arguments << [name, opts]
-          end
-
-          def example(prefix = ESM.config.prefix)
-            I18n.t("commands.#{@command_name}.example", prefix: prefix, default: "")
-          end
-
-          def description(prefix = ESM.config.prefix)
-            I18n.t("commands.#{@command_name}.description", prefix: prefix, default: "")
-          end
-
 
           def set_type(type)
-            @type = type
+            self.type = type
           end
 
-          def limit_to(channel_type) # standard:disable Style/TrivialAccessors
-            @limit_to = channel_type
+          def limit_to(channel_type)
+            self.limited_to = channel_type
           end
 
           def define(attribute, **opts)
-            @defines[attribute] = OpenStruct.new(opts)
+            defines[attribute] = Define.new(**opts)
           end
 
           def requires(*keys)
-            @requires = keys
+            self.requirements += keys
           end
 
-          def attributes
-            ATTRIBUTES.new(
-              name: @command_name.dup,
-              category: @category.dup,
-              aliases: @aliases.deep_dup,
-              arguments: @arguments.deep_dup,
-              type: @type,
-              limit_to: @limit_to,
-              defines: @defines.deep_dup,
-              requires: @requires.deep_dup,
-              skipped_checks: @skipped_checks.deep_dup
-            )
+          def skip_action(*actions)
+            self.skipped_actions += actions
           end
 
-          def skip_check(*checks)
-            checks.each do |check|
-              @skipped_checks << check
-            end
+          def inherited(child_class)
+            child_class.__disconnect_variables!
+            super
+          end
+
+          def __disconnect_variables!
+            self.arguments = Arguments.new
+            self.type = :player
+            self.limited_to = nil
+            self.defines = {}
+            self.requirements = Set.new
+            self.skipped_actions = Set.new
+            self.has_v1_variant = false
           end
         end
 
         ############################################################
         ############################################################
 
-        # V1: name is defined in the migrations file, but will need to be added here once v1 has been deprecated
-        attr_reader :category, :type, :aliases, :limit_to,
-          :requires, :response, :cooldown_time,
-          :defines, :permissions, :checks, :skip_flags,
-          :timers, :event, :arguments, :argument_names
+        attr_reader :response # v1
+        attr_reader :name, :description, :description_long, :example,
+          :category, :cooldown_time, :permissions, :timers, :event
 
         attr_writer :current_community # Used in commands/general/help.rb
 
         def initialize
-          attributes = self.class.attributes
+          command_class = self.class
+          @name = command_class.command_name
+          @category = command_class.category
+          @description = I18n.t("commands.#{name}.description", default: "")
+          @description_long = I18n.t("commands.#{name}.description_long", default: "")
+          @example = I18n.t("commands.#{name}.example", default: "")
 
-          @name = attributes.name
-          @category = attributes.category
-          @aliases = attributes.aliases
-          @argument_names = attributes.arguments.map(&:first)
-          @arguments = ESM::Command::ArgumentContainer.new(self, attributes.arguments)
-          @type = attributes.type
-          @limit_to = attributes.limit_to
-          @defines = attributes.defines
-          @requires = attributes.requires
+          @skipped_actions = ActiveSupport::ArrayInquirer.new(skipped_actions.to_a)
+          @requirements = ActiveSupport::ArrayInquirer.new(requirements.to_a)
+          @defines = defines.to_istruct
 
           # Mainly for specs, but does give performance analytics (which is a nice bonus)
           @timers = Timers.new(name)
-
-          # Flags for skipping anything else
-          @skip_flags = Set.new
-
-          # Pre load
-          @permissions = Base::Permissions.new(self)
-          @checks = Base::Checks.new(self, attributes.skipped_checks)
         end
       end
     end

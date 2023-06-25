@@ -96,118 +96,117 @@ module ESM
         }
       }.freeze
 
-      attr_reader :name, :parser, :opts
-      attr_accessor :content
+      attr_reader :name, :display_name, :command_name,
+        :default_value, :cast_type, :modifier,
+        :description_short, :description_long, :optional_text
 
-      def initialize(name, opts = {})
+      #
+      # A configurable representation of a command argument
+      #
+      # @param name [Symbol, String] The argument's name
+      # @param type [Symbol, String] Optional. The argument's type (directly linked to Discord). Default: :string
+      # @param opts [Hash] Options to configure the argument
+      # @option opts [Boolean] :required Optional. Sets if the argument MUST be provided by the user. Default: true
+      # @option opts [Symbol, String, nil] :template The name of an entry in DEFAULTS to use as a foundation
+      #     in which these `opts` are merged into. Useful for having an argument that acts like another argument
+      # @option opts [String] :description This argument's description, in less than 120 characters.
+      #     Note: Providing this option is optional, however, all arguments MUST have a non-blank description
+      #     This description is used in Discord when viewing the argument.
+      #     This value defaults to the value located at the locale path:
+      #         commands.<command_name>.arguments.<argument_name>.desc_short
+      # @option opts [String] :description_log This argument's description, but more descriptive
+      #     Note: Providing this option is optional, however, this argument MUST have a non-blank description
+      #     This description is used in the help documentation with the help command and on the website
+      #     This value defaults to the value located at the locale path:
+      #         commands.<command_name>.arguments.<argument_name>.desc_long
+      # @option opts [String] :optional_text Optional. Allows for overriding the "this argument is optional" text
+      #     in the help documentation. This argument must be optional for this to be used.
+      #     This is used in the help documentation with the help command and on the website
+      #     This value defaults to the value located at the locale path:
+      #         commands.<command_name>.arguments.<argument_name>.optional_text
+      # @option opts [Symbol, String] :display_name Optional. Allows overwriting the display name of the argument
+      #     without changing how the argument is referenced in code
+      # @option opts [Object] :default Optional. The default value if this argument is not required. Default: nil
+      # @option opts [Boolean] :preserve_case Optional. Controls if this argument's value should be converted to
+      #     lowercase or not. Default: false
+      # @option opts [Symbol, Proc] :type_caster Optional. Performs extra casting once the value is received from Discord
+      #     If the value is a Symbol, it will be be checked against the available options.
+      #     If the value is a Proc, it will be called and the raw value passed in
+      #     Valid options: :json, :symbol
+      # @option opts [Proc] :modifier Optional. A block of code used to modify this argument's value before validation
+      #
+      def initialize(name, type, opts = {})
+        template_name = (opts[:template] || name).to_sym
+        opts = DEFAULTS[template_name].merge(opts) if DEFAULTS.key?(template_name)
+
         @name = name
-        @opts = load_options(opts)
-        @content = nil
+        @display_name = (opts[:display_name] || name).to_sym
+        @command_name = opts[:command_name].to_sym
+
+        @required = !!opts[:required]
+        @default_value = opts[:default]
+        @preserve_case = !!opts[:preserve_case]
+        @type_caster = opts[:type_caster]
+        @modifier = opts[:modifier] || ->(_) {}
+
+        @description_short = load_locale_or_provided(opts[:description], "desc_short")
+        @description_long = load_locale_or_provided(opts[:description_long], "desc_long")
+
+        @optional_text =
+          if (text = opts[:optional_text].presence)
+            load_locale_or_provided(text, "optional_text")
+          elsif optional?
+            text = "This argument is optional#{default_value? ? "" : "."}"
+            text += " and it defaults to `#{default_value}`." if default_value?
+            text
+          end
       end
 
-      def store(input, command)
-        @content = format(input)
+      def validate!(input, command)
+        content = format(input)
 
         # Arguments can opt to modify the parsed value (this is how auto-fill works)
         command.instance_exec(self, &modifier) if modifier?
 
-        debug!(
-          argument: {
-            name: name,
-            display: to_s,
-            regex: regex,
-            default: default
-          },
-          input: input,
-          output: {
-            type: content.class.name,
-            content: content
-          }
-        )
-      end
+        # debug!(
+        #   argument: {
+        #     name: name,
+        #     display: to_s,
+        #     regex: regex,
+        #     default: default
+        #   },
+        #   input: input,
+        #   output: {
+        #     type: content.class.name,
+        #     content: content
+        #   }
+        # )
 
-      # The regex must be optional and must handle the whitespace
-      def regex
-        @regex ||= /(?<#{name}>\s+(?:#{opts[:regex]&.source || "\\S+"}))?/.source
+        content
       end
 
       def preserve_case?
-        opts[:preserve] ||= false
-      end
-
-      def type
-        opts[:type] ||= :string
-      end
-
-      def display_as
-        opts[:display_as] ||= name.to_s
-      end
-
-      def default
-        opts[:default]
-      end
-
-      def modifier
-        opts[:modifier]
+        @preserve_case
       end
 
       def modifier?
         modifier&.respond_to?(:call)
       end
 
-      def default?
-        opts.key?(:default)
+      def default_value?
+        !!@default_value
       end
 
       def required?
-        !default?
+        @required
       end
 
-      # Only valid if argument has content and no default.
-      # Allows content to be nil if not required
-      def invalid?
-        required? && content.nil?
+      def optional?
+        !required?
       end
 
       def optional!
-        opts[:default] = nil
-      end
-
-      def description(command = nil)
-        description_path = opts[:description]
-
-        # Defaults the description path to be commands.<name>.arguments.<name>
-        if description_path.blank?
-          description_path = "commands"
-          description_path += ".#{command.name}" if command
-          description_path += ".arguments.#{name}"
-        end
-
-        # Call I18n with the name of the translation and pass the prefix into the translation by default
-        localized_description = I18n.send(
-          :translate,
-          description_path,
-          prefix: command&.prefix || ESM.config.prefix || "!",
-          default: ""
-        )
-
-        # Allows not having to provide an I18n path as the description
-        if (localized_description.blank? || localized_description.starts_with?("translation missing")) && opts[:description].present?
-          opts[:description]
-        else
-          localized_description
-        end
-      end
-
-      def optional_text
-        return if required?
-        # Check for the key so this can be set back to nil
-        return opts[:optional_text] if opts.key?(:optional_text)
-
-        has_default = !default.nil?
-        opts[:optional_text] = "This argument is optional#{has_default ? "" : "."}"
-        opts[:optional_text] += " and it defaults to `#{default}`." if has_default
-        opts[:optional_text]
+        @required = false
       end
 
       def optional_text?
@@ -216,21 +215,19 @@ module ESM
 
       def to_s
         name =
-          if display_as.present?
-            display_as.to_s
+          if display_name.present?
+            display_name.to_s
           else
             self.name.to_s
           end
 
-        "<#{"?" if default?}#{name}>"
+        "<#{"?" if optional?}#{name}>"
       end
 
       def help_documentation(command = nil)
         output = ["**`#{self}`**"]
 
-        if (result = description(command)) && result.present?
-          output << "#{result}."
-        end
+        output << "#{description_long}." if description_long.presence
 
         output << "**Note:** #{optional_text}" if optional_text?
         output.join("\n")
@@ -238,27 +235,23 @@ module ESM
 
       private
 
-      def load_options(opts)
-        argument_name = (opts[:template] || name).to_sym
+      def load_locale_or_provided(path, suffix)
+        locale_path = path.presence || "commands.#{command_name}.arguments.#{name}.#{suffix}"
+        localized = I18n.translate(locale_path, default: "")
 
-        opts =
-          if DEFAULTS.key?(argument_name)
-            DEFAULTS[argument_name].merge(opts)
-          else
-            opts
-          end
-
-        opts[:preserve] ||= false
-        opts[:type] ||= :string
-        opts[:display_as] ||= name.to_s
-        opts
+        # Allows not having to provide an I18n path as the description
+        if (localized.blank? || localized.starts_with?("translation missing")) && path.present?
+          path
+        else
+          localized
+        end
       end
 
       def format(value)
         value =
           if value.present?
             preserve_case? ? value.strip : value.downcase.strip
-          elsif default?
+          elsif default_value?
             default
           else
             value
@@ -271,10 +264,6 @@ module ESM
         return if value.nil?
 
         case type
-        when :integer
-          value.to_i
-        when :float
-          value.to_f
         when :json
           ESM::JSON.parse(value)
         when :symbol

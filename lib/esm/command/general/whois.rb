@@ -20,8 +20,8 @@ module ESM
 
           embed =
             ESM::Embed.build do |e|
-              add_discord_info(e) if target_user.is_a?(Discordrb::User)
-              add_steam_info(e) if target_user.esm_user.registered?
+              add_discord_info(e) if target_user.discord_user.is_a?(Discordrb::User)
+              add_steam_info(e) if target_user.registered?
             end
 
           reply(embed)
@@ -32,17 +32,18 @@ module ESM
         #########################
         # Argument e is an embed
         def add_discord_info(e)
+          discord_user = target_user.discord_user
           e.add_field(value: I18n.t("commands.whois.discord.header"))
-          e.add_field(name: I18n.t("commands.whois.discord.id"), value: target_user.id, inline: true)
-          e.add_field(name: I18n.t("commands.whois.discord.username"), value: target_user.distinct, inline: true)
-          e.add_field(name: I18n.t("commands.whois.discord.status"), value: target_user.status.to_s.capitalize, inline: true)
-          e.add_field(name: I18n.t("commands.whois.discord.created_at"), value: target_user.creation_time.strftime("%c"), inline: true)
-          e.set_author(name: target_user.distinct, icon_url: target_user.avatar_url)
+          e.add_field(name: I18n.t("commands.whois.discord.id"), value: discord_user.id, inline: true)
+          e.add_field(name: I18n.t("commands.whois.discord.username"), value: discord_user.distinct, inline: true)
+          e.add_field(name: I18n.t("commands.whois.discord.status"), value: discord_user.status.to_s.capitalize, inline: true)
+          e.add_field(name: I18n.t("commands.whois.discord.created_at"), value: discord_user.creation_time.strftime("%c"), inline: true)
+          e.set_author(name: discord_user.distinct, icon_url: discord_user.avatar_url)
         end
 
         # Argument e is an embed
         def add_steam_info(e)
-          @steam_data = target_user.esm_user.steam_data
+          @steam_data = target_user.steam_data
 
           e.add_field(value: I18n.t("commands.whois.steam.header"))
 
@@ -81,13 +82,13 @@ module ESM
         end
 
         def check_for_user_access!
-          return if current_user.esm_user.developer?
+          return if current_user.developer?
 
           # This is just a steam uid, go ahead and allow it.
-          return if !target_user.is_a?(Discordrb::User)
+          return if !target_user.is_a?(ESM::User::Ephemeral)
 
           # Ensure the user in question is a member of the current Discord. This keeps players from inviting ESM and abusing the command to find admins of other servers.
-          return if current_community.discord_server.member(target_user.id).present?
+          return if current_community.discord_server.member(target_user.discord_id.to_i).present?
 
           check_failed!(:access_denied, user: current_user.mention)
         end

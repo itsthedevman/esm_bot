@@ -19,7 +19,7 @@ module ESM
           if v2_target_server?
             query_arma("me", uid: current_user.steam_uid)
           else
-            deliver!(query: "player_info", uid: current_user.esm_user.steam_uid)
+            deliver!(query: "player_info", uid: current_user.steam_uid)
           end
         end
 

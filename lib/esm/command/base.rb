@@ -5,6 +5,7 @@
 module ESM
   module Command
     class Base
+      include Checks
       include Definition
       include Metadata
       include Helpers

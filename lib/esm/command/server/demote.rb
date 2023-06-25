@@ -19,8 +19,8 @@ module ESM
         argument :target
 
         def on_execute
-          # Check for registered target_user. A steam_uid is valid here
-          @checks.registered_target_user! if target_user.is_a?(Discordrb::User)
+          # Check for registered target_user. A steam_uid is valid here so don't check ESM::User::Ephemeral
+          check_registered_target_user! if target_user.is_a?(ESM::User)
 
           deliver!(
             function_name: "demotePlayer",

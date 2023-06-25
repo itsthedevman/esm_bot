@@ -8,7 +8,7 @@ module ESM
         requires :registration
 
         # Skipped because of `stats` argument. This is manually checked in `#discord`
-        skip_check :connected_server
+        skip_action :connected_server
 
         define :enabled, modifiable: true, default: true
         define :whitelist_enabled, modifiable: true, default: false
@@ -22,14 +22,14 @@ module ESM
         def on_execute
           return reply(send_stats) if @arguments.amount == "stats"
 
-          @checks.connected_server!
+          check_connected_server!
           check_for_bad_amount!
 
           deliver!(
             function_name: "gamble",
-            uid: current_user.esm_user.steam_uid,
+            uid: current_user.steam_uid,
             amount: @arguments.amount,
-            id: current_user.id,
+            id: current_user.discord_id,
             name: current_user.name
           )
         end
@@ -50,7 +50,7 @@ module ESM
         end
 
         def gamble_stat
-          @gamble_stat ||= ESM::UserGambleStat.where(server_id: target_server.id, user_id: current_user.esm_user.id).first_or_create
+          @gamble_stat ||= ESM::UserGambleStat.where(server_id: target_server.id, user_id: current_user.id).first_or_create
         end
 
         def send_stats

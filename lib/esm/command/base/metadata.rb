@@ -5,30 +5,7 @@ module ESM
     class Base
       module Metadata
         def usage
-          @usage ||= "#{distinct} #{@arguments.map(&:to_s).join(" ")}"
-        end
-
-        # Don't memoize this, prefix can change based on when its called
-        def distinct
-          "#{prefix}#{name}"
-        end
-
-        def offset
-          distinct.size
-        end
-
-        def example
-          I18n.t("commands.#{@name}.example", prefix: prefix, default: "")
-        end
-
-        def description
-          I18n.t("commands.#{@name}.description", prefix: prefix, default: "")
-        end
-
-        def prefix
-          return ESM.config.prefix if current_community&.command_prefix.nil?
-
-          current_community.command_prefix
+          @usage ||= "#{path} #{arguments.map(&:to_s).join(" ")}"
         end
 
         def to_h

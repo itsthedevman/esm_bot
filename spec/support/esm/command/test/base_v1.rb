@@ -21,7 +21,7 @@ module ESM
         argument :target
         argument :_integer, regex: /1/, description: "test_base._integer", type: :integer
         argument :_preserve, regex: /preserve/, description: "test_base._preserve", preserve: true
-        argument :_display_as, regex: /display_as/, description: "test_base._display_as", display_as: "sa_yalpsid"
+        argument :_display_as, regex: /display_name/, description: "test_base._display_as", display_name: "sa_yalpsid"
 
         # Leave these at the end
         argument :_default, regex: /default/, description: "test_base._default", default: "not_default"

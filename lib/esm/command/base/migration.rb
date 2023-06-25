@@ -9,11 +9,11 @@ module ESM
 
         class_methods do
           def has_v1_variant!
-            @has_v1_variant = true
+            self.has_v1_variant = true
           end
 
           def has_v1_variant?
-            @has_v1_variant == true
+            has_v1_variant == true
           end
         end
 
@@ -80,17 +80,12 @@ module ESM
           ESM::Websocket.deliver!(target_server.server_id, request)
         end
 
-        # Using method because requests need the v1 name stored in @name
-        def name
-          @name.sub("_v1", "")
-        end
-
         def v2_target_server?
           target_server&.v2? || false
         end
 
         def v2?
-          !@name.ends_with?("_v1")
+          !name.ends_with?("_v1")
         end
       end
     end

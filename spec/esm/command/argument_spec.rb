@@ -17,12 +17,12 @@ describe ESM::Command::Argument do
   end
 
   describe "Display Name Argument" do
-    let(:argument) { ESM::Command::Argument.new(:foo, {regex: /foo/, display_as: "FOOBAR", description: "Test"}) }
+    let(:argument) { ESM::Command::Argument.new(:foo, {regex: /foo/, display_name: "FOOBAR", description: "Test"}) }
 
     it "has a different display name" do
-      expect(argument.display_as).not_to be_nil
-      expect(argument.display_as).to eq("FOOBAR")
-      expect(argument.name).not_to eq(argument.display_as)
+      expect(argument.display_name).not_to be_nil
+      expect(argument.display_name).to eq("FOOBAR")
+      expect(argument.name).not_to eq(argument.display_name)
     end
   end
 
@@ -46,8 +46,8 @@ describe ESM::Command::Argument do
     let(:argument) { ESM::Command::Argument.new(:foo, {regex: /hello/, default: "Hello World", description: "Test"}) }
 
     it "has a default value" do
-      expect(argument.default?).to be(true)
-      expect(argument.default).to eq("Hello World")
+      expect(argument.default_value?).to be(true)
+      expect(argument.default_value).to eq("Hello World")
     end
   end
 
@@ -71,7 +71,7 @@ describe ESM::Command::Argument do
     end
 
     it "has a display name" do
-      expect(argument.display_as).to eq("foo")
+      expect(argument.display_name).to eq("foo")
     end
 
     it "has a nil default" do
@@ -79,7 +79,7 @@ describe ESM::Command::Argument do
     end
 
     it "does not have a default" do
-      expect(argument.default?).to be(false)
+      expect(argument.default_value?).to be(false)
     end
 
     it "has a description" do
@@ -98,8 +98,8 @@ describe ESM::Command::Argument do
       expect(argument.to_s).to eq("<?foo>")
     end
 
-    it "uses the display_as" do
-      argument = ESM::Command::Argument.new(:foo, {regex: /.+/, display_as: "bar", description: "test"})
+    it "uses the display_name" do
+      argument = ESM::Command::Argument.new(:foo, {regex: /.+/, display_name: "bar", description: "test"})
       expect(argument.to_s).to eq("<bar>")
     end
   end

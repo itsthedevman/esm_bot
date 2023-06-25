@@ -7,7 +7,6 @@ module ESM
         set_type :development
         requires :dev
 
-
         define :enabled, modifiable: false, default: true
         define :whitelist_enabled, modifiable: false, default: false
         define :whitelisted_role_ids, modifiable: false, default: []

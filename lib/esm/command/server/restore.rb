@@ -19,7 +19,7 @@ module ESM
         argument :territory_id
 
         def on_execute
-          @checks.owned_server!
+          check_owned_server!
           deliver!(query: "restore", territory_id: @arguments.territory_id)
         end
 

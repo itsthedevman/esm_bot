@@ -17,7 +17,7 @@ module ESM
 
         def on_execute
           # Create a confirmation request to the requestee
-          @checks.pending_request!
+          check_pending_request!
           add_request(
             to: current_user,
             description: I18n.t(
