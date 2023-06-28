@@ -98,7 +98,8 @@ module ESM
 
       attr_reader :name, :display_name, :command_name,
         :default_value, :cast_type, :modifier,
-        :description_short, :description_long, :optional_text
+        :description_short, :description_long, :optional_text,
+        :options
 
       #
       # A configurable representation of a command argument
@@ -134,6 +135,9 @@ module ESM
       #     If the value is a Proc, it will be called and the raw value passed in
       #     Valid options: :json, :symbol
       # @option opts [Proc] :modifier Optional. A block of code used to modify this argument's value before validation
+      # @option opts [Array<String>] :choices Optional. A list of choices the user can pick for this argument
+      # @option opts [Integer] :min_value If type is integer/number, this is the minimum value that can be selected
+      # @option opts [Integer] :max_value If type is integer/number, this is the maximum value that can be selected
       #
       def initialize(name, type, opts = {})
         template_name = (opts[:template] || name).to_sym
@@ -148,9 +152,14 @@ module ESM
         @preserve_case = !!opts[:preserve_case]
         @type_caster = opts[:type_caster]
         @modifier = opts[:modifier] || ->(_) {}
+        @options = {
+          choices: opts[:choices],
+          min_value: opts[:min_value],
+          max_value: opts[:max_value]
+        }
 
-        @description_short = load_locale_or_provided(opts[:description], "desc_short")
-        @description_long = load_locale_or_provided(opts[:description_long], "desc_long")
+        @description_short = load_locale_or_provided(opts[:description], "description")
+        @description_long = load_locale_or_provided(opts[:description_long], "description_long") || @description_short
 
         @optional_text =
           if (text = opts[:optional_text].presence)
@@ -231,6 +240,20 @@ module ESM
 
         output << "**Note:** #{optional_text}" if optional_text?
         output.join("\n")
+      end
+
+      def to_h
+        {
+          name: name,
+          command_name: command_name,
+          display_name: display_name,
+          description_short: description_short,
+          description_long: description_long,
+          optional_text: optional_text,
+          default_value: default_value,
+          cast_type: cast_type,
+          modifier: modifier
+        }
       end
 
       private
