@@ -34,10 +34,6 @@ module ESM
       :direct_message_typing
     ).keys.freeze
 
-    def self.register_command(command_class)
-      warn!(command_class: command_class)
-    end
-
     attr_reader :config, :prefix, :metadata
 
     def initialize
@@ -171,6 +167,13 @@ module ESM
     ###########################
     # Public Methods
     ###########################
+
+    def register_command(server_id = nil, &block)
+      register_application_command(
+        :esm, "Commands for Exile Server Manager",
+        server_id: server_id, &block
+      )
+    end
 
     #
     # Checks if the bot has send permission to the provided channel
