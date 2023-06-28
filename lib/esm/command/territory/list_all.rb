@@ -2,7 +2,7 @@
 
 module ESM
   module Command
-    module Server
+    module Territory
       class ListAll < ESM::Command::Base
         command_type :admin
 

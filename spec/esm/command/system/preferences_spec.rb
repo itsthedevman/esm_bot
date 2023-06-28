@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-describe ESM::Command::System::Preferences, category: "command" do
-  let!(:command) { ESM::Command::System::Preferences.new }
+describe ESM::Command::Player::Preferences, category: "command" do
+  let!(:command) { ESM::Command::Player::Preferences.new }
 
   it "should be valid" do
     expect(command).not_to be_nil
@@ -23,7 +23,7 @@ describe ESM::Command::System::Preferences, category: "command" do
     let!(:community) { ESM::Test.community }
     let!(:server) { ESM::Test.server }
     let!(:user) { ESM::Test.user }
-    let!(:types) { ESM::Command::System::Preferences::TYPES.dup[1..] }
+    let!(:types) { ESM::Command::Player::Preferences::TYPES.dup[1..] }
     let(:type) { types.sample }
     let(:preference) { ESM::UserNotificationPreference.where(server_id: server.id, user_id: user.id).first }
 

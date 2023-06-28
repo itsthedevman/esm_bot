@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-describe ESM::Command::General::Mode, category: "command" do
-  let!(:command) { ESM::Command::General::Mode.new }
+describe ESM::Command::Community::Mode, category: "command" do
+  let!(:command) { ESM::Command::Community::Mode.new }
 
   it "should be valid" do
     expect(command).not_to be_nil

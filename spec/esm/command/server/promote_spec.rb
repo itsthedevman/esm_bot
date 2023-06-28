@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-describe ESM::Command::Server::Promote, category: "command" do
-  let!(:command) { ESM::Command::Server::Promote.new }
+describe ESM::Command::Territory::Promote, category: "command" do
+  let!(:command) { ESM::Command::Territory::Promote.new }
   let(:territory_id) { Faker::Alphanumeric.alphanumeric(number: 3..30) }
 
   it "should be valid" do

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-describe ESM::Command::Server::Remove, category: "command" do
-  let!(:command) { ESM::Command::Server::Remove.new }
+describe ESM::Command::Territory::Remove, category: "command" do
+  let!(:command) { ESM::Command::Territory::Remove.new }
   let(:territory_id) { Faker::Alphanumeric.alphanumeric(number: 3..30) }
 
   it "should be valid" do

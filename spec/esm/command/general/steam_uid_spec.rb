@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-describe ESM::Command::General::SteamUid, category: "command" do
-  let!(:command) { ESM::Command::General::SteamUid.new }
+describe ESM::Command::Player::SteamUid, category: "command" do
+  let!(:command) { ESM::Command::Player::SteamUid.new }
 
   it "should be valid" do
     expect(command).not_to be_nil

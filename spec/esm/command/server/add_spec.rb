@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-describe ESM::Command::Server::Add, category: "command" do
-  let!(:command) { ESM::Command::Server::Add.new }
+describe ESM::Command::Territory::Add, category: "command" do
+  let!(:command) { ESM::Command::Territory::Add.new }
 
   describe "V1" do
     it "should be valid" do

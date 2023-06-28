@@ -6,7 +6,7 @@ module ESM
       class ServerSuccessCommand < ESM::Command::Base
         has_v1_variant!
 
-        set_type :player
+        command_type :player
         requires :registration
 
         define :enabled, modifiable: true, default: true

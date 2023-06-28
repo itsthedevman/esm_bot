@@ -4,7 +4,7 @@ module ESM
   module Command
     module Test
       class SkipServerCheckCommand < ESM::Command::Base
-        set_type :player
+        command_type :player
 
         skip_action :connected_server
 

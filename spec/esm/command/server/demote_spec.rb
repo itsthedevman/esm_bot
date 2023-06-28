@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-describe ESM::Command::Server::Demote, category: "command" do
-  let!(:command) { ESM::Command::Server::Demote.new }
+describe ESM::Command::Territory::Demote, category: "command" do
+  let!(:command) { ESM::Command::Territory::Demote.new }
   let(:territory_id) { Faker::Alphanumeric.alphanumeric(number: 3..30) }
 
   it "should be valid" do

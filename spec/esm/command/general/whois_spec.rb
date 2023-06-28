@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-describe ESM::Command::General::Whois, category: "command" do
-  let!(:command) { ESM::Command::General::Whois.new }
+describe ESM::Command::Player::Whois, category: "command" do
+  let!(:command) { ESM::Command::Player::Whois.new }
 
   before :example do
     ESM::Test.skip_cooldown = true

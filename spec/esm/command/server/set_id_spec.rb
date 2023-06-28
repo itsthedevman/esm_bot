@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-describe ESM::Command::Server::SetId, category: "command" do
-  let!(:command) { ESM::Command::Server::SetId.new }
+describe ESM::Command::Territory::SetId, category: "command" do
+  let!(:command) { ESM::Command::Territory::SetId.new }
 
   it "should be valid" do
     expect(command).not_to be_nil

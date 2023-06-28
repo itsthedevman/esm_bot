@@ -6,7 +6,7 @@ module ESM
       class BaseV1 < ESM::Command::Base
         ARGUMENT_COUNT = 7
 
-        set_type :player
+        command_type :player
 
         requires :registration
 

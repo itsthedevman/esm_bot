@@ -4,7 +4,7 @@ module ESM
   module Command
     module Test
       class DirectMessageCommand < ESM::Command::Base
-        set_type :player
+        command_type :player
         limit_to :dm
 
         define :enabled, modifiable: true, default: true

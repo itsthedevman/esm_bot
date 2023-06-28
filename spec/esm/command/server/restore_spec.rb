@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-describe ESM::Command::Server::Restore, category: "command" do
-  let!(:command) { ESM::Command::Server::Restore.new }
+describe ESM::Command::Territory::Restore, category: "command" do
+  let!(:command) { ESM::Command::Territory::Restore.new }
   let(:territory_id) { Faker::Alphanumeric.alphanumeric(number: 3..30) }
 
   it "should be valid" do

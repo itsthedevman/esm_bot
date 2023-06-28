@@ -2,7 +2,7 @@
 
 module ESM
   module Command
-    module System
+    module Player
       class Whois < ESM::Command::Base
         command_type :admin
         limit_to :text
