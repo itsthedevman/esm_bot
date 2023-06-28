@@ -19,7 +19,7 @@ module ESM
               if v2_target_server? || !self.class.has_v1_variant?
                 self
               else
-                "#{self.class}V1".constantize.new
+                ESM::Command.get_v1(self.class.name).new
               end
 
             timers.time!(:from_discord) do
