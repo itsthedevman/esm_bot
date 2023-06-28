@@ -2,9 +2,9 @@
 
 module ESM
   module Command
-    module Server
+    module Territory
       class SetId < ESM::Command::Base
-        set_type :player
+        command_type :player
 
         requires :registration
 

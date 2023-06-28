@@ -3,9 +3,9 @@
 # New command? Make sure to create a migration to add the configuration to all communities
 module ESM
   module Command
-    module Server
+    module Territory
       class Restore < ESM::Command::Base
-        set_type :admin
+        command_type :admin
         limit_to :text
         requires :registration
 

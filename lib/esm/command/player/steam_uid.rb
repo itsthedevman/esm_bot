@@ -3,9 +3,9 @@
 # New command? Make sure to create a migration to add the configuration to all communities
 module ESM
   module Command
-    module General
+    module Player
       class SteamUid < ESM::Command::Base
-        set_type :player
+        command_type :player
 
         requires :registration
 

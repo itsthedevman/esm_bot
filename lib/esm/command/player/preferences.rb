@@ -2,7 +2,7 @@
 
 module ESM
   module Command
-    module System
+    module Player
       class Preferences < ESM::Command::Base
         TYPES = %w[
           all
@@ -19,7 +19,7 @@ module ESM
           marxet-item-sold
         ].freeze
 
-        set_type :player
+        command_type :player
 
         limit_to :dm
         requires :registration

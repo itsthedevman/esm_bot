@@ -2,9 +2,9 @@
 
 module ESM
   module Command
-    module General
+    module Community
       class Mode < ESM::Command::Base
-        set_type :admin
+        command_type :admin
         limit_to :dm
 
         define :enabled, modifiable: false, default: true

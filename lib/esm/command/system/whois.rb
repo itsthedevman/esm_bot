@@ -2,9 +2,9 @@
 
 module ESM
   module Command
-    module General
+    module System
       class Whois < ESM::Command::Base
-        set_type :admin
+        command_type :admin
         limit_to :text
 
         define :enabled, modifiable: true, default: true

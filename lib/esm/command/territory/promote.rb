@@ -3,9 +3,9 @@
 # New command? Make sure to create a migration to add the configuration to all communities
 module ESM
   module Command
-    module Server
-      class Remove < ESM::Command::Base
-        set_type :player
+    module Territory
+      class Promote < ESM::Command::Base
+        command_type :player
         requires :registration
 
         define :enabled, modifiable: true, default: true
@@ -23,7 +23,7 @@ module ESM
           check_registered_target_user! if target_user.is_a?(ESM::User)
 
           deliver!(
-            function_name: "removePlayerFromTerritory",
+            function_name: "promotePlayer",
             territory_id: @arguments.territory_id,
             target_uid: target_uid,
             uid: current_user.steam_uid
@@ -32,7 +32,7 @@ module ESM
 
         def on_response(_, _)
           message = I18n.t(
-            "commands.remove.success_message",
+            "commands.promote.success_message",
             user: current_user.mention,
             target_uid: target_uid,
             territory_id: @arguments.territory_id,

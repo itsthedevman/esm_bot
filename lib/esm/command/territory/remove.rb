@@ -3,9 +3,9 @@
 # New command? Make sure to create a migration to add the configuration to all communities
 module ESM
   module Command
-    module Server
-      class Demote < ESM::Command::Base
-        set_type :player
+    module Territory
+      class Remove < ESM::Command::Base
+        command_type :player
         requires :registration
 
         define :enabled, modifiable: true, default: true
@@ -19,11 +19,11 @@ module ESM
         argument :target
 
         def on_execute
-          # Check for registered target_user. A steam_uid is valid here so don't check ESM::User::Ephemeral
+          # Check for registered target_user
           check_registered_target_user! if target_user.is_a?(ESM::User)
 
           deliver!(
-            function_name: "demotePlayer",
+            function_name: "removePlayerFromTerritory",
             territory_id: @arguments.territory_id,
             target_uid: target_uid,
             uid: current_user.steam_uid
@@ -32,7 +32,7 @@ module ESM
 
         def on_response(_, _)
           message = I18n.t(
-            "commands.demote.success_message",
+            "commands.remove.success_message",
             user: current_user.mention,
             target_uid: target_uid,
             territory_id: @arguments.territory_id,

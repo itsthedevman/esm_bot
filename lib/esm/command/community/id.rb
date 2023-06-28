@@ -2,9 +2,9 @@
 
 module ESM
   module Command
-    module General
+    module Community
       class Id < ESM::Command::Base
-        set_type :player
+        command_type :player
         limit_to :text
 
         define :enabled, modifiable: false, default: true
