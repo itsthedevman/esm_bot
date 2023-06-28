@@ -4,7 +4,7 @@ module ESM
   module Command
     module System
       class Accept < ESM::Command::Base
-        set_type :player
+        command_type :player
         limit_to :dm
 
         define :enabled, modifiable: false, default: true

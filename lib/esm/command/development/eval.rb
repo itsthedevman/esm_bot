@@ -4,7 +4,7 @@ module ESM
   module Command
     module Development
       class Eval < ESM::Command::Base
-        set_type :development
+        command_type :development
         requires :dev
 
         define :enabled, modifiable: false, default: true

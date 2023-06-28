@@ -6,7 +6,7 @@ module ESM
       class Sqf < ESM::Command::Base
         has_v1_variant!
 
-        set_type :admin
+        command_type :admin
 
         limit_to :text
         requires :registration

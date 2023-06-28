@@ -5,7 +5,7 @@ module ESM
   module Command
     module Server
       class Uptime < ESM::Command::Base
-        set_type :player
+        command_type :player
 
 
         define :enabled, modifiable: true, default: true

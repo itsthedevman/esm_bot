@@ -5,7 +5,10 @@ module ESM
   module Command
     module General
       class Register < ESM::Command::Base
-        set_type :player
+        command_type :player
+
+        clear_namespaces!
+        use_root_namespace
 
         define :enabled, modifiable: false, default: true
         define :whitelist_enabled, modifiable: false, default: false

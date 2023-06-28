@@ -4,8 +4,7 @@ module ESM
   module Command
     module Entertainment
       class Meow < ESM::Command::Base
-        set_type :player
-
+        command_type :player
 
         define :enabled, modifiable: false, default: true
         define :whitelist_enabled, modifiable: false, default: false

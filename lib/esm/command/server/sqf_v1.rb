@@ -5,7 +5,7 @@ module ESM
   module Command
     module Server
       class SqfV1 < ESM::Command::Base
-        set_type :admin
+        command_type :admin
 
         limit_to :text
         requires :registration

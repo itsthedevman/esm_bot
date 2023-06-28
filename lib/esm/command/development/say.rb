@@ -4,7 +4,7 @@ module ESM
   module Command
     module Development
       class Say < ESM::Command::Base
-        set_type :development
+        command_type :development
         requires :dev
 
         define :enabled, modifiable: false, default: true

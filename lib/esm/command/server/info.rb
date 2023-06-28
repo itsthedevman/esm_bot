@@ -4,7 +4,7 @@ module ESM
   module Command
     module Server
       class Info < ESM::Command::Base
-        set_type :admin
+        command_type :admin
         limit_to :text
         requires :registration
 

@@ -2,9 +2,9 @@
 
 module ESM
   module Command
-    module Community
-      class Server < ESM::Command::Base
-        set_type :player
+    module Server
+      class Show < ESM::Command::Base
+        command_type :player
 
         define :enabled, modifiable: true, default: true
         define :whitelist_enabled, modifiable: true, default: false
@@ -13,6 +13,7 @@ module ESM
         define :cooldown_time, modifiable: true, default: 2.seconds
 
         argument :server_id
+
         skip_action :connected_server
 
         def on_execute

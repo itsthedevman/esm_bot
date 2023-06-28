@@ -4,8 +4,10 @@ module ESM
   module Command
     module General
       class Help < ESM::Command::Base
-        set_type :player
+        command_type :player
 
+        clear_namespaces!
+        use_root_namespace # Set the namespace to /esm help
 
         define :enabled, modifiable: false, default: true
         define :whitelist_enabled, modifiable: false, default: false

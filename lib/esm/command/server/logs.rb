@@ -28,7 +28,7 @@ module ESM
           "déc" => "dec"
         }.freeze
 
-        set_type :admin
+        command_type :admin
         limit_to :text
         requires :registration
 
