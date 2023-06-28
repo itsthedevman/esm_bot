@@ -22,14 +22,28 @@ module ESM
     def self.[](command_name)
       return if command_name.blank?
 
-      @all.find { |command| command_name == command.name }
+      command_name = command_name.to_s
+      @all.find { |command| command_name == command.command_name }
     end
 
     # V1
     def self.get_v1(command_name)
       return if command_name.blank?
 
-      @v1.find { |command| command_name == command.name }
+      command_name = command_name.to_s
+      @v1.find { |command| command_name == command.command_name }
+    end
+
+    def self.by_type
+      @by_type
+    end
+
+    def self.admin_commands
+      @by_type[:admin]
+    end
+
+    def self.player_commands
+      @by_type[:player]
     end
 
     def self.include?(command_name)
@@ -39,61 +53,44 @@ module ESM
     def self.load
       @all = []
       @v1 = [] # V1
-      @by_type = nil
-      cache = []
+      @by_type = []
 
+      commands_needing_cached = []
       ESM::Command::Base.subclasses.each do |command_class|
-        if command_class.name.include?("v1") # V1
-          @v1 << command_class # V1
-        else
-          # Tell the bot about our command
-          ESM::Bot.register_command(command_class)
+        # Background commands do not have types
+        next if command_class.type.nil?
 
-          # Cache Command
-          cache << cache(command_class)
+        # V1 - Skip because the V2 command is the one we want to cache
+        if command_class.name.downcase.end_with?("v1")
+          @v1 << command_class
+          next
         end
+
+        @all << command_class
+        next if !TYPES.include?(command_class.type)
+
+        # To be written to the DB in bulk
+        command = command_class.new
+        commands_needing_cached << {
+          command_name: command.name,
+          command_type: command.type,
+          command_category: command.category,
+          command_description: command.description,
+          command_example: command.example,
+          command_usage: command.arguments.map(&:to_s).join(" "),
+          command_arguments: command.arguments.to_s,
+          command_defines: command.defines.to_h
+        }
       end
 
       # Lock it!
       @all.freeze
+      @by_type = @all.group_by(&:type).freeze
 
       # Run some jobs for command
-      RebuildCommandCacheJob.perform_async(cache)
+      RebuildCommandCacheJob.perform_async(commands_needing_cached)
       SyncCommandConfigurationsJob.perform_async(nil)
       SyncCommandCountsJob.perform_async(nil)
-    end
-
-    def self.parse_command_name_from_path(command_path)
-      command_path.gsub("#{File.expand_path("..", command_path)}/", "").gsub(/\.rb$/, "")
-    end
-
-    def self.cache(command_class)
-      command = command_class.new
-
-      # Background commands do not have types
-      return if command.type.nil?
-
-      # Use command_name instead of command.name to get set_id instead of setid
-      @all << command_class
-
-      # Don't cache invalid command types.
-      return if !TYPES.include?(command.type)
-
-      # To be written to the DB in bulk
-      {
-        command_name: command.name,
-        command_type: command.type,
-        command_category: command.category,
-        command_description: command.description,
-        command_example: command.example,
-        command_usage: command.arguments.map(&:to_s).join(" "),
-        command_arguments: command.arguments.to_s,
-        command_defines: command.defines.to_h
-      }
-    end
-
-    def self.by_type
-      @by_type ||= @all.group_by(&:type)
     end
 
     #
