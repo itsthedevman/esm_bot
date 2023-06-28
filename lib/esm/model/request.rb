@@ -30,7 +30,7 @@ module ESM
 
       # Build the command
       command =
-        if command_name.ends_with?("v1")
+        if command_name.downcase.ends_with?("v1")
           ESM::Command.get_v1(command_name).new
         else
           ESM::Command[command_name].new
