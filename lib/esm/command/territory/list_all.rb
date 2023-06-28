@@ -3,8 +3,8 @@
 module ESM
   module Command
     module Server
-      class ServerTerritories < ESM::Command::Base
-        set_type :admin
+      class ListAll < ESM::Command::Base
+        command_type :admin
 
         limit_to :text
         requires :registration
