@@ -3,7 +3,10 @@
 module ESM
   module Command
     module Territory
-      class ListAll < ESM::Command::Base
+      class ServerTerritories < ESM::Command::Base
+        clear_namespaces!
+        add_namespace :admin, :territory, command_name: :list
+        
         command_type :admin
 
         limit_to :text
@@ -16,7 +19,7 @@ module ESM
         define :cooldown_time, modifiable: true, default: 2.seconds
 
         argument :server_id
-        argument :order_by, regex: /id|territory_name|owner_uid/, description: "commands.server_territories.arguments.order_by", default: :territory_name, type: :symbol
+        argument :order_by, regex: /id|territory_name|owner_uid/, default: :territory_name, type: :symbol
 
         def on_execute
           check_owned_server!

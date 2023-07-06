@@ -3,7 +3,10 @@
 module ESM
   module Command
     module Territory
-      class List < ESM::Command::Base
+      class Territories < ESM::Command::Base
+        clear_namespaces!
+        add_namespace :territory, command_name: :list
+
         command_type :player
         requires :registration
 
