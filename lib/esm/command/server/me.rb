@@ -5,6 +5,8 @@ module ESM
     module Server
       class Me < ESM::Command::Base
         command_type :player
+        command_namespace :server, command_name: :my_player
+
         requires :registration
 
         define :enabled, modifiable: true, default: true

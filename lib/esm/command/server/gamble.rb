@@ -5,6 +5,7 @@ module ESM
     module Server
       class Gamble < ESM::Command::Base
         command_type :player
+
         requires :registration
 
         # Skipped because of `stats` argument. This is manually checked in `#discord`
@@ -17,7 +18,7 @@ module ESM
         define :cooldown_time, modifiable: true, default: 2.seconds
 
         argument :server_id
-        argument :amount, regex: /(?!-\d+$)\d+|half|all|stats/, description: "commands.gamble.arguments.amount"
+        argument :amount, regex: /(?!-\d+$)\d+|half|all|stats/
 
         def on_execute
           return reply(send_stats) if @arguments.amount == "stats"

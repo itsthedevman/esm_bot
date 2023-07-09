@@ -4,10 +4,8 @@ module ESM
   module Command
     module Territory
       class ServerTerritories < ESM::Command::Base
-        clear_namespaces!
-        add_namespace :admin, :territory, command_name: :list
-        
         command_type :admin
+        command_namespace :territory, :admin, command_name: :list
 
         limit_to :text
         requires :registration

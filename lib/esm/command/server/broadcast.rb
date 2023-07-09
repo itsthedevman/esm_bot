@@ -6,6 +6,8 @@ module ESM
     module Server
       class Broadcast < ESM::Command::Base
         command_type :admin
+        command_namespace :server, :admin
+
         limit_to :text
         requires :registration
 
@@ -18,7 +20,6 @@ module ESM
         argument(
           :broadcast_to,
           regex: ESM::Regex::BROADCAST,
-          description: "commands.broadcast.arguments.broadcast_to",
           modifier: lambda do |argument|
             return if argument.content.blank?
             return if %w[all preview].include?(argument.content)
@@ -31,7 +32,7 @@ module ESM
           end
         )
 
-        argument :message, regex: /(.|[\r\n])+/, description: "commands.broadcast.arguments.message", preserve: true
+        argument :message, regex: /(.|[\r\n])+/, preserve: true
 
         def on_execute
           check_for_message_length!

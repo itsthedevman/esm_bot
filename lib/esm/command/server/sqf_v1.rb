@@ -18,8 +18,8 @@ module ESM
         define :cooldown_time, modifiable: true, default: 2.seconds
 
         argument :server_id
-        argument :target, description: "commands.sqf_v1.arguments.execution_target", default: nil, display_name: :execution_target
-        argument :code_to_execute, regex: /[\s\S]+/, description: "commands.sqf_v1.arguments.code_to_execute", preserve: true
+        argument :target, default: nil, display_name: :execution_target
+        argument :code_to_execute, regex: /[\s\S]+/, preserve: true
 
         def on_execute
           check_owned_server!

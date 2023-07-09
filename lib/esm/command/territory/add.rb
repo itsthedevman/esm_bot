@@ -5,6 +5,8 @@ module ESM
     module Territory
       class Add < ESM::Command::Base
         command_type :player
+        command_namespace :territory, command_name: :add_player
+
         requires :registration
 
         define :enabled, modifiable: true, default: true

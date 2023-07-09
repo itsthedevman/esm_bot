@@ -5,6 +5,7 @@ module ESM
     module Territory
       class Pay < ESM::Command::Base
         command_type :player
+
         requires :registration
 
         define :enabled, modifiable: true, default: true

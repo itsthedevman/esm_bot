@@ -6,6 +6,8 @@ module ESM
     module Territory
       class Remove < ESM::Command::Base
         command_type :player
+        command_namespace :territory, command_name: :remove_player
+
         requires :registration
 
         define :enabled, modifiable: true, default: true

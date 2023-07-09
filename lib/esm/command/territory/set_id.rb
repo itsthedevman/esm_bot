@@ -16,7 +16,7 @@ module ESM
 
         argument :server_id
         argument :old_territory_id, template: :territory_id
-        argument :new_territory_id, template: :territory_id, description: "commands.set_id.arguments.new_territory_id"
+        argument :new_territory_id, template: :territory_id
 
         def on_execute
           # Require at least 3 characters and a max of 30

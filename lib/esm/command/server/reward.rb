@@ -6,6 +6,7 @@ module ESM
     module Server
       class Reward < ESM::Command::Base
         command_type :player
+
         requires :registration
 
         define :enabled, modifiable: true, default: true

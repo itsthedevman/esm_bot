@@ -29,6 +29,8 @@ module ESM
         }.freeze
 
         command_type :admin
+        command_namespace :server, :admin, command_name: :search_logs
+
         limit_to :text
         requires :registration
 
@@ -44,7 +46,7 @@ module ESM
         argument :server_id
 
         # In order to utilize the `#target_user` logic, the argument must have a name as target.
-        argument :target, regex: /.+/, description: "commands.logs.arguments.query", display_name: :query
+        argument :target, regex: /.+/, display_name: :query
 
         def on_execute
           query = ""

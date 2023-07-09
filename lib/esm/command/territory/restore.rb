@@ -6,6 +6,8 @@ module ESM
     module Territory
       class Restore < ESM::Command::Base
         command_type :admin
+        command_namespace :territory, :admin
+
         limit_to :text
         requires :registration
 

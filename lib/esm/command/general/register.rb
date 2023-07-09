@@ -6,8 +6,6 @@ module ESM
     module General
       class Register < ESM::Command::Base
         command_type :player
-
-        clear_namespaces!
         use_root_namespace
 
         define :enabled, modifiable: false, default: true

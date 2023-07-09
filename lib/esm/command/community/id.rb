@@ -5,6 +5,7 @@ module ESM
     module Community
       class Id < ESM::Command::Base
         command_type :player
+
         limit_to :text
 
         define :enabled, modifiable: false, default: true

@@ -5,6 +5,8 @@ module ESM
     module Server
       class Reset < ESM::Command::Base
         command_type :admin
+        command_namespace :server, :admin, command_name: :reset_player
+
         limit_to :text
         requires :registration
 

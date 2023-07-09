@@ -29,6 +29,7 @@ module ESM
         #         TODO
         #
         command_type :player
+
         requires :registration
 
         define :enabled, modifiable: true, default: true
@@ -38,7 +39,7 @@ module ESM
         define :cooldown_time, modifiable: false, default: 2.seconds # Don't allow adjusting this cooldown. Each reward has it's own cooldown
 
         argument :server_id
-        argument :reward_id, description: "commands.reward.arguments.reward_id", regex: ESM::Regex::REWARD_ID, default: nil
+        argument :reward_id, regex: ESM::Regex::REWARD_ID, default: nil
 
         # FOR DEV ONLY
         # skip_action :cooldown, :connected_server

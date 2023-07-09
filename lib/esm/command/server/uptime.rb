@@ -7,7 +7,6 @@ module ESM
       class Uptime < ESM::Command::Base
         command_type :player
 
-
         define :enabled, modifiable: true, default: true
         define :whitelist_enabled, modifiable: true, default: false
         define :whitelisted_role_ids, modifiable: true, default: []

@@ -5,6 +5,8 @@ module ESM
     module Community
       class Mode < ESM::Command::Base
         command_type :admin
+        command_namespace :community, :admin, command_name: :change_mode
+
         limit_to :dm
 
         define :enabled, modifiable: false, default: true
@@ -14,7 +16,7 @@ module ESM
         define :cooldown_time, modifiable: false, default: 2.seconds
 
         argument :community_id
-        argument :mode, regex: /player|server/, description: "commands.mode.arguments.mode"
+        argument :mode, regex: /player|server/
 
         def on_execute
           check_for_owner!

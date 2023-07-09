@@ -5,6 +5,8 @@ module ESM
     module Server
       class Info < ESM::Command::Base
         command_type :admin
+        command_namespace :server, :admin, command_name: :show
+
         limit_to :text
         requires :registration
 

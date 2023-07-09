@@ -5,9 +5,7 @@ module ESM
     module General
       class Help < ESM::Command::Base
         command_type :player
-
-        clear_namespaces!
-        use_root_namespace # Set the namespace to /esm help
+        use_root_namespace
 
         define :enabled, modifiable: false, default: true
         define :whitelist_enabled, modifiable: false, default: false
@@ -15,7 +13,7 @@ module ESM
         define :allowed_in_text_channels, modifiable: false, default: true
         define :cooldown_time, modifiable: false, default: 2.seconds
 
-        argument :category, regex: /.*/, default: nil, description: "commands.help.arguments.category"
+        argument :category, regex: /.*/, default: nil
 
         def on_execute
           case @arguments.category

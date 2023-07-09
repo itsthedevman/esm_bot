@@ -4,10 +4,9 @@ module ESM
   module Command
     module Territory
       class Territories < ESM::Command::Base
-        clear_namespaces!
-        add_namespace :territory, command_name: :list
-
         command_type :player
+        command_namespace :territory, command_name: :list
+
         requires :registration
 
         define :enabled, modifiable: true, default: true

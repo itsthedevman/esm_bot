@@ -4,9 +4,10 @@ module ESM
   module Command
     module Server
       class Sqf < ESM::Command::Base
-        has_v1_variant!
-
         command_type :admin
+        command_namespace :server, :admin, command_name: :execute_code
+
+        has_v1_variant!
 
         limit_to :text
         requires :registration
@@ -18,8 +19,8 @@ module ESM
         define :cooldown_time, modifiable: true, default: 2.seconds
 
         argument :server_id
-        argument :target, regex: /#{ESM::Regex::TARGET.source}|server|all|everyone/i, description: "commands.sqf.arguments.execution_target", default: nil, display_name: :execution_target
-        argument :code_to_execute, regex: /[\s\S]+/, description: "commands.sqf.arguments.code_to_execute", preserve: true
+        argument :target, regex: /#{ESM::Regex::TARGET.source}|server|all|everyone/i, default: nil, display_name: :execution_target
+        argument :code_to_execute, regex: /[\s\S]+/, preserve: true
 
         skip_action :nil_target_user
 
