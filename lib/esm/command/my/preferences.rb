@@ -2,7 +2,7 @@
 
 module ESM
   module Command
-    module Player
+    module My
       class Preferences < ESM::Command::Base
         TYPES = %w[
           all
@@ -34,8 +34,8 @@ module ESM
         define :cooldown_time, modifiable: false, default: 2.seconds
 
         argument :server_id
-        argument :state, regex: /allow|deny/, description: "commands.preferences.arguments.state", default: nil
-        argument :type, regex: /#{TYPES.join("|")}/, description: "commands.preferences.arguments.type", default: "all"
+        argument :state, regex: /allow|deny/, default: nil
+        argument :type, regex: /#{TYPES.join("|")}/, default: "all"
 
         def on_execute
           return send_preferences if @arguments.state.nil?

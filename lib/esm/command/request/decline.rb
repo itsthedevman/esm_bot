@@ -2,9 +2,10 @@
 
 module ESM
   module Command
-    module System
+    module Request
       class Decline < ESM::Command::Base
         command_type :player
+
         limit_to :dm
 
         define :enabled, modifiable: false, default: true
@@ -13,7 +14,7 @@ module ESM
         define :allowed_in_text_channels, modifiable: false, default: true
         define :cooldown_time, modifiable: false, default: 2.seconds
 
-        argument :uuid, regex: /[0-9a-fA-F]{4}/, description: "commands.decline.arguments.uuid"
+        argument :uuid, regex: /[0-9a-fA-F]{4}/
 
         def on_execute
           request = current_user.pending_requests.where(uuid_short: @arguments.uuid).first

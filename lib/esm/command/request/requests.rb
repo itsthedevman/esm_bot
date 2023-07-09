@@ -2,9 +2,10 @@
 
 module ESM
   module Command
-    module System
+    module Request
       class Requests < ESM::Command::Base
         command_type :player
+        command_namespace :request, command_name: :list
 
         limit_to :dm
 

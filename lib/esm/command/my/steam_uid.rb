@@ -3,7 +3,7 @@
 # New command? Make sure to create a migration to add the configuration to all communities
 module ESM
   module Command
-    module Player
+    module My
       class SteamUid < ESM::Command::Base
         command_type :player
 

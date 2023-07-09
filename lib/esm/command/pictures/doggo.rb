@@ -2,7 +2,7 @@
 
 module ESM
   module Command
-    module Entertainment
+    module Pictures
       class Doggo < ESM::Command::Base
         command_type :player
 

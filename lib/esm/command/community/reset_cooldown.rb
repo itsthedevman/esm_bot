@@ -3,9 +3,11 @@
 # New command? Make sure to create a migration to add the configuration to all communities
 module ESM
   module Command
-    module Player
+    module Community
       class ResetCooldown < ESM::Command::Base
         command_type :admin
+        command_namespace :community, :admin
+
         limit_to :text
         requires :registration
 
@@ -23,7 +25,6 @@ module ESM
         argument(
           :command_name,
           regex: /\w+/,
-          description: "commands.reset_cooldown.arguments.command_name",
           default: nil,
           modifier: lambda do |argument|
             return if argument.content.nil?

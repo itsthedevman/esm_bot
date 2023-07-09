@@ -2,9 +2,11 @@
 
 module ESM
   module Command
-    module Player
+    module Community
       class Whois < ESM::Command::Base
         command_type :admin
+        command_namespace :community, :admin, command_name: :find_player
+
         limit_to :text
 
         define :enabled, modifiable: true, default: true
