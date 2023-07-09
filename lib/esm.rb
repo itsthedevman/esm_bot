@@ -29,6 +29,7 @@
   "neatjson",
   "puma",
   "puma/events",
+  "pry",
   "redis",
   "securerandom",
   "semantic",
@@ -113,11 +114,6 @@ module ESM
   # Allow IRB to be not-blocked by ESM's main thread
   def self.console!
     @console = true
-  end
-
-  def self.initialize_i18n
-    I18n.load_path += Dir[File.expand_path("config/locales/**/*.yml")]
-    I18n.reload!
   end
 
   def self.initialize_steam

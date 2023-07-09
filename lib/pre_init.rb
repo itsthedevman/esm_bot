@@ -6,6 +6,16 @@
 Dir["#{__dir__}/esm/extension/**/*.rb"].sort.each { |extension| require extension }
 
 #############################
+# Must be ran before autoload
+#############################
+I18n.load_path += Dir[File.expand_path("config/locales/**/*.yml")]
+I18n.reload!
+
+ESM.initialize_logger
+ESM.initialize_steam
+ESM.initialize_redis
+
+#############################
 # DB migrations
 #############################
 module Rails
@@ -55,9 +65,4 @@ end
 #############################
 # Initializers
 #############################
-ESM.initialize_i18n
-ESM.initialize_logger
-ESM.initialize_steam
-ESM.initialize_redis
-
 ESM::Arma::ClassLookup.cache
