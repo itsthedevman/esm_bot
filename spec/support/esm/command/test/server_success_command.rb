@@ -16,7 +16,7 @@ module ESM
         define :cooldown_time, modifiable: true, default: 2.seconds
 
         argument :server_id
-        argument :nullable, regex: /.*/, description: "commands.server_success_command.arguments.nullable", default: nil
+        argument :nullable, regex: /.*/, default: nil
 
         def on_execute
           send_to_arma(type: :echo, data: {type: :empty})

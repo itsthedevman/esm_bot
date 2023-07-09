@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-describe ESM::Command::Entertainment::Doggo, category: "command" do
-  let!(:command) { ESM::Command::Entertainment::Doggo.new }
+describe ESM::Command::Pictures::Doggo, category: "command" do
+  let!(:command) { ESM::Command::Pictures::Doggo.new }
 
   it "should be valid" do
     expect(command).not_to be_nil

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-describe ESM::Command::Player::ResetCooldown, category: "command" do
-  let!(:command) { ESM::Command::Player::ResetCooldown.new }
+describe ESM::Command::Community::ResetCooldown, category: "command" do
+  let!(:command) { ESM::Command::Community::ResetCooldown.new }
 
   it "should be valid" do
     expect(command).not_to be_nil

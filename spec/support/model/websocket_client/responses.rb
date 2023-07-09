@@ -139,7 +139,7 @@ class WebsocketClient
       territories = []
       Faker::Number.between(from: 100, to: 400).times do
         territories << {
-          id: rand < 0.5 ? SecureRandom.uuid[0..4] : Faker::Lorem.sentence[0..20],
+          id: (rand < 0.5) ? SecureRandom.uuid[0..4] : Faker::Lorem.sentence[0..20],
           territory_name: Faker::Lorem.sentence,
           owner_name: Faker::Name.name,
           owner_uid: Faker::Number.number(digits: 17).to_s

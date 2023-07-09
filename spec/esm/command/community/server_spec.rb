@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-describe ESM::Command::Server::Show, category: "command" do
-  let!(:command) { ESM::Command::Server::Show.new }
+describe ESM::Command::Server::Server, category: "command" do
+  let!(:command) { ESM::Command::Server::Server.new }
 
   it "is valid" do
     expect(command).not_to be_nil

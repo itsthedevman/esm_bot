@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-describe ESM::Command::System::Accept, category: "command" do
-  let!(:command) { ESM::Command::System::Accept.new }
+describe ESM::Command::Request::Accept, category: "command" do
+  let!(:command) { ESM::Command::Request::Accept.new }
 
   it "should be valid" do
     expect(command).not_to be_nil

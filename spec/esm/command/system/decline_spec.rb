@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-describe ESM::Command::System::Decline, category: "command" do
-  let!(:command) { ESM::Command::System::Decline.new }
+describe ESM::Command::Request::Decline, category: "command" do
+  let!(:command) { ESM::Command::Request::Decline.new }
 
   it "should be valid" do
     expect(command).not_to be_nil

@@ -90,7 +90,7 @@ class TerritoryGenerator
       build_rights: builders,
       moderators: moderators,
       object_count: Faker::Number.between(from: 0, to: level_info[:object_count]),
-      esm_custom_id: rand > 0.6 ? Faker::Name.first_name.downcase : nil
+      esm_custom_id: (rand > 0.6) ? Faker::Name.first_name.downcase : nil
     }
   end
 

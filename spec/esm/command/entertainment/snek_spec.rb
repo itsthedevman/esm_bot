@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-describe ESM::Command::Entertainment::Snek, category: "command" do
-  let!(:command) { ESM::Command::Entertainment::Snek.new }
+describe ESM::Command::Pictures::Snek, category: "command" do
+  let!(:command) { ESM::Command::Pictures::Snek.new }
 
   it "should be valid" do
     expect(command).not_to be_nil

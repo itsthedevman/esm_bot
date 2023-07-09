@@ -1,4 +1,4 @@
-describe ESM::Command::System::Requests, category: "command" do
+describe ESM::Command::Request::Requests, category: "command" do
   let!(:command) { described_class.new }
 
   it "is valid" do
