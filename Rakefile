@@ -35,9 +35,10 @@ task default: [:test, "standard:fix"]
 
 # Some db tasks require your app code to be loaded; they'll expect to find it here
 task :environment do
+  ESM.console!
 end
 
 task :bot do
   ESM.console!
-  # ESM.run!
+  ESM.run!
 end
