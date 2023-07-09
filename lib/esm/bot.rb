@@ -168,13 +168,6 @@ module ESM
     # Public Methods
     ###########################
 
-    def register_command(server_id = nil, &block)
-      register_application_command(
-        :esm, "Commands for Exile Server Manager",
-        server_id: server_id, &block
-      )
-    end
-
     #
     # Checks if the bot has send permission to the provided channel
     #

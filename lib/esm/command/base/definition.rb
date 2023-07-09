@@ -7,6 +7,10 @@ module ESM
       module Definition
         extend ActiveSupport::Concern
 
+        # TYPES holds the various argument types Discord supports
+        # Valid: string, integer, boolean, user, channel, role, mentionable, number, attachment
+        ARGUMENT_TYPES = Discordrb::Interactions::OptionBuilder::TYPES.with_indifferent_access
+
         class Define < ImmutableStruct.define(:modifiable, :default)
           def initialize(modifiable: true, default: nil)
             super(modifiable: modifiable, default: default)
@@ -27,7 +31,7 @@ module ESM
           class_attribute :example
           class_attribute :has_v1_variant
           class_attribute :limited_to
-          class_attribute :namespaces
+          class_attribute :namespace
           class_attribute :requirements
           class_attribute :skipped_actions
           class_attribute :type
@@ -95,23 +99,35 @@ module ESM
           end
 
           #
-          # Adds a command definition namespace that is registered with Discord
-          # When registered with Discord, each namespace is converted to: /esm <segments...> <command_name>
+          # Sets the command's namespace
+          # When registered with Discord, each namespace is converted to: /<segments...> <command_name>
           #
           # @param *segments [Array<Symbol>] The individual segments
           # @param command_name [Symbol] The command name. Defaults to the result from `#command_name`
           #
-          def add_namespace(segments = [], command_name: self.command_name)
-            namespaces << {segments: segments, command_name: command_name.to_sym}
+          def command_namespace(*segments, command_name: self.command_name)
+            raise ESM::Exception::InvalidCommandNamespace, "#{name}#command_namespace - Discord only supports one subgroup per command" if segments.size > 2
+
+            self.namespace = {
+              segments: segments.presence,
+              command_name: command_name.to_sym
+            }
           end
 
-          alias_method :use_root_namespace, :add_namespace
+          #
+          # Adds the root namespace (/esm <command_name>) to this command
+          #
+          # @return [<Type>] <description>
+          #
+          def use_root_namespace
+            command_namespace([])
+          end
 
           #
-          # Clears the command's namespace. Useful when the command has a special namespace and doesn't need the default
+          # Adds the default namespace (/<category> <command_name>) to this command
           #
-          def clear_namespaces!
-            self.namespaces = []
+          def use_default_namespace
+            command_namespace([category.to_sym])
           end
 
           # @!visibility private
@@ -128,7 +144,7 @@ module ESM
             # ESM::Command::Territory::SetId => set_id
             self.command_name = name.demodulize.underscore.downcase.sub("_v1", "")
 
-            # ESM::Command::System::Accept => system
+            # ESM::Command::Request::Accept => system
             self.category = module_parent.name.demodulize.downcase
 
             self.description = I18n.t("commands.#{command_name}.description", default: "")
@@ -136,38 +152,53 @@ module ESM
             self.example = I18n.t("commands.#{command_name}.example", default: "")
             self.has_v1_variant = false
             self.limited_to = nil
-            self.namespaces = [{segments: [category.to_sym], command_name: command_name}]
+            self.namespace = []
             self.requirements = Set.new
             self.skipped_actions = Set.new
             self.type = :player
           end
 
           # @!visibility private
-          def register(command_builder)
-            command_group = command_builder
-            command_name = namespace[:command_name]
-            segments = namespace[:segments]
+          def register(community_discord_id)
+            use_default_namespace if namespace.nil?
 
-            # Build the namespace `/esm namespaces...`
-            segments.each do |segment|
-              command_group.subcommand_group(segment, "") do |group|
-                command_group = group
+            # If there are no segments, the command is a root level command
+            command_prefix = namespace[:segments].first || namespace[:command_name]
+
+            debug!(command_name: command_name, command_prefix: command_prefix)
+
+            # Description must be less than 100 characters (Discord requirement)
+            ::ESM.bot.register_application_command(command_prefix, "COMMAND", server_id: community_discord_id) do |command_builder|
+              # A command can have up to one subgroup
+              if (subgroup_prefix = namespace[:segments].second)
+                command_builder.subcommand_group(subgroup_prefix.to_sym, "GROUP") do |subgroup_builder|
+                  register_command(subgroup_builder, command_name)
+                end
+              else
+                register_command(command_builder, command_name)
               end
             end
+          end
 
-            # Now define the command itself and its arguments
-            command_group.subcommand(command_name, description) do |arg_builder|
-              valid_argument_types = arg_builder.class::TYPES
-
-              arguments.each do |argument|
-                if !valid_argument_types.key?(argument.type)
+          # @!visibility private
+          def register_command(command_group, command_name)
+            # Description must be less than 100 characters (Discord requirement)
+            command_group.subcommand(command_name.to_sym, description.truncate(100)) do |arg_builder|
+              arguments.each do |(_argument_name, argument)|
+                if !ARGUMENT_TYPES.key?(argument.type)
                   raise ESM::Exception::InvalidCommandArgument, "Invalid type provided for argument #{argument.to_h}"
                 end
 
-                arg_builder.option(
-                  valid_argument_types[argument.type],
+                info!(
+                  command: self.command_name,
+                  command_name: command_name,
+                  argument: {name: argument.name, type: argument.type}
+                )
+
+                arg_builder.public_send(
+                  argument.type,
                   argument.name,
-                  argument.description_short,
+                  argument.description,
                   **argument.options
                 )
               end

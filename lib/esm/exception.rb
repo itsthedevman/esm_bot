@@ -28,6 +28,9 @@ module ESM
     # Raised to keep me in my place and ensure I define arguments correctly
     class InvalidCommandArgument < Error; end
 
+    # Raised when a command attempts to set its namespace with more than one subgroups
+    class InvalidCommandNamespace < Error; end
+
     # Raised if a server fails to authenticate to the Websocket server
     class FailedAuthentication < Error; end
 

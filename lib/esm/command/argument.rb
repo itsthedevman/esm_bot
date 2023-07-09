@@ -96,9 +96,9 @@ module ESM
         }
       }.freeze
 
-      attr_reader :name, :display_name, :command_name,
+      attr_reader :name, :type, :display_name, :command_name,
         :default_value, :cast_type, :modifier,
-        :description_short, :description_long, :optional_text,
+        :description, :description_long, :optional_text,
         :options
 
       #
@@ -115,7 +115,7 @@ module ESM
       #     This description is used in Discord when viewing the argument.
       #     This value defaults to the value located at the locale path:
       #         commands.<command_name>.arguments.<argument_name>.desc_short
-      # @option opts [String] :description_log This argument's description, but more descriptive
+      # @option opts [String] :description_long This argument's description, but more descriptive
       #     Note: Providing this option is optional, however, this argument MUST have a non-blank description
       #     This description is used in the help documentation with the help command and on the website
       #     This value defaults to the value located at the locale path:
@@ -144,6 +144,7 @@ module ESM
         opts = DEFAULTS[template_name].merge(opts) if DEFAULTS.key?(template_name)
 
         @name = name
+        @type = type
         @display_name = (opts[:display_name] || name).to_sym
         @command_name = opts[:command_name].to_sym
 
@@ -152,14 +153,15 @@ module ESM
         @preserve_case = !!opts[:preserve_case]
         @type_caster = opts[:type_caster]
         @modifier = opts[:modifier] || ->(_) {}
-        @options = {
-          choices: opts[:choices],
-          min_value: opts[:min_value],
-          max_value: opts[:max_value]
-        }
+        
+        @options = {}
+        @options[:choices] = opts[:choices] if opts[:choices]
+        @options[:min_value] = opts[:min_value] if opts[:min_value]
+        @options[:max_value] = opts[:max_value] if opts[:max_value]
 
-        @description_short = load_locale_or_provided(opts[:description], "description")
-        @description_long = load_locale_or_provided(opts[:description_long], "description_long") || @description_short
+        description = load_locale_or_provided(opts[:description], "description")
+        @description = description.truncate(99) # Discord req: Must be less than 100 characters
+        @description_long = load_locale_or_provided(opts[:description_long], "description_long").presence || description
 
         @optional_text =
           if (text = opts[:optional_text].presence)
