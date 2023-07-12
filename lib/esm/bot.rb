@@ -34,7 +34,7 @@ module ESM
       :direct_message_typing
     ).keys.freeze
 
-    attr_reader :config, :prefix, :metadata
+    attr_reader :config, :prefix, :metadata, :delivery_overseer
 
     def initialize
       @waiting_for = {}
@@ -213,19 +213,13 @@ module ESM
         raise ESM::Exception::ChannelAccessDenied if !channel_permission?(:send_messages, delivery_channel)
       end
 
-      id = @delivery_overseer.add(
+      @delivery_overseer.add(
         message,
         delivery_channel,
         embed_message: embed_message,
         replying_to: replying_to,
         wait: !async
       )
-
-      # The Discord response message is none of our concern
-      return if async
-
-      # Blocking until the message has been sent and Discord replies
-      @delivery_overseer.wait_for_delivery(id)
     rescue ESM::Exception::ChannelAccessDenied
       embed = ESM::Embed.build(
         :error,
