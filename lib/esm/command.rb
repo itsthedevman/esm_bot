@@ -16,14 +16,14 @@ module ESM
     TYPES = %i[admin player].freeze
 
     class << self
-      attr_reader :all, :v1
+      attr_reader :all, :v1, :by_type, :by_namespace_for_server, :by_namespace_for_global
     end
 
     def self.[](command_name)
       return if command_name.blank?
 
       command_name = command_name.to_s
-      @all.find { |command| command_name == command.command_name }
+      all.find { |command| command_name == command.command_name }
     end
 
     # V1
@@ -31,19 +31,15 @@ module ESM
       return if command_name.blank?
 
       command_name = command_name.to_s
-      @v1.find { |command| command_name == command.command_name }
-    end
-
-    def self.by_type
-      @by_type
+      v1.find { |command| command_name == command.command_name }
     end
 
     def self.admin_commands
-      @by_type[:admin]
+      by_type[:admin]
     end
 
     def self.player_commands
-      @by_type[:player]
+      by_type[:player]
     end
 
     def self.include?(command_name)
@@ -54,6 +50,8 @@ module ESM
       @all = []
       @v1 = [] # V1
       @by_type = []
+      @by_namespace_for_server = {}
+      @by_namespace_for_global = {}
 
       commands_needing_cached = []
       ESM::Command::Base.subclasses.each do |command_class|
@@ -86,6 +84,44 @@ module ESM
       # Lock it!
       @all.freeze
       @by_type = @all.group_by(&:type).freeze
+
+      # Build the command structure for both server and global commands
+      # Commands must be registered with Discord together if they share the same namespace
+      all.each do |command_class|
+        namespace = command_class.namespace
+        segments = namespace[:segments]
+        command_name = namespace[:command_name]
+
+        # Only player commands are registered as global. Otherwise, it's a server registered command
+        current_segment =
+          if command_class.type == :player
+            @by_namespace_for_global
+          else
+            @by_namespace_for_server
+          end
+
+        # Discord treats the first segment after the slash as the "command name"
+        # Commands may use this as the root namespace (/help, /register)
+        # Or this could be a single group (/community <command_name>)
+        if (segment = segments.first)
+          current_segment = current_segment[segment.to_sym] ||= {}
+        end
+
+        # Discord treats this as a "subgroup" after the "command name"
+        # Commands may use this as a group namespace (/server admin <command_name>)
+        if (segment = segments.second)
+          current_segment = current_segment[segment.to_sym] ||= {}
+        end
+
+        # Ensure this namespace isn't already used
+        if (namespaced_command = current_segment[command_name.to_sym])
+          raise ESM::Exception::InvalidCommandNamespace,
+            "#{command_class} attempted to bind to the namespace `/#{segments.join(" ")} #{command_name}` which is already bound to #{namespaced_command}"
+        end
+
+        # Finally store the command with the final segment (/server admin show)
+        current_segment[command_name.to_sym] = command_class
+      end
 
       # Run some jobs for command
       RebuildCommandCacheJob.perform_async(commands_needing_cached)
@@ -155,6 +191,61 @@ module ESM
             whitelisted_role_ids: whitelisted_role_ids
           }
         end
+    end
+
+    #
+    # Registers admin and development commands as "server commands" for the community
+    # These are only present on the Discord and are not global
+    #
+    # @param community_discord_id [String, Integer] The community's guild ID
+    #
+    def self.register_server_commands(community_discord_id)
+      by_namespace_for_server.each do |name, segments_or_command|
+        register_command(name, segments_or_command, community_discord_id)
+      end
+
+      nil
+    end
+
+    #
+    # Registers player commands as global since they can be used in DMs.
+    # A guild ID can be provided to bind these to the community instead since global commands take time to become available (Discord reasons...)
+    #
+    # @param community_discord_id [String, Integer, nil] Optional. The community's guild ID
+    #
+    def self.register_global_commands(community_discord_id = nil)
+      by_namespace_for_global.each do |name, segments_or_command|
+        register_command(name, segments_or_command, community_discord_id)
+      end
+
+      nil
+    end
+
+    # @!visibility private
+    def self.register_command(name, segments_or_command, community_discord_id)
+      # It's a command and it's at the root level
+      if all.include?(segments_or_command)
+        segments_or_command.register_root_command(community_discord_id, name)
+        return
+      end
+
+      # It's a group and it may have subgroups or subcommands
+      ::ESM.bot.register_application_command(name, "COMMAND", server_id: community_discord_id) do |builder|
+        segments_or_command.each do |name, segments_or_command|
+          # It's a command!
+          if all.include?(segments_or_command)
+            segments_or_command.register_subcommand(builder, name)
+            next
+          end
+
+          # It's a group!
+          builder.subcommand_group(name, "GROUP") do |group_builder|
+            segments_or_command.each do |command_name, command|
+              command.register_subcommand(group_builder, command_name)
+            end
+          end
+        end
+      end
     end
   end
 end

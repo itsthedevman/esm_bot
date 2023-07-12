@@ -7,10 +7,6 @@ module ESM
       module Definition
         extend ActiveSupport::Concern
 
-        # TYPES holds the various argument types Discord supports
-        # Valid: string, integer, boolean, user, channel, role, mentionable, number, attachment
-        ARGUMENT_TYPES = Discordrb::Interactions::OptionBuilder::TYPES.with_indifferent_access
-
         class Define < ImmutableStruct.define(:modifiable, :default)
           def initialize(modifiable: true, default: nil)
             super(modifiable: modifiable, default: default)
@@ -109,7 +105,7 @@ module ESM
             raise ESM::Exception::InvalidCommandNamespace, "#{name}#command_namespace - Discord only supports one subgroup per command" if segments.size > 2
 
             self.namespace = {
-              segments: segments.presence,
+              segments: segments.presence || [],
               command_name: command_name.to_sym
             }
           end
@@ -117,17 +113,38 @@ module ESM
           #
           # Adds the root namespace (/esm <command_name>) to this command
           #
-          # @return [<Type>] <description>
+          alias_method :use_root_namespace, :command_namespace
+
           #
-          def use_root_namespace
-            command_namespace([])
+          # Returns a hash representation of this command
+          #
+          # @return [Hash]
+          #
+          def to_h
+            {
+              command_name: command_name,
+              type: type,
+              category: category,
+              namespace: namespace,
+              has_v1_variant: has_v1_variant,
+              limited_to: limited_to,
+              defines: defines,
+              requirements: self.requirements,
+              skipped_actions: self.skipped_actions,
+              arguments: arguments,
+              description: description,
+              description_long: description_long,
+              example: example
+            }
           end
 
           #
-          # Adds the default namespace (/<category> <command_name>) to this command
+          # Returns the JSON representation of this command
           #
-          def use_default_namespace
-            command_namespace([category.to_sym])
+          # @return [String]
+          #
+          def to_json(...)
+            to_h.to_json(...)
           end
 
           # @!visibility private
@@ -152,56 +169,47 @@ module ESM
             self.example = I18n.t("commands.#{command_name}.example", default: "")
             self.has_v1_variant = false
             self.limited_to = nil
-            self.namespace = []
+            self.namespace = command_namespace(category.to_sym) # Sets the default namespace to be: /<category> <command_name>
             self.requirements = Set.new
             self.skipped_actions = Set.new
             self.type = :player
           end
 
           # @!visibility private
-          def register(community_discord_id)
-            use_default_namespace if namespace.nil?
-
-            # If there are no segments, the command is a root level command
-            command_prefix = namespace[:segments].first || namespace[:command_name]
-
-            debug!(command_name: command_name, command_prefix: command_prefix)
-
+          def register_root_command(community_discord_id, command_name)
             # Description must be less than 100 characters (Discord requirement)
-            ::ESM.bot.register_application_command(command_prefix, "COMMAND", server_id: community_discord_id) do |command_builder|
-              # A command can have up to one subgroup
-              if (subgroup_prefix = namespace[:segments].second)
-                command_builder.subcommand_group(subgroup_prefix.to_sym, "GROUP") do |subgroup_builder|
-                  register_command(subgroup_builder, command_name)
-                end
-              else
-                register_command(command_builder, command_name)
-              end
+            ::ESM.bot.register_application_command(command_name, description.truncate(100), server_id: community_discord_id) do |builder|
+              register_arguments(builder)
+              warn!(command_name: command_name, builder: builder.to_a)
             end
           end
 
           # @!visibility private
-          def register_command(command_group, command_name)
+          def register_subcommand(builder, command_name)
             # Description must be less than 100 characters (Discord requirement)
-            command_group.subcommand(command_name.to_sym, description.truncate(100)) do |arg_builder|
-              arguments.each do |(_argument_name, argument)|
-                if !ARGUMENT_TYPES.key?(argument.type)
-                  raise ESM::Exception::InvalidCommandArgument, "Invalid type provided for argument #{argument.to_h}"
-                end
+            builder.subcommand(command_name.to_sym, description.truncate(100)) do |arg_builder|
+              register_arguments(arg_builder)
+            end
+          end
 
-                info!(
-                  command: self.command_name,
-                  command_name: command_name,
-                  argument: {name: argument.name, type: argument.type}
-                )
-
-                arg_builder.public_send(
-                  argument.type,
-                  argument.name,
-                  argument.description,
-                  **argument.options
-                )
+          # @!visibility private
+          def register_arguments(builder)
+            arguments.each do |(_argument_name, argument)|
+              if !builder.respond_to?(argument.type)
+                raise ESM::Exception::InvalidCommandArgument, "Invalid type provided for argument #{argument.to_h}"
               end
+
+              info!(
+                command: command_name,
+                argument: {name: argument.name, type: argument.type}
+              )
+
+              builder.public_send(
+                argument.type,
+                argument.name,
+                argument.description,
+                **argument.options
+              )
             end
           end
         end

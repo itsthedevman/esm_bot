@@ -41,4 +41,8 @@ end
 task :bot do
   ESM.console!
   ESM.run!
+
+  until ESM.bot.ready?
+    sleep 1
+  end
 end

@@ -3,12 +3,14 @@
 require_relative "../lib/esm"
 require_relative "../spec/support/esm/test"
 
+print "Waiting for ESM to start..."
 ESM.console!
 ESM.run!
 
 until ESM.bot.ready?
   sleep 1
 end
+puts " done"
 
 ESM::BotAttribute.create!(
   maintenance_mode_enabled: false,
@@ -17,6 +19,8 @@ ESM::BotAttribute.create!(
   status_message: "Extension V2 development"
 )
 
+print "Creating communities..."
+::ESM.bot.get_application_commands(server_id: "452568470765305866").each(&:delete)
 community = ESM::Community.create!(
   community_id: "esm",
   community_name: "ESM Test Server 1",
@@ -26,6 +30,7 @@ community = ESM::Community.create!(
   player_mode_enabled: false
 )
 
+::ESM.bot.get_application_commands(server_id: "901967248653189180").each(&:delete)
 ESM::Community.create!(
   community_id: "esm2",
   community_name: "ESM Test Server 2",
@@ -33,13 +38,16 @@ ESM::Community.create!(
   command_prefix: "pls "
 )
 
+::ESM.bot.get_application_commands(server_id: "421111581267591168").each(&:delete)
 community2 = ESM::Community.create!(
   community_id: "zdt",
   community_name: "ZDT",
   guild_id: "421111581267591168",
   player_mode_enabled: false
 )
+puts " done"
 
+print "Creating servers..."
 server = ESM::Server.create!(
   community_id: community.id,
   server_id: "esm_malden",
@@ -129,7 +137,9 @@ ESM::Server.create!(
   server_ip: "127.0.0.1",
   server_port: "2302"
 )
+puts " done"
 
+print "Creating users..."
 [
   {discord_id: "137709767954137088", discord_username: "Bryan", discord_discriminator: "9876", steam_uid: "76561198037177305"},
   {discord_id: "477847544521687040", discord_username: "Bryan V2", discord_discriminator: "2145", steam_uid: ESM::Test.data[:steam_uids].sample},
@@ -142,5 +152,6 @@ end
 ESM::UserDefault.where(user_id: 1).update_all(server_id: server.id, community_id: community.id)
 ESM::UserAlias.create!(user_id: 1, server_id: server.id, value: "s")
 ESM::UserAlias.create!(user_id: 1, community_id: community.id, value: "c")
+puts " done"
 
 Redis.new.set("server_key", server.token.to_json)
