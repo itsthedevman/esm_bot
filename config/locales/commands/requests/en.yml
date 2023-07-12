@@ -1,9 +1,8 @@
----
 en:
   commands:
     requests:
       description: |-
         Lists your pending command requests
       example: |-
-        **`%{prefix}requests`**
+        **`requests`**
         Returns a list of your pending requests

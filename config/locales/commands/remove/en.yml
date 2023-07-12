@@ -1,4 +1,3 @@
----
 en:
   commands:
     remove:
@@ -6,10 +5,9 @@ en:
         **Territory Owner or Moderator Only.**
         Removes a player from a territory.
       example: |-
-        **`%{prefix}remove esm_malden awesome @Bryan`**
+        **`remove esm_malden awesome @Bryan`**
         Removes @Bryan from territory `awesome` on `esm_malden`
 
-        **`%{prefix}remove esm_malden fort_a 76561198037177305`**
+        **`remove esm_malden fort_a 76561198037177305`**
         Removes `76561198037177305` from territory `fort_a` on `esm_malden`
-      success_message: Hey %{user}, `%{target_uid}` has been removed from territory
-        `%{territory_id}` on `%{server}`
+      success_message: Hey %{user}, `%{target_uid}` has been removed from territory `%{territory_id}` on `%{server}`

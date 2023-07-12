@@ -1,4 +1,3 @@
----
 en:
   commands:
     reset_cooldown:
@@ -18,25 +17,26 @@ en:
 
         See examples for more details
       example: |-
-        **`%{prefix}reset_cooldown`**
+        **`reset_cooldown`**
         Resets every command's cooldowns for your community.
 
-        **`%{prefix}reset_cooldown @Bryan`**
+        **`reset_cooldown @Bryan`**
         Resets every command's cooldown for @Bryan on your community.
 
-        **`%{prefix}reset_cooldown @Bryan reward`**
+        **`reset_cooldown @Bryan reward`**
         Resets the `reward` cooldown for @Bryan on your community.
 
-        **`%{prefix}reset_cooldown @Bryan reward esm_malden`**
+        **`reset_cooldown @Bryan reward esm_malden`**
         Resets the `reward` cooldown for @Bryan on `esm_malden` only
 
-        **`%{prefix}reset_cooldown reward esm_malden`**
+        **`reset_cooldown reward esm_malden`**
         Resets the `reward` cooldown for `esm_malden` only
 
-        **`%{prefix}reset_cooldown reward`**
+        **`reset_cooldown reward`**
         Resets the `reward` cooldown every server your community has registered
       arguments:
-        command_name: The name of the command to reset the cooldown for
+        command_name:
+          description: The name of the command to reset the cooldown for
       confirmation_embed:
         title: Reset Confirmation
         description:
@@ -46,8 +46,7 @@ en:
           one_command: "`%{command_name}`. "
           all_commands: 'all commands. '
           one_server: This change will only be applied to `%{server_id}`.
-          all_servers: This change will be applied to every server your community
-            has registered with me.
+          all_servers: This change will be applied to every server your community has registered with me.
         field_name: "**Proceed?**"
         field_value: Reply back `yes` or `no`
       cancellation_reply: ":thumbsup: I've cancelled your request."

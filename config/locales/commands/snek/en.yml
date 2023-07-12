@@ -1,10 +1,8 @@
----
 en:
   commands:
     snek:
-      description: Nope rope, danger noodle, whatever you want to call them. One thing
-        for sure is that they are cute.
+      description: Nope rope, danger noodle, whatever you want to call them. One thing for sure is that they are cute.
       example: |-
-        **`%{prefix}snek`**
+        **`snek`**
         Returns a random snake image
       waiting: Slithering...
