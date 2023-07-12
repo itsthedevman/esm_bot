@@ -6,7 +6,7 @@ module ESM
     module Server
       class Player < ESM::Command::Base
         command_type :admin
-        command_namespace :server, :admin, command_name: :modify
+        command_namespace :server, :admin, command_name: :modify_player
 
         limit_to :text
         requires :registration

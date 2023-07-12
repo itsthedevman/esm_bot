@@ -2,6 +2,8 @@
 
 module ESM
   class Community < ApplicationRecord
+    ALPHABET = ("a".."z").to_a.freeze
+
     before_create :generate_community_id
     before_create :set_command_prefix
     after_create :create_command_configurations
@@ -124,7 +126,7 @@ module ESM
 
       loop do
         # Attempt to generate an id. Top rated comment from this answer: https://stackoverflow.com/a/88341
-        new_id = ("a".."z").to_a.sample(4).join
+        new_id = ALPHABET.sample(4).join
         count += 1
 
         # Our only saviors
