@@ -44,15 +44,14 @@ module ESM
               e.description = I18n.t(
                 "commands.help.getting_started.description",
                 command_count_player: commands_by_type[:player].size,
-                command_count_total: commands_by_type.values.flatten.size,
-                prefix: prefix
+                command_count_total: commands_by_type.values.flatten.size
               )
 
               # history
               %w[commands command privacy].each do |field_type|
                 e.add_field(
                   name: I18n.t("commands.help.getting_started.fields.#{field_type}.name"),
-                  value: I18n.t("commands.help.getting_started.fields.#{field_type}.value", prefix: prefix)
+                  value: I18n.t("commands.help.getting_started.fields.#{field_type}.value")
                 )
               end
             end
@@ -73,7 +72,7 @@ module ESM
             embed =
               ESM::Embed.build do |e|
                 e.title = I18n.t("commands.help.commands.#{type}.title")
-                e.description = I18n.t("commands.help.commands.#{type}.description", prefix: prefix)
+                e.description = I18n.t("commands.help.commands.#{type}.description")
                 e.color = ESM::Color.random
 
                 categories(type).each do |category, commands|
@@ -93,14 +92,13 @@ module ESM
             ESM::Embed.build do |e|
               e.title = I18n.t("commands.help.esm_history.title")
               e.description = I18n.t(
-                "commands.help.esm_history.description",
-                prefix: prefix
+                "commands.help.esm_history.description"
               )
 
               %w[what_next when_done why].each do |field_type|
                 e.add_field(
                   name: I18n.t("commands.help.esm_history.fields.#{field_type}.name"),
-                  value: I18n.t("commands.help.esm_history.fields.#{field_type}.value", prefix: prefix)
+                  value: I18n.t("commands.help.esm_history.fields.#{field_type}.value")
                 )
               end
             end
@@ -117,24 +115,15 @@ module ESM
         # Return an array so ESM::Embed field logic will handle overflow correctly
         def format_commands(commands)
           commands.map do |command|
-            "**`#{prefix}#{command.name}`**\n#{command.description(prefix)}"
+            "**`##{command.name}`**\n#{command.description}"
           end
         end
 
         def command
           command = ESM::Command[@arguments.category].new
-
-          if current_community
-            # For prefix
-            command.current_community = current_community
-
-            # For whitelisted permission
-            command.permissions.load
-          end
-
           embed =
             ESM::Embed.build do |e|
-              e.title = I18n.t("commands.help.command.title", prefix: prefix, name: command.name)
+              e.title = I18n.t("commands.help.command.title", name: command.name)
               description = [command.description, ""]
 
               # Adds a note about being limited to DM or Text

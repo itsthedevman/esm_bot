@@ -13,7 +13,7 @@ module ESM
         define :cooldown_time, modifiable: true, default: 2.seconds
 
         def on_execute
-          skip(:cooldown)
+          skip_action(:cooldown)
         end
 
         def on_response(_, _)

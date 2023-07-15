@@ -3,36 +3,55 @@
 module ESM
   module Command
     class Arguments < Hash
-      def load(input)
-      end
-      
-      def validate!
-        each { |argument| invalid_argument!(argument) if argument.invalid? }
+      def from(inbound_arguments, validators: {}, command: nil)
+        if validators.any?
+          check_for_invalid_arguments!(inbound_arguments, validators, command)
+        end
+
+        merge!(inbound_arguments)
+        bind_hooks
+
+        self
       end
 
-      def to_s
-        return "" if empty?
+      def check_for_invalid_arguments!(arguments, validators, commands)
+        invalid_arguments =
+          validators.filter_map do |(name, validator)|
+            arguments[name] = validator.validate!(arguments[name], command)
+            nil
+          rescue ESM::Exception::InvalidArgument => argument
+            argument
+          end
 
-        format(join_with: "\n\n") do |_name, argument|
-          argument.help_documentation
+        return if invalid_arguments.empty?
+
+        raise ESM::Exception::CheckFailure, ESM::Embed.build do |e|
+          e.title = "**Invalid #{"argument".pluralize(invalid_arguments.size)}**"
+          e.description = "TODO"
+
+          help_command = ESM::Command.get(:help)
+          e.footer = "For more information, use `#{help_command.statement(category: command.command_name)}`"
         end
       end
 
-      def invalid_argument!(argument)
-        embed =
-          ESM::Embed.build do |e|
-            e.title = "**Missing argument `#{argument}` for `#{command.distinct}`**"
-            e.description = "```#{command.distinct} #{build_error_description}```"
+      def inspect
+        ESM::JSON.pretty_generate(self)
+      end
 
-            e.add_field(
-              name: "Arguments",
-              value: map { |argument| argument.help_documentation(command) }
-            )
+      def method_missing(method_name, *arguments, &block)
+        self[method_name]
+      end
 
-            e.footer = "For more information, send me `#{command.prefix}help #{command.name}`"
-          end
+      def respond_to_missing?(method_name, _include_private = false)
+        key?(method_name) || super
+      end
 
-        raise ESM::Exception::FailedArgumentParse, embed
+      private
+
+      def bind_hooks
+        each do |name, value|
+          define_method(name) { value }
+        end
       end
     end
   end

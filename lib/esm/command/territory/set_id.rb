@@ -56,7 +56,7 @@ module ESM
           return if @response.success
 
           # Don't set a cooldown if we errored.
-          skip(:cooldown)
+          skip_action(:cooldown)
 
           # DLL Reason. This is a weird one since I can't localize the message
           check_failed! { ESM::Embed.build(:error, description: "I'm sorry #{current_user.mention}, #{@response.reason}") } if @response.reason

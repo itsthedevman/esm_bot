@@ -6,55 +6,55 @@ module ESM
       module Checks
         # Order matters!
         def run_all_checks!
-          dev_only!
-          registered!
+          check_for_dev_only!
+          check_for_registered!
 
-          nil_target_server!
-          nil_target_community!
-          nil_target_user!
-          different_community!
-          cooldown!
-          connected_server! unless skipped_actions.connected_server?
+          check_for_nil_target_server!
+          check_for_nil_target_community!
+          check_for_nil_target_user!
+          check_for_different_community!
+          check_for_cooldown!
+          check_for_connected_server! unless skipped_actions.connected_server?
         end
 
-        def check_text_only!
+        def check_for_text_only!
           check_failed!(:text_only, user: current_user.mention) if text_only? && !current_channel.text?
         end
 
-        def check_dm_only!
+        def check_for_dm_only!
           # DM commands are allowed in player mode
           return if current_community&.player_mode_enabled?
 
           check_failed!(:dm_only, user: current_user.mention) if dm_only? && !current_channel.dm?
         end
 
-        def check_permissions!
-          if !permissions.enabled?
+        def check_for_permissions!
+          if !enabled?
             # If the community doesn't want to send a message, don't send a message.
             # This only applies to text channels. The user needs to know why the bot is not replying to their message
-            if current_channel.text? && !permissions.notify_when_disabled?
+            if current_channel.text? && !notify_when_disabled?
               check_failed!(exception_class: ESM::Exception::CheckFailureNoMessage)
             else
               check_failed!(:command_not_enabled, user: current_user.mention, command_name: name)
             end
           end
 
-          if !permissions.whitelisted?
+          if !whitelisted?
             check_failed!(:not_whitelisted, user: current_user.mention, command_name: name)
           end
 
-          if !permissions.allowed?
+          if !allowed?
             check_failed!(:not_allowed_in_text_channels, user: current_user.mention, command_name: name)
           end
         end
 
-        def check_registered!
+        def check_for_registered!
           return if !registration_required? || current_user.registered?
 
           check_failed!(:not_registered, user: current_user.mention, full_username: current_user.distinct)
         end
 
-        def check_cooldown!
+        def check_for_cooldown!
           return if ESM.env.test? && ESM::Test.skip_cooldown
           return if skipped_actions.cooldown?
           return if !on_cooldown?
@@ -69,12 +69,12 @@ module ESM
           )
         end
 
-        def check_dev_only!
+        def check_for_dev_only!
           # Empty on purpose
           raise ESM::Exception::CheckFailure, "" if dev_only? && !current_user.developer?
         end
 
-        def check_connected_server!
+        def check_for_connected_server!
           return if arguments.server_id.nil?
 
           # Return if the server is not connected
@@ -83,7 +83,7 @@ module ESM
           check_failed!(:server_not_connected, user: current_user.mention, server_id: arguments.server_id)
         end
 
-        def check_nil_target_server!
+        def check_for_nil_target_server!
           return if arguments.server_id.nil?
           return if !target_server.nil?
 
@@ -118,7 +118,7 @@ module ESM
           end
         end
 
-        def check_nil_target_community!
+        def check_for_nil_target_community!
           return if arguments.community_id.nil?
           return if !target_community.nil?
 
@@ -152,7 +152,7 @@ module ESM
           end
         end
 
-        def check_nil_target_user!
+        def check_for_nil_target_user!
           return if skipped_actions.nil_target_user?
           return if arguments.target.nil?
           return if !target_user.nil?
@@ -164,7 +164,7 @@ module ESM
         end
 
         # Order matters!
-        def check_player_mode!
+        def check_for_player_mode!
           # This only affects text channels
           return if !current_channel.text?
 
@@ -184,7 +184,7 @@ module ESM
           check_failed!(:player_mode_command_not_available, user: current_user.mention, command_name: name)
         end
 
-        def check_different_community!
+        def check_for_different_community!
           # Only affects text channels
           return if !current_channel.text?
 
@@ -205,7 +205,7 @@ module ESM
 
         # Used by calling in a command that uses the request system.
         # This will raise ESM::Exception::CheckFailure if there is a pending request for the target_user
-        def check_pending_request!
+        def check_for_pending_request!
           return if request.nil?
 
           if target_user.nil? || current_user == target_user
@@ -216,7 +216,7 @@ module ESM
         end
 
         # Raises CheckFailure if the target_server does not belong to the current_community
-        def check_owned_server!
+        def check_for_owned_server!
           return if target_server.nil?
           return if target_server.community_id == current_community.id
 
@@ -227,7 +227,7 @@ module ESM
         # This will always raise if the target_user is an instance of User::Ephemeral.
         #
         # @raise ESM::Exception::CheckFailure
-        def check_registered_target_user!
+        def check_for_registered_target_user!
           return if target_user.nil? || target_user.registered?
 
           check_failed!(:target_not_registered, user: current_user.mention, target_user: target_user.mention)

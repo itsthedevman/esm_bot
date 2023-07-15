@@ -37,8 +37,8 @@ module ESM
     # Raised when a message fails validation or fails to create
     class InvalidMessage < Error; end
 
-    # Raised if the parser failed to find the argument in a message from a user
-    class FailedArgumentParse < DataError; end
+    # Raised if the provided argument value from the user is invalid
+    class InvalidArgument < DataError; end
 
     # Generic exception for any checks
     class CheckFailure < DataError; end

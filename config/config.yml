@@ -28,11 +28,9 @@ default: &default
 
 development:
   !!merge <<: *default
-  prefix: "~"
 
 test:
   !!merge <<: *default
-  prefix: "~"
   loops:
     # ESM::Request::Overseer
     request_overseer:
@@ -63,4 +61,3 @@ test:
 
 production:
   !!merge <<: *default
-  prefix: "!"

@@ -99,7 +99,7 @@ module ESM
       attr_reader :name, :type, :display_name, :command_name,
         :default_value, :cast_type, :modifier,
         :description, :description_long, :optional_text,
-        :options
+        :options, :validator
 
       #
       # A configurable representation of a command argument
@@ -138,6 +138,7 @@ module ESM
       # @option opts [Array<String>] :choices Optional. A list of choices the user can pick for this argument
       # @option opts [Integer] :min_value If type is integer/number, this is the minimum value that can be selected
       # @option opts [Integer] :max_value If type is integer/number, this is the maximum value that can be selected
+      # @option opts [nil, Regex] :validate_with If provided, this will be tested against the input.
       #
       def initialize(name, type, opts = {})
         template_name = (opts[:template] || name).to_sym
@@ -153,7 +154,8 @@ module ESM
         @preserve_case = !!opts[:preserve_case]
         @type_caster = opts[:type_caster]
         @modifier = opts[:modifier] || ->(_) {}
-        
+        @validator = opts[:validate_with]
+
         @options = {}
         @options[:choices] = opts[:choices] if opts[:choices]
         @options[:min_value] = opts[:min_value] if opts[:min_value]
@@ -179,19 +181,16 @@ module ESM
         # Arguments can opt to modify the parsed value (this is how auto-fill works)
         command.instance_exec(self, &modifier) if modifier?
 
-        # debug!(
-        #   argument: {
-        #     name: name,
-        #     display: to_s,
-        #     regex: regex,
-        #     default: default
-        #   },
-        #   input: input,
-        #   output: {
-        #     type: content.class.name,
-        #     content: content
-        #   }
-        # )
+        debug!(
+          argument: to_h.except(:description, :description_long),
+          input: input,
+          output: {
+            type: content.class.name,
+            content: content
+          }
+        )
+
+        check_for_valid_content!(content)
 
         content
       end
@@ -249,12 +248,13 @@ module ESM
           name: name,
           command_name: command_name,
           display_name: display_name,
-          description_short: description_short,
+          description: description,
           description_long: description_long,
           optional_text: optional_text,
           default_value: default_value,
           cast_type: cast_type,
-          modifier: modifier
+          modifier: modifier,
+          validator: validator
         }
       end
 
@@ -298,6 +298,13 @@ module ESM
         end
       rescue
         value
+      end
+
+      def check_for_valid_content!(content)
+        return unless validator
+        return if content.match?(validator)
+
+        raise ESM::Exception::InvalidArgument, self
       end
     end
   end

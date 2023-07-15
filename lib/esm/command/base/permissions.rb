@@ -5,6 +5,7 @@ module ESM
     class Base
       module Permissions
         def community_permissions?
+          # Caching so if community_permissions returns `nil`, it doesn't hit the database for every call to this method
           @community_permission_predicate ||= !community_permissions.nil?
         end
 
@@ -74,17 +75,6 @@ module ESM
           else
             defines.allowed_in_text_channels&.default || true
           end
-        end
-
-        def to_h
-          {
-            config: community_permissions&.attributes,
-            enabled: enabled?,
-            allowed: allowed?,
-            whitelisted: whitelisted?,
-            notify_when_disabled: notify_when_disabled?,
-            cooldown_time: cooldown_time
-          }
         end
       end
     end

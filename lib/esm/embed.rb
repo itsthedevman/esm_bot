@@ -163,6 +163,21 @@ module ESM
       }
     end
 
+    def for_discord_embed
+      {
+        title: title,
+        description: description,
+        timestamp: timestamp.to_s,
+        color: color&.sub("#", "")&.to_i(16),
+        footer: footer&.to_hash,
+        fields: fields.map(&:to_hash),
+        author: author&.to_hash,
+        thumbnail: thumbnail&.to_hash,
+        image: image&.to_hash,
+        url: url&.to_hash
+      }
+    end
+
     def build_from_template(type, **attributes)
       case type
       when :info

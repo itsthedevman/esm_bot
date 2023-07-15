@@ -9,7 +9,7 @@ module ESM
         def execute(event)
           command = self
 
-          if event.is_a?(Discordrb::Commands::CommandEvent)
+          if event.is_a?(Discordrb::Events::ApplicationCommandEvent)
             # The event has to be stored before argument parsing because of callbacks referencing event data
             # Still have to pass the even through to from_discord for V1
             @event = event
@@ -41,18 +41,21 @@ module ESM
 
         def from_discord(discord_event)
           @event = discord_event
-          arguments.load(discord_event.options)
-          permissions.load
 
-          check_text_only!
-          check_dm_only!
-          check_player_mode!
-          check_permissions!
+          arguments.from(
+            event.options.symbolize_keys,
+            validators: self.class.arguments
+          )
+
+          check_for_text_only!
+          check_for_dm_only!
+          check_for_player_mode!
+          check_for_permissions!
 
           arguments.validate!
 
           info!(to_h)
-          check_run_all!
+          run_all_checks!
 
           result = nil
           timers.time!(:on_execute) do
@@ -153,17 +156,17 @@ module ESM
               e.description = description
               e.add_field(name: I18n.t("commands.request.accept_name"), value: I18n.t("commands.request.accept_value", url: accept_request_url(request.uuid)), inline: true)
               e.add_field(name: I18n.t("commands.request.decline_name"), value: I18n.t("commands.request.decline_value", url: decline_request_url(request.uuid)), inline: true)
-              e.add_field(name: I18n.t("commands.request.command_usage_name"), value: I18n.t("commands.request.command_usage_value", prefix: ESM.config.prefix, uuid: request.uuid_short))
+              e.add_field(name: I18n.t("commands.request.command_usage_name"), value: I18n.t("commands.request.command_usage_value", uuid: request.uuid_short))
             end
 
           ESM.bot.deliver(embed, to: target)
         end
 
         def create_or_update_cooldown
-          return if skip_flags.include?(:cooldown)
+          return if skipped_actions.cooldown?
 
           new_cooldown = current_cooldown_query.first_or_create
-          new_cooldown.update_expiry!(timers.on_execute.started_at, permissions.cooldown_time)
+          new_cooldown.update_expiry!(timers.on_execute.started_at, cooldown_time)
 
           @current_cooldown = new_cooldown
         end
@@ -194,21 +197,23 @@ module ESM
 
         def handle_error(error, raise_error: ESM.env.test?)
           raise error if raise_error # Mainly for tests
+          return if error.is_a?(ESM::Exception::CheckFailureNoMessage)
 
-          message = nil
-          case error
-          when ESM::Exception::CheckFailure, ESM::Exception::FailedArgumentParse
-            message = error.data
-          when ESM::Exception::CheckFailureNoMessage
-            return
-          when StandardError
-            uuid = SecureRandom.uuid
-            error!(uuid: uuid, message: error.message, backtrace: error.backtrace)
+          message =
+            case error
+            when ESM::Exception::CheckFailure
+              error.data
+            when StandardError
+              uuid = SecureRandom.uuid.split("-")[1..3].join("-")
+              error!(uuid: uuid, message: error.message, backtrace: error.backtrace)
 
-            message = ESM::Embed.build(:error, description: I18n.t("exceptions.system", error_code: uuid))
-          end
+              ESM::Embed.build(
+                :error,
+                description: I18n.t("exceptions.system", error_code: uuid)
+              )
+            end
 
-          ESM.bot.deliver(message, to: event&.channel)
+          reply(message)
         end
       end
     end

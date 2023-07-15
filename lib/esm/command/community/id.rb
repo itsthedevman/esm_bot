@@ -20,7 +20,7 @@ module ESM
               e.description = I18n.t("commands.id.embed.description", community_name: current_community.name, community_id: current_community.community_id)
               e.add_field(
                 name: I18n.t("commands.id.embed.field.name"),
-                value: I18n.t("commands.id.embed.field.value", prefix: prefix, community_id: current_community.community_id)
+                value: I18n.t("commands.id.embed.field.value", community_id: current_community.community_id)
               )
             end
 

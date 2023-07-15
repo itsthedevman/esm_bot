@@ -7,10 +7,11 @@ module ESM
     class Base
       include Checks
       include Definition
-      include Metadata
       include Helpers
       include Lifecycle
+      include Metadata
       include Migration
+      include Permissions
     end
   end
 end

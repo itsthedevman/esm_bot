@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module ESM
-  class Bot < Discordrb::Commands::CommandBot
+  class Bot < Discordrb::Bot
     # View Channels
     # Send Messages
     # Embed Links
@@ -34,28 +34,18 @@ module ESM
       :direct_message_typing
     ).keys.freeze
 
-    attr_reader :config, :prefix, :metadata, :delivery_overseer
+    attr_reader :config, :metadata, :delivery_overseer
 
     def initialize
       @waiting_for = {}
       @mutex = Mutex.new
       @delivery_overseer = ESM::Bot::DeliveryOverseer.new
 
-      @prefixes = {}
-      @prefixes.default = ESM.config.prefix
-
-      load_community_prefixes
-
-      super(
-        token: ESM.config.token,
-        prefix: method(:determine_activation_prefix),
-        help_command: false,
-        intents: INTENTS
-      )
+      super(token: ESM.config.token, intents: INTENTS)
     end
 
     def run
-      ESM::Command.load unless ESM.env.test?
+      ESM::Command.load
 
       # Binds the Discord Events
       bind_events!
@@ -90,12 +80,12 @@ module ESM
     # These all have to have unique-to-ESM names since we are inheriting
     ###########################
     def bind_events!
-      mention { |event| esm_mention(event) }
-      ready { |event| esm_ready(event) }
-      server_create { |event| esm_server_create(event) }
-      user_ban { |event| esm_user_ban(event) }
-      user_unban { |event| esm_user_unban(event) }
-      member_join { |event| esm_member_join(event) }
+      mention(&method(:esm_mention))
+      ready(&method(:esm_ready))
+      server_create(&method(:esm_server_create))
+      user_ban(&method(:esm_user_ban))
+      user_unban(&method(:esm_user_unban))
+      member_join(&method(:esm_member_join))
     end
 
     def esm_mention(_event)
@@ -138,9 +128,13 @@ module ESM
       # V1
 
       ESM::Connection::Server.run!
+      ESM::Command.setup_event_hooks!
 
       @esm_status = :ready
-      info!(status: @esm_status, invite_url: ESM.bot.invite_url(permission_bits: ESM::Bot::PERMISSION_BITS))
+      info!(
+        status: @esm_status,
+        invite_url: invite_url(permission_bits: ESM::Bot::PERMISSION_BITS)
+      )
     end
 
     def esm_server_create(event)
@@ -292,10 +286,6 @@ module ESM
       match[1]
     end
 
-    def update_community_prefix(community)
-      @prefixes[community.guild_id] = community.command_prefix
-    end
-
     # Channel can be any of the following: An CommandEvent, a Channel, a User/Member, or a String (Channel, or user)
     def determine_delivery_channel(channel)
       return if channel.nil?
@@ -320,10 +310,6 @@ module ESM
           temp_channel
         end
       end
-    end
-
-    def update_prefix(community)
-      @prefixes[community.guild_id] = community.command_prefix || ESM.config.prefix
     end
 
     #
@@ -371,22 +357,6 @@ module ESM
     end
 
     private
-
-    def load_community_prefixes
-      ESM::Community.all.each do |community|
-        next if community.command_prefix.nil?
-
-        @prefixes[community.guild_id] = community.command_prefix
-      end
-    end
-
-    def determine_activation_prefix(message)
-      # The default for @prefixes is the config prefix (NOT NIL)
-      prefix = @prefixes[message.channel&.server&.id.to_s]
-      return if !message.content.start_with?(prefix)
-
-      message.content[prefix.size..]
-    end
 
     def format_invalid_response(expected)
       expected_string = expected.map { |value| "`#{value}`" }.join(" or ")

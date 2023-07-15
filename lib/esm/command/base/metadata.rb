@@ -11,6 +11,7 @@ module ESM
         def to_h
           {
             name: name,
+            arguments: arguments,
             current_community: current_community&.attributes,
             current_channel: current_channel.inspect,
             current_user: current_user.inspect,
@@ -26,8 +27,19 @@ module ESM
             registration_required: registration_required?,
             whitelist_enabled: whitelist_enabled?,
             on_cooldown: on_cooldown?,
-            permissions: @permissions.to_h
+            permissions: {
+              config: community_permissions&.attributes,
+              enabled: enabled?,
+              allowed: allowed?,
+              whitelisted: whitelisted?,
+              notify_when_disabled: notify_when_disabled?,
+              cooldown_time: cooldown_time
+            }
           }
+        end
+
+        def inspect
+          "<#{self.class.name} #{ESM::JSON.pretty_generate(to_h)}>"
         end
       end
     end

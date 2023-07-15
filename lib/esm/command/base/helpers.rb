@@ -4,6 +4,32 @@ module ESM
   module Command
     class Base
       module Helpers
+        extend ActiveSupport::Concern
+
+        class_methods do
+          #
+          # Generates the command statement that Discord uses to execute commands
+          #
+          # @param **inbound_arguments [Hash] The arguments to insert into the statement
+          #
+          # @return [String] The command statement
+          #
+          def statement(**inbound_arguments)
+            command_statement = namespace[:segments].dup
+            command_statement << namespace[:command_name]
+
+            if arguments.any?
+              arguments.each do |(name, arguments)|
+                command_statement << "#{name}:#{inbound_arguments[name]}"
+              end
+            end
+
+            "/#{command_statement.join(" ")}"
+          end
+        end
+
+        delegate :statement, to: "self.class"
+
         #
         # The ESM representation of the user who executed the command
         #
@@ -171,7 +197,7 @@ module ESM
         # @return [Boolean]
         #
         def dev_only?
-          requires.dev?
+          requirements.dev?
         end
 
         #
@@ -180,7 +206,7 @@ module ESM
         # @return [Boolean]
         #
         def registration_required?
-          requires.registration?
+          requirements.registration?
         end
 
         #
@@ -248,8 +274,8 @@ module ESM
           raise exception_class || ESM::Exception::CheckFailure, reason
         end
 
-        def skip(*flags)
-          flags.each { |flag| @skip_flags << flag }
+        def skip_action(*actions)
+          self.skipped_actions += actions
         end
 
         #
@@ -314,14 +340,16 @@ module ESM
           )
         end
 
-        # Convenience method for replying back to the event's channel
-        def reply(message)
-          ESM.bot.deliver(message, to: current_channel, replying_to: @event&.message)
-        end
+        # Convenience method for replying back to the event
+        def reply(message, **flags)
+          data = flags.deep_dup
+          if message.is_a?(ESM::Embed)
+            data[:embeds] = [message.for_discord_embed]
+          else
+            data[:content] = message
+          end
 
-        def reply_sync(message)
-          pending_delivery = ESM.bot.deliver(message, to: current_channel, replying_to: @event&.message, async: false)
-          pending_delivery.wait_for_delivery
+          event.respond(**data)
         end
 
         def edit_message(message, content)

@@ -30,24 +30,6 @@ raise "Failed to build extension_server" if build_result != "0"
 
 EXTENSION_SERVER = IO.popen("POSTGRES_DATABASE=esm_test RUST_LOG=#{LOG_LEVEL} bin/extension_server")
 
-###########
-# This starts ESM
-require "esm"
-
-ESM.logger.level =
-  case LOG_LEVEL
-  when :trace
-    Logger::TRACE
-  when :debug
-    Logger::DEBUG
-  when :info
-    Logger::INFO
-  when :warn
-    Logger::WARN
-  else
-    Logger::ERROR
-  end
-
 # Load the spec related files
 require_relative "./spec_helper_methods"
 
@@ -75,6 +57,24 @@ loader.eager_load
 
 # Load the commands after they've been auto-loaded
 ESM::Command.load
+
+###########
+# This starts ESM
+require "esm"
+
+ESM.logger.level =
+  case LOG_LEVEL
+  when :trace
+    Logger::TRACE
+  when :debug
+    Logger::DEBUG
+  when :info
+    Logger::INFO
+  when :warn
+    Logger::WARN
+  else
+    Logger::ERROR
+  end
 
 # Enable discordrb logging
 Discordrb::LOGGER.debug = false

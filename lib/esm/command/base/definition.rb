@@ -155,7 +155,7 @@ module ESM
 
           # @!visibility private
           def __disconnect_variables!
-            self.arguments = Arguments.new
+            self.arguments = {}
             self.defines = {}
 
             # ESM::Command::Territory::SetId => set_id
@@ -232,6 +232,7 @@ module ESM
           command_class = self.class
           @name = command_class.command_name
           @category = command_class.category
+          @arguments = Arguments.new
 
           @skipped_actions = ActiveSupport::ArrayInquirer.new(skipped_actions.to_a)
           @requirements = ActiveSupport::ArrayInquirer.new(requirements.to_a)

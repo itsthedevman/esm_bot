@@ -56,7 +56,7 @@ module ESM
 
         def send_stats
           # Don't set a cooldown
-          skip(:cooldown)
+          skip_action(:cooldown)
 
           ESM::Embed.build do |e|
             e.title = I18n.t("commands.gamble.stats.title", server_id: target_server.server_id)

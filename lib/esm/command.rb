@@ -27,6 +27,10 @@ module ESM
       all.find { |command| command_name == command.command_name }
     end
 
+    def self.get(command_name)
+      self[command_name]
+    end
+
     # V1
     def self.get_v1(command_name)
       return if command_name.blank?

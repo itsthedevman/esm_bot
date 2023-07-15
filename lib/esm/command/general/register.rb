@@ -29,7 +29,7 @@ module ESM
 
         def already_registered_message
           ESM::Embed.build do |e|
-            e.description = I18n.t("commands.register.already_registered", user: current_user.mention, prefix: prefix)
+            e.description = I18n.t("commands.register.already_registered", user: current_user.mention)
           end
         end
 
