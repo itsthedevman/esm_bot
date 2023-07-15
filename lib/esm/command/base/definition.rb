@@ -178,18 +178,19 @@ module ESM
           # @!visibility private
           def register_root_command(community_discord_id, command_name)
             # Description must be less than 100 characters (Discord requirement)
-            ::ESM.bot.register_application_command(command_name, description.truncate(100), server_id: community_discord_id) do |builder|
+            ::ESM.bot.register_application_command(
+              command_name,
+              description.truncate(100),
+              server_id: community_discord_id
+            ) do |builder, _permission_builder|
               register_arguments(builder)
-              warn!(command_name: command_name, builder: builder.to_a)
             end
           end
 
           # @!visibility private
           def register_subcommand(builder, command_name)
             # Description must be less than 100 characters (Discord requirement)
-            builder.subcommand(command_name.to_sym, description.truncate(100)) do |arg_builder|
-              register_arguments(arg_builder)
-            end
+            builder.subcommand(command_name.to_sym, description.truncate(100), &method(:register_arguments))
           end
 
           # @!visibility private
@@ -211,6 +212,11 @@ module ESM
                 **argument.options
               )
             end
+          end
+
+          # @!visibility private
+          def event_hook(event)
+            new.execute(event)
           end
         end
 

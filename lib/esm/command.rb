@@ -16,7 +16,8 @@ module ESM
     TYPES = %i[admin player].freeze
 
     class << self
-      attr_reader :all, :v1, :by_type, :by_namespace_for_server, :by_namespace_for_global
+      attr_reader :all, :v1, :by_type,
+        :by_namespace_for_server, :by_namespace_for_global, :by_namespace_for_all
     end
 
     def self.[](command_name)
@@ -52,6 +53,7 @@ module ESM
       @by_type = []
       @by_namespace_for_server = {}
       @by_namespace_for_global = {}
+      @by_namespace_for_all = {}
 
       commands_needing_cached = []
       ESM::Command::Base.subclasses.each do |command_class|
@@ -65,7 +67,13 @@ module ESM
         end
 
         @all << command_class
-        next if !TYPES.include?(command_class.type)
+
+        # Build the command structure for both server and global commands
+        # Commands must be registered with Discord together if they share the same namespace
+        register_namespace(command_class)
+
+        # Only admin and player commands need to be cached
+        next unless TYPES.include?(command_class.type)
 
         # To be written to the DB in bulk
         command = command_class.new
@@ -84,44 +92,7 @@ module ESM
       # Lock it!
       @all.freeze
       @by_type = @all.group_by(&:type).freeze
-
-      # Build the command structure for both server and global commands
-      # Commands must be registered with Discord together if they share the same namespace
-      all.each do |command_class|
-        namespace = command_class.namespace
-        segments = namespace[:segments]
-        command_name = namespace[:command_name]
-
-        # Only player commands are registered as global. Otherwise, it's a server registered command
-        current_segment =
-          if command_class.type == :player
-            @by_namespace_for_global
-          else
-            @by_namespace_for_server
-          end
-
-        # Discord treats the first segment after the slash as the "command name"
-        # Commands may use this as the root namespace (/help, /register)
-        # Or this could be a single group (/community <command_name>)
-        if (segment = segments.first)
-          current_segment = current_segment[segment.to_sym] ||= {}
-        end
-
-        # Discord treats this as a "subgroup" after the "command name"
-        # Commands may use this as a group namespace (/server admin <command_name>)
-        if (segment = segments.second)
-          current_segment = current_segment[segment.to_sym] ||= {}
-        end
-
-        # Ensure this namespace isn't already used
-        if (namespaced_command = current_segment[command_name.to_sym])
-          raise ESM::Exception::InvalidCommandNamespace,
-            "#{command_class} attempted to bind to the namespace `/#{segments.join(" ")} #{command_name}` which is already bound to #{namespaced_command}"
-        end
-
-        # Finally store the command with the final segment (/server admin show)
-        current_segment[command_name.to_sym] = command_class
-      end
+      @by_namespace_for_all = by_namespace_for_global.deep_merge(by_namespace_for_server)
 
       # Run some jobs for command
       RebuildCommandCacheJob.perform_async(commands_needing_cached)
@@ -193,6 +164,34 @@ module ESM
         end
     end
 
+    def self.setup_event_hooks!
+      by_namespace_for_all.each do |name, segments_or_command|
+        # It's a command and it's at the root level
+        if all.include?(segments_or_command)
+          ::ESM.bot.application_command(name, &segments_or_command.method(:event_hook))
+          next
+        end
+
+        # It's a group and it may have subgroups or subcommands
+        ::ESM.bot.application_command(name) do |group|
+          segments_or_command.each do |name, segments_or_command|
+            # It's a command!
+            if all.include?(segments_or_command)
+              group.subcommand(name, &segments_or_command.method(:event_hook))
+              next
+            end
+
+            # It's a group!
+            group.group(name) do |group|
+              segments_or_command.each do |name, command|
+                group.subcommand(name, &command.method(:event_hook))
+              end
+            end
+          end
+        end
+      end
+    end
+
     #
     # Registers admin and development commands as "server commands" for the community
     # These are only present on the Discord and are not global
@@ -246,6 +245,43 @@ module ESM
           end
         end
       end
+    end
+
+    # @!visibility private
+    private_class_method def self.register_namespace(command_class)
+      namespace = command_class.namespace
+      segments = namespace[:segments]
+      command_name = namespace[:command_name]
+
+      # Only player commands are registered as global. Otherwise, it's a server registered command
+      current_segment =
+        if command_class.type == :player
+          @by_namespace_for_global
+        else
+          @by_namespace_for_server
+        end
+
+      # Discord treats the first segment after the slash as the "command name"
+      # Commands may use this as the root namespace (/help, /register)
+      # Or this could be a single group (/community <command_name>)
+      if (segment = segments.first)
+        current_segment = current_segment[segment.to_sym] ||= {}
+      end
+
+      # Discord treats this as a "subgroup" after the "command name"
+      # Commands may use this as a group namespace (/server admin <command_name>)
+      if (segment = segments.second)
+        current_segment = current_segment[segment.to_sym] ||= {}
+      end
+
+      # Ensure this namespace isn't already used
+      if (namespaced_command = current_segment[command_name.to_sym])
+        raise ESM::Exception::InvalidCommandNamespace,
+          "#{command_class} attempted to bind to the namespace `/#{segments.join(" ")} #{command_name}` which is already bound to #{namespaced_command}"
+      end
+
+      # Finally store the command with the final segment (/server admin show)
+      current_segment[command_name.to_sym] = command_class
     end
   end
 end
