@@ -4,19 +4,6 @@ module ESM
   module Command
     class Base
       module Checks
-        # Order matters!
-        def run_all_checks!
-          check_for_dev_only!
-          check_for_registered!
-
-          check_for_nil_target_server!
-          check_for_nil_target_community!
-          check_for_nil_target_user!
-          check_for_different_community!
-          check_for_cooldown!
-          check_for_connected_server! unless skipped_actions.connected_server?
-        end
-
         def check_for_text_only!
           check_failed!(:text_only, user: current_user.mention) if text_only? && !current_channel.text?
         end
@@ -56,7 +43,6 @@ module ESM
 
         def check_for_cooldown!
           return if ESM.env.test? && ESM::Test.skip_cooldown
-          return if skipped_actions.cooldown?
           return if !on_cooldown?
 
           if current_cooldown.cooldown_type == "times"

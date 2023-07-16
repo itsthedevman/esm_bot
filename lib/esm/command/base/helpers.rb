@@ -340,7 +340,13 @@ module ESM
           )
         end
 
-        # Convenience method for replying back to the event
+        #
+        # Replies to a Discordrb::ApplicationCommandEvent using the #respond method
+        # Makes it easier to send messages or embeds without needing to handle them
+        #
+        # @param message [String, ESM::Embed] The message or embed to send
+        # @param **flags [Hash] Any other options to send into #respond
+        #
         def reply(message, **flags)
           data = flags.deep_dup
           if message.is_a?(ESM::Embed)
@@ -361,6 +367,98 @@ module ESM
           else
             message.edit(content)
           end
+        end
+
+        def request
+          @request ||= lambda do
+            requestee = target_user || current_user
+
+            # Don't look for the requestor because multiple different people could attempt to invite them
+            # requestor_user_id: current_user.esm_user.id,
+            query = ESM::Request.where(requestee_user_id: requestee.esm_user.id, command_name: command_name)
+
+            arguments.to_h.each do |name, value|
+              query = query.where("command_arguments->>'#{name}' = ?", value)
+            end
+
+            query.first
+          end.call
+        end
+
+        def add_request(to:, description: "")
+          @request =
+            ESM::Request.create!(
+              requestor_user_id: current_user.id,
+              requestee_user_id: to.id,
+              requested_from_channel_id: current_channel.id.to_s,
+              command_name: command_name,
+              command_arguments: arguments.to_h
+            )
+
+          send_request_message(description: description, target: to)
+        end
+
+        def request_url
+          # I have no idea why the ENV won't apply for this _one_ key.
+          if ESM.env.production?
+            "https://www.esmbot.com/requests"
+          else
+            ENV["REQUEST_URL"]
+          end
+        end
+
+        def accept_request_url(uuid)
+          "#{request_url}/#{uuid}/accept"
+        end
+
+        def decline_request_url(uuid)
+          "#{request_url}/#{uuid}/decline"
+        end
+
+        def send_request_message(target:, description: "")
+          embed =
+            ESM::Embed.build do |e|
+              e.set_author(name: current_user.distinct, icon_url: current_user.avatar_url)
+              e.description = description
+              e.add_field(name: I18n.t("commands.request.accept_name"), value: I18n.t("commands.request.accept_value", url: accept_request_url(request.uuid)), inline: true)
+              e.add_field(name: I18n.t("commands.request.decline_name"), value: I18n.t("commands.request.decline_value", url: decline_request_url(request.uuid)), inline: true)
+              e.add_field(name: I18n.t("commands.request.command_usage_name"), value: I18n.t("commands.request.command_usage_value", uuid: request.uuid_short))
+            end
+
+          ESM.bot.deliver(embed, to: target)
+        end
+
+        def create_or_update_cooldown
+          return if skipped_actions.cooldown?
+
+          new_cooldown = current_cooldown_query.first_or_create
+          new_cooldown.update_expiry!(timers.on_execute.started_at, cooldown_time)
+
+          @current_cooldown = new_cooldown
+        end
+
+        def current_cooldown_query
+          query = ESM::Cooldown.where(command_name: name)
+
+          # If the command requires a steam_uid, use it to track the cooldown.
+          query =
+            if registration_required?
+              query.where(steam_uid: current_user.steam_uid)
+            else
+              query.where(user_id: current_user.id)
+            end
+
+          # Check for the target_community
+          query = query.where(community_id: target_community.id) if target_community
+
+          # If we don't have a target_community, use the current_community (if applicable)
+          query = query.where(community_id: current_community.id) if current_community && target_community.nil?
+
+          # Check for the individual server
+          query = query.where(server_id: target_server.id) if target_server
+
+          # Return the query
+          query
         end
       end
     end
