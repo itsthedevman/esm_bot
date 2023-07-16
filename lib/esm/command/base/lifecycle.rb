@@ -40,7 +40,7 @@ module ESM
         end
 
         #
-        # Called internally by #execute, this method handles when a command has been executed on Discord. 
+        # Called internally by #execute, this method handles when a command has been executed on Discord.
         #
         # @param discord_event [Discordrb::ApplicationCommandEvent]
         #
@@ -66,10 +66,10 @@ module ESM
           # Finish up the checks
           check_for_dev_only!
           check_for_registered!
-          check_for_nil_target_server!
-          check_for_nil_target_community!
-          check_for_nil_target_user!
-          check_for_different_community!
+          check_for_nil_target_server! unless skipped_actions.nil_target_server?
+          check_for_nil_target_community! unless skipped_actions.nil_target_community?
+          check_for_nil_target_user! unless skipped_actions.nil_target_user?
+          check_for_different_community! unless skipped_actions.different_community?
           check_for_cooldown! unless skipped_actions.cooldown?
           check_for_connected_server! unless skipped_actions.connected_server?
 
@@ -80,7 +80,7 @@ module ESM
           end
 
           # Update the cooldown after the command has ran just in case there are issues
-          create_or_update_cooldown
+          create_or_update_cooldown unless skipped_actions.cooldown?
 
           # This just tracks how many times a command is used
           ESM::CommandCount.increment_execution_counter(name)

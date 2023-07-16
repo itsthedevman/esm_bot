@@ -275,7 +275,7 @@ module ESM
         end
 
         def skip_action(*actions)
-          self.skipped_actions += actions
+          skipped_actions.set(*actions)
         end
 
         #
@@ -429,8 +429,6 @@ module ESM
         end
 
         def create_or_update_cooldown
-          return if skipped_actions.cooldown?
-
           new_cooldown = current_cooldown_query.first_or_create
           new_cooldown.update_expiry!(timers.on_execute.started_at, cooldown_time)
 

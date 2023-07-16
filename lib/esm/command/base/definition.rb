@@ -82,7 +82,7 @@ module ESM
           # @param *keys [Symbol] The requirements. Valid options: :registration, :dev
           #
           def requires(*keys)
-            self.requirements += keys
+            requirements.set(*keys)
           end
 
           #
@@ -91,7 +91,7 @@ module ESM
           # @param *actions [Array<Symbol>] The name of the actions to skip
           #
           def skip_action(*actions)
-            self.skipped_actions += actions
+            skipped_actions.set(*actions)
           end
 
           #
@@ -129,8 +129,8 @@ module ESM
               has_v1_variant: has_v1_variant,
               limited_to: limited_to,
               defines: defines,
-              requirements: self.requirements,
-              skipped_actions: self.skipped_actions,
+              requirements: requirements.to_h,
+              skipped_actions: skipped_actions.to_h,
               arguments: arguments,
               description: description,
               description_long: description_long,
@@ -169,10 +169,14 @@ module ESM
             self.example = I18n.t("commands.#{command_name}.example", default: "")
             self.has_v1_variant = false
             self.limited_to = nil
-            self.namespace = command_namespace(category.to_sym) # Sets the default namespace to be: /<category> <command_name>
-            self.requirements = Set.new
-            self.skipped_actions = Set.new
             self.type = :player
+            self.namespace = command_namespace(category.to_sym) # Sets the default namespace to be: /<category> <command_name>
+
+            self.requirements = Inquirer.new(:dev, :registration)
+            self.skipped_actions = Inquirer.new(
+              :connected_server, :cooldown, :nil_target_user,
+              :nil_target_server, :nil_target_community, :different_community
+            )
           end
 
           # @!visibility private
@@ -232,11 +236,8 @@ module ESM
           command_class = self.class
           @name = command_class.command_name
           @category = command_class.category
+          @defines = defines.to_istruct # unsure...
           @arguments = Arguments.new
-
-          @skipped_actions = ActiveSupport::ArrayInquirer.new(skipped_actions.to_a)
-          @requirements = ActiveSupport::ArrayInquirer.new(requirements.to_a)
-          @defines = defines.to_istruct
 
           # Mainly for specs, but does give performance analytics (which is a nice bonus)
           @timers = Timers.new(name)

@@ -241,7 +241,7 @@ describe ESM::Command::Base do
     end
 
     it "does not require registration" do
-      command.requirements.delete(:registration)
+      command.requirements.unset(:registration)
       expect(command.registration_required?).to be(false)
     end
   end

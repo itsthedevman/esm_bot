@@ -139,7 +139,6 @@ module ESM
         end
 
         def check_for_nil_target_user!
-          return if skipped_actions.nil_target_user?
           return if arguments.target.nil?
           return if !target_user.nil?
 
