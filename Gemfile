@@ -6,7 +6,7 @@ gem "actionview", "~> 6.1", ">= 6.1.4.4"
 gem "activerecord", "~> 6.1", ">= 6.1.4.4"
 gem "activerecord-import"
 gem "activesupport", "~> 6.1", ">= 6.1.4.4"
-gem "discordrb", github: "shardlab/discordrb", branch: "main"
+gem "discordrb", path: "../discordrb"
 gem "dotenv"
 gem "dotiw"
 gem "eye"
@@ -47,6 +47,8 @@ group :development do
   gem "ruby-prof"
   gem "solargraph"
   gem "standard"
+  gem "rubocop-rspec"
+  gem "rubocop-performance"
   gem "yard"
 end
 
