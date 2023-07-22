@@ -14,6 +14,10 @@ module ESM
             from_server: ESM::Time::Timer.new,
             from_request: ESM::Time::Timer.new
           }
+
+          @timers.keys.each do |key|
+            self.class.define_method(key) { @timers[key] }
+          end
         end
 
         def reset_all!
@@ -29,23 +33,22 @@ module ESM
         end
 
         def time!(timer_name, &block)
-          timer = @timers[timer_name.to_sym]
-          raise "Invalid timer name: #{timer_name}. Expected one of #{@timers.keys.to_sentence(last_word_connector: ", or ")}" if timer.nil?
+          timer = public_send(timer_name)
+          if timer.nil?
+            raise "Invalid timer name: #{timer_name}. Expected one of #{@timers.keys.to_sentence(last_word_connector: ", or ")}"
+          end
 
           timer.start!
           yield
           timer.stop!
 
-          info!(timer: timer_name, command: @command_name, time_elapsed: "#{timer.time_elapsed * 1000} ms")
+          info!(
+            timer: timer_name,
+            command: @command_name,
+            time_elapsed: "#{timer.time_elapsed * 1000} ms"
+          )
+
           nil
-        end
-
-        def method_missing(method_name, *_arguments, &_block)
-          @timers[method_name.to_sym]
-        end
-
-        def respond_to_missing?(method_name, _include_private = false)
-          @timer.key?(method_name.to_sym)
         end
       end
     end

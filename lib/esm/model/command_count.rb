@@ -6,10 +6,7 @@ module ESM
     attribute :execution_count, :integer
 
     def self.increment_execution_counter(command_name)
-      # Single quotes are required for strings, double quotes are for columns
-      connection.execute(
-        "UPDATE command_counts SET execution_count = COALESCE(\"execution_count\", 0) + 1 WHERE command_name = '#{command_name}';"
-      )
+      where(command_name: name).update_counters(execution_count: 1)
     end
   end
 end
