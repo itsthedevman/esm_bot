@@ -20,7 +20,10 @@ module ESM
 
             if arguments.any?
               arguments.each do |(name, arguments)|
-                command_statement << "#{name}:#{inbound_arguments[name]}"
+                value = inbound_arguments[name]
+                next if value.blank?
+
+                command_statement << "#{name}:#{value}"
               end
             end
 
@@ -340,6 +343,12 @@ module ESM
           )
         end
 
+        # Convenience method for replying back to the event's channel
+        def reply(message)
+          pending_delivery = ESM.bot.deliver(message, to: current_channel, async: false)
+          pending_delivery.wait_for_delivery
+        end
+
         #
         # Replies to a Discordrb::ApplicationCommandEvent using the #respond method
         # Makes it easier to send messages or embeds without needing to handle them
@@ -347,7 +356,7 @@ module ESM
         # @param message [String, ESM::Embed] The message or embed to send
         # @param **flags [Hash] Any other options to send into #respond
         #
-        def reply(message, **flags)
+        def respond(message, **flags)
           data = flags.deep_dup
           if message.is_a?(ESM::Embed)
             data[:embeds] = [message.for_discord_embed]

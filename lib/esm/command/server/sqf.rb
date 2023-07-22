@@ -4,10 +4,10 @@ module ESM
   module Command
     module Server
       class Sqf < ESM::Command::Base
+        v2_variant!
+
         command_type :admin
         command_namespace :server, :admin, command_name: :execute_code
-
-        has_v1_variant!
 
         limit_to :text
         requires :registration

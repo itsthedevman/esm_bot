@@ -1,5 +1,9 @@
 # frozen_string_literal: true
 
+# 
+# This entire file is dedicated to the migration methods from @esm v1 to @esm v2
+# This file will be deleted once the migration has been completed
+#
 module ESM
   module Command
     class Base
@@ -8,12 +12,16 @@ module ESM
         extend ActiveSupport::Concern
 
         class_methods do
-          def has_v1_variant!
+          def v2_variant!
             self.has_v1_variant = true
           end
 
-          def has_v1_variant?
-            has_v1_variant == true
+          def v1_variant?
+            !!has_v1_variant
+          end
+
+          def as_v1_variant
+            ESM::Command.get_v1(self.class.command_name).new(**arguments)
           end
         end
 
@@ -89,7 +97,7 @@ module ESM
         end
 
         def v2_target_server?
-          target_server&.v2? || false
+          !!target_server&.v2?
         end
 
         def v2?

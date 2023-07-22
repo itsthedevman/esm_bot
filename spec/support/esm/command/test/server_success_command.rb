@@ -4,7 +4,7 @@ module ESM
   module Command
     module Test
       class ServerSuccessCommand < ESM::Command::Base
-        has_v1_variant!
+        v2_variant!
 
         command_type :player
         requires :registration
