@@ -278,11 +278,12 @@ module ESM
 
         outgoing_message&.on_response(incoming_message)
       rescue => e
-        if (command = outgoing_message&.command)
-          command.handle_error(e, raise_error: false) # Force not raising errors for every env
-        else
-          raise e # Bubble up to #on_inbound
-        end
+        command = outgoing_message&.command
+
+        # Bubble up to #on_inbound
+        raise e if command.nil?
+
+        command.handle_error(e)
       end
 
       def on_disconnect(request)

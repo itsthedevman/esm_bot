@@ -7,23 +7,9 @@ module ESM
         # The entry point for a command
         # @note Do not handle exceptions anywhere in this commands lifecycle
         def execute(event)
-          command = self
-
           if event.is_a?(Discordrb::Events::ApplicationCommandEvent)
-            # The event has to be stored before argument parsing because of callbacks referencing event data
-            # Still have to pass the even through to from_discord for V1
-            @event = event
-
-            # V1
-            command =
-              if v2_target_server? || !self.class.has_v1_variant?
-                self
-              else
-                ESM::Command.get_v1(self.class.name).new
-              end
-
             timers.time!(:from_discord) do
-              command.send(:from_discord, event)
+              from_discord(event)
             end
           else
             timers.time!(:from_server) do
@@ -31,12 +17,7 @@ module ESM
             end
           end
 
-          command
-        rescue => e
-          command.send(:handle_error, e)
-          command
-        ensure
-          command.timers.stop_all!
+          self
         end
 
         #
@@ -46,9 +27,6 @@ module ESM
         #
         def from_discord(discord_event)
           @event = discord_event
-
-          # Load the arguments
-          arguments.from(event.options.symbolize_keys)
 
           # Check for these BEFORE validating the arguments so even if
           # an argument was invalid, it doesn't matter since these take priority
@@ -121,8 +99,7 @@ module ESM
         def request_declined
         end
 
-        def handle_error(error, raise_error: ESM.env.test?)
-          raise error if raise_error # Mainly for tests
+        def handle_error(error)
           return if error.is_a?(ESM::Exception::CheckFailureNoMessage)
 
           message =
@@ -130,7 +107,7 @@ module ESM
             when ESM::Exception::CheckFailure
               error.data
             when StandardError
-              uuid = SecureRandom.uuid.split("-")[1..3].join("-")
+              uuid = SecureRandom.uuid.split("-")[0..1].join("")
               error!(uuid: uuid, message: error.message, backtrace: error.backtrace)
 
               ESM::Embed.build(

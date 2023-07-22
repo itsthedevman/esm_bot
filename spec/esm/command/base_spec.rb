@@ -319,7 +319,7 @@ describe ESM::Command::Base do
         test_command = ESM::Command::Test::DirectMessageCommand.new
         event = CommandEvent.create(test_command.statement, channel_type: :text, user: user)
 
-        expect { test_command.execute(event, raise_error: false) }.not_to raise_error
+        expect { test_command.execute(event) }.not_to raise_error
         wait_for { ESM::Test.messages.size }.to eq(1)
 
         error = ESM::Test.messages.first.second
@@ -330,7 +330,7 @@ describe ESM::Command::Base do
         test_command = ESM::Command::Test::ErrorCommand.new
         event = CommandEvent.create(test_command.statement, channel_type: :text, user: user)
 
-        expect { test_command.execute(event, raise_error: false) }.not_to raise_error
+        expect { test_command.execute(event) }.not_to raise_error
         wait_for { ESM::Test.messages.size }.to eq(1)
 
         error = ESM::Test.messages.first.second

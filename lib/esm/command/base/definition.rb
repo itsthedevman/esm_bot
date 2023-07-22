@@ -199,7 +199,10 @@ module ESM
 
           # @!visibility private
           def register_arguments(builder)
-            arguments.each do |(_argument_name, argument)|
+            # Required arguments must be first (Discord requirement)
+            sorted_arguments = arguments.values.sort_by { |argument| argument.required? ? 0 : 1 }
+
+            sorted_arguments.each do |argument|
               if !builder.respond_to?(argument.type)
                 raise ESM::Exception::InvalidCommandArgument, "Invalid type provided for argument #{argument.to_h}"
               end
@@ -216,11 +219,27 @@ module ESM
                 **argument.options
               )
             end
+
+            info!(command: command_name, status: :registered)
           end
 
           # @!visibility private
           def event_hook(event)
-            new.execute(event)
+            # Sends a "waiting..." message
+            event.defer(ephemeral: false)
+
+            command = new(**event.options.symbolize_keys)
+
+            # V1
+            command = command.as_v1_variant if v1_variant? && !command.v2_target_server?
+            command.execute(event)
+
+            event.edit_response(
+              content: "Completed in #{command.timers.from_discord.time_elapsed.round(2)} seconds"
+            )
+          rescue => e
+            command.handle_error(e)
+            event.edit_response(content: "Well, this is awkward...")
           end
         end
 
@@ -232,12 +251,12 @@ module ESM
 
         attr_writer :current_community # Used in commands/general/help.rb
 
-        def initialize
+        def initialize(**arguments)
           command_class = self.class
           @name = command_class.command_name
           @category = command_class.category
           @defines = defines.to_istruct # unsure...
-          @arguments = Arguments.new
+          @arguments = Arguments.new(**arguments)
 
           # Mainly for specs, but does give performance analytics (which is a nice bonus)
           @timers = Timers.new(name)
