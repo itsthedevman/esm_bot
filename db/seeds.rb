@@ -3,7 +3,7 @@
 require_relative "../lib/esm"
 require_relative "../spec/support/esm/test"
 
-print "Waiting for ESM to start..."
+puts "Waiting for ESM to start..."
 ESM.console!
 ESM.run!
 

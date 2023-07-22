@@ -1,10 +1,34 @@
 en:
   commands:
     arguments:
-      community_id: "The community ID for the community that you want to run this command on. Community IDs are often 3 to 4 characters long and can be found by using the `id` command on that community's discord"
-      target: "A user that you want to run this command on. This argument accepts any of the following:\nA Discord mention, e.g. `@Bryan`\nA Discord ID, e.g. `137709767954137088`\nor a Steam 64 ID (Steam UID), e.g. `76561198037177305`"
-      server_id: "The ID for the server that you want to run this command on. Server IDs are composed of a community ID and a custom name, separated by an underscore.\nFor example: `esm_malden`, `esm_tanoa`, and `esm_some_awesome_server`"
-      territory_id: "The ID for the territory that you want to run this command on. Territory IDs are often 3-6 characters long, or a custom one set using the `set_id` command.\nWant to see all of your territories? Try using the `territories` command"
+      community_id:
+        description: "The community ID for the community that you want to run this command on"
+        description_long: |-
+          The community ID, or alias, for the community that you want to run this command on
+          Community IDs are composed of a few characters that are configured by the server owner
+          You may find this by by using the `/community id` on the Discord server for that community
+          You may also configure defaults or aliases for this argument via the Player Dashboard on my website
+      target:
+        description: "The user that you want to run this command on"
+        description_long: |-
+          The user that you want to run this command on
+          This argument accepts any of the following:
+          A Discord mention, e.g. `@Bryan`
+          A Discord ID, e.g. `137709767954137088`
+          or a Steam 64 ID (Steam UID), e.g. `76561198037177305`
+      server_id:
+        description: "The ID for the server that you want to run this command on"
+        description_long: |-
+          The server ID, or alias, for the server that you want to run this command on
+          Server IDs are composed of a community ID and a custom name, separated by an underscore
+          For example: `esm_malden`, `esm_tanoa`, and `esm_some_awesome_server`
+          You may also configure defaults or aliases for this argument via the Player Dashboard on my website
+      territory_id:
+        description: "The ID for the territory that you want to run this command on"
+        description_long: |-
+          The ID for the territory that you want to run this command on
+          Territory IDs are often 3-6 characters long, or a custom one set using the `/territory set_id` command.
+          Want to see all of your territories? Try using the `/territory list` command
   "yes": "Yes"
   "no": "No"
   invalid_response: "I'm sorry, I don't know how to reply to your response.\nI was expecting %{expected}"

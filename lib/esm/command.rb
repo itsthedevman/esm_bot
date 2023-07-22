@@ -18,6 +18,8 @@ module ESM
     class << self
       attr_reader :all, :v1, :by_type,
         :by_namespace_for_server, :by_namespace_for_global, :by_namespace_for_all
+
+      delegate :application_command, :register_application_command, to: "::ESM.bot"
     end
 
     def self.[](command_name)
@@ -168,32 +170,36 @@ module ESM
         end
     end
 
+    #
+    # Using the namespaces of the commands, this method registers the event_hook with Discordrb so it's executed
+    # when a command event occurs
+    #
     def self.setup_event_hooks!
       by_namespace_for_all.each do |name, segments_or_command|
         # It's a command and it's at the root level
         if all.include?(segments_or_command)
-          ::ESM.bot.application_command(name, &segments_or_command.method(:event_hook))
+          application_command(name, &segments_or_command.method(:event_hook))
           next
         end
 
         # It's a group and it may have subgroups or subcommands
-        ::ESM.bot.application_command(name) do |group|
-          segments_or_command.each do |name, segments_or_command|
-            # It's a command!
-            if all.include?(segments_or_command)
-              group.subcommand(name, &segments_or_command.method(:event_hook))
-              next
-            end
+        segments_or_command.each do |sub_name, segments_or_command|
+          # It's a command!
+          if all.include?(segments_or_command)
+            application_command(name).subcommand(sub_name, &segments_or_command.method(:event_hook))
+            next
+          end
 
-            # It's a group!
-            group.group(name) do |group|
-              segments_or_command.each do |name, command|
-                group.subcommand(name, &command.method(:event_hook))
-              end
+          # It's a group!
+          application_command(name).group(sub_name) do |group|
+            segments_or_command.each do |command_name, command|
+              group.subcommand(command_name, &command.method(:event_hook))
             end
           end
         end
       end
+
+      nil
     end
 
     #
@@ -233,7 +239,7 @@ module ESM
       end
 
       # It's a group and it may have subgroups or subcommands
-      ::ESM.bot.register_application_command(name, "COMMAND", server_id: community_discord_id) do |builder|
+      ::ESM.bot.register_application_command(name, "C - If you are seeing this, something went wrong", server_id: community_discord_id) do |builder|
         segments_or_command.each do |name, segments_or_command|
           # It's a command!
           if all.include?(segments_or_command)
@@ -242,7 +248,7 @@ module ESM
           end
 
           # It's a group!
-          builder.subcommand_group(name, "GROUP") do |group_builder|
+          builder.subcommand_group(name, "G - If you are seeing this, something went wrong") do |group_builder|
             segments_or_command.each do |command_name, command|
               command.register_subcommand(group_builder, command_name)
             end
