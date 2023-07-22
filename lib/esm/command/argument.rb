@@ -4,19 +4,29 @@ module ESM
   module Command
     class Argument
       DEFAULTS = {
-        target: {regex: ESM::Regex::TARGET, description: "commands.arguments.target"},
-        territory_id: {regex: ESM::Regex::TERRITORY_ID, description: "commands.arguments.territory_id"},
+        target: {
+          validate_with: ESM::Regex::TARGET,
+          required: true,
+          description: "commands.arguments.target.description",
+          description_long: "commands.arguments.target.description_long"
+        },
+        territory_id: {
+          validate_with: ESM::Regex::TERRITORY_ID,
+          required: true,
+          description: "commands.arguments.territory_id.description",
+          description_long: "commands.arguments.territory_id.description_long"
+        },
         community_id: {
-          regex: ESM::Regex::COMMUNITY_ID,
-          description: "commands.arguments.community_id",
+          validate_with: ESM::Regex::COMMUNITY_ID,
+          description: "commands.arguments.community_id.description",
+          description_long: "commands.arguments.community_id.description_long",
           preserve: true,
-          default: nil,
           optional_text: "This argument may be excluded if a community is set as a default for you, or the Discord community if you are using this command in a text channel",
-          modifier: lambda do |argument|
-            if argument.content.present?
+          modifier: lambda do |context|
+            if context.content.present?
               # User alias
-              if (id_alias = current_user.id_aliases.find_community_alias(argument.content))
-                argument.content = id_alias.community.community_id
+              if (id_alias = current_user.id_aliases.find_community_alias(context.content))
+                context.content = id_alias.community.community_id
                 return
               end
 
@@ -28,38 +38,38 @@ module ESM
 
             # User default
             if current_user.id_defaults.community_id
-              argument.content = current_user.id_defaults.community.community_id
+              context.content = current_user.id_defaults.community.community_id
               return
             end
 
             # Community autofill
             if current_channel.text?
-              argument.content = current_community.community_id
+              context.content = current_community.community_id
             end
 
             # Nothing was provided and there was no default - it'll be validated later
           end
         },
         server_id: {
-          regex: ESM::Regex::SERVER_ID_OPTIONAL_COMMUNITY,
-          description: "commands.arguments.server_id",
+          validate_with: ESM::Regex::SERVER_ID_OPTIONAL_COMMUNITY,
+          description: "commands.arguments.server_id.description",
+          description_long: "commands.arguments.server_id.description_long",
           preserve: true,
-          default: nil,
           optional_text: "This argument may be excluded if a server is set as a default for you, or the Discord community if you are using this command in a text channel",
-          modifier: lambda do |argument|
-            if argument.content.present?
+          modifier: lambda do |context|
+            if context.content.present?
               # User provided - Starts with a community ID
-              return if argument.content.match("#{ESM::Regex::COMMUNITY_ID_OPTIONAL.source}_")
+              return if context.content.match("#{ESM::Regex::COMMUNITY_ID_OPTIONAL.source}_")
 
               # User alias
-              if (id_alias = current_user.id_aliases.find_server_alias(argument.content))
-                argument.content = id_alias.server.server_id
+              if (id_alias = current_user.id_aliases.find_server_alias(context.content))
+                context.content = id_alias.server.server_id
                 return
               end
 
               # Community autofill
-              if current_channel.text? && current_community.servers.by_server_id_fuzzy(argument.content).any?
-                argument.content = "#{current_community.community_id}_#{argument.content}"
+              if current_channel.text? && current_community.servers.by_server_id_fuzzy(context.content).any?
+                context.content = "#{current_community.community_id}_#{context.content}"
               end
 
               return # Keep whatever was given - it'll be validated later
@@ -73,21 +83,21 @@ module ESM
               # Channel default
               channel_default = current_community.id_defaults.for_channel(current_channel)
               if channel_default&.server_id
-                argument.content = channel_default.server.server_id
+                context.content = channel_default.server.server_id
                 return
               end
 
               # Global default
               global_default = current_community.id_defaults.global
               if global_default&.server_id
-                argument.content = global_default.server.server_id
+                context.content = global_default.server.server_id
                 return
               end
             end
 
             # User Default
             if current_user.id_defaults.server_id
-              argument.content = current_user.id_defaults.server.server_id
+              context.content = current_user.id_defaults.server.server_id
               return
             end
 
@@ -95,6 +105,11 @@ module ESM
           end
         }
       }.freeze
+
+      # @!visibility private
+      class ArgumentContext < Struct.new(:content, keyword_init: true)
+      end
+      private_constant :ArgumentContext
 
       attr_reader :name, :type, :display_name, :command_name,
         :default_value, :cast_type, :modifier,
@@ -107,33 +122,43 @@ module ESM
       # @param name [Symbol, String] The argument's name
       # @param type [Symbol, String] Optional. The argument's type (directly linked to Discord). Default: :string
       # @param opts [Hash] Options to configure the argument
-      # @option opts [Boolean] :required Optional. Sets if the argument MUST be provided by the user. Default: true
+      #
+      # @option opts [Symbol] :required Optional. Controls if the argument should be required by Discord. Default: false
+      #
       # @option opts [Symbol, String, nil] :template The name of an entry in DEFAULTS to use as a foundation
       #     in which these `opts` are merged into. Useful for having an argument that acts like another argument
+      #
       # @option opts [String] :description This argument's description, in less than 120 characters.
       #     Note: Providing this option is optional, however, all arguments MUST have a non-blank description
       #     This description is used in Discord when viewing the argument.
       #     This value defaults to the value located at the locale path:
       #         commands.<command_name>.arguments.<argument_name>.desc_short
+      #
       # @option opts [String] :description_long This argument's description, but more descriptive
       #     Note: Providing this option is optional, however, this argument MUST have a non-blank description
       #     This description is used in the help documentation with the help command and on the website
       #     This value defaults to the value located at the locale path:
       #         commands.<command_name>.arguments.<argument_name>.desc_long
+      #
       # @option opts [String] :optional_text Optional. Allows for overriding the "this argument is optional" text
       #     in the help documentation. This argument must be optional for this to be used.
       #     This is used in the help documentation with the help command and on the website
       #     This value defaults to the value located at the locale path:
       #         commands.<command_name>.arguments.<argument_name>.optional_text
+      #
       # @option opts [Symbol, String] :display_name Optional. Allows overwriting the display name of the argument
       #     without changing how the argument is referenced in code
+      #
       # @option opts [Object] :default Optional. The default value if this argument is not required. Default: nil
+      #
       # @option opts [Boolean] :preserve_case Optional. Controls if this argument's value should be converted to
       #     lowercase or not. Default: false
+      #
       # @option opts [Symbol, Proc] :type_caster Optional. Performs extra casting once the value is received from Discord
       #     If the value is a Symbol, it will be be checked against the available options.
       #     If the value is a Proc, it will be called and the raw value passed in
       #     Valid options: :json, :symbol
+      #
       # @option opts [Proc] :modifier Optional. A block of code used to modify this argument's value before validation
       # @option opts [Array<String>] :choices Optional. A list of choices the user can pick for this argument
       # @option opts [Integer] :min_value If type is integer/number, this is the minimum value that can be selected
@@ -156,7 +181,7 @@ module ESM
         @modifier = opts[:modifier] || ->(_) {}
         @validator = opts[:validate_with]
 
-        @options = {}
+        @options = {required: @required}
         @options[:choices] = opts[:choices] if opts[:choices]
         @options[:min_value] = opts[:min_value] if opts[:min_value]
         @options[:max_value] = opts[:max_value] if opts[:max_value]
@@ -175,11 +200,14 @@ module ESM
           end
       end
 
-      def validate!(input, command)
-        content = format(input)
+      def transform_and_validate!(input, command)
+        context = ArgumentContext.new(content: format(input))
 
         # Arguments can opt to modify the parsed value (this is how auto-fill works)
-        command.instance_exec(self, &modifier) if modifier?
+        command.instance_exec(context, &modifier) if modifier?
+
+        # Now that potential modification is done, pull the content back out
+        content = context.content
 
         debug!(
           argument: to_h.except(:description, :description_long),
@@ -215,10 +243,6 @@ module ESM
         !required?
       end
 
-      def optional!
-        @required = false
-      end
-
       def optional_text?
         optional_text.present?
       end
@@ -231,7 +255,7 @@ module ESM
             self.name.to_s
           end
 
-        "<#{"?" if optional?}#{name}>"
+        "#{name}:"
       end
 
       def help_documentation(command = nil)
@@ -301,6 +325,8 @@ module ESM
       end
 
       def check_for_valid_content!(content)
+        return if content.nil? && required?
+
         return unless validator
         return if content.match?(validator)
 
