@@ -23,8 +23,9 @@ RSpec.configure do |config|
     FactoryBot.find_definitions
     DatabaseCleaner.strategy = :truncation
 
-    # Build script generates territories
     ESM::ExileTerritory.delete_all
+  rescue ActiveRecord::ConnectionNotEstablished
+    raise "Unable to connect to the Exile MySQL server. Please ensure it is running before trying again"
   end
 
   config.after :suite do
@@ -32,14 +33,14 @@ RSpec.configure do |config|
     EXTENSION_SERVER.close
   end
 
-  config.around(:each) do |example|
+  config.around do |example|
     DatabaseCleaner.cleaning do
       ESM::Test.reset!
 
       # Ensure the server is paused. This can be resumed on demand (see spec_context/connection_context.rb)
       ESM::Connection::Server.pause
 
-      debug!(
+      trace!(
         example_group: example.example_group&.description,
         example: example.description
       )
@@ -88,5 +89,6 @@ end
 # HEY! LISTEN! The following lines must be the last code to execute in this file
 ESM.console!
 ESM.run!
+ESM::Test.wait_until { ESM::Database.connected? }
 ESM::Test.wait_until { ESM.bot.ready? }
 ESM::Test.wait_until { ESM::Connection::Server.instance&.tcp_server_alive? }

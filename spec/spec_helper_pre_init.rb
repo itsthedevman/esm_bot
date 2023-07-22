@@ -11,13 +11,14 @@ require "bundler/setup"
 require "awesome_print"
 require "colorize"
 require "database_cleaner/active_record"
-require "pry"
+require "esm"
 require "factory_bot"
 require "faker"
 require "hashids"
+require "neatjson"
+require "pry"
 require "rspec/expectations"
 require "rspec/wait"
-require "neatjson"
 require "timecop"
 
 ###########
@@ -33,6 +34,16 @@ EXTENSION_SERVER = IO.popen("POSTGRES_DATABASE=esm_test RUST_LOG=#{LOG_LEVEL} bi
 # Load the spec related files
 require_relative "./spec_helper_methods"
 
+# Load the rest of our support files
+ESM.loader.tap do |loader|
+  loader.push_dir(ESM.root.join("spec", "support"))
+
+  loader.collapse(ESM.root.join("spec", "support", "model"))
+  loader.ignore(ESM.root.join("spec", "support", "esm"))
+end
+
+ESM.load!
+
 # Spec related files
 Dir["#{__dir__}/spec_*/**/*.rb"]
   .sort
@@ -43,24 +54,8 @@ Dir["#{__dir__}/support/esm/**/*.rb"]
   .sort
   .each { |extension| require extension }
 
-# Load the rest of our support files
-loader = Zeitwerk::Loader.new
-loader.inflector.inflect("esm" => "ESM")
-loader.push_dir("#{__dir__}/support")
-
-loader.collapse("#{__dir__}/support/model")
-loader.ignore("#{__dir__}/support/esm")
-
-# Load everything right meow
-loader.setup
-loader.eager_load
-
 # Load the commands after they've been auto-loaded
 ESM::Command.load
-
-###########
-# This starts ESM
-require "esm"
 
 ESM.logger.level =
   case LOG_LEVEL
