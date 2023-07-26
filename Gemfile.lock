@@ -49,6 +49,11 @@ GEM
     benchmark (0.2.1)
     benchmark-ips (2.12.0)
     builder (3.2.4)
+    bundle-audit (0.1.0)
+      bundler-audit
+    bundler-audit (0.9.1)
+      bundler (>= 1.2.0, < 3)
+      thor (~> 1.0)
     capistrano (3.17.3)
       airbrussh (>= 1.0.0)
       i18n
@@ -347,6 +352,7 @@ DEPENDENCIES
   awesome_print
   bcrypt_pbkdf
   benchmark-ips
+  bundle-audit
   bundler
   capistrano
   capistrano-asdf
