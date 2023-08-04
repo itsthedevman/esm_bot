@@ -25,8 +25,10 @@ module ESM
     def self.[](command_name)
       return if command_name.blank?
 
-      command_name = command_name.to_s
-      all.find { |command| command_name == command.command_name }
+      command_name = command_name.to_s unless command_name.is_a?(String)
+
+      # Find by name or by its statement
+      all.find { |command| command_name == command.command_name || command_name == command.statement }
     end
 
     def self.get(command_name)
