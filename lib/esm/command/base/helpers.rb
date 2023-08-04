@@ -182,7 +182,7 @@ module ESM
         # @return [Boolean]
         #
         def dm_only?
-          @limit_to == :dm
+          @limited_to == :dm
         end
 
         #
@@ -191,7 +191,7 @@ module ESM
         # @return [Boolean]
         #
         def text_only?
-          @limit_to == :text
+          @limited_to == :text
         end
 
         #

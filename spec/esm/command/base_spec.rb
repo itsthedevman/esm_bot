@@ -372,30 +372,30 @@ describe ESM::Command::Base do
     end
 
     it "has no limit" do
-      expect(command.limit_to).to be_nil
+      expect(command.limited_to).to be_nil
       expect(command.dm_only?).to be(false)
       expect(command.text_only?).to be(false)
     end
 
     it "is limited to DM" do
-      command.limit_to = :dm
-      expect(command.limit_to).to eq(:dm)
+      command.limited_to = :dm
+      expect(command.limited_to).to eq(:dm)
       expect(command.dm_only?).to be(true)
       expect(command.text_only?).to be(false)
-      command.limit_to = nil
+      command.limited_to = nil
     end
 
     it "is limited to text" do
-      command.limit_to = :text
-      expect(command.limit_to).to eq(:text)
+      command.limited_to = :text
+      expect(command.limited_to).to eq(:text)
       expect(command.dm_only?).to be(false)
       expect(command.text_only?).to be(true)
-      command.limit_to = nil
+      command.limited_to = nil
     end
 
     it "executes in both DM and Text channels", requires_connection: true do
       ESM::Test.skip_cooldown = true
-      command.limit_to = nil
+      command.limited_to = nil
 
       # Test text channel
       command_statement = command.statement(
@@ -424,7 +424,7 @@ describe ESM::Command::Base do
 
     it "executes in only DM channels", requires_connection: true do
       ESM::Test.skip_cooldown = true
-      command.limit_to = :dm
+      command.limited_to = :dm
 
       # Test text channel
       command_statement = command.statement(
@@ -453,12 +453,12 @@ describe ESM::Command::Base do
       event = CommandEvent.create(command_statement, channel_type: :dm, user: user)
       expect { command.execute(event) }.not_to raise_error
 
-      command.limit_to = nil
+      command.limited_to = nil
     end
 
     it "executes in on Text channels", requires_connection: true do
       ESM::Test.skip_cooldown = true
-      command.limit_to = :text
+      command.limited_to = :text
 
       # Test text channel
       command_statement = command.statement(
@@ -487,7 +487,7 @@ describe ESM::Command::Base do
         expect(embed.description).to match(/this command can only be used in a discord server's \*\*text channel\*\*\./i)
       end
 
-      command.limit_to = nil
+      command.limited_to = nil
     end
   end
 
