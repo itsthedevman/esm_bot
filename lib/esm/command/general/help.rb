@@ -23,8 +23,6 @@ module ESM
             commands(types: [:player], include_development: false)
           when "admin commands"
             commands(types: [:admin], include_development: false)
-          # when "esm history"
-          #   esm_history
           when ->(category) { ESM::Command.include?(category) }
             command
           else
@@ -85,25 +83,6 @@ module ESM
 
             reply(embed)
           end
-        end
-
-        def esm_history
-          embed =
-            ESM::Embed.build do |e|
-              e.title = I18n.t("commands.help.esm_history.title")
-              e.description = I18n.t(
-                "commands.help.esm_history.description"
-              )
-
-              %w[what_next when_done why].each do |field_type|
-                e.add_field(
-                  name: I18n.t("commands.help.esm_history.fields.#{field_type}.name"),
-                  value: I18n.t("commands.help.esm_history.fields.#{field_type}.value")
-                )
-              end
-            end
-
-          reply(embed)
         end
 
         def categories(type)
