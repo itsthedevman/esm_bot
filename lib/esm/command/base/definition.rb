@@ -239,6 +239,9 @@ module ESM
               content: "Completed in #{command.timers.from_discord.time_elapsed.round(2)} seconds"
             )
           rescue => e
+            # This occurs if event.defer fails due to Discord dropping the interaction before the bot had a chance to process it
+            return if command.nil?
+
             command.handle_error(e)
             event.edit_response(content: "Well, this is awkward...")
           end
