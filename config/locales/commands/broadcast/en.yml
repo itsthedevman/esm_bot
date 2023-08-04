@@ -18,7 +18,7 @@ en:
           description: Where the broadcast should go
           description_extra: This can be either a valid `server_id` to send to just that server, `all` to send to all of your community's servers, or `preview` to just preview the message without sending it
         message:
-          description: The message to send or preview. Supports Discord Markdown and cannot be more than 2000 characters long
+          description: The message to send or preview. Supports Discord Markdown and must be less than 2000 characters
           description_extra: The message to send or preview. This supports Discord Markdown and cannot be more than 2000 characters long
       confirmation_embed:
         title: Broadcast Confirmation
