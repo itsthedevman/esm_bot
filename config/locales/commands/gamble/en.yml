@@ -1,23 +1,23 @@
 en:
   commands:
     gamble:
-      description: Feeling lucky? This command will gamble the specified amount of poptabs for the provided server ID. Poptabs are taken from your locker on that server.
+      description: Feeling lucky? Gamble poptabs on a server for a chance to win
       example: |-
-        **`gamble esm_malden 50`**
+        **`/server gamble esm_malden 50`**
         Gambles 50 poptabs from the locker on server `esm_malden`
 
-        **`gamble esm_altis half`**
+        **`/server gamble esm_altis half`**
         Gambles half of the poptabs in the locker on server `esm_altis`
 
-        **`gamble esm_tanoa all`**
+        **`/server gamble esm_tanoa all`**
         Gambles all of the poptabs in the locker on server `esm_tanoa`
 
-        **`gamble esm_namalsk stats`**
+        **`/server gamble esm_namalsk stats`**
         Displays gambling statistics for server `esm_namalsk`
       arguments:
         amount:
-          description: |-
-            The amount of poptabs to gamble. Poptabs are withdrawled from your locker.
+          description: "The amount of poptabs to gamble. Poptabs are withdrawn from your locker."
+          description_extra: |-
             The following options can be provided instead of a number:
             - `all`: Gambles all of your poptabs in your locker.
             - `half`: Gambles half of your poptabs in your locker

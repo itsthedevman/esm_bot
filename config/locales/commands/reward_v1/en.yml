@@ -1,7 +1,8 @@
 en:
   commands:
     reward_v1:
-      description: Requests a reward on the given server. After requesting a reward, you will be sent a confirmation message in your PMs with me. From here, you can confirm you are logged into the server and alive before accepting the rewards.
+      description: Requests a reward on the given server
+      description: After requesting a reward, you will be sent a confirmation message in your PMs with me. From here, you can confirm you are logged into the server and alive before accepting the rewards.
       example: |-
         **`reward esm_malden`**
         Requests a reward on `esm_malden`

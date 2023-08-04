@@ -2,23 +2,24 @@ en:
   commands:
     broadcast:
       description: Sends the provided message to all servers or the provided server ID in your community
-      description_long: |-
-        Sends the provided message to all servers or the provided server ID in your community.
+      description_extra: |-
         Registered players on these servers will receive the message via Direct Message if they have `custom` notification allowed for the server.
       example: |-
-        **`broadcast esm_malden This is an emergency announcement`**
+        **`/server admin broadcast esm_malden This is an emergency announcement`**
         Broadcasts `This is an emergency announcement` to every registered player on `esm_malden`.
 
-        **`broadcast all Admin event going on right meow. More information on our Discord!`**
-        Brodcasts `Admin event going on right meow. More information on our Discord!` to registered player on every server for this community.
+        **`/server admin broadcast all Admin event going on right meow. More information on our Discord!`**
+        Broadcasts `Admin event going on right meow. More information on our Discord!` to registered player on every server for this community.
 
-        **`broadcast preview Testing`**
+        **`/server admin broadcast preview Testing`**
         Provides a preview of the message without sending it.
       arguments:
         broadcast_to:
-          description: This can be either a valid `server_id` to send to just that server, `all` to send to all of your community's servers, or `preview` to just preview the message without sending it
+          description: Where the broadcast should go
+          description_extra: This can be either a valid `server_id` to send to just that server, `all` to send to all of your community's servers, or `preview` to just preview the message without sending it
         message:
-          description: The message to send or preview. This supports Discord Markdown and cannot be more than 2000 characters long
+          description: The message to send or preview. Supports Discord Markdown and cannot be more than 2000 characters long
+          description_extra: The message to send or preview. This supports Discord Markdown and cannot be more than 2000 characters long
       confirmation_embed:
         title: Broadcast Confirmation
         description: I will be sending the above message to the players on `%{server_ids}`

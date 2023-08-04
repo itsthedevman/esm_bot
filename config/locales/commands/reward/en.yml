@@ -1,13 +1,15 @@
 en:
   commands:
     reward:
-      description: |-
-        Requests a reward package to be deployed on the provided server. After running this command, you will be sent a confirmation message in your PMs with me. From here, you'll confirm you are online and alive before I send deliver the rewards to you.
+      description: Requests a reward package to be deployed on the provided server
+      description_extra: |-
+        After running this command, you will be sent a confirmation message in your PMs with me. From here, you'll confirm you are online and alive before I send deliver the rewards to you.
       example: |-
-        **`reward esm_malden`**
+        **`/server reward esm_malden`**
         Requests the default reward to be delivered to you on `esm_malden`.
       arguments:
-        reward_id: "The ID of the reward you would like to receive. If omitted, the default reward will be given"
+        reward_id:
+          description: "The ID of the reward you would like to receive. If omitted, the default reward will be given"
       errors:
         check_pm: "Hey %{user}. Before I can process your request, I need to confirm a few things. Please reply to the message in your Direct Messages to continue."
         no_reply: "Hey %{user}, I haven't heard from you in awhile so I cancelled your request. Please re-run the previous command when you're ready to continue"

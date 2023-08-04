@@ -4,12 +4,15 @@ en:
       arguments:
         mode:
           description: Sets which mode, valid options are `server` or `player`
-      description: Changes which mode ESM is in
+      description: Changes how I function on your Discord server
+      description_extra: |-
+        When I am in "player" mode, I chill with you and your friends on your Discord server, waiting to execute a command on the servers you play on. 
+        When I am in "server" mode, I become a liaison between your Exile server(s) and its players, allowing them to run my commands on it. You may configure how I respond to commands on your server from the server dashboard.
       example: |-
-        **`mode esm server`**
+        **`/community admin change_mode esm server`**
         Disables player mode. Set this mode if your community hosts servers
 
-        **`mode esm player`**
+        **`/community admin change_mode esm player`**
         Enables player mode. Set this mode if you play on servers
       enabled: "✅ Player mode has been enabled for **%{community_name}**. All of my player commands may now be used on its Discord server"
       disabled: "✅ Player mode has been disabled for **%{community_name}**. You may now manage your community and servers via my [Dashboard](https://www.esmbot.com/portal)"

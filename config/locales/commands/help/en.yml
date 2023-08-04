@@ -3,30 +3,30 @@ en:
     help:
       arguments:
         category:
-          description: The categories can be found by just using `help`
+          description: The categories can be found by just using `/help`
       description: A helpful command. An unhelpful description
       example: |-
-        **`help`**
+        **`/help`**
         Displays information about getting started with Exile Server Manager
 
-        **`help player commands`**
+        **`/help player commands`**
         Displays all player commands
 
-        **`help admin commands`**
+        **`/help admin commands`**
         Displays all admin commands
 
-        **`help commands`**
+        **`/help commands`**
         Displays all commands
 
-        **`help set_id`**
+        **`/help set_id`**
         Displays detailed information about the `set_id` command
       categories:
         name: Categories
         value: |-
-          **`help commands`**
+          **`/help commands`**
           List all commands
 
-          **`help <command_name>`**
+          **`/help <command_name>`**
           Get information about the provided command
       getting_started:
         title: "Well, hello there %{user}!"
@@ -37,17 +37,14 @@ en:
           commands:
             name: "**Looking for my commands?**"
             value: |-
-              `help player commands` for my player commands
-              `help admin commands` for my admin commands _(commands available to certain roles only!)_,
-              `help commands` for all commands
+              `/help player commands` for my player commands
+              `/help admin commands` for my admin commands _(commands available to certain roles only!)_,
+              `/help commands` for all commands
 
               Commands and details about them are also available on my website: https://esmbot.com/wiki/commands
           command:
             name: "**Want to see examples or more information about a command?**"
-            value: "Just send me `help <command_name>`, replacing `<command_name>` with the name of the command! For example: `help register`"
-          history:
-            name: "**Interested in my history?**"
-            value: "You can find out more by sending me `help esm history`"
+            value: "Just send me `/help <command_name>`, replacing `<command_name>` with the name of the command! For example: `/help register`"
           privacy:
             name: "**Privacy Policy**"
             value: |-
@@ -75,38 +72,3 @@ en:
         usage: "**__Usage__**"
         arguments: "**__Arguments__**"
         examples: "**__Examples__**"
-      esm_history:
-        title: "Exile Server Manager's History"
-        description: |-
-          Hi, Bryan here - I'm the sole developer of Exile Server Manager.
-
-          First, I just want to say thank you. Thank you for using this bot, and thank you for being curious.
-
-          ESM is a passion project of mine. I originally created ESM for my end of semester project during university in Dec 2017. Back then it was just a tiny website written in PHP (_cringe_) and it had very little functionality. It list the server's territories and that was it. After the semester was over, I continued to expand its functionality and soon it outgrew the website and took on a new shell as a Discord bot written in JavaScript with a C# Arma 3 server extension.
-
-          Released for public use on June 6th 2018, ESM launched with a **total of 13 player commands**. The `reward` command wasn't even one of them! Over the next year I continued to release updates to the bot, server extension, and website with more features, more commands, and even more bug fixes. _Oh so many bug fixes..._
-          Come March 2019, ESM would reach version `1.0.0` and would gain that glorious reward command.
-          _Oh, while I'm here, huge shout out to the Mafia Bosses on ESM's Discord. They supported ESM through thick and thin and I am so grateful for them._
-
-          Not much happened after 1.0.0 became "stable". At this point ESM was functioning, but it was slowly failing. The lack of knowledge and experience when I started this project meant that ESM had some design flaws within its core systems. It was working, but it had reached the point of diminishing returns.
-
-          By Oct 2019, I was working full time as a Ruby developer and had a year or so work experience under my belt. Armed with more knowledge, I set out to re-imagine ESM.
-
-          _And this time, it was made out of Ruby._
-
-          On Jan 2nd 2021, version 2.0.0 was released. I was rewritten in MRI Ruby, but still using my original server extension. This update brought improvements to every one of my commands and features. But most importantly, it laid a foundation for new features in the future.
-
-        fields:
-          what_next:
-            name: "**What's next?**"
-            value: |-
-              I'm still running strong and my author is still working on me. As I mentioned above, I am still using my original Arma 3 server extension. This piece of me is old, outdated, and unfortunately is blocking my author from adding a lot of new and exciting features.
-              Good news though, my author is currently working on completely rewriting the Arma 3 server extension from the ground up. New commands, improvements to the reward command (_among others_), speed improvements, possible linux support (_waaaaat?_), and more!
-          when_done:
-            name: "**So when will it be done?**"
-            value: |-
-              My author is hoping sometime late 2022
-          why:
-            name: "**Why?**"
-            value: |-
-              Well, aren't you the curious one.

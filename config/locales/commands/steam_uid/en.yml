@@ -3,6 +3,6 @@ en:
     steam_uid:
       description: Displays the registered Steam UID for your account
       example: |-
-        **`steam_uid`**
+        **`/my steam_uid`**
         Displays the registered Steam UID for your account
       response: Hey %{user}, your Steam UID is `%{steam_uid}`.

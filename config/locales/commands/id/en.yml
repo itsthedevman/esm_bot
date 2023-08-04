@@ -3,10 +3,10 @@ en:
     id:
       description: Displays the current Community's community ID for ESM
       example: |-
-        `id`
+        `/community id`
         Returns the Community's ID
       embed:
         description: "**%{community_name}'s** community ID is **`%{community_id}`**"
         field:
           name: Want to list all registered servers for this community?
-          value: "**`servers %{community_id}`**"
+          value: "**`/community servers %{community_id}`**"

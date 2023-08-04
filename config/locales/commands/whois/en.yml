@@ -3,13 +3,13 @@ en:
     whois:
       description: Displays all available information about a player via their Steam UID, Discord ID, or Mention
       example: |-
-        **`whois @Bryan`**
+        **`/community admin find_player @Bryan`**
         Using their mention, get all available information about this player
 
-        **`whois 76561198037177305`**
+        **`/community admin find_player 76561198037177305`**
         Using their steam uid, get all available information about this player
 
-        **`whois 137709767954137088`**
+        **`/community admin find_player 137709767954137088`**
         Using their Discord ID, get all available information about this player
       discord:
         header: __Discord Information__

@@ -7,5 +7,5 @@ en:
       decline_name: To **decline** this request
       decline_value: "[DECLINE](%{url})"
       command_usage_name: Don't feel safe going to my website?
-      command_usage_value: That's okay! You can accept or decline this request by using ```accept %{uuid}``` or ```decline %{uuid}```
+      command_usage_value: That's okay! You can accept or decline this request by using ```/request accept %{uuid}``` or ```/request decline %{uuid}```
       check_pm: Hi %{user}, you'll need to confirm this request. I've sent you a confirmation message in a direct message with you.

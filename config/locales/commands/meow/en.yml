@@ -3,6 +3,6 @@ en:
     meow:
       description: It's so fluffy I'm going to die!!!
       example: |-
-        **`meow`**
+        **`/pictures meow`**
         Returns a random cat image
       waiting: pispispispispispispispis

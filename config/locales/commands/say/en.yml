@@ -3,5 +3,5 @@ en:
     say:
       description: A development command. Forces the bot to say whatever is inputted
       example: |-
-        **`say hello`**
+        **`/development say hello`**
         The bot will reply hello

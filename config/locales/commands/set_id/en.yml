@@ -1,16 +1,18 @@
 en:
   commands:
     set_id:
-      description: |-
-        **Territory Owner Only.**
-        Sets a custom territory ID for the provide server ID. Once set, this custom territory ID can be used whenever a command requires a territory ID argument.
+      description: Changes your territory ID to the provided ID
+      description_extra: |-
+        This command is only available for the territory owner.
+        Once set, this custom territory ID can be used whenever a command requires a territory ID argument.
       example: |-
-        **`set_id esm_malden jqjoe no_u`**
+        **`/territory set_id esm_malden jqjoe no_u`**
         Sets territory `jqjoe` to be `no_u`
 
-        **`set_id esm_altis fort_awesome tent_sadness`**
+        **`/territory set_id esm_altis fort_awesome tent_sadness`**
         Changes territory `fort_awesome` to be `tent_sadness`
       arguments:
         new_territory_id:
-          description: The new territory ID to use. This ID can be 3 to 20 characters long and can **only contain letters, numbers, and underscores**.
+          description: The new territory ID to use.
+          description_extra: This ID can be 3 to 20 characters long and can **only contain letters, numbers, and underscores**.
       success_message: ":confetti_ball: \nTerritory `%{old_territory_id}`'s ID is now `%{new_territory_id}`. You can now use this ID wherever a command requires `<territory_id>`\nFor example: ```pay %{server_id} %{new_territory_id}```"

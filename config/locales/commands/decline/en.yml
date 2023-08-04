@@ -3,7 +3,7 @@ en:
     decline:
       description: Declines a request based off its UUID
       example: |-
-        **`decline e09e`**
+        **`/request decline e09e`**
         Declines request `e09e` from your pending requests
       success_message: The request has been declined. The requestor **has not** be notified
       arguments:

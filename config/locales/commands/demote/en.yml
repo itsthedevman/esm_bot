@@ -1,13 +1,12 @@
 en:
   commands:
     demote:
-      description: |-
-        **Territory Owner Only.**
-        Demotes a player from moderator to builder in a territory.
+      description: Demotes a player from moderator to builder in a territory.
+      description_extra: "This command is only available for the territory owner"
       example: |-
-        **`demote esm_malden awesome @Bryan`**
+        **`/territory demote_player esm_malden awesome @Bryan`**
         Demote @Bryan to builder in territory `awesome` on `esm_malden`
 
-        **`promote esm_malden fort_a 76561198037177305`**
+        **`/territory demote_player esm_malden fort_a 76561198037177305`**
         Demote `76561198037177305` to builder in territory `fort_a` on `esm_malden`
       success_message: Hey %{user}, `%{target_uid}` has been demoted to builder in territory `%{territory_id}` on `%{server}`

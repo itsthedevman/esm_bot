@@ -1,9 +1,8 @@
 en:
   commands:
     reset_cooldown:
-      description: |-
-        Resets a player's cooldowns.
-
+      description: Resets a player's cooldowns
+      description_extra: |-
         Admins can preform any of the following:
           Resets a cooldown for a player.
           Reset all cooldowns for one server.
@@ -17,22 +16,22 @@ en:
 
         See examples for more details
       example: |-
-        **`reset_cooldown`**
+        **`/community admin reset_cooldown`**
         Resets every command's cooldowns for your community.
 
-        **`reset_cooldown @Bryan`**
+        **`/community admin reset_cooldown @Bryan`**
         Resets every command's cooldown for @Bryan on your community.
 
-        **`reset_cooldown @Bryan reward`**
+        **`/community admin reset_cooldown @Bryan reward`**
         Resets the `reward` cooldown for @Bryan on your community.
 
-        **`reset_cooldown @Bryan reward esm_malden`**
+        **`/community admin reset_cooldown @Bryan reward esm_malden`**
         Resets the `reward` cooldown for @Bryan on `esm_malden` only
 
-        **`reset_cooldown reward esm_malden`**
+        **`/community admin reset_cooldown reward esm_malden`**
         Resets the `reward` cooldown for `esm_malden` only
 
-        **`reset_cooldown reward`**
+        **`/community admin reset_cooldown reward`**
         Resets the `reward` cooldown every server your community has registered
       arguments:
         command_name:

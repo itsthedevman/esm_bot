@@ -3,6 +3,6 @@ en:
     snek:
       description: Nope rope, danger noodle, whatever you want to call them. One thing for sure is that they are cute.
       example: |-
-        **`snek`**
+        **`/pictures snek`**
         Returns a random snake image
       waiting: Slithering...
