@@ -93,8 +93,11 @@ module ESM
 
         # Return an array so ESM::Embed field logic will handle overflow correctly
         def format_commands(commands)
-          commands.map do |command|
-            "**`##{command.name}`**\n#{command.description}"
+          commands.sort_by(&:statement).map do |command|
+            description = command.description
+            description += "\n#{command.description_extra}" if command.description_extra.present?
+
+            "**`#{command.statement}`**\n#{description}"
           end
         end
 
@@ -102,12 +105,12 @@ module ESM
           command = ESM::Command[@arguments.category].new
           embed =
             ESM::Embed.build do |e|
-              e.title = I18n.t("commands.help.command.title", name: command.name)
-              description = [command.description, ""]
+              e.title = I18n.t("commands.help.command.title", name: command.statement)
+              description = ["_This command used to be `!#{command.command_name}`_", command.description, ""]
 
               # Adds a note about being limited to DM or Text
-              description << I18n.t("commands.help.command.note") if command.limit_to || command.whitelist_enabled?
-              description << I18n.t("commands.help.command.limited_to", channel_type: I18n.t(command.limit_to)) if command.limit_to
+              description << I18n.t("commands.help.command.note") if command.limited_to || command.whitelist_enabled?
+              description << I18n.t("commands.help.command.limited_to", channel_type: I18n.t(command.limited_to)) if command.limited_to
               description << I18n.t("commands.help.command.whitelist_enabled") if command.whitelist_enabled?
               e.description = description
 

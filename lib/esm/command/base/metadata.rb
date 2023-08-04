@@ -5,7 +5,7 @@ module ESM
     class Base
       module Metadata
         def usage
-          @usage ||= "#{path} #{arguments.map(&:to_s).join(" ")}"
+          @usage ||= statement(**arguments)
         end
 
         def to_h
