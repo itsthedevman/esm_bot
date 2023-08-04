@@ -1,7 +1,6 @@
 require "bundler/setup"
 # require "bundler/gem_tasks"
 require "standalone_migrations"
-require_relative "lib/esm"
 
 # HOTFIX: StandaloneMigrations 7.1.0 uses #exists?, which is removed in 3.2
 # They have yet to patch it 12023-Mar-04
@@ -12,6 +11,9 @@ class File
 end
 
 StandaloneMigrations::Tasks.load_tasks
+
+# Must be required AFTER StandaloneMigrations
+require_relative "lib/esm"
 
 if ENV["ESM_ENV"] == "test"
   require "rspec/core/rake_task"
@@ -36,6 +38,7 @@ task default: [:test, "standard:fix"]
 # Some db tasks require your app code to be loaded; they'll expect to find it here
 task :environment do
   ESM.console!
+  ESM.load!
 end
 
 task :bot do
