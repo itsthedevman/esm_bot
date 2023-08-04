@@ -23,7 +23,7 @@ module ESM
           class_attribute :command_name
           class_attribute :defines
           class_attribute :description
-          class_attribute :description_long
+          class_attribute :description_extra
           class_attribute :example
           class_attribute :has_v1_variant
           class_attribute :limited_to
@@ -133,7 +133,7 @@ module ESM
               skipped_actions: skipped_actions.to_h,
               arguments: arguments,
               description: description,
-              description_long: description_long,
+              description_extra: description_extra,
               example: example
             }
           end
@@ -159,14 +159,15 @@ module ESM
             self.defines = {}
 
             # ESM::Command::Territory::SetId => set_id
-            self.command_name = name.demodulize.underscore.downcase.sub("_v1", "")
+            name = self.name.demodulize.underscore.downcase
+            self.command_name = name.sub("_v1", "")
 
             # ESM::Command::Request::Accept => system
             self.category = module_parent.name.demodulize.downcase
 
-            self.description = I18n.t("commands.#{command_name}.description", default: "")
-            self.description_long = I18n.t("commands.#{command_name}.description_long", default: nil) || description
-            self.example = I18n.t("commands.#{command_name}.example", default: "")
+            self.description = I18n.t("commands.#{name}.description", default: "")
+            self.description_extra = I18n.t("commands.#{name}.description_extra", default: nil)
+            self.example = I18n.t("commands.#{name}.example", default: "")
             self.has_v1_variant = false
             self.limited_to = nil
             self.type = :player

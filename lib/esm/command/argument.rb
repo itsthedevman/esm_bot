@@ -8,18 +8,18 @@ module ESM
           validate_with: ESM::Regex::TARGET,
           required: true,
           description: "commands.arguments.target.description",
-          description_long: "commands.arguments.target.description_long"
+          description_extra: "commands.arguments.target.description_extra"
         },
         territory_id: {
           validate_with: ESM::Regex::TERRITORY_ID,
           required: true,
           description: "commands.arguments.territory_id.description",
-          description_long: "commands.arguments.territory_id.description_long"
+          description_extra: "commands.arguments.territory_id.description_extra"
         },
         community_id: {
           validate_with: ESM::Regex::COMMUNITY_ID,
           description: "commands.arguments.community_id.description",
-          description_long: "commands.arguments.community_id.description_long",
+          description_extra: "commands.arguments.community_id.description_extra",
           preserve: true,
           optional_text: "This argument may be excluded if a community is set as a default for you, or the Discord community if you are using this command in a text channel",
           modifier: lambda do |context|
@@ -53,7 +53,7 @@ module ESM
         server_id: {
           validate_with: ESM::Regex::SERVER_ID_OPTIONAL_COMMUNITY,
           description: "commands.arguments.server_id.description",
-          description_long: "commands.arguments.server_id.description_long",
+          description_extra: "commands.arguments.server_id.description_extra",
           preserve: true,
           optional_text: "This argument may be excluded if a server is set as a default for you, or the Discord community if you are using this command in a text channel",
           modifier: lambda do |context|
@@ -113,7 +113,7 @@ module ESM
 
       attr_reader :name, :type, :display_name, :command_name,
         :default_value, :cast_type, :modifier,
-        :description, :description_long, :optional_text,
+        :description, :description_extra, :optional_text,
         :options, :validator
 
       #
@@ -128,17 +128,17 @@ module ESM
       # @option opts [Symbol, String, nil] :template The name of an entry in DEFAULTS to use as a foundation
       #     in which these `opts` are merged into. Useful for having an argument that acts like another argument
       #
-      # @option opts [String] :description This argument's description, in less than 120 characters.
+      # @option opts [String] :description This argument's description, in less than 100 characters.
       #     Note: Providing this option is optional, however, all arguments MUST have a non-blank description
       #     This description is used in Discord when viewing the argument.
       #     This value defaults to the value located at the locale path:
-      #         commands.<command_name>.arguments.<argument_name>.desc_short
+      #         commands.<command_name>.arguments.<argument_name>.description
       #
-      # @option opts [String] :description_long This argument's description, but more descriptive
+      # @option opts [String] :description_extra Any extra information to be included, but wouldn't fit in the 100 character limit
       #     Note: Providing this option is optional, however, this argument MUST have a non-blank description
       #     This description is used in the help documentation with the help command and on the website
       #     This value defaults to the value located at the locale path:
-      #         commands.<command_name>.arguments.<argument_name>.desc_long
+      #         commands.<command_name>.arguments.<argument_name>.description_extra
       #
       # @option opts [String] :optional_text Optional. Allows for overriding the "this argument is optional" text
       #     in the help documentation. This argument must be optional for this to be used.
@@ -188,7 +188,7 @@ module ESM
 
         description = load_locale_or_provided(opts[:description], "description")
         @description = description.truncate(99) # Discord req: Must be less than 100 characters
-        @description_long = load_locale_or_provided(opts[:description_long], "description_long").presence || description
+        @description_extra = load_locale_or_provided(opts[:description_extra], "description_extra").presence
 
         @optional_text =
           if (text = opts[:optional_text].presence)
@@ -210,7 +210,7 @@ module ESM
         content = context.content
 
         debug!(
-          argument: to_h.except(:description, :description_long),
+          argument: to_h.except(:description, :description_extra),
           input: input,
           output: {
             type: content.class.name,
@@ -259,9 +259,9 @@ module ESM
       end
 
       def help_documentation(command = nil)
-        output = ["**`#{self}`**"]
+        output = ["**`#{self}`**", description]
 
-        output << "#{description_long}." if description_long.presence
+        output << "#{description_extra}." if description_extra.presence
 
         output << "**Note:** #{optional_text}" if optional_text?
         output.join("\n")
@@ -273,7 +273,7 @@ module ESM
           command_name: command_name,
           display_name: display_name,
           description: description,
-          description_long: description_long,
+          description_extra: description_extra,
           optional_text: optional_text,
           default_value: default_value,
           cast_type: cast_type,
