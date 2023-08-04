@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# 
+#
 # This entire file is dedicated to the migration methods from @esm v1 to @esm v2
 # This file will be deleted once the migration has been completed
 #
@@ -38,7 +38,9 @@ module ESM
         #
         # V1: This is called when the message is received from the server
         #
-        def from_server(parameters)
+        def from_server
+          parameters = event
+
           # Parameters is always an array. 90% of the time, parameters size will only be 1
           # This just makes typing a little easier when writing commands
           @response = (parameters.size == 1) ? parameters.first : parameters

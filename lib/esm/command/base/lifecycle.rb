@@ -4,16 +4,58 @@ module ESM
   module Command
     class Base
       module Lifecycle
-        # The entry point for a command
-        # @note Do not handle exceptions anywhere in this commands lifecycle
+        extend ActiveSupport::Concern
+
+        class_methods do
+          #
+          # The entry point of a command
+          # This is registered with Discordrb and is called as part of an interaction lifecycle
+          #
+          # @note This method will gracefully handle 99% of the errors automatically.
+          # I recommend avoiding manually handling exceptions in a command's lifecycle so this system can handle it. But the choice is up to you
+          #
+          # @!visibility private
+          #
+          def event_hook(event)
+            error = false
+
+            # Shows "Exile Server Manager is thinking...". This is so much better than "typing"
+            event.defer(ephemeral: false)
+
+            command = new
+            command = command.as_v1_variant if v1_variant? && !command.v2_target_server?
+            command.execute(event)
+          rescue => e
+            # This occurs if event.defer fails due to Discord dropping the interaction before the bot had a chance to process it
+            return if command.nil?
+
+            error = true
+            command.handle_error(e)
+          ensure
+            # Ugh - can't guard here
+            if !command.nil?
+              content =
+                if error
+                  "Well, this is awkward..."
+                else
+                  "Completed in #{command.timers.from_discord.time_elapsed.round(2)} seconds"
+                end
+
+              event.edit_response(content: content)
+            end
+          end
+        end
+
         def execute(event)
+          @event = event
+
           if event.is_a?(Discordrb::Events::ApplicationCommandEvent)
             timers.time!(:from_discord) do
-              from_discord(event)
+              from_discord
             end
           else
             timers.time!(:from_server) do
-              from_server(event)
+              from_server
             end
           end
 
@@ -25,18 +67,15 @@ module ESM
         #
         # @param discord_event [Discordrb::ApplicationCommandEvent]
         #
-        def from_discord(discord_event)
-          @event = discord_event
-
-          # Check for these BEFORE validating the arguments so even if
-          # an argument was invalid, it doesn't matter since these take priority
+        def from_discord
+          # Check for these BEFORE validating the arguments so even if an argument was invalid, it doesn't matter since these take priority
           check_for_text_only!
           check_for_dm_only!
           check_for_player_mode!
           check_for_permissions!
 
           # Now ensure the user hasn't smoked too much lead
-          arguments.validate!(self.class.arguments, command: self)
+          arguments.validate!(**event.options.symbolize_keys, command: self)
 
           # Adding a comment to make this look better is always a weird idea
           info!(to_h)

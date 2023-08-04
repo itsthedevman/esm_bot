@@ -248,21 +248,16 @@ module ESM
       end
 
       def to_s
-        name =
-          if display_name.present?
-            display_name.to_s
-          else
-            self.name.to_s
-          end
-
-        "#{name}:"
+        if display_name.present?
+          display_name.to_s
+        else
+          name.to_s
+        end
       end
 
-      def help_documentation(command = nil)
+      def help_documentation
         output = ["**`#{self}`**", description]
-
         output << "#{description_extra}." if description_extra.presence
-
         output << "**Note:** #{optional_text}" if optional_text?
         output.join("\n")
       end

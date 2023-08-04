@@ -4,10 +4,6 @@ module ESM
   module Command
     class Base
       module Metadata
-        def usage
-          @usage ||= statement(**arguments)
-        end
-
         def to_h
           {
             name: name,

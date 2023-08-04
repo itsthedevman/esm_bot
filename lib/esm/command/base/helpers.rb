@@ -7,31 +7,45 @@ module ESM
         extend ActiveSupport::Concern
 
         class_methods do
-          #
-          # Generates the command statement that Discord uses to execute commands
-          #
-          # @param **inbound_arguments [Hash] The arguments to insert into the statement
-          #
-          # @return [String] The command statement
-          #
-          def statement(**inbound_arguments)
-            command_statement = namespace[:segments].dup
-            command_statement << namespace[:command_name]
-
-            if arguments.any?
-              arguments.each do |(name, arguments)|
-                value = inbound_arguments[name]
-                next if value.blank?
-
-                command_statement << "#{name}:#{value}"
-              end
-            end
-
-            "/#{command_statement.join(" ")}"
+          def usage
+            new.usage(with_args: false)
           end
         end
 
-        delegate :statement, to: "self.class"
+        #
+        # <Description>
+        #
+        # @param overrides [<Type>] <description>
+        # @param with_args [<Type>] <description>
+        #
+        # @return [<Type>] <description>
+        #
+        def usage(overrides: {}, with_args: true)
+          command_statement = namespace[:segments].dup
+          command_statement << namespace[:command_name]
+
+          if with_args && arguments.size > 0
+            arguments.with_templates.each do |(name, data)|
+              template = data[:template]
+
+              # Better support for falsey values
+              value =
+                if overrides.key?(name)
+                  overrides[name]
+                else
+                  data[:value]
+                end
+
+              # Perf
+              value_is_blank = value.blank?
+              next if value_is_blank && template.optional?
+
+              command_statement << (value_is_blank ? "#{name}:<#{name}>" : "#{name}:#{value}")
+            end
+          end
+
+          "/#{command_statement.join(" ")}"
+        end
 
         #
         # The ESM representation of the user who executed the command
@@ -438,10 +452,8 @@ module ESM
         end
 
         def create_or_update_cooldown
-          new_cooldown = current_cooldown_query.first_or_create
-          new_cooldown.update_expiry!(timers.on_execute.started_at, cooldown_time)
-
-          @current_cooldown = new_cooldown
+          @current_cooldown = current_cooldown_query.first_or_create
+          current_cooldown.update_expiry!(timers.on_execute.started_at, cooldown_time)
         end
 
         def current_cooldown_query
