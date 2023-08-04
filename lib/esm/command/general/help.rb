@@ -93,11 +93,11 @@ module ESM
 
         # Return an array so ESM::Embed field logic will handle overflow correctly
         def format_commands(commands)
-          commands.sort_by(&:statement).map do |command|
+          commands.sort_by(&:usage).map do |command|
             description = command.description
             description += "\n#{command.description_extra}" if command.description_extra.present?
 
-            "**`#{command.statement}`**\n#{description}"
+            "**`#{command.usage}`**\n#{description}"
           end
         end
 
@@ -105,7 +105,7 @@ module ESM
           command = ESM::Command[@arguments.category].new
           embed =
             ESM::Embed.build do |e|
-              e.title = I18n.t("commands.help.command.title", name: command.statement)
+              e.title = I18n.t("commands.help.command.title", name: command.usage(with_args: false))
               description = ["_This command used to be `!#{command.command_name}`_", command.description, ""]
 
               # Adds a note about being limited to DM or Text
@@ -124,7 +124,7 @@ module ESM
               if command.arguments.present?
                 e.add_field(
                   name: I18n.t("commands.help.command.arguments"),
-                  value: command.arguments.map { |argument| argument.help_documentation(command) }
+                  value: command.arguments.templates.map { |_, argument| argument.help_documentation }
                 )
               end
 

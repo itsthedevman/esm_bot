@@ -6,7 +6,9 @@ module ESM
     attribute :execution_count, :integer
 
     def self.increment_execution_counter(command_name)
-      where(command_name: name).update_counters(execution_count: 1)
+      Thread.new do
+        where(command_name: name).update_counters(execution_count: 1)
+      end
     end
   end
 end

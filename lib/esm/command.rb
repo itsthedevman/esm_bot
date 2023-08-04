@@ -27,8 +27,8 @@ module ESM
 
       command_name = command_name.to_s unless command_name.is_a?(String)
 
-      # Find by name or by its statement
-      all.find { |command| command_name == command.command_name || command_name == command.statement }
+      # Find by name or by its usage (allowing / or no /)
+      all.find { |command| command_name == command.command_name || command.usage.include?(command_name) }
     end
 
     def self.get(command_name)
