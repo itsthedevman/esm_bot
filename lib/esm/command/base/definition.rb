@@ -7,7 +7,7 @@ module ESM
       module Definition
         extend ActiveSupport::Concern
 
-        class Define < Struct.define(:modifiable, :default)
+        class Define < Struct.new(:modifiable, :default)
           attr_predicate :modifiable
 
           def initialize(modifiable: true, default: nil)
@@ -79,7 +79,7 @@ module ESM
             end
 
             attribute = attributes[attribute]
-            opts.each { |k, v| attribute.public_send(k, v) }
+            opts.each { |k, v| attribute.send("#{k}=", v) }
             self
           end
 
@@ -183,13 +183,14 @@ module ESM
             # ESM::Command::Request::Accept => system
             self.category = module_parent.name.demodulize.downcase
 
+            command_namespace(category.to_sym) # Sets the default namespace to be: /<category> <command_name>
+
             self.description = I18n.t("commands.#{name}.description", default: "")
             self.description_extra = I18n.t("commands.#{name}.description_extra", default: nil)
             self.example = I18n.t("commands.#{name}.example", default: "")
             self.has_v1_variant = false
             self.limited_to = nil
             self.type = :player
-            self.namespace = command_namespace(category.to_sym) # Sets the default namespace to be: /<category> <command_name>
 
             self.requirements = Inquirer.new(:dev, :registration)
             self.skipped_actions = Inquirer.new(

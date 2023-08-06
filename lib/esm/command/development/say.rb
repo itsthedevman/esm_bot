@@ -5,6 +5,7 @@ module ESM
     module Development
       class Say < ESM::Command::Base
         command_type :development
+
         requires :dev
 
         change_attribute :enabled, modifiable: false
