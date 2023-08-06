@@ -20,7 +20,7 @@ module ESM
         invalid_arguments =
           templates.filter_map do |(name, template)|
             # Apply pre-defined transformations and then validate the content
-            self[name] = template.transform_and_validate!(inbound_arguments[name], command)
+            self[name] = template.transform_and_validate!(inbound_arguments[template.display_name], command)
 
             nil
           rescue ESM::Exception::InvalidArgument => argument
