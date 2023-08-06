@@ -32,11 +32,7 @@ module ESM
 
         requires :registration
 
-        define :enabled, modifiable: true, default: true
-        define :whitelist_enabled, modifiable: true, default: false
-        define :whitelisted_role_ids, modifiable: true, default: []
-        define :allowed_in_text_channels, modifiable: true, default: true
-        define :cooldown_time, modifiable: false, default: 2.seconds # Don't allow adjusting this cooldown. Each reward has it's own cooldown
+        change_attribute :cooldown_time, modifiable: false, default: 2.seconds # Don't allow adjusting this cooldown. Each reward has it's own cooldown
 
         argument :server_id
         argument :reward_id, regex: ESM::Regex::REWARD_ID, default: nil

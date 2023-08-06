@@ -7,21 +7,19 @@ module ESM
       module Definition
         extend ActiveSupport::Concern
 
-        class Define < ImmutableStruct.define(:modifiable, :default)
+        class Define < Struct.define(:modifiable, :default)
+          attr_predicate :modifiable
+
           def initialize(modifiable: true, default: nil)
             super(modifiable: modifiable, default: default)
-          end
-
-          def modifiable?
-            modifiable
           end
         end
 
         included do
           class_attribute :arguments
+          class_attribute :attributes
           class_attribute :category
           class_attribute :command_name
-          class_attribute :defines
           class_attribute :description
           class_attribute :description_extra
           class_attribute :example
@@ -46,6 +44,7 @@ module ESM
               name, type,
               **opts.merge(command_name: command_name)
             )
+            self
           end
 
           #
@@ -55,6 +54,7 @@ module ESM
           #
           def command_type(type)
             self.type = type.to_sym
+            self
           end
 
           #
@@ -64,16 +64,23 @@ module ESM
           #
           def limit_to(channel_type)
             self.limited_to = channel_type.to_sym
+            self
           end
 
           #
-          # Defines an attribute on the command. These are used mainly for permissions
+          # Changes an attribute on the command. These are used mainly for permissions
           #
           # @param attribute [Symbol, String] The name of the attribute
           # @param **opts [Hash] Configuration options. See ESM::Command::Define
           #
-          def define(attribute, **opts)
-            defines[attribute] = Define.new(**opts)
+          def change_attribute(attribute, **opts)
+            if !attributes.key?(attribute)
+              raise ArgumentError, "Invalid attribute provided: #{attribute}. Expected one of: #{attributes.keys}"
+            end
+
+            attribute = attributes[attribute]
+            opts.each { |k, v| attribute.public_send(k, v) }
+            self
           end
 
           #
@@ -83,6 +90,7 @@ module ESM
           #
           def requires(*keys)
             requirements.set(*keys)
+            self
           end
 
           #
@@ -92,6 +100,7 @@ module ESM
           #
           def skip_action(*actions)
             skipped_actions.set(*actions)
+            self
           end
 
           #
@@ -108,6 +117,8 @@ module ESM
               segments: segments.presence || [],
               command_name: command_name.to_sym
             }
+
+            self
           end
 
           #
@@ -128,7 +139,7 @@ module ESM
               namespace: namespace,
               has_v1_variant: has_v1_variant,
               limited_to: limited_to,
-              defines: defines,
+              attributes: attributes,
               requirements: requirements.to_h,
               skipped_actions: skipped_actions.to_h,
               arguments: arguments,
@@ -156,7 +167,14 @@ module ESM
           # @!visibility private
           def __disconnect_variables!
             self.arguments = {}
-            self.defines = {}
+
+            self.attributes = {
+              enabled: Define.new(default: true),
+              whitelist_enabled: Define.new(default: false),
+              whitelisted_role_ids: Define.new(default: []),
+              allowed_in_text_channels: Define.new(default: true),
+              cooldown_time: Define.new(default: 2.seconds)
+            }
 
             # ESM::Command::Territory::SetId => set_id
             name = self.name.demodulize.underscore.downcase
@@ -237,7 +255,7 @@ module ESM
           command_class = self.class
           @name = command_class.command_name
           @category = command_class.category
-          @defines = defines.to_istruct
+          @attributes = attributes.to_istruct
           @arguments = ESM::Command::Arguments.new(**command_class.arguments)
 
           # Mainly for specs, but does give performance analytics (which is a nice bonus)

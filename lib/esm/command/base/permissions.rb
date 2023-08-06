@@ -15,7 +15,7 @@ module ESM
             # Calls .seconds, .days, .months, etc
             community_permissions.cooldown_quantity.send(community_permissions.cooldown_type)
           else
-            defines.cooldown_time&.default || 2.seconds
+            attributes.cooldown_time&.default || 2.seconds
           end
         end
 
@@ -23,7 +23,7 @@ module ESM
           if community_permissions?
             community_permissions.enabled?
           else
-            defines.enabled&.default || true
+            attributes.enabled&.default || true
           end
         end
 
@@ -40,7 +40,7 @@ module ESM
             if community_permissions?
               community_permissions.whitelist_enabled?
             else
-              defines.whitelist_enabled&.default || type == :admin
+              attributes.whitelist_enabled&.default || type == :admin
             end
 
           return true if !whitelist_enabled
@@ -56,7 +56,7 @@ module ESM
             if community_permissions?
               community_permissions.whitelisted_role_ids
             else
-              defines.whitelisted_role_ids&.default || []
+              attributes.whitelisted_role_ids&.default || []
             end
 
           return true if guild_member.permission?(:administrator)
@@ -73,7 +73,7 @@ module ESM
           if community_permissions?
             community_permissions.allowed_in_text_channels?
           else
-            defines.allowed_in_text_channels&.default || true
+            attributes.allowed_in_text_channels&.default || true
           end
         end
       end

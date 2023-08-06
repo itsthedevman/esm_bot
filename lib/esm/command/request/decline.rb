@@ -6,13 +6,7 @@ module ESM
       class Decline < ESM::Command::Base
         command_type :player
 
-        limit_to :dm
-
-        define :enabled, modifiable: false, default: true
-        define :whitelist_enabled, modifiable: false, default: false
-        define :whitelisted_role_ids, modifiable: false, default: []
-        define :allowed_in_text_channels, modifiable: false, default: true
-        define :cooldown_time, modifiable: false, default: 2.seconds
+        change_attribute :allowed_in_text_channels, default: false
 
         argument :uuid, regex: /[0-9a-fA-F]{4}/
 

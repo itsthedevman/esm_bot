@@ -9,11 +9,9 @@ module ESM
 
         requires :registration
 
-        define :enabled, modifiable: false, default: true
-        define :whitelist_enabled, modifiable: false, default: false
-        define :whitelisted_role_ids, modifiable: false, default: []
-        define :allowed_in_text_channels, modifiable: true, default: true
-        define :cooldown_time, modifiable: true, default: 2.seconds
+        change_attribute :enabled, modifiable: false
+        change_attribute :whitelist_enabled, modifiable: false
+        change_attribute :whitelisted_role_ids, modifiable: false
 
         def on_execute
           embed =

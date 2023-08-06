@@ -11,12 +11,6 @@ module ESM
         # Skipped because of `stats` argument. This is manually checked in `#discord`
         skip_action :connected_server
 
-        define :enabled, modifiable: true, default: true
-        define :whitelist_enabled, modifiable: true, default: false
-        define :whitelisted_role_ids, modifiable: true, default: []
-        define :allowed_in_text_channels, modifiable: true, default: true
-        define :cooldown_time, modifiable: true, default: 2.seconds
-
         argument :amount, checked_against: /(?!-\d+$)\d+|half|all|stats/
         argument :server_id, display_name: :on
 

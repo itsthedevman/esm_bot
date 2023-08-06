@@ -27,11 +27,11 @@ module ESM
         # This command is not dependent on the server being connected
         skip_action :connected_server
 
-        define :enabled, modifiable: false, default: true
-        define :whitelist_enabled, modifiable: false, default: false
-        define :whitelisted_role_ids, modifiable: false, default: []
-        define :allowed_in_text_channels, modifiable: false, default: true
-        define :cooldown_time, modifiable: false, default: 2.seconds
+        change_attribute :enabled, modifiable: false
+        change_attribute :whitelist_enabled, modifiable: false
+        change_attribute :whitelisted_role_ids, modifiable: false
+        change_attribute :allowed_in_text_channels, modifiable: false
+        change_attribute :cooldown_time, modifiable: false
 
         argument :server_id, display_name: :for
         argument :action, choices: %w[allow deny]

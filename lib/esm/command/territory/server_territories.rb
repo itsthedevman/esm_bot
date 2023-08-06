@@ -10,11 +10,7 @@ module ESM
         limit_to :text
         requires :registration
 
-        define :enabled, modifiable: true, default: true
-        define :whitelist_enabled, modifiable: true, default: true
-        define :whitelisted_role_ids, modifiable: true, default: []
-        define :allowed_in_text_channels, modifiable: true, default: true
-        define :cooldown_time, modifiable: true, default: 2.seconds
+        change_attribute :whitelist_enabled, default: true
 
         argument :server_id, display_name: :on
         argument :order_by, choices: %w[id territory_name owner_uid], default: :territory_name, type: :symbol

@@ -8,11 +8,10 @@ module ESM
         command_type :player
         use_root_namespace
 
-        define :enabled, modifiable: false, default: true
-        define :whitelist_enabled, modifiable: false, default: false
-        define :whitelisted_role_ids, modifiable: false, default: []
-        define :allowed_in_text_channels, modifiable: true, default: true
-        define :cooldown_time, modifiable: false, default: 2.seconds
+        change_attribute :enabled, modifiable: false
+        change_attribute :whitelist_enabled, modifiable: false
+        change_attribute :whitelisted_role_ids, modifiable: false
+        change_attribute :cooldown_time, modifiable: false
 
         def on_execute
           message =

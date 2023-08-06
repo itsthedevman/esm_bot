@@ -6,11 +6,7 @@ module ESM
       class Meow < ESM::Command::Base
         command_type :player
 
-        define :enabled, modifiable: false, default: true
-        define :whitelist_enabled, modifiable: false, default: false
-        define :whitelisted_role_ids, modifiable: false, default: []
-        define :allowed_in_text_channels, modifiable: true, default: true
-        define :cooldown_time, modifiable: false, default: 5.seconds
+        change_attribute :cooldown_time, modifiable: false, default: 5.seconds
 
         SUB_REDDIT = %w[lolcats catpics catpictures Chonkers CatsStandingUp].freeze
 

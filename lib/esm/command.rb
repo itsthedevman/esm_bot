@@ -93,7 +93,7 @@ module ESM
           command_example: command.example,
           command_usage: command.arguments.map(&:to_s).join(" "),
           command_arguments: command.arguments.to_s,
-          command_defines: command.defines.to_h
+          command_defines: command.attributes.to_h
         }
       end
 
@@ -117,7 +117,7 @@ module ESM
       @configurations ||=
         ESM::Command.all.map do |command_class|
           command = command_class.new
-          cooldown_default = command.defines.cooldown_time&.default || 2.seconds
+          cooldown_default = command.attributes.cooldown_time&.default || 2.seconds
 
           case cooldown_default
           when Enumerator, Integer
@@ -132,21 +132,21 @@ module ESM
 
           # Written this way because the defaults can be `false` and `false || true` will always be `true`
           enabled =
-            if (define = command.defines.enabled)
+            if (define = command.attributes.enabled)
               define.default
             else
               true
             end
 
           allowed_in_text_channels =
-            if (define = command.defines.allowed_in_text_channels)
+            if (define = command.attributes.allowed_in_text_channels)
               define.default
             else
               true
             end
 
           whitelist_enabled =
-            if (define = command.defines.whitelist_enabled)
+            if (define = command.attributes.whitelist_enabled)
               define.default
             else
               command.type == :admin
@@ -154,7 +154,7 @@ module ESM
 
           # Except this one, but it just looks nice this way
           whitelisted_role_ids =
-            if (define = command.defines.whitelisted_role_ids)
+            if (define = command.attributes.whitelisted_role_ids)
               define.default
             else
               []
