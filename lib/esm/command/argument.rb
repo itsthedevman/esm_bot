@@ -11,7 +11,7 @@ module ESM
           description_extra: "commands.arguments.target.description_extra"
         },
         command: {
-          checked_against: ->(context) { ESM::Command.include?(context.content) }
+          checked_against: ->(context) { ESM::Command.include?(context.content) },
           description: "commands.arguments.command.description"
         },
         territory_id: {
