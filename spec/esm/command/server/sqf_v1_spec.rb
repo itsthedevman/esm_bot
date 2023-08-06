@@ -28,13 +28,13 @@ describe ESM::Command::Server::SqfV1, category: "command" do
     let(:connection) { ESM::Websocket.connections[server.server_id] }
     let(:response) { command.response }
 
-    before :each do
+    before do
       grant_command_access!(community, "sqf")
 
       wait_for { wsc.connected? }.to be(true)
     end
 
-    after :each do
+    after do
       wsc.disconnect!
     end
 

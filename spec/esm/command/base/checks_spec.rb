@@ -6,7 +6,7 @@ describe ESM::Command::Base::Checks do
   let!(:user) { ESM::Test.user }
   let!(:second_user) { ESM::Test.user }
 
-  before :each do
+  before do
     command.instance_variable_set(:@current_user, user.discord_user)
   end
 

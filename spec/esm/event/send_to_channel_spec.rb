@@ -3,7 +3,7 @@
 describe ESM::Event::SendToChannel, v2: true, requires_connection: true do
   include_context "connection"
 
-  after :each do
+  after do
     community.update!(logging_channel_id: nil)
     connection_server.message_overseer.remove_all!
   end

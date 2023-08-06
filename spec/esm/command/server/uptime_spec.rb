@@ -25,11 +25,11 @@ describe ESM::Command::Server::Uptime, category: "command" do
     let!(:user) { ESM::Test.user }
     let!(:wsc) { WebsocketClient.new(server) }
 
-    before :each do
+    before do
       wait_for { wsc.connected? }.to be(true)
     end
 
-    after :each do
+    after do
       wsc.disconnect!
     end
 

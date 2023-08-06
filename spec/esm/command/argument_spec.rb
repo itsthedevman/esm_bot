@@ -137,7 +137,7 @@ describe ESM::Command::Argument do
     let(:pm_event) { CommandEvent.create(command_statement, user: user, channel_type: :pm) }
     let(:community) { command.current_community } # Only call in tests
 
-    before :each do
+    before do
       command.event = text_event
     end
 

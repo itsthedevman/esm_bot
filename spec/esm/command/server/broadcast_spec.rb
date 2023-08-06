@@ -30,7 +30,7 @@ describe ESM::Command::Server::Broadcast, category: "command" do
     let(:connection) { ESM::Websocket.connections[server.server_id] }
     let(:response) { command.response }
 
-    before :each do
+    before do
       wait_for { wsc.connected? && second_wsc.connected? }.to be(true)
 
       # Create cooldowns for the users
@@ -41,7 +41,7 @@ describe ESM::Command::Server::Broadcast, category: "command" do
       grant_command_access!(community, "broadcast")
     end
 
-    after :each do
+    after do
       wsc.disconnect!
       second_wsc.disconnect!
     end

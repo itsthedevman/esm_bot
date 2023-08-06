@@ -12,11 +12,11 @@ describe ESM::Exile::Territory do
   let(:same_level_territory) { ESM::Territory.where(territory_level: territory_example.level, server_id: server.id).first }
   let(:next_level_territory) { ESM::Territory.where(territory_level: territory_example.level + 1, server_id: server.id).first }
 
-  before :each do
+  before do
     wait_for { wsc.connected? }.to be(true)
   end
 
-  after :each do
+  after do
     wsc.disconnect!
   end
 
@@ -118,7 +118,7 @@ describe ESM::Exile::Territory do
   end
 
   describe "Requires Upgraded Territory" do
-    before :each do
+    before do
       territory_example.level = Faker::Number.between(from: 1, to: ESM::Territory.all.size - 2)
     end
 

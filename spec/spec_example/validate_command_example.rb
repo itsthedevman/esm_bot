@@ -10,7 +10,7 @@ RSpec.shared_examples("validate_command") do
   end
 
   it "has the required defines" do
-    defines = command.defines.to_h
+    defines = command.attributes.to_h
     expect(defines).to have_key(:enabled)
     expect(defines).to have_key(:whitelist_enabled)
     expect(defines).to have_key(:whitelisted_role_ids)

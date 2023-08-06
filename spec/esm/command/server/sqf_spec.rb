@@ -16,7 +16,7 @@ describe ESM::Command::Server::Sqf, category: "command", v2: true do
   describe "#on_execute/#on_response", requires_connection: true do
     include_context "connection"
 
-    before :each do
+    before do
       grant_command_access!(community, "sqf")
     end
 

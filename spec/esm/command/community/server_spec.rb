@@ -26,11 +26,11 @@ describe ESM::Command::Server::Server, category: "command" do
     let!(:wsc) { WebsocketClient.new(server) }
     let(:connection) { ESM::Websocket.connections[server.server_id] }
 
-    before :each do
+    before do
       wait_for { wsc.connected? }.to be(true)
     end
 
-    after :each do
+    after do
       wsc.disconnect!
     end
 

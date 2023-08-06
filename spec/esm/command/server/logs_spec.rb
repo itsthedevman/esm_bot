@@ -30,13 +30,13 @@ describe ESM::Command::Server::Logs, category: "command" do
     let(:connection) { ESM::Websocket.connections[server.server_id] }
     let(:response) { command.response }
 
-    before :each do
+    before do
       wait_for { wsc.connected? }.to be(true)
 
       grant_command_access!(community, "logs")
     end
 
-    after :each do
+    after do
       wsc.disconnect!
     end
 

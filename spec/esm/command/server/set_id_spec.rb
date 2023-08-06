@@ -27,11 +27,11 @@ describe ESM::Command::Territory::SetId, category: "command" do
     let(:connection) { ESM::Websocket.connections[server.server_id] }
     let(:response) { command.response }
 
-    before :each do
+    before do
       wait_for { wsc.connected? }.to be(true)
     end
 
-    after :each do
+    after do
       wsc.disconnect!
     end
 

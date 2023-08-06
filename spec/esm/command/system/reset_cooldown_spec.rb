@@ -54,7 +54,7 @@ describe ESM::Command::Community::ResetCooldown, category: "command" do
       )
     end
 
-    before :each do
+    before do
       # Grant everyone access to use this command
       grant_command_access!(community, "reset_cooldown")
 

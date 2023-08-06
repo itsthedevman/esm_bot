@@ -46,14 +46,14 @@ describe ESM::Websocket::ServerRequest do
     request
   end
 
-  before :each do
+  before do
     wait_for { client.connected? }.to be(true)
 
     # Wait for the client to connect before executing the command
     command
   end
 
-  after :each do
+  after do
     client.disconnect!
   end
 
@@ -94,7 +94,7 @@ describe ESM::Websocket::ServerRequest do
       message = {commandID: request.id, parameters: []}.to_ostruct
 
       # Set a flag so our command raises an error
-      command.defines.FLAG_RAISE_ERROR = true
+      command.attributes.FLAG_RAISE_ERROR = true
 
       expect { ESM::Websocket::ServerRequest.new(connection: connection, message: message).process }.not_to raise_error
       wait_for { ESM::Test.messages.size }.to eq(1)

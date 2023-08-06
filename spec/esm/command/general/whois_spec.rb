@@ -3,7 +3,7 @@
 describe ESM::Command::Community::Whois, category: "command" do
   let!(:command) { ESM::Command::Community::Whois.new }
 
-  before :example do
+  before do
     ESM::Test.skip_cooldown = true
   end
 
@@ -27,7 +27,7 @@ describe ESM::Command::Community::Whois, category: "command" do
     let!(:community) { ESM::Test.community(type: :esm_community) }
     let!(:user) { ESM::Test.user(type: :user) }
 
-    before :each do
+    before do
       grant_command_access!(community, "whois")
     end
 

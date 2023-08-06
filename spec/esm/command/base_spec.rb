@@ -37,17 +37,17 @@ describe ESM::Command::Base do
     end
 
     it "has defines" do
-      expect(command.defines).not_to be_nil
-      expect(command.defines.enabled.modifiable).to be(true)
-      expect(command.defines.enabled.default).to be(true)
-      expect(command.defines.whitelist_enabled.modifiable).to be(true)
-      expect(command.defines.whitelist_enabled.default).to eq(false)
-      expect(command.defines.whitelisted_role_ids.modifiable).to be(true)
-      expect(command.defines.whitelisted_role_ids.default).to eq([])
-      expect(command.defines.allowed_in_text_channels.modifiable).to be(true)
-      expect(command.defines.allowed_in_text_channels.default).to be(true)
-      expect(command.defines.cooldown_time.modifiable).to be(true)
-      expect(command.defines.cooldown_time.default).to eq(2.seconds)
+      expect(command.attributes).not_to be_nil
+      expect(command.attributes.enabled.modifiable).to be(true)
+      expect(command.attributes.enabled.default).to be(true)
+      expect(command.attributes.whitelist_enabled.modifiable).to be(true)
+      expect(command.attributes.whitelist_enabled.default).to eq(false)
+      expect(command.attributes.whitelisted_role_ids.modifiable).to be(true)
+      expect(command.attributes.whitelisted_role_ids.default).to eq([])
+      expect(command.attributes.allowed_in_text_channels.modifiable).to be(true)
+      expect(command.attributes.allowed_in_text_channels.default).to be(true)
+      expect(command.attributes.cooldown_time.modifiable).to be(true)
+      expect(command.attributes.cooldown_time.default).to eq(2.seconds)
     end
 
     it "has requires" do
@@ -610,11 +610,11 @@ describe ESM::Command::Base do
     let!(:wsc) { WebsocketClient.new(server) }
     let(:connection) { ESM::Websocket.connections[server.server_id] }
 
-    before :each do
+    before do
       wait_for { wsc.connected? }.to be(true)
     end
 
-    after :each do
+    after do
       wsc.disconnect!
     end
 

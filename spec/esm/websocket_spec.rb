@@ -6,11 +6,11 @@ describe ESM::Websocket do
   let!(:esm_malden) { create(:esm_malden, community_id: esm_community.id) }
   let!(:esm_malden_wsc) { WebsocketClient.new(esm_malden) }
 
-  before :each do
+  before do
     wait_for { esm_malden_wsc.connected? }.to be(true)
   end
 
-  after :each do
+  after do
     esm_malden_wsc.disconnect!
   end
 
@@ -25,11 +25,11 @@ describe ESM::Websocket do
     let!(:second_server) { create(:server, community_id: second_community.id) }
     let!(:second_connection) { WebsocketClient.new(second_server) }
 
-    before :each do
+    before do
       wait_for { second_connection.connected? }.to be(true)
     end
 
-    after :each do
+    after do
       second_connection.disconnect!
     end
 

@@ -36,7 +36,7 @@ describe ESM::Event::ServerInitialization, v2: true, requires_connection: true d
 
   let(:event) { described_class.new(server, message) }
 
-  before :each do
+  before do
     ESM::Test.block_outbound_messages = true
 
     # Update the data stored in the connection object, NOT the one in the test.

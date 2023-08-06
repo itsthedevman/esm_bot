@@ -6,11 +6,11 @@ describe ESM::Websocket::Request::Overseer do
   let!(:user) { ESM::Test.user }
   let!(:connection) { WebsocketClient.new(server) }
 
-  before :each do
+  before do
     wait_for { connection.connected? }.to be(true)
   end
 
-  after :each do
+  after do
     connection.disconnect!
   end
 
@@ -18,7 +18,7 @@ describe ESM::Websocket::Request::Overseer do
     let!(:server_connection) { ESM::Websocket.connections[server.server_id] }
     let!(:iterations) { Faker::Number.between(from: 1, to: 10) }
 
-    before :each do
+    before do
       iterations.times do
         server_connection.requests << ESM::Websocket::Request.new(user: nil, channel: nil, command_name: "testing", parameters: nil)
       end

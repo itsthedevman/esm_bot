@@ -10,12 +10,6 @@ module ESM
 
         requires :registration
 
-        define :enabled, modifiable: true, default: true
-        define :whitelist_enabled, modifiable: true, default: false
-        define :whitelisted_role_ids, modifiable: true, default: []
-        define :allowed_in_text_channels, modifiable: true, default: true
-        define :cooldown_time, modifiable: true, default: 2.seconds
-
         argument :community_id
         argument :server_id
         argument :target
@@ -31,7 +25,7 @@ module ESM
         end
 
         def on_response(_, _)
-          raise ESM::Exception::CheckFailure, ESM::Embed.build(:error, description: "This failed a check") if @defines.FLAG_RAISE_ERROR
+          raise ESM::Exception::CheckFailure, ESM::Embed.build(:error, description: "This failed a check") if @attributes.FLAG_RAISE_ERROR
 
           "server"
         end

@@ -29,7 +29,7 @@ describe ESM::Command::Territory::ServerTerritories, category: "command" do
       let(:connection) { ESM::Websocket.connections[server.server_id] }
       let(:response) { command.response }
 
-      before :each do
+      before do
         # Grant everyone access to use this command
         configuration = community.command_configurations.where(command_name: "server_territories").first
         configuration.update(whitelist_enabled: false)
@@ -37,7 +37,7 @@ describe ESM::Command::Territory::ServerTerritories, category: "command" do
         wait_for { wsc.connected? }.to be(true)
       end
 
-      after :each do
+      after do
         wsc.disconnect!
       end
 

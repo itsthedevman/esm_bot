@@ -8,7 +8,7 @@ RSpec.shared_context("connection") do
     ESM::Test.execute_sqf!(server, code, steam_uid: user.steam_uid)
   end
 
-  before(:each) do |example|
+  before do |example|
     next unless example.metadata[:requires_connection]
 
     ESM::Test.callbacks.run_callback(:before_connection, on_instance: self)
@@ -30,7 +30,7 @@ RSpec.shared_context("connection") do
     end
   end
 
-  after(:each) do |example|
+  after do |example|
     next unless example.metadata[:requires_connection]
 
     users = []

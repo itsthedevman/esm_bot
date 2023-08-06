@@ -11,11 +11,11 @@ describe ESM::Event::Xm8NotificationV1 do
 
   let(:territory) { TerritoryGenerator.generate.to_ostruct }
 
-  before :each do
+  before do
     wait_for { wsc.connected? }.to be(true)
   end
 
-  after :each do
+  after do
     wsc.disconnect!
   end
 
