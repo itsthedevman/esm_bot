@@ -20,25 +20,12 @@ module ESM
         define :allowed_in_text_channels, modifiable: true, default: true
         define :cooldown_time, modifiable: true, default: 2.seconds
 
-        argument :target, default: nil
-
-        argument(
-          :command_name,
-          regex: /\w+/,
-          default: nil,
-          modifier: lambda do |argument|
-            return if argument.content.nil?
-            return if ESM::Command.include?(argument.content)
-
-            # This allows "passing" the value for the command_name argument onto the server_id argument.
-            argument.content = nil
-          end
-        )
-
-        argument :server_id, default: nil
+        argument :target, display_name: :for
+        argument :command
+        argument :server_id, display_name: :on
 
         def on_execute
-          check_owned_server! if @arguments.server_id
+          check_owned_server! if arguments.server_id
           check_for_valid_command!
           check_registered_target_user! if target_user
 
@@ -55,10 +42,10 @@ module ESM
         end
 
         def check_for_valid_command!
-          return if @arguments.command_name.nil?
-          return if ESM::Command.include?(@arguments.command_name)
+          return if arguments.command_name.nil?
+          return if ESM::Command.include?(arguments.command_name)
 
-          check_failed!(:invalid_command, user: current_user.mention, command_name: @arguments.command_name)
+          check_failed!(:invalid_command, user: current_user.mention, command_name: arguments.command_name)
         end
 
         def confirmation_embed
@@ -78,16 +65,16 @@ module ESM
 
             # Command
             description +=
-              if @arguments.command_name
-                I18n.t("#{namespace_prefix}.description.one_command", command_name: @arguments.command_name)
+              if arguments.command_name
+                I18n.t("#{namespace_prefix}.description.one_command", command_name: arguments.command_name)
               else
                 I18n.t("#{namespace_prefix}.description.all_commands")
               end
 
             # Server
             description +=
-              if @arguments.server_id
-                I18n.t("#{namespace_prefix}.description.one_server", server_id: @arguments.server_id)
+              if arguments.server_id
+                I18n.t("#{namespace_prefix}.description.one_server", server_id: arguments.server_id)
               else
                 I18n.t("#{namespace_prefix}.description.all_servers")
               end
@@ -102,8 +89,8 @@ module ESM
           query = query.or(ESM::Cooldown.where(user_id: target_user.id, steam_uid: target_user.steam_uid)) if target_user
 
           # Check for command_name and/or server_id if we've been given one
-          query = query.where(command_name: @arguments.command_name) if !@arguments.command_name.nil?
-          query = query.where(server_id: target_server.id) if !@arguments.server_id.nil?
+          query = query.where(command_name: arguments.command_name) if !arguments.command_name.nil?
+          query = query.where(server_id: target_server.id) if !arguments.server_id.nil?
 
           query
         end
@@ -125,16 +112,16 @@ module ESM
 
             # Command
             description +=
-              if @arguments.command_name
-                I18n.t("#{namespace_prefix}.description.one_command", command_name: @arguments.command_name)
+              if arguments.command_name
+                I18n.t("#{namespace_prefix}.description.one_command", command_name: arguments.command_name)
               else
                 I18n.t("#{namespace_prefix}.description.all_commands")
               end
 
             # Server
             description +=
-              if @arguments.server_id
-                I18n.t("#{namespace_prefix}.description.one_server", server_id: @arguments.server_id)
+              if arguments.server_id
+                I18n.t("#{namespace_prefix}.description.one_server", server_id: arguments.server_id)
               else
                 I18n.t("#{namespace_prefix}.description.all_servers")
               end

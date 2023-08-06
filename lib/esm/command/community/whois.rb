@@ -15,7 +15,7 @@ module ESM
         define :allowed_in_text_channels, modifiable: true, default: true
         define :cooldown_time, modifiable: true, default: 2.seconds
 
-        argument :target
+        argument :target, display_name: :whom
 
         def on_execute
           check_for_user_access!

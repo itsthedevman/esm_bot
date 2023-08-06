@@ -5,18 +5,18 @@ en:
       description_extra: |-
         Registered players on these servers will receive the message via Direct Message if they have `custom` notification allowed for the server.
       example: |-
-        **`/server admin broadcast esm_malden This is an emergency announcement`**
+        **`/server admin broadcast message:This is an emergency announcement to:esm_malden`**
         Broadcasts `This is an emergency announcement` to every registered player on `esm_malden`.
 
-        **`/server admin broadcast all Admin event going on right meow. More information on our Discord!`**
+        **`/server admin broadcast message:Admin event going on right meow. More information on our Discord! to:all`**
         Broadcasts `Admin event going on right meow. More information on our Discord!` to registered player on every server for this community.
 
-        **`/server admin broadcast preview Testing`**
+        **`/server admin broadcast message:Testing`**
         Provides a preview of the message without sending it.
       arguments:
         broadcast_to:
           description: Where the broadcast should go
-          description_extra: This can be either a valid `server_id` to send to just that server, `all` to send to all of your community's servers, or `preview` to just preview the message without sending it
+          description_extra: This can be either a valid `server_id` to send to just that server, `all` to send to all of your community's servers, or `preview` or omit to just preview the message without sending it
         message:
           description: The message to send or preview. Supports Discord Markdown and must be less than 2000 characters
           description_extra: The message to send or preview. This supports Discord Markdown and cannot be more than 2000 characters long

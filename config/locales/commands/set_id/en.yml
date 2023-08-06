@@ -6,10 +6,10 @@ en:
         This command is only available for the territory owner.
         Once set, this custom territory ID can be used whenever a command requires a territory ID argument.
       example: |-
-        **`/territory set_id esm_malden jqjoe no_u`**
+        **`/territory set_id from:jqjoe to:no_u on:esm_malden`**
         Sets territory `jqjoe` to be `no_u`
 
-        **`/territory set_id esm_altis fort_awesome tent_sadness`**
+        **`/territory set_id from:fort_awesome to:tent_sadness on:esm_altis`**
         Changes territory `fort_awesome` to be `tent_sadness`
       arguments:
         new_territory_id:

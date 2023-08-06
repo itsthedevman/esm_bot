@@ -15,7 +15,7 @@ module ESM
         define :allowed_in_text_channels, modifiable: true, default: true
         define :cooldown_time, modifiable: true, default: 1
 
-        argument :server_id
+        argument :server_id, display_name: :on
 
         def on_execute
           # Check for pending requests

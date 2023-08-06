@@ -17,8 +17,11 @@ module ESM
         define :allowed_in_text_channels, modifiable: true, default: true
         define :cooldown_time, modifiable: true, default: 2.seconds
 
+        argument :message, preserve: true
+
         argument(
           :broadcast_to,
+          display_as: :to,
           regex: ESM::Regex::BROADCAST,
           modifier: lambda do |argument|
             return if argument.content.blank?
@@ -32,13 +35,11 @@ module ESM
           end
         )
 
-        argument :message, regex: /(.|[\r\n])+/, preserve: true
-
         def on_execute
           check_for_message_length!
 
           # Send just the preview
-          return reply(broadcast_embed) if @arguments.broadcast_to == "preview"
+          return reply(broadcast_embed) if arguments.broadcast_to == "preview" || arguments.broadcast_to.blank?
 
           # Preload the servers
           load_servers
@@ -76,7 +77,7 @@ module ESM
 
           ESM::Embed.build do |e|
             e.title = I18n.t("commands.broadcast.broadcast_embed.title", community_name: current_community.community_name, server_ids: server_ids)
-            e.description = @arguments.message
+            e.description = arguments.message
             e.color = :orange
             e.footer = I18n.t("commands.broadcast.broadcast_embed.footer", prefix: prefix)
           end
@@ -84,11 +85,11 @@ module ESM
 
         def load_servers
           @servers =
-            if @arguments.broadcast_to == "all"
+            if arguments.broadcast_to == "all"
               current_community.servers
             else
               # Find the server, but check existence and if the server belongs to this community
-              server = ESM::Server.find_by_server_id(@arguments.broadcast_to)
+              server = ESM::Server.find_by_server_id(arguments.broadcast_to)
 
               raise_invalid_server_id! if server.nil?
               raise_no_server_access! if server.community_id != current_community.id
@@ -126,7 +127,7 @@ module ESM
         end
 
         def check_for_message_length!
-          check_failed!(:message_length, user: current_user.mention) if @arguments.message.size > 2000
+          check_failed!(:message_length, user: current_user.mention) if arguments.message.size > 2000
         end
 
         def raise_no_server_access!
@@ -134,7 +135,7 @@ module ESM
         end
 
         def raise_invalid_server_id!
-          check_failed!(:invalid_server_id, user: current_user.mention, provided_server_id: @arguments.broadcast_to)
+          check_failed!(:invalid_server_id, user: current_user.mention, provided_server_id: arguments.broadcast_to)
         end
       end
     end

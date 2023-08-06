@@ -3,5 +3,5 @@ en:
     eval:
       description: Executes the provided string in ruby
       example: |-
-        **`/development eval true`**
+        **`/development eval code:true`**
         Returns true

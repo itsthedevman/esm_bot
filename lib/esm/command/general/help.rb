@@ -13,10 +13,10 @@ module ESM
         define :allowed_in_text_channels, modifiable: false, default: true
         define :cooldown_time, modifiable: false, default: 2.seconds
 
-        argument :category, regex: /.*/, default: nil
+        argument :category, display_name: :with
 
         def on_execute
-          case @arguments.category
+          case arguments.category
           when "commands"
             commands
           when "player commands"
@@ -102,7 +102,7 @@ module ESM
         end
 
         def command
-          command = ESM::Command[@arguments.category].new
+          command = ESM::Command[arguments.category].new
           embed =
             ESM::Embed.build do |e|
               e.title = I18n.t("commands.help.command.title", name: command.usage(with_args: false))

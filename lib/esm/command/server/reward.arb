@@ -220,7 +220,7 @@ module ESM
         end
 
         def selected_reward
-          @selected_reward ||= target_server.server_rewards.where(reward_id: @arguments.reward_id).first
+          @selected_reward ||= target_server.server_rewards.where(reward_id: arguments.reward_id).first
         end
 
         def check_for_in_progress!
@@ -232,7 +232,7 @@ module ESM
         def check_for_valid_reward_id!
           return if selected_reward.present?
 
-          raise_error!(:incorrect_reward_id, user: current_user.mention, reward_id: @arguments.reward_id)
+          raise_error!(:incorrect_reward_id, user: current_user.mention, reward_id: arguments.reward_id)
         end
 
         def check_for_reward_items!

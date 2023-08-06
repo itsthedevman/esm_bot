@@ -3,16 +3,16 @@ en:
     gamble:
       description: Feeling lucky? Gamble poptabs on a server for a chance to win
       example: |-
-        **`/server gamble esm_malden 50`**
+        **`/server gamble amount:50 on:esm_malden`**
         Gambles 50 poptabs from the locker on server `esm_malden`
 
-        **`/server gamble esm_altis half`**
+        **`/server gamble amount:half on:esm_altis`**
         Gambles half of the poptabs in the locker on server `esm_altis`
 
-        **`/server gamble esm_tanoa all`**
+        **`/server gamble amount:all on:esm_tanoa`**
         Gambles all of the poptabs in the locker on server `esm_tanoa`
 
-        **`/server gamble esm_namalsk stats`**
+        **`/server gamble amount:stats on:esm_namalsk`**
         Displays gambling statistics for server `esm_namalsk`
       arguments:
         amount:

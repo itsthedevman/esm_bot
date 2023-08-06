@@ -16,9 +16,9 @@ module ESM
         define :allowed_in_text_channels, modifiable: true, default: true
         define :cooldown_time, modifiable: true, default: 2.seconds
 
-        argument :server_id
-        argument :territory_id
-        argument :target
+        argument :target, display_name: :whom
+        argument :territory_id, display_name: :in
+        argument :server_id, display_name: :on
 
         def on_execute
           # Check for registered target_user
@@ -26,7 +26,7 @@ module ESM
 
           deliver!(
             function_name: "promotePlayer",
-            territory_id: @arguments.territory_id,
+            territory_id: arguments.territory_id,
             target_uid: target_uid,
             uid: current_user.steam_uid
           )
@@ -37,7 +37,7 @@ module ESM
             "commands.promote.success_message",
             user: current_user.mention,
             target_uid: target_uid,
-            territory_id: @arguments.territory_id,
+            territory_id: arguments.territory_id,
             server: target_server.server_id
           )
 

@@ -19,8 +19,8 @@ module ESM
           code = arguments.code
           return binding.pry if code == "bd" && ESM.env.development? # standard:disable Lint/Debugger
 
-          response = eval @arguments.code # rubocop:disable Security/Eval
-          reply("Input:\n```ruby\n#{@arguments.code}\n```\nOutput:\n```ruby\n#{response}\n```")
+          response = eval arguments.code # rubocop:disable Security/Eval
+          reply("Input:\n```ruby\n#{arguments.code}\n```\nOutput:\n```ruby\n#{response}\n```")
         rescue => e
           reply("An error occurred: ```#{e.message}```Backtrace: ```#{e.backtrace[0..2].join("\n")}```")
         end

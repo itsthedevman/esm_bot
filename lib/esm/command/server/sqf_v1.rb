@@ -17,9 +17,9 @@ module ESM
         define :allowed_in_text_channels, modifiable: true, default: true
         define :cooldown_time, modifiable: true, default: 2.seconds
 
-        argument :server_id
-        argument :target, default: nil, display_name: :execution_target
-        argument :code_to_execute, regex: /[\s\S]+/, preserve: true
+        argument :server_id, display_name: :on
+        argument :target
+        argument :code_to_execute, display_name: :code, preserve: true
 
         def on_execute
           check_owned_server!
@@ -34,7 +34,7 @@ module ESM
               "server"
             end
 
-          deliver!(command_name: "exec", function_name: "exec", target: execute_on, code: minify_sqf(@arguments.code_to_execute))
+          deliver!(command_name: "exec", function_name: "exec", target: execute_on, code: minify_sqf(arguments.code_to_execute))
         end
 
         def on_response(_, _)

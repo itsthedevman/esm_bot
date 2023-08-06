@@ -15,13 +15,13 @@ module ESM
         define :allowed_in_text_channels, modifiable: true, default: true
         define :cooldown_time, modifiable: true, default: 2.seconds
 
-        argument :server_id
-        argument :territory_id
+        argument :territory_id, display_name: :territory
+        argument :server_id, display_name: :on
 
         def on_execute
           deliver!(
             function_name: "upgradeTerritory",
-            territory_id: @arguments.territory_id,
+            territory_id: arguments.territory_id,
             uid: current_user.steam_uid
           )
         end
@@ -32,7 +32,7 @@ module ESM
           message = I18n.t(
             "commands.upgrade.success_message",
             user: current_user.mention,
-            territory_id: @arguments.territory_id,
+            territory_id: arguments.territory_id,
             cost: @response.cost.to_poptab,
             level: @response.level,
             range: @response.range,

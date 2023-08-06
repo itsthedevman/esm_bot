@@ -18,11 +18,11 @@ module ESM
         define :allowed_in_text_channels, modifiable: true, default: true
         define :cooldown_time, modifiable: true, default: 2.seconds
 
-        argument :server_id
-        argument :target, regex: /#{ESM::Regex::TARGET.source}|server|all|everyone/i, default: nil, display_name: :execution_target
-        argument :code_to_execute, regex: /[\s\S]+/, preserve: true
-
         skip_action :nil_target_user
+
+        argument :server_id, display_name: :on
+        argument :target, check_against: /#{ESM::Regex::TARGET.source}|server|all|everyone/i
+        argument :code_to_execute, display_name: :code, preserve: true
 
         def on_execute
           check_owned_server!

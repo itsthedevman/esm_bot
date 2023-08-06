@@ -13,9 +13,9 @@ module ESM
         define :allowed_in_text_channels, modifiable: true, default: true
         define :cooldown_time, modifiable: true, default: 2.seconds
 
-        argument :server_id
-
         skip_action :connected_server
+
+        argument :server_id, display_name: :for
 
         def on_execute
           embed =

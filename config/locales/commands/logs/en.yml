@@ -3,10 +3,10 @@ en:
     logs:
       description: Searches the last 14 days worth of Trading, Territory, and Death logs
       example: |-
-        **`/server admin search_logs esm_malden @Bryan`**
+        **`/server admin search_logs for:@Bryan on:esm_malden`**
         Parses the logs on `esm_malden` for @Bryan's Steam UID and returns any matched lines
 
-        **`/server admin search_logs esm_altis Exile_Chopper_Hummingbird_Green`**
+        **`/server admin search_logs for:Exile_Chopper_Hummingbird_Green on:esm_altis`**
         Parses the logs on `esm_altis` for `Exile_Chopper_Hummingbird_Green` and returns any matched lines
       arguments:
         query:

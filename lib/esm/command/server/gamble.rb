@@ -17,11 +17,11 @@ module ESM
         define :allowed_in_text_channels, modifiable: true, default: true
         define :cooldown_time, modifiable: true, default: 2.seconds
 
-        argument :server_id
-        argument :amount, regex: /(?!-\d+$)\d+|half|all|stats/
+        argument :amount, checked_against: /(?!-\d+$)\d+|half|all|stats/
+        argument :server_id, display_name: :on
 
         def on_execute
-          return reply(send_stats) if @arguments.amount == "stats"
+          return reply(send_stats) if arguments.amount == "stats"
 
           check_connected_server!
           check_for_bad_amount!
@@ -29,7 +29,7 @@ module ESM
           deliver!(
             function_name: "gamble",
             uid: current_user.steam_uid,
-            amount: @arguments.amount,
+            amount: arguments.amount,
             id: current_user.discord_id,
             name: current_user.name
           )
@@ -45,9 +45,9 @@ module ESM
         #########################
 
         def check_for_bad_amount!
-          return if %w[half all].include?(@arguments.amount)
+          return if %w[half all].include?(arguments.amount)
 
-          check_failed!(:bad_amount, user: current_user.mention) if @arguments.amount.to_i <= 0
+          check_failed!(:bad_amount, user: current_user.mention) if arguments.amount.to_i <= 0
         end
 
         def gamble_stat
@@ -173,7 +173,7 @@ module ESM
             username: current_user.username,
             usertag: current_user.mention,
             amountchanged: @response.amount,
-            amountgambled: @arguments.amount,
+            amountgambled: arguments.amount,
             lockerbefore: @response.locker_before,
             lockerafter: @response.locker_after
           )

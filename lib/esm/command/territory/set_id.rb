@@ -14,9 +14,9 @@ module ESM
         define :allowed_in_text_channels, modifiable: true, default: true
         define :cooldown_time, modifiable: true, default: 2.seconds
 
-        argument :server_id
-        argument :old_territory_id, template: :territory_id
-        argument :new_territory_id, template: :territory_id
+        argument :old_territory_id, template: :territory_id, display_name: :from
+        argument :new_territory_id, template: :territory_id, display_name: :to
+        argument :server_id, display_name: :on
 
         def on_execute
           # Require at least 3 characters and a max of 30
@@ -28,8 +28,8 @@ module ESM
             command_name: "setterritoryid",
             query: "set_custom_territory_id",
             player_uid: current_user.steam_uid,
-            old_territory_id: @arguments.old_territory_id,
-            new_territory_id: @arguments.new_territory_id
+            old_territory_id: arguments.old_territory_id,
+            new_territory_id: arguments.new_territory_id
           )
         end
 
@@ -41,15 +41,15 @@ module ESM
         private
 
         def check_for_minimum_characters!
-          return if @arguments.new_territory_id.nil?
+          return if arguments.new_territory_id.nil?
 
-          check_failed!(:minimum_characters, user: current_user.mention) if @arguments.new_territory_id.size < 3
+          check_failed!(:minimum_characters, user: current_user.mention) if arguments.new_territory_id.size < 3
         end
 
         def check_for_maximum_characters!
-          return if @arguments.new_territory_id.nil?
+          return if arguments.new_territory_id.nil?
 
-          check_failed!(:maximum_characters, user: current_user.mention) if @arguments.new_territory_id.size > 20
+          check_failed!(:maximum_characters, user: current_user.mention) if arguments.new_territory_id.size > 20
         end
 
         def check_for_failure!
@@ -71,8 +71,8 @@ module ESM
               "commands.set_id.success_message",
               prefix: prefix,
               server_id: target_server.server_id,
-              old_territory_id: @arguments.old_territory_id,
-              new_territory_id: @arguments.new_territory_id
+              old_territory_id: arguments.old_territory_id,
+              new_territory_id: arguments.new_territory_id
             )
           )
         end

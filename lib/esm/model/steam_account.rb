@@ -85,7 +85,7 @@ module ESM
       end.call
     end
 
-    #          "SteamId" => "76561198037177305",
+    #          "SteamId" => "76561234567890123",
     #  "CommunityBanned" => false,
     #        "VACBanned" => false,
     #  "NumberOfVACBans" => 0,

@@ -43,10 +43,8 @@ module ESM
         define :allowed_in_text_channels, modifiable: true, default: true
         define :cooldown_time, modifiable: true, default: 2.seconds
 
-        argument :server_id
-
-        # In order to utilize the `#target_user` logic, the argument must have a name as target.
-        argument :target, regex: /.+/, display_name: :query
+        argument :target, display_name: :for
+        argument :server_id, display_name: :on
 
         def on_execute
           query = ""
@@ -58,7 +56,7 @@ module ESM
             query = target_user.steam_uid
           else
             # Escape any regex in the "query"
-            query = Regexp.quote(@arguments.target)
+            query = Regexp.quote(arguments.target)
           end
 
           deliver!(search: query, length: 14)
@@ -75,7 +73,7 @@ module ESM
         def on_response(_, _)
           check_for_no_logs!
 
-          @log = ESM::Log.create!(server_id: target_server.id, search_text: @arguments.target, requestors_user_id: current_user.id)
+          @log = ESM::Log.create!(server_id: target_server.id, search_text: arguments.target, requestors_user_id: current_user.id)
 
           parse_logs
 

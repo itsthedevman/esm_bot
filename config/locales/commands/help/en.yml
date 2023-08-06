@@ -9,24 +9,24 @@ en:
         **`/help`**
         Displays information about getting started with Exile Server Manager
 
-        **`/help player commands`**
+        **`/help with:player commands`**
         Displays all player commands
 
-        **`/help admin commands`**
+        **`/help with:admin commands`**
         Displays all admin commands
 
-        **`/help commands`**
+        **`/help with:commands`**
         Displays all commands
 
-        **`/help set_id`**
-        Displays detailed information about the `set_id` command
+        **`/help with:/territory set_id`**
+        Displays detailed information about the `/territory set_id` command
       categories:
         name: Categories
         value: |-
-          **`/help commands`**
+          **`/help with:commands`**
           List all commands
 
-          **`/help <command_name>`**
+          **`/help with:<command_name>`**
           Get information about the provided command
       getting_started:
         title: "Well, hello there %{user}!"
@@ -37,14 +37,14 @@ en:
           commands:
             name: "**Looking for my commands?**"
             value: |-
-              `/help player commands` for my player commands
-              `/help admin commands` for my admin commands _(commands available to certain roles only!)_,
-              `/help commands` for all commands
+              `/help with:player commands` for my player commands
+              `/help with:admin commands` for my admin commands _(commands available to certain roles only!)_,
+              `/help with:commands` for all commands
 
               Commands and details about them are also available on my website: https://esmbot.com/wiki/commands
           command:
             name: "**Want to see examples or more information about a command?**"
-            value: "Just send me `/help <command_name>`, replacing `<command_name>` with the name of the command! For example: `/help register`"
+            value: "Just send me `/help with:<command_name>`, replacing `<command_name>` with the name of the command! For example: `/help with:register`"
           privacy:
             name: "**Privacy Policy**"
             value: |-

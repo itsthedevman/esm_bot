@@ -15,24 +15,20 @@ module ESM
         define :allowed_in_text_channels, modifiable: false, default: false
         define :cooldown_time, modifiable: false, default: 2.seconds
 
-        argument :community_id
-        argument :mode, regex: /player|server/
+        argument :community_id, display_name: :for
 
         def on_execute
           check_for_owner!
-          check_for_same_mode!
+          check_for_active_servers! if enable_player_mode?
 
-          if @arguments.mode == "player"
-            enable_player_mode
-          else
-            disable_player_mode
-          end
+          # Flip it, flip it good
+          target_community.update!(player_mode_enabled: enable_player_mode?)
 
           # Reply back
           embed =
             ESM::Embed.build do |e|
               e.description = I18n.t(
-                "commands.mode.#{(@arguments.mode == "player") ? "enabled" : "disabled"}",
+                "commands.mode.#{enable_player_mode ? "enabled" : "disabled"}",
                 community_name: target_community.name
               )
               e.color = :green
@@ -41,43 +37,15 @@ module ESM
           reply(embed)
         end
 
-        #########################
-        # Command Methods
-        #########################
+        private
 
-        def check_for_owner!
-          server = ESM.bot.server(target_community.guild_id.to_i)
-          guild_member = current_user.on(server)
-          check_failed!(:no_permissions, user: current_user.mention) if guild_member.nil?
-
-          return if guild_member.owner?
-
-          check_failed!(:no_permissions, user: current_user.mention)
-        end
-
-        def check_for_same_mode!
-          check_failed!(:same_mode, state: (@arguments.mode == "player") ? "enabled" : "disabled") if same_mode?
+        # Attempt to flip the value and see what happens :D
+        def enable_player_mode?
+          @enable_player_mode ||= !target_community.player_mode_enabled?
         end
 
         def check_for_active_servers!
           check_failed!(:servers_exist, user: current_user.mention) if target_community.servers.any?
-        end
-
-        def same_mode?
-          (@arguments.mode == "player" && target_community.player_mode_enabled?) ||
-            (@arguments.mode == "server" && !target_community.player_mode_enabled?)
-        end
-
-        def enable_player_mode
-          check_for_active_servers!
-
-          # Enable Player Mode
-          target_community.update!(player_mode_enabled: true)
-        end
-
-        def disable_player_mode
-          # Disable player mode
-          target_community.update!(player_mode_enabled: false)
         end
       end
     end

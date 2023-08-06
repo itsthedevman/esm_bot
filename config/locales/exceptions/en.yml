@@ -79,9 +79,8 @@ en:
     snek_not_found: "Hey %{user}, all of the sneks slithered away. Please wait a few moments before trying again"
 
     # mode
-    servers_exist: "I'm sorry %{user}, in order to enable player mode, you must remove any servers you have added to me via my [Dashboard](https://www.esmbot.com/portal)"
-    same_mode: "Looks like there's nothing to change! You already have player mode %{state} 👍"
-    no_permissions: "I'm sorry %{user}, Only the owner of this community has access to this command"
+    servers_exist: "I'm sorry %{user}, in order to enable player mode you must remove any servers you've registered via my [Dashboard](https://www.esmbot.com/portal)"
+    no_permissions: "I'm sorry %{user}, only the owner of this community has access to this command"
 
     # broadcast
     no_server_access: "%{user}, you do not access to that server. You may only run this command for servers that belong to `%{community_id}`"

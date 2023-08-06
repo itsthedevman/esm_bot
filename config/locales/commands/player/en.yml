@@ -3,23 +3,23 @@ en:
     player:
       description: Modifies a player on a server, regardless of them being online or not.
       example: |-
-        **`server admin modify_player esm_malden @Bryan money 1500`**
-        Gives @Bryan's player on `esm_malden` 1500 poptabs
+        **`server admin modify_player whom:@discord_mention on:esm_malden action:money amount:1500`**
+        Gives @discord_mention's player on `esm_malden` 1500 poptabs
 
-        **`server admin modify_player esm_altis @Bryan locker -50`**
-        Removes 50 poptabs from @Bryan's locker on `esm_altis`
+        **`server admin modify_player whom:@discord_mention on:esm_altis action:locker amount:-50`**
+        Removes 50 poptabs from @discord_mention's locker on `esm_altis`
 
-        **`server admin modify_player esm_namalsk 76561198037177305 k`**
-        RIP @Bryan. Kills @Bryan's player on `esm_namalsk`
+        **`server admin modify_player whom:76561234567890123 on:esm_namalsk action:k`**
+        RIP @discord_mention. Kills @discord_mention's player on `esm_namalsk`
       arguments:
-        type:
-          description: "Valid types: `money`/`m`, `respect`/`r`, `locker`/`l`, `heal`/`h`, `kill`/`k`"
-        value:
-          description: "Type `m`, `r`, and `l` require this argument. `h` and `k` do not"
+        action:
+          description: "Valid actions: `money`/`m`, `respect`/`r`, `locker`/`l`, `heal`/`h`, `kill`/`k`"
+        amount:
+          description: "Actions `m`, `r`, and `l` require this argument. `h` and `k` do not"
           description_extra: |-
-            For types `money`, `respect`, and `locker`:
-              - This argument is required and must be a positive or negative number.
+            For actions `money`, `respect`, and `locker`:
+              - This argument is required and must be a positive or negative number
               - Positive numbers will add the given amount of that type
               - Negative numbers will remove the given amount of that type
             For types `heal` and `kill`:
-              - This argument is optional
+              - This argument is ignored

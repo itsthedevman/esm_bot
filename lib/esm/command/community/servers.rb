@@ -12,7 +12,7 @@ module ESM
         define :allowed_in_text_channels, modifiable: true, default: true
         define :cooldown_time, modifiable: true, default: 2.seconds
 
-        argument :community_id
+        argument :community_id, display_name: :for
 
         def on_execute
           servers = ESM::Server.where(community_id: target_community.id, server_visibility: :public)
@@ -32,7 +32,7 @@ module ESM
         def check_for_no_servers!(servers)
           return if servers.present?
 
-          check_failed!(:no_servers, community_id: @arguments.community_id)
+          check_failed!(:no_servers, community_id: arguments.community_id)
         end
 
         def build_server_embed

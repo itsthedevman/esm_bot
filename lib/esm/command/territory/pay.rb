@@ -14,11 +14,11 @@ module ESM
         define :allowed_in_text_channels, modifiable: true, default: true
         define :cooldown_time, modifiable: true, default: 2.seconds
 
-        argument :server_id
-        argument :territory_id
+        argument :territory_id, display_name: :territory
+        argument :server_id, display_name: :on
 
         def on_execute
-          deliver!(function_name: "payTerritory", territory_id: @arguments.territory_id, uid: current_user.steam_uid)
+          deliver!(function_name: "payTerritory", territory_id: arguments.territory_id, uid: current_user.steam_uid)
         end
 
         def on_response(_, _)
@@ -28,7 +28,7 @@ module ESM
                 "commands.pay.embed.description",
                 user: current_user.mention,
                 server_id: target_server.server_id,
-                territory_id: @arguments.territory_id,
+                territory_id: arguments.territory_id,
                 cost: @response.payment.to_poptab,
                 locker_amount: @response.locker.to_poptab
               )

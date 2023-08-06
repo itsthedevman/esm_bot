@@ -28,8 +28,8 @@ module ESM
 
               description + <<~STRING
                 Expires on #{r.expires_at}
-                [Accept](#{accept_request_url(r.uuid)}) - `#{prefix}accept #{r.uuid_short}`
-                [Decline](#{decline_request_url(r.uuid)}) - `#{prefix}decline #{r.uuid_short}`
+                [Accept](#{accept_request_url(r.uuid)}) - `/requests accept uuid:#{r.uuid_short}`
+                [Decline](#{decline_request_url(r.uuid)}) - `/requests decline uuid:#{r.uuid_short}`
               STRING
             end.join("\n")
           end

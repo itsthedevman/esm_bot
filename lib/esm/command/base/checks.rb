@@ -15,6 +15,16 @@ module ESM
           check_failed!(:dm_only, user: current_user.mention) if dm_only? && !current_channel.dm?
         end
 
+        def check_for_owner!
+          server = target_community.discord_server
+          guild_member = current_user.on(server)
+
+          check_failed!(:no_permissions, user: current_user.mention) if guild_member.nil?
+          return if guild_member.owner?
+
+          check_failed!(:no_permissions, user: current_user.mention)
+        end
+
         def check_for_permissions!
           if !enabled?
             # If the community doesn't want to send a message, don't send a message.

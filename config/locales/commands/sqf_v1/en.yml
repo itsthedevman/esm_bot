@@ -3,11 +3,11 @@ en:
     sqf_v1:
       description: Executes the given codes on a server (returning any results), or a target.
       example: |-
-        **`/server admin execute_code esm_malden isServer`**
+        **`/server admin execute_code on:esm_malden code:isServer`**
         Executes `isServer` on `esm_malden` and returns `true` back.
 
-        **`/server admin execute_code esm_tanoa @Bryan player setDamage 1;`**
-        Executes `player setDamage 1` on @Bryan's player in game. If the player is not in game, an error will be returned.
+        **`/server admin execute_code on:esm_tanoa target:@discord_mention code:player setDamage 1;`**
+        Executes `player setDamage 1` on @discord_mention's player in game. If the player is not in game, an error will be returned.
       arguments:
         execution_target:
           description: The target to execute the codes on.

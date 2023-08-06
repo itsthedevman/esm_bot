@@ -4,16 +4,16 @@ en:
       description: View, allow, or deny notifications on a per server basis.
       description_extra: All notifications are enabled by default, this command allows for fine grained tuning.
       example: |-
-        **`/my preferences esm_malden`**
+        **`/my preferences for:esm_malden`**
         Displays your notification preferences for `esm_malden`
 
-        **`/my preferences esm_malden allow`**
+        **`/my preferences for:esm_malden action:allow`**
         Allows `esm_malden` to send you all notification types
 
-        **`/my preferences esm_altis deny protection-money-paid`**
+        **`/my preferences for:esm_altis action:deny type:protection-money-paid`**
         Blocks `esm_altis` from sending you the `protection-money-paid` XM8 notification
       arguments:
-        state:
+        action:
           description: Controls if the notification will be sent to you. Valid options are `allow` and `deny`
         type:
           description: "The notification type. See /help for more information"

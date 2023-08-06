@@ -1,7 +1,7 @@
 en:
   commands:
     reset_cooldown:
-      description: Resets a player's cooldowns
+      description: Resets cooldown(s)
       description_extra: |-
         Admins can preform any of the following:
           Resets a cooldown for a player.
@@ -14,28 +14,29 @@ en:
           Reset a single command cooldown for a user on every server in their community.
           Or, reset a single command cooldown for a user on one server in their community.
 
+        **Important:** Due to the destructive nature of this command, the `on:` argument does not support autofill or aliases. Omitting this argument will result in the behavior described in the examples.
+
         See examples for more details
       example: |-
         **`/community admin reset_cooldown`**
         Resets every command's cooldowns for your community.
 
-        **`/community admin reset_cooldown @Bryan`**
-        Resets every command's cooldown for @Bryan on your community.
+        **`/community admin reset_cooldown for:@discord_mention`**
+        Resets every command's cooldown for @discord_mention on your community.
 
-        **`/community admin reset_cooldown @Bryan reward`**
-        Resets the `reward` cooldown for @Bryan on your community.
+        **`/community admin reset_cooldown for:@discord_mention command:/server reward`**
+        Resets the `/server reward` command cooldown for @discord_mention on your community.
 
-        **`/community admin reset_cooldown @Bryan reward esm_malden`**
-        Resets the `reward` cooldown for @Bryan on `esm_malden` only
+        **`/community admin reset_cooldown for:@discord_mention command:/server reward on:esm_malden`**
+        Resets the `/server reward` command cooldown for @discord_mention on `esm_malden` only
 
-        **`/community admin reset_cooldown reward esm_malden`**
-        Resets the `reward` cooldown for `esm_malden` only
+        **`/community admin reset_cooldown command:server reward esm_malden`**
+        Resets the `/server reward` command cooldown for `esm_malden` only.
+        _Note: This shows that the `/` is optional in the `command:` argument_
 
-        **`/community admin reset_cooldown reward`**
-        Resets the `reward` cooldown every server your community has registered
-      arguments:
-        command_name:
-          description: The name of the command to reset the cooldown for
+        **`/community admin reset_cooldown command:server reward`**
+        Resets the `/server reward` command cooldown every server your community has registered.
+        _Note: This shows that the `/` is optional in the `command:` argument_
       confirmation_embed:
         title: Reset Confirmation
         description:

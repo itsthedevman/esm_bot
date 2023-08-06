@@ -5,23 +5,27 @@ module ESM
     class Argument
       DEFAULTS = {
         target: {
-          validate_with: ESM::Regex::TARGET,
           required: true,
+          checked_against: ESM::Regex::TARGET,
           description: "commands.arguments.target.description",
           description_extra: "commands.arguments.target.description_extra"
         },
+        command: {
+          checked_against: ->(context) { ESM::Command.include?(context.content) }
+          description: "commands.arguments.command.description"
+        },
         territory_id: {
-          validate_with: ESM::Regex::TERRITORY_ID,
           required: true,
+          checked_against: ESM::Regex::TERRITORY_ID,
           description: "commands.arguments.territory_id.description",
           description_extra: "commands.arguments.territory_id.description_extra"
         },
         community_id: {
-          validate_with: ESM::Regex::COMMUNITY_ID,
+          preserve: true,
+          checked_against: ESM::Regex::COMMUNITY_ID,
           description: "commands.arguments.community_id.description",
           description_extra: "commands.arguments.community_id.description_extra",
-          preserve: true,
-          optional_text: "This argument may be excluded if a community is set as a default for you, or the Discord community if you are using this command in a text channel",
+          optional_text: "commands.arguments.community_id.optional_text",
           modifier: lambda do |context|
             if context.content.present?
               # User alias
@@ -51,11 +55,11 @@ module ESM
           end
         },
         server_id: {
-          validate_with: ESM::Regex::SERVER_ID_OPTIONAL_COMMUNITY,
+          preserve: true,
+          checked_against: ESM::Regex::SERVER_ID_OPTIONAL_COMMUNITY,
           description: "commands.arguments.server_id.description",
           description_extra: "commands.arguments.server_id.description_extra",
-          preserve: true,
-          optional_text: "This argument may be excluded if a server is set as a default for you, or the Discord community if you are using this command in a text channel",
+          optional_text: "commands.arguments.server_id.optional_text",
           modifier: lambda do |context|
             if context.content.present?
               # User provided - Starts with a community ID
@@ -119,51 +123,86 @@ module ESM
       #
       # A configurable representation of a command argument
       #
-      # @param name [Symbol, String] The argument's name
-      # @param type [Symbol, String] Optional. The argument's type (directly linked to Discord). Default: :string
-      # @param opts [Hash] Options to configure the argument
+      # @param name [Symbol, String]
+      #     The argument's name
       #
-      # @option opts [Symbol] :required Optional. Controls if the argument should be required by Discord. Default: false
+      # @param type [Symbol, String]
+      #     The argument's type (directly linked to Discord).
+      #     Optional.
+      #     Default: :string
       #
-      # @option opts [Symbol, String, nil] :template The name of an entry in DEFAULTS to use as a foundation
-      #     in which these `opts` are merged into. Useful for having an argument that acts like another argument
+      # @param opts [Hash]
+      #     Options to configure the argument
       #
-      # @option opts [String] :description This argument's description, in less than 100 characters.
-      #     Note: Providing this option is optional, however, all arguments MUST have a non-blank description
-      #     This description is used in Discord when viewing the argument.
+      #   @option opts [Symbol] :required
+      #     Controls if the argument should be required by Discord.
+      #     Optional.
+      #     Default: false
+      #
+      #   @option opts [Symbol, String, nil] :template
+      #     The name of a default entry in which `opts` are merged into.
+      #     Useful for having an argument that acts like another argument, but may have different configuration
+      #
+      #   @option opts [String] :description
+      #     This argument's description, in less than 100 characters.
+      #       This description is used in Discord when viewing the argument.
+      #       Note: Providing this option is optional, however, all arguments MUST have a non-blank description
       #     This value defaults to the value located at the locale path:
       #         commands.<command_name>.arguments.<argument_name>.description
       #
-      # @option opts [String] :description_extra Any extra information to be included, but wouldn't fit in the 100 character limit
-      #     Note: Providing this option is optional, however, this argument MUST have a non-blank description
-      #     This description is used in the help documentation with the help command and on the website
+      #   @option opts [String] :description_extra
+      #     Any extra information to be included that wouldn't fit in the 100 character limit
+      #       Note: Providing this option is optional, however, this argument MUST have a non-blank description
+      #       This description is used in the help documentation with the help command and on the website
       #     This value defaults to the value located at the locale path:
       #         commands.<command_name>.arguments.<argument_name>.description_extra
       #
-      # @option opts [String] :optional_text Optional. Allows for overriding the "this argument is optional" text
-      #     in the help documentation. This argument must be optional for this to be used.
-      #     This is used in the help documentation with the help command and on the website
+      #   @option opts [String] :optional_text
+      #     Allows for overriding the "this argument is optional" text in the help documentation.
+      #       This opt is ignored if `required: true`
+      #     Optional.
       #     This value defaults to the value located at the locale path:
       #         commands.<command_name>.arguments.<argument_name>.optional_text
       #
-      # @option opts [Symbol, String] :display_name Optional. Allows overwriting the display name of the argument
-      #     without changing how the argument is referenced in code
+      #   @option opts [Symbol, String] :display_name
+      #     Changes how the argument is displayed to the user, but not in the code
+      #     Optional.
       #
-      # @option opts [Object] :default Optional. The default value if this argument is not required. Default: nil
+      #   @option opts [Object] :default
+      #     The default value if this argument. This value is ignored if `required: true`
+      #     Optional.
+      #     Default: nil
       #
-      # @option opts [Boolean] :preserve_case Optional. Controls if this argument's value should be converted to
-      #     lowercase or not. Default: false
+      #   @option opts [Boolean] :preserve_case
+      #     Controls if this argument's value should be converted to lowercase or not.
+      #     Optional.
+      #     Default: false
       #
-      # @option opts [Symbol, Proc] :type_caster Optional. Performs extra casting once the value is received from Discord
-      #     If the value is a Symbol, it will be be checked against the available options.
-      #     If the value is a Proc, it will be called and the raw value passed in
+      #   @option opts [Symbol, Proc] :type_caster
+      #     Performs extra casting once the value is received from Discord
+      #       If the value is a Symbol, it will be be checked against the available options.
+      #       If the value is a Proc, it will be called and the raw value passed in.
+      #     Optional.
       #     Valid options: :json, :symbol
       #
-      # @option opts [Proc] :modifier Optional. A block of code used to modify this argument's value before validation
-      # @option opts [Array<String>] :choices Optional. A list of choices the user can pick for this argument
-      # @option opts [Integer] :min_value If type is integer/number, this is the minimum value that can be selected
-      # @option opts [Integer] :max_value If type is integer/number, this is the maximum value that can be selected
-      # @option opts [nil, Regex] :validate_with If provided, this will be tested against the input.
+      #   @option opts [Proc] :modifier
+      #     A block of code used to modify this argument's value before validation
+      #     Optional.
+      #
+      #   @option opts [Array<String>] :choices
+      #     A list of choices the user can pick for this argument
+      #     Optional.
+      #
+      #   @option opts [Integer] :min_value
+      #     If type is integer/number, this is the minimum value that can be selected
+      #
+      #   @option opts [Integer] :max_value
+      #     If type is integer/number, this is the maximum value that can be selected
+      #
+      #   @option opts [nil, Regex, String, Proc] :checked_against
+      #     Regex/String will be tested against the provided value
+      #     Proc will have the content provided as the argument and must return a truthy value to be considered "valid"
+      #
       #
       def initialize(name, type, opts = {})
         template_name = (opts[:template] || name).to_sym
@@ -179,7 +218,7 @@ module ESM
         @preserve_case = !!opts[:preserve_case]
         @type_caster = opts[:type_caster]
         @modifier = opts[:modifier] || ->(_) {}
-        @validator = opts[:validate_with]
+        @validator = opts[:checked_against]
 
         @options = {required: @required}
         @options[:choices] = opts[:choices] if opts[:choices]
@@ -218,7 +257,7 @@ module ESM
           }
         )
 
-        check_for_valid_content!(content)
+        check_for_valid_content!(command, content)
 
         content
       end
@@ -319,11 +358,19 @@ module ESM
         value
       end
 
-      def check_for_valid_content!(content)
+      def check_for_valid_content!(command, content)
         return if content.nil? && required?
-
         return unless validator
-        return if content.match?(validator)
+
+        success =
+          case validator
+          when Regex, String
+            content.match?(validator)
+          when Proc
+            command.instance_exec(content, &validator)
+          end
+
+        return if success
 
         raise ESM::Exception::InvalidArgument, self
       end

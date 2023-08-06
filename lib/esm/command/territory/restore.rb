@@ -17,12 +17,12 @@ module ESM
         define :allowed_in_text_channels, modifiable: true, default: true
         define :cooldown_time, modifiable: true, default: 2.seconds
 
-        argument :server_id
-        argument :territory_id
+        argument :territory_id, display_name: :territory
+        argument :server_id, display_name: :on
 
         def on_execute
           check_owned_server!
-          deliver!(query: "restore", territory_id: @arguments.territory_id)
+          deliver!(query: "restore", territory_id: arguments.territory_id)
         end
 
         def on_response(_, _)
@@ -30,7 +30,7 @@ module ESM
             if @response.success
               ESM::Embed.build(
                 :success,
-                description: I18n.t("commands.restore.success_message", user: current_user.mention, territory_id: @arguments.territory_id)
+                description: I18n.t("commands.restore.success_message", user: current_user.mention, territory_id: arguments.territory_id)
               )
             else
               ESM::Embed.build(
@@ -38,7 +38,7 @@ module ESM
                 description: I18n.t(
                   "commands.restore.failure_message",
                   user: current_user.mention,
-                  territory_id: @arguments.territory_id,
+                  territory_id: arguments.territory_id,
                   server: target_server.server_id
                 )
               )

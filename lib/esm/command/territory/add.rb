@@ -15,9 +15,9 @@ module ESM
         define :allowed_in_text_channels, modifiable: true, default: true
         define :cooldown_time, modifiable: true, default: 2.seconds
 
-        argument :server_id
-        argument :territory_id
-        argument :target
+        argument :target, display_name: :whom
+        argument :territory_id, display_name: :to
+        argument :server_id, display_name: :on
 
         def on_execute
           # Either a memer or admin trying to add themselves. Either way, the arma server handles this.
@@ -33,7 +33,7 @@ module ESM
               "commands.add.request_description",
               current_user: current_user.distinct,
               target_user: target_user.mention,
-              territory_id: @arguments.territory_id,
+              territory_id: arguments.territory_id,
               server_id: target_server.server_id
             )
           )
@@ -44,7 +44,7 @@ module ESM
 
         def on_response(_, _)
           # Send the success message to the requestee (which can be the requestor)
-          embed = ESM::Embed.build(:success, description: I18n.t("commands.add.requestee_success", user: target_user.mention, territory_id: @arguments.territory_id))
+          embed = ESM::Embed.build(:success, description: I18n.t("commands.add.requestee_success", user: target_user.mention, territory_id: arguments.territory_id))
           ESM.bot.deliver(embed, to: target_user)
 
           # Don't send essentially the same message twice
@@ -57,7 +57,7 @@ module ESM
               "commands.add.requestor_success",
               current_user: current_user.mention,
               target_user: target_user.distinct,
-              territory_id: @arguments.territory_id,
+              territory_id: arguments.territory_id,
               server_id: target_server.server_id
             )
           )
@@ -70,7 +70,7 @@ module ESM
             send_to_arma(
               data: {
                 territory: {
-                  encoded: {id: @arguments.territory_id}
+                  encoded: {id: arguments.territory_id}
                 }
               }
             )
@@ -78,7 +78,7 @@ module ESM
             # Request the arma server to add the user
             deliver!(
               function_name: "addPlayerToTerritory",
-              territory_id: @arguments.territory_id,
+              territory_id: arguments.territory_id,
               target_uid: target_user.steam_uid,
               uid: current_user.steam_uid
             )
@@ -87,7 +87,7 @@ module ESM
           # # Don't send the request accepted message if the requestor is the requestee
           # return if same_user?
 
-          # embed = ESM::Embed.build(:success, description: I18n.t("commands.add.requestor_accepted", uuid: @request.uuid_short, target_user: target_user.distinct, territory_id: @arguments.territory_id, server_id: target_server.server_id))
+          # embed = ESM::Embed.build(:success, description: I18n.t("commands.add.requestor_accepted", uuid: @request.uuid_short, target_user: target_user.distinct, territory_id: arguments.territory_id, server_id: target_server.server_id))
 
           # reply(embed)
         end

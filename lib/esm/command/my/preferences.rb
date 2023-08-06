@@ -33,20 +33,20 @@ module ESM
         define :allowed_in_text_channels, modifiable: false, default: true
         define :cooldown_time, modifiable: false, default: 2.seconds
 
-        argument :server_id
-        argument :state, regex: /allow|deny/, default: nil
-        argument :type, regex: /#{TYPES.join("|")}/, default: "all"
+        argument :server_id, display_name: :for
+        argument :action, choices: %w[allow deny]
+        argument :type, choices: TYPES
 
         def on_execute
-          return send_preferences if @arguments.state.nil?
+          return send_preferences if arguments.state.nil?
 
           # Creates an array of ["custom"] or ["base-raid", "flag-stolen", "flag-restored", etc...]
           types =
-            if @arguments.type == "all"
+            if arguments.type == "all"
               # Remove "all" from the list
               TYPES.dup[1..]
             else
-              [@arguments.type]
+              [arguments.type]
             end
 
           # Converts the array of types to { custom: true }, or { "base-raid": false, "flag-stolen": false, "flag-restored": false, etc... }
@@ -65,7 +65,7 @@ module ESM
         end
 
         def allowed?
-          @arguments.state == "allow"
+          arguments.state == "allow"
         end
 
         def send_preferences

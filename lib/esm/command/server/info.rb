@@ -16,9 +16,9 @@ module ESM
         define :allowed_in_text_channels, modifiable: true, default: true
         define :cooldown_time, modifiable: true, default: 2.seconds
 
-        argument :server_id
-        argument :target, default: nil
-        argument :territory_id, default: nil
+        argument :target, display_name: :whom
+        argument :territory_id, display_name: :territory
+        argument :server_id, display_name: :on
 
         def on_execute
           # Ensure we were given a target or territory ID
@@ -26,8 +26,8 @@ module ESM
 
           # Territory ID takes priority since both arguments are optional, and both can be provided
           # Reasoning: Given the weird scenario, user gives a mention plus a territory ID thinking that it will do some filter...
-          if @arguments.territory_id.present?
-            deliver!(query: "territory_info", territory_id: @arguments.territory_id)
+          if arguments.territory_id.present?
+            deliver!(query: "territory_info", territory_id: arguments.territory_id)
           else
             deliver!(query: "player_info", uid: target_user.steam_uid)
           end
@@ -50,7 +50,7 @@ module ESM
         private
 
         def check_for_no_target!
-          check_failed!(:no_target, user: current_user.mention) if @arguments.target.nil? && @arguments.territory_id.nil?
+          check_failed!(:no_target, user: current_user.mention) if arguments.target.nil? && arguments.territory_id.nil?
         end
 
         def check_for_response!

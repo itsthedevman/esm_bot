@@ -3,10 +3,10 @@ en:
     add:
       description: Adds the target user as a builder in the provided territory
       example: |-
-        **`/territory add_player esm_malden jqjoe @Bryan`**
-        Adds @Bryan to `jqjoe` on `esm_malden`
+        **`/territory add_player whom:@discord_mention to:jqjoe on:esm_malden`**
+        Adds @discord_mention to `jqjoe` on `esm_malden`
 
-        **`/territory add_player esm_malden some_territory @your_username`**
+        **`/territory add_player target:@your_username to:some_territory on:esm_malden`**
         If you are a territory admin, you may replace `@your_username` with a tag of yourself to add yourself to this territory.
       request_description: |-
         Hi %{target_user}!

@@ -17,22 +17,16 @@ module ESM
         define :allowed_in_text_channels, modifiable: true, default: true
         define :cooldown_time, modifiable: true, default: 2.seconds
 
-        argument :server_id
-        argument :target
-        argument :type, regex: /m(?:oney)?|r(?:espect)?|l(?:ocker)?|h(?:eal)?|k(?:ill)?/
-        argument(
-          :value,
-          regex: /-?\d+/,
-          type: :integer,
+        argument :target, display_name: :whom
+        argument :action, required: true, checked_against: /m(?:oney)?|r(?:espect)?|l(?:ocker)?|h(?:eal)?|k(?:ill)?/
+        argument :server_id, display_name: :on
+        argument(:amount, type: :integer, checked_against: /-?\d+/,
           modifier: lambda do |argument|
             return unless arguments.type&.match(/h(?:eal)?|k(?:ill)?/i)
 
             # The types `heal` and `kill` don't require the value argument.
-            # This is done this way because setting `content` to have a default of nil makes the help text confusing
-            argument.optional!
             argument.content = nil
-          end
-        )
+          end)
 
         def on_execute
           check_registered_target_user! if target_user.is_a?(ESM::User)
@@ -41,15 +35,15 @@ module ESM
             function_name: "modifyPlayer",
             discord_tag: current_user.mention,
             target_uid: target_uid,
-            type: expand_type,
-            value: @arguments.value
+            type: expanded_action,
+            value: arguments.amount
           )
         end
 
         def on_response(_, _)
           embed = ESM::Notification.build_random(
             community_id: target_community.id,
-            type: expand_type,
+            type: expanded_action,
             category: "player",
             serverid: target_server.server_id,
             servername: target_server.server_name,
@@ -69,9 +63,9 @@ module ESM
 
         private
 
-        def expand_type
-          @expand_type ||= lambda do
-            case @arguments.type
+        def expanded_action
+          @expanded_action ||= lambda do
+            case arguments.action
             when "m"
               "money"
             when "r"
@@ -83,7 +77,7 @@ module ESM
             when "k"
               "kill"
             else
-              @arguments.type
+              arguments.action
             end
           end.call
         end

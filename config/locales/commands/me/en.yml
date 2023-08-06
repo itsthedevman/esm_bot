@@ -3,7 +3,7 @@ en:
     me:
       description: Displays information (money, health, poptabs, territories, etc.) about your player on the server
       example: |-
-        **`/server my_player esm_malden`**
+        **`/server my_player on:esm_malden`**
         Returns my player information on `esm_malden`
       embed:
         title: "%{user}'s stats on `%{server_id}`"

@@ -6,7 +6,7 @@ en:
         This command is only available for the territory owner or moderators
         To see costs, please use the `/territory list` command
       example: |-
-        **`/territory upgrade esm_malden awesome`**
+        **`/territory upgrade territory:awesome on:esm_malden`**
         Upgrades territory `awesome` to the next level on `esm_malden`
       success_message: |-
         Hey %{user}, you successfully upgraded territory `%{territory_id}` for **%{cost}**.

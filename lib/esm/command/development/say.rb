@@ -13,11 +13,11 @@ module ESM
         define :allowed_in_text_channels, modifiable: false, default: true
         define :cooldown_time, modifiable: false, default: 2.seconds
 
-        argument :text, regex: /.+/, preserve: true, description: "Text to make the bot say"
+        argument :text, preserve: true, description: "Text to make the bot say"
 
         def on_execute
           @event.message.delete if !ESM.env.test?
-          reply(@arguments.text)
+          reply(arguments.text)
         end
       end
     end

@@ -16,8 +16,8 @@ module ESM
         define :allowed_in_text_channels, modifiable: true, default: true
         define :cooldown_time, modifiable: true, default: 2.seconds
 
-        argument :server_id
-        argument :order_by, regex: /id|territory_name|owner_uid/, default: :territory_name, type: :symbol
+        argument :server_id, display_name: :on
+        argument :order_by, choices: %w[id territory_name owner_uid], default: :territory_name, type: :symbol
 
         def on_execute
           check_owned_server!
@@ -49,7 +49,7 @@ module ESM
           tables = []
 
           # Sorted here on purpose. Makes it so I can test this functionality
-          @territories.sort_by!(&@arguments.order_by)
+          @territories.sort_by!(&arguments.order_by)
 
           # Two challenges for this code.
           # 1: The width of each row had to be less than 67 (10 characters per line reserved for spacing/separating)

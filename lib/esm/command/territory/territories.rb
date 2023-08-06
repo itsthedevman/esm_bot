@@ -15,7 +15,7 @@ module ESM
         define :allowed_in_text_channels, modifiable: true, default: false
         define :cooldown_time, modifiable: true, default: 2.seconds
 
-        argument :server_id
+        argument :server_id, display_name: :for
 
         def on_execute
           deliver!(query: "list_territories", uid: current_user.steam_uid)
