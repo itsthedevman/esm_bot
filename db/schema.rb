@@ -290,6 +290,7 @@ ActiveRecord::Schema.define(version: 2023_06_09_223251) do
   end
 
   create_table "user_aliases", force: :cascade do |t|
+    t.uuid "uuid"
     t.bigint "user_id"
     t.bigint "community_id"
     t.bigint "server_id"
@@ -299,6 +300,7 @@ ActiveRecord::Schema.define(version: 2023_06_09_223251) do
     t.index ["user_id", "community_id", "value"], name: "index_user_aliases_on_user_id_and_community_id_and_value", unique: true
     t.index ["user_id", "server_id", "value"], name: "index_user_aliases_on_user_id_and_server_id_and_value", unique: true
     t.index ["user_id"], name: "index_user_aliases_on_user_id"
+    t.index ["uuid"], name: "index_user_aliases_on_uuid"
   end
 
   create_table "user_defaults", force: :cascade do |t|

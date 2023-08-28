@@ -17,6 +17,7 @@ class CreateDefaultsTable < ActiveRecord::Migration[6.1]
     end
 
     create_table :user_aliases, if_not_exists: true do |t|
+      t.uuid :uuid, index: true, unique: true
       t.belongs_to :user, foreign_key: true
       t.references :community, index: true, foreign_key: true
       t.references :server, index: true, foreign_key: true
