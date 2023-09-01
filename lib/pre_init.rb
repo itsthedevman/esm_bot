@@ -1,18 +1,26 @@
 # frozen_string_literal: true
 
+info!("Pre init started")
+
 #############################
 # Must be ran before autoload
 #############################
 I18n.load_path += Dir[File.expand_path("config/locales/**/*.yml")]
 I18n.reload!
 
-ESM.initialize_logger
-ESM.initialize_steam
-ESM.initialize_redis
+# Steam
+SteamWebApi.configure do |config|
+  config.api_key = ESM.config.steam_api_key
+end
 
-#############################
-# DB migrations
-#############################
+# Make the computer understand us
+ActiveSupport::Inflector.inflections(:en) do |inflect|
+  inflect.acronym("ESM")
+  inflect.acronym("ID")
+  inflect.acronym("UID")
+end
+
+# Required by standalone_migrations
 module Rails
   def self.root
     Dir.pwd
@@ -53,10 +61,6 @@ ESM.loader.tap do |loader|
 end
 
 #############################
-# Configure Inflector
-#############################
-ActiveSupport::Inflector.inflections(:en) do |inflect|
-  inflect.acronym("ESM")
-  inflect.acronym("ID")
-  inflect.acronym("UID")
-end
+# No logger calls (with a hash) before this point
+
+info!("Pre init complete")

@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require "active_record_query_trace"
-require "colorize"
 
 # Allows seeing the backtrace for queries
 # Only use lines that pertain to ESM

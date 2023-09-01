@@ -13,33 +13,32 @@ PATH
 GEM
   remote: https://rubygems.org/
   specs:
-    actionpack (6.1.7.4)
-      actionview (= 6.1.7.4)
-      activesupport (= 6.1.7.4)
-      rack (~> 2.0, >= 2.0.9)
+    actionpack (7.0.7.2)
+      actionview (= 7.0.7.2)
+      activesupport (= 7.0.7.2)
+      rack (~> 2.0, >= 2.2.4)
       rack-test (>= 0.6.3)
       rails-dom-testing (~> 2.0)
       rails-html-sanitizer (~> 1.0, >= 1.2.0)
-    actionview (6.1.7.4)
-      activesupport (= 6.1.7.4)
+    actionview (7.0.7.2)
+      activesupport (= 7.0.7.2)
       builder (~> 3.1)
       erubi (~> 1.4)
       rails-dom-testing (~> 2.0)
       rails-html-sanitizer (~> 1.1, >= 1.2.0)
     active_record_query_trace (1.8)
-    activemodel (6.1.7.4)
-      activesupport (= 6.1.7.4)
-    activerecord (6.1.7.4)
-      activemodel (= 6.1.7.4)
-      activesupport (= 6.1.7.4)
-    activerecord-import (1.4.1)
+    activemodel (7.0.7.2)
+      activesupport (= 7.0.7.2)
+    activerecord (7.0.7.2)
+      activemodel (= 7.0.7.2)
+      activesupport (= 7.0.7.2)
+    activerecord-import (1.5.0)
       activerecord (>= 4.2)
-    activesupport (6.1.7.4)
+    activesupport (7.0.7.2)
       concurrent-ruby (~> 1.0, >= 1.0.2)
       i18n (>= 1.6, < 2)
       minitest (>= 5.1)
       tzinfo (~> 2.0)
-      zeitwerk (~> 2.3)
     airbrussh (1.4.1)
       sshkit (>= 1.6.1, != 1.7.0)
     ast (2.4.2)
@@ -192,19 +191,20 @@ GEM
       rack
     rack-test (2.1.0)
       rack (>= 1.3)
-    rails-dom-testing (2.1.1)
+    rails-dom-testing (2.2.0)
       activesupport (>= 5.0.0)
       minitest
       nokogiri (>= 1.6)
     rails-html-sanitizer (1.6.0)
       loofah (~> 2.21)
       nokogiri (~> 1.14)
-    railties (6.1.7.4)
-      actionpack (= 6.1.7.4)
-      activesupport (= 6.1.7.4)
+    railties (7.0.7.2)
+      actionpack (= 7.0.7.2)
+      activesupport (= 7.0.7.2)
       method_source
       rake (>= 12.2)
       thor (~> 1.0)
+      zeitwerk (~> 2.5)
     rainbow (3.1.1)
     rake (13.0.6)
     rbs (2.8.4)
@@ -344,11 +344,11 @@ PLATFORMS
   x86_64-linux
 
 DEPENDENCIES
-  actionview (~> 6.1, >= 6.1.4.4)
+  actionview (~> 7.0, >= 7.0.7.2)
   active_record_query_trace
-  activerecord (~> 6.1, >= 6.1.4.4)
-  activerecord-import
-  activesupport (~> 6.1, >= 6.1.4.4)
+  activerecord (~> 7.0, >= 7.0.7.2)
+  activerecord-import (~> 1.5)
+  activesupport (~> 7.0, >= 7.0.7.2)
   awesome_print
   bcrypt_pbkdf
   benchmark-ips
@@ -358,6 +358,7 @@ DEPENDENCIES
   capistrano-asdf
   capistrano-bundler
   colorize
+  connection_pool (~> 2.4, >= 2.4.1)
   database_cleaner-active_record
   discordrb!
   dotenv
@@ -389,7 +390,7 @@ DEPENDENCIES
   simplecov
   sinatra
   solargraph
-  standalone_migrations
+  standalone_migrations (~> 7.1, >= 7.1.1)
   standard
   steam-condenser
   steam_web_api

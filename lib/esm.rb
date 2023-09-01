@@ -18,6 +18,7 @@
   "active_support/all",
   "activerecord-import",
   "base64",
+  "colorize",
   "discordrb",
   "dotenv",
   "dotiw",
@@ -97,26 +98,26 @@ module ESM
   }.freeze
 
   class << self
-    attr_reader :bot, :config, :logger, :env, :redis, :loader
+    def bot
+      @bot ||= ESM::Bot.new
+    end
 
     def run!
       require_relative "post_init"
 
       # Start the bot
-      @bot = ESM::Bot.new
-
       if @console
         # Allow RSpec to continue
-        Thread.new { @bot.run }
+        Thread.new { bot.run }
       else
-        @bot.run
+        bot.run
       end
     end
 
+    # Load everything right meow
     def load!
-      # Load everything right meow
-      @loader.setup
-      @loader.eager_load
+      loader.setup
+      loader.eager_load
     end
 
     def root
@@ -128,70 +129,80 @@ module ESM
       @console = true
     end
 
-    def initialize_steam
-      SteamWebApi.configure do |config|
-        config.api_key = @config.steam_api_key
-      end
-    end
+    def logger
+      @logger ||= begin
+        logger = Logger.new("log/#{env}.log", "daily")
+        logger.level = Logger::INFO
 
-    def initialize_logger
-      @logger = Logger.new("log/#{env}.log", "daily")
-      @logger.level = Logger::INFO
+        logger.formatter = proc do |severity, datetime, progname = "N/A", msg|
+          header = "#{severity} [#{datetime.utc.strftime("%F %H:%M:%S:%L")}] (#{progname})"
+          body = "\n\t#{msg.to_s.gsub("\n", "\n\t")}\n\n"
 
-      @logger.formatter = proc do |severity, datetime, progname = "N/A", msg|
-        header = "#{severity} [#{datetime.utc.strftime("%F %H:%M:%S:%L")}] (#{progname})"
-        body = "\n\t#{msg.to_s.gsub("\n", "\n\t")}\n\n"
+          if ENV["PRINT_LOG"] == "true"
+            styled_header =
+              case severity
+              when "TRACE"
+                header.colorize(:cyan)
+              when "INFO"
+                header.colorize(:light_green)
+              when "DEBUG"
+                header.colorize(:magenta)
+              when "WARN"
+                header.colorize(:yellow)
+              when "ERROR", "FATAL"
+                header.colorize(:red)
+              else
+                header
+              end
 
-        if ENV["PRINT_LOG"] == "true"
-          header =
-            case severity
-            when "TRACE"
-              header.colorize(:cyan)
-            when "INFO"
-              header.colorize(:light_green)
-            when "DEBUG"
-              header.colorize(:magenta)
-            when "WARN"
-              header.colorize(:yellow)
-            when "ERROR", "FATAL"
-              header.colorize(:red)
-            else
-              header
-            end
+            styled_body =
+              case severity
+              when "WARN"
+                body.colorize(:yellow)
+              when "ERROR", "FATAL"
+                body.colorize(:red)
+              else
+                body
+              end
 
-          body =
-            case severity
-            when "WARN"
-              body.colorize(:yellow)
-            when "ERROR", "FATAL"
-              body.colorize(:red)
-            else
-              body
-            end
+            puts "#{styled_header}#{styled_body}"
+          end
 
-          puts "#{header}#{body}"
+          "#{header}#{body}"
         end
 
-        "#{header}#{body}"
+        logger
       end
     end
 
-    def initialize_redis
-      @redis = Redis.new(REDIS_OPTS)
+    def redis
+      @redis ||= ConnectionPool::Wrapper.new do
+        Redis.new(**REDIS_OPTS)
+      end
+    end
+
+    def env
+      @env ||= Inquirer.new(:production, :staging, :test, :development).set(ENV["ESM_ENV"].presence || :development)
+    end
+
+    def config
+      @config ||= begin
+        config = YAML.safe_load(
+          ERB.new(File.read(File.expand_path("config/config.yml"))).result,
+          aliases: true
+        )[env.to_s]
+
+        config.to_istruct
+      end
+    end
+
+    def loader
+      @loader ||= begin
+        Zeitwerk::Loader.attr_predicate(:setup, :eager_loaded)
+        Zeitwerk::Loader.for_gem(warn_on_extra_files: false)
+      end
     end
   end
-
-  # Borrowed from Rails, load the ENV
-  # https://github.com/rails/rails/blob/master/railties/lib/rails.rb:72
-  @env ||= ActiveSupport::StringInquirer.new(ENV["ESM_ENV"].presence || "development")
-
-  # Load the config
-  config = YAML.safe_load(ERB.new(File.read(File.expand_path("config/config.yml"))).result, aliases: true)[env]
-  @config = JSON.parse(config.to_json, object_class: OpenStruct)
-
-  # File loader
-  Zeitwerk::Loader.attr_predicate(:setup, :eager_loaded)
-  @loader = Zeitwerk::Loader.for_gem(warn_on_extra_files: false)
 end
 
 # Required ahead of time, ignored in autoloader
