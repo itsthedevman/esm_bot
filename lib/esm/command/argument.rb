@@ -189,8 +189,8 @@ module ESM
       #     A block of code used to modify this argument's value before validation
       #     Optional.
       #
-      #   @option opts [Array<String>] :choices
-      #     A list of choices the user can pick for this argument
+      #   @option opts [Hash] :choices
+      #     The key: display_value of choices the user can pick from
       #     Optional.
       #
       #   @option opts [Integer] :min_value
@@ -202,7 +202,6 @@ module ESM
       #   @option opts [nil, Regex, String, Proc] :checked_against
       #     Regex/String will be tested against the provided value
       #     Proc will have the content provided as the argument and must return a truthy value to be considered "valid"
-      #
       #
       def initialize(name, type, opts = {})
         template_name = (opts[:template] || name).to_sym
@@ -225,8 +224,7 @@ module ESM
         @options[:min_value] = opts[:min_value] if opts[:min_value]
         @options[:max_value] = opts[:max_value] if opts[:max_value]
 
-        description = load_locale_or_provided(opts[:description], "description")
-        @description = description.truncate(99) # Discord req: Must be less than 100 characters
+        @description = load_locale_or_provided(opts[:description], "description")
         @description_extra = load_locale_or_provided(opts[:description_extra], "description_extra").presence
 
         @optional_text =
@@ -237,6 +235,8 @@ module ESM
             text += " and it defaults to `#{default_value}`." if default_value?
             text
           end
+
+        check_for_valid_configuration!
       end
 
       def transform_and_validate!(input, command)
@@ -373,6 +373,30 @@ module ESM
         return if success
 
         raise ESM::Exception::InvalidArgument, self
+      end
+
+      def check_for_valid_configuration!
+        # choices must be hash
+        # choice values must be string
+        if options.key?(:choices)
+          raise ArgumentError, "#{command_name}:argument.#{self} - choices must be a hash" if !options[:choices].is_a?(Hash)
+
+          if options[:choices].values.any? { |v| !v.is_a?(String) }
+            raise ArgumentError, "#{command_name}:argument.#{self} - choices cannot contain non-string values"
+          end
+        end
+
+        # min/max values can only be with integer/number type
+        if options.key?(:min_value) || options.key?(:max_value)
+          if [:integer, :number].exclude?(type)
+            raise ArgumentError, "#{command_name}:argument.#{self} - min/max values can only be used with integer or number types"
+          end
+        end
+
+        # description has a maximum of 100 characters
+        if description.length > 100
+          raise ArgumentError, "#{command_name}:argument.#{self} - description cannot be longer than 100 characters"
+        end
       end
     end
   end
