@@ -106,7 +106,7 @@ module ESM
           embed =
             ESM::Embed.build do |e|
               e.title = I18n.t("commands.help.command.title", name: command.usage(with_args: false))
-              description = ["_This command used to be `!#{command.command_name}`_", command.description, ""]
+              description = ["*This command used to be `!#{command.command_name}`*", command.description, ""]
 
               # Adds a note about being limited to DM or Text
               description << I18n.t("commands.help.command.note") if command.limited_to || command.whitelist_enabled?
