@@ -234,7 +234,7 @@ module ESM
 
               builder.public_send(
                 argument.type,
-                argument.name,
+                argument.display_name,
                 argument.description,
                 **argument.options
               )
