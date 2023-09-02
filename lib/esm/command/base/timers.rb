@@ -8,11 +8,11 @@ module ESM
           @command_name = command_name
 
           @timers = {
-            on_execute: ESM::Time::Timer.new,
-            on_response: ESM::Time::Timer.new,
-            from_discord: ESM::Time::Timer.new,
-            from_server: ESM::Time::Timer.new,
-            from_request: ESM::Time::Timer.new
+            on_execute: Timer.new,
+            on_response: Timer.new,
+            from_discord: Timer.new,
+            from_server: Timer.new,
+            from_request: Timer.new
           }
 
           @timers.keys.each do |key|
