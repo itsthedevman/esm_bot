@@ -7,16 +7,16 @@ module ESM
         TYPES = %w[
           all
           custom
-          base-raid
-          flag-stolen
-          flag-restored
-          flag-steal-started
-          protection-money-due
-          protection-money-paid
-          grind-started
-          hack-started
-          charge-plant-started
-          marxet-item-sold
+          base_raid
+          flag_stolen
+          flag_restored
+          flag_steal_started
+          protection_money_due
+          protection_money_paid
+          grind_started
+          hack_started
+          charge_plant_started
+          marxet_item_sold
         ].freeze
 
         command_type :player
@@ -34,11 +34,11 @@ module ESM
         change_attribute :cooldown_time, modifiable: false
 
         argument :server_id, display_name: :for
-        argument :action, choices: %w[allow deny]
-        argument :type, choices: TYPES
+        argument :action, choices: {allow: "Allow", deny: "Block"}
+        argument :type, choices: TYPES.each_with_object({}) { |t, h| h[t] = t.titleize.humanize }
 
         def on_execute
-          return send_preferences if arguments.state.nil?
+          return send_preferences if arguments.action.nil?
 
           # Creates an array of ["custom"] or ["base-raid", "flag-stolen", "flag-restored", etc...]
           types =
@@ -50,7 +50,7 @@ module ESM
             end
 
           # Converts the array of types to { custom: true }, or { "base-raid": false, "flag-stolen": false, "flag-restored": false, etc... }
-          query = types.map { |type| [type.underscore, allowed?] }.to_h
+          query = types.map { |type| [type, allowed?] }.to_h
 
           # Update the preference
           preference.update(query)
@@ -65,7 +65,7 @@ module ESM
         end
 
         def allowed?
-          arguments.state == "allow"
+          @allowed ||= arguments.action == "allow"
         end
 
         def send_preferences

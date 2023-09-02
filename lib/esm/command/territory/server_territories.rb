@@ -13,7 +13,12 @@ module ESM
         change_attribute :whitelist_enabled, default: true
 
         argument :server_id, display_name: :on
-        argument :order_by, choices: %w[id territory_name owner_uid], default: :territory_name, type: :symbol
+
+        argument :order_by, default: :territory_name, type: :symbol, choices: {
+          id: "ID",
+          territory_name: "Territory name",
+          owner_uid: "Owner UID"
+        }
 
         def on_execute
           check_owned_server!
