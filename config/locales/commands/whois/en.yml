@@ -3,14 +3,17 @@ en:
     whois:
       description: Displays all available information about a player via their Steam UID, Discord ID, or Mention
       example: |-
-        **`/community admin find_player whom:@discord_mention`**
-        Using their mention, get all available information about this player
+        ```
+        /community admin find_player whom:@discord_mention
+        ```Using their mention, get all available information about this player
 
-        **`/community admin find_player whom:76561234567890123`**
-        Using their steam uid, get all available information about this player
+        ```
+        /community admin find_player whom:76561234567890123
+        ```Using their steam uid, get all available information about this player
 
-        **`/community admin find_player whom:137456789012345678`**
-        Using their Discord ID, get all available information about this player
+        ```
+        /community admin find_player whom:137456789012345678
+        ```Using their Discord ID, get all available information about this player
       discord:
         header: __Discord Information__
         id: ID

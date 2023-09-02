@@ -6,28 +6,35 @@ en:
           description: The categories can be found by just using `/help`
       description: A helpful command. An unhelpful description
       example: |-
-        **`/help`**
-        Displays information about getting started with Exile Server Manager
+        ```
+        /help
+        ```Displays information about getting started with Exile Server Manager
 
-        **`/help with:player commands`**
-        Displays all player commands
+        ```
+        /help with:player commands
+        ```Displays all player commands
 
-        **`/help with:admin commands`**
-        Displays all admin commands
+        ```
+        /help with:admin commands
+        ```Displays all admin commands
 
-        **`/help with:commands`**
-        Displays all commands
+        ```
+        /help with:commands
+        ```Displays all commands
 
-        **`/help with:/territory set_id`**
-        Displays detailed information about the `/territory set_id` command
+        ```
+        /help with:/territory set_id
+        ```Displays detailed information about the `/territory set_id` command
       categories:
         name: Categories
         value: |-
-          **`/help with:commands`**
-          List all commands
+          ```
+          /help with:commands
+          ```List all commands
 
-          **`/help with:<command_name>`**
-          Get information about the provided command
+          ```
+          /help with:<command_name>
+          ```Get information about the provided command
       getting_started:
         title: "Well, hello there %{user}!"
         description: |-
@@ -44,7 +51,7 @@ en:
               Commands and details about them are also available on my website: https://esmbot.com/wiki/commands
           command:
             name: "**Want to see examples or more information about a command?**"
-            value: "Just send me `/help with:<command_name>`, replacing `<command_name>` with the name of the command! For example: `/help with:register`"
+            value: "Just send me `/help with:<command_name>`, replacing `<command_name>` with the name of the command! For example: `/help with:servers` or using the slash variant `/help with:/community servers`"
           privacy:
             name: "**Privacy Policy**"
             value: |-
@@ -57,7 +64,7 @@ en:
           description: |-
             These commands are for players to interact with their character in game. They are primarily used in a Direct Message with me, but can be available to use in a community's Discord server or on your own with Player Mode Enabled.
             Please note, communities have the ability to disable or whitelist commands for their servers, regardless of where the command is used.
-            More information about a particular command can be found by using the `help command_name` command. For example: `help servers`
+            More information about a particular command can be found by using `/help with:<command_name>`, replacing `<command_name>` with the name of the command! For example: `/help with:servers` or using the slash variant `/help with:/community servers`
         admin:
           title: Admin Commands
           description: These commands are locked by default and may only be used by a community's admins and the whitelisted roles.

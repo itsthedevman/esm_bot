@@ -3,14 +3,17 @@ en:
     player:
       description: Modifies a player on a server, regardless of them being online or not.
       example: |-
-        **`server admin modify_player whom:@discord_mention on:esm_malden action:money amount:1500`**
-        Gives @discord_mention's player on `esm_malden` 1500 poptabs
+        ```
+        server admin modify_player whom:@discord_mention on:esm_malden action:money amount:1500
+        ```Gives @discord_mention's player on `esm_malden` 1500 poptabs
 
-        **`server admin modify_player whom:@discord_mention on:esm_altis action:locker amount:-50`**
-        Removes 50 poptabs from @discord_mention's locker on `esm_altis`
+        ```
+        server admin modify_player whom:@discord_mention on:esm_altis action:locker amount:-50
+        ```Removes 50 poptabs from @discord_mention's locker on `esm_altis`
 
-        **`server admin modify_player whom:76561234567890123 on:esm_namalsk action:k`**
-        RIP @discord_mention. Kills @discord_mention's player on `esm_namalsk`
+        ```
+        server admin modify_player whom:76561234567890123 on:esm_namalsk action:k
+        ```RIP @discord_mention. Kills @discord_mention's player on `esm_namalsk`
       arguments:
         action:
           description: "Valid actions: `money`/`m`, `respect`/`r`, `locker`/`l`, `heal`/`h`, `kill`/`k`"

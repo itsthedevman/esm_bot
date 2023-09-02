@@ -5,8 +5,9 @@ en:
       description_extra: |-
         After running this command, you will be sent a confirmation message in your PMs with me. From here, you'll confirm you are online and alive before I send deliver the rewards to you.
       example: |-
-        **`/server reward on:esm_malden`**
-        Requests the default reward to be delivered to you on `esm_malden`.
+        ```
+        /server reward on:esm_malden
+        ```Requests the default reward to be delivered to you on `esm_malden`.
       arguments:
         reward_id:
           description: "The ID of the reward you would like to receive. If omitted, the default reward will be given"

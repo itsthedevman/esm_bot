@@ -3,6 +3,7 @@ en:
     doggo:
       description: Humanity's best friend
       example: |-
-        **`/pictures doggo`**
-        Returns a random dog image
+        ```
+        /pictures doggo
+        ```Returns a random dog image
       waiting: Shaking treat jar...

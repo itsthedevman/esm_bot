@@ -5,11 +5,13 @@ en:
       description_extra: |-
         Some servers may implement a tax for paying using ESM. You can see how much your territory's protection cost is by using `/territory list`
       example: |-
-        **`/territory pay territory:qqoej on:esm_malden`**
-        Pay the territory protection for `qqoej` on server `esm_malden`
+        ```
+        /territory pay territory:qqoej on:esm_malden
+        ```Pay the territory protection for `qqoej` on server `esm_malden`
 
-        **`/territory pay territory:fort_kickass on:esm_malden`**
-        Pay the territory protection for custom territory ID `fort_kickass` on server `esm_malden`
+        ```
+        /territory pay territory:fort_kickass on:esm_malden
+        ```Pay the territory protection for custom territory ID `fort_kickass` on server `esm_malden`
       embed:
         description: |-
           %{user}, `%{server_id}` has successfully received the payment of **%{cost}** for `%{territory_id}`.

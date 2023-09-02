@@ -3,5 +3,6 @@ en:
     requests:
       description: Lists your pending command requests
       example: |-
-        **`/request list`**
-        Returns a list of your pending requests
+        ```
+        /request list
+        ```Returns a list of your pending requests

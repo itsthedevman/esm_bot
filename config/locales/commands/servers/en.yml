@@ -3,7 +3,8 @@ en:
     servers:
       description: Displays all registered servers for a given community ID, regardless if they are online or not
       example: |-
-        **`/community servers for:esm`**
-        Returns all registered servers for `esm`.
+        ```
+        /community servers for:esm
+        ```Returns all registered servers for `esm`.
       offline: "❌ Offline"
       offline_for: "❌ Offline for %{time}"

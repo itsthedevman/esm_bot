@@ -3,8 +3,9 @@ en:
     register:
       description: Provides information on how to link a Steam account with me
       example: |-
-        **`/register`**
-        Provides information on how to link a Steam account
+        ```
+        /register
+        ```Provides information on how to link a Steam account
       already_registered: |-
         Hey %{user}, it looks like you are already registered with me. You can view all of my commands using `/help commands`.
         Looking for the registration link? It's https://www.esmbot.com/register

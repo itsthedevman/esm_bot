@@ -18,25 +18,30 @@ en:
 
         See examples for more details
       example: |-
-        **`/community admin reset_cooldown`**
-        Resets every command's cooldowns for your community.
+        ```
+        /community admin reset_cooldown
+        ```Resets every command's cooldowns for your community.
 
-        **`/community admin reset_cooldown for:@discord_mention`**
-        Resets every command's cooldown for @discord_mention on your community.
+        ```
+        /community admin reset_cooldown for:@discord_mention
+        ```Resets every command's cooldown for @discord_mention on your community.
 
-        **`/community admin reset_cooldown for:@discord_mention command:/server reward`**
-        Resets the `/server reward` command cooldown for @discord_mention on your community.
+        ```
+        /community admin reset_cooldown for:@discord_mention command:/server reward
+        ```Resets the `/server reward` command cooldown for @discord_mention on your community.
 
-        **`/community admin reset_cooldown for:@discord_mention command:/server reward on:esm_malden`**
-        Resets the `/server reward` command cooldown for @discord_mention on `esm_malden` only
+        ```
+        /community admin reset_cooldown for:@discord_mention command:/server reward on:esm_malden
+        ```Resets the `/server reward` command cooldown for @discord_mention on `esm_malden` only
 
-        **`/community admin reset_cooldown command:server reward esm_malden`**
-        Resets the `/server reward` command cooldown for `esm_malden` only.
-        _Note: This shows that the `/` is optional in the `command:` argument_
+        ```
+        /community admin reset_cooldown command:/server reward esm_malden
+        ```Resets the `/server reward` command cooldown for `esm_malden` only.
 
-        **`/community admin reset_cooldown command:server reward`**
-        Resets the `/server reward` command cooldown every server your community has registered.
-        _Note: This shows that the `/` is optional in the `command:` argument_
+        ```
+        /community admin reset_cooldown command:server reward
+        ```Resets the `/server reward` command cooldown every server your community has registered.
+        *Remember: The "slash" in a slash command can be omitted*
       confirmation_embed:
         title: Reset Confirmation
         description:

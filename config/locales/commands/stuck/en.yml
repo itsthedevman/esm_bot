@@ -4,8 +4,9 @@ en:
       description: Deletes your player on the provided server in an attempt to fix the spawning glitch.
       description_extra: You will be required to confirm the request before any deletion takes place.
       example: |-
-        **`/server stuck on:esm_malden`**
-        Deletes your player on `esm_malden`
+        ```
+        /server stuck on:esm_malden
+        ```Deletes your player on `esm_malden`
       request_description: |-
         Hey %{user}, you have requested to have your player reset to get out of the "rabbit" or stuck state when spawning in. In order for the process to work, your player needs to have been spawned in at least once and you cannot be logged into the server when you confirm this.
 

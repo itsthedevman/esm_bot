@@ -4,7 +4,8 @@ en:
       description: Restores a territory if marked for deletion for missing a territory payment
       description_extra: This will not restore a territory if it has been deleted from the database
       example: |-
-        **`/territory admin restore territory:jquee on:esm_malden`**
-        Restores territory `jquee` on esm_malden
+        ```
+        /territory admin restore territory:jquee on:esm_malden
+        ```Restores territory `jquee` on esm_malden
       success_message: Hey %{user}, `%{territory_id}` has been restored
       failure_message: I'm sorry %{user}, `%{territory_id}` no longer exists on `%{server}`.

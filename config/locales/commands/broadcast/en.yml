@@ -5,14 +5,17 @@ en:
       description_extra: |-
         Registered players on these servers will receive the message via Direct Message if they have `custom` notification allowed for the server.
       example: |-
-        **`/server admin broadcast message:This is an emergency announcement to:esm_malden`**
-        Broadcasts `This is an emergency announcement` to every registered player on `esm_malden`.
+        ```
+        /server admin broadcast message:This is an emergency announcement to:esm_malden
+        ```Broadcasts `This is an emergency announcement` to every registered player on `esm_malden`.
 
-        **`/server admin broadcast message:Admin event going on right meow. More information on our Discord! to:all`**
-        Broadcasts `Admin event going on right meow. More information on our Discord!` to registered player on every server for this community.
+        ```
+        /server admin broadcast message:Admin event going on right meow. More information on our Discord! to:all
+        ```Broadcasts `Admin event going on right meow. More information on our Discord!` to registered player on every server for this community.
 
-        **`/server admin broadcast message:Testing`**
-        Provides a preview of the message without sending it.
+        ```
+        /server admin broadcast message:Testing
+        ```Provides a preview of the message without sending it.
       arguments:
         broadcast_to:
           description: Where the broadcast should go

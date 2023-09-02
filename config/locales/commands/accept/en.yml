@@ -3,8 +3,9 @@ en:
     accept:
       description: Accepts a request based off its UUID
       example: |-
-        **`/request accept uuid:c619`**
-        Accepts request `c619` from your pending requests
+        ```
+        /request accept uuid:c619
+        ```Accepts request `c619` from your pending requests
       success_message: The request has been accepted and I've notified the requestor
       arguments:
         uuid:
