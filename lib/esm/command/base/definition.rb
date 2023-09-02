@@ -42,7 +42,7 @@ module ESM
           def argument(name, type = :string, **opts)
             arguments[name] = Argument.new(
               name, type,
-              **opts.merge(command_name: command_name)
+              **opts.merge(command_class: self)
             )
             self
           end
@@ -197,14 +197,15 @@ module ESM
               :connected_server, :cooldown, :nil_target_user,
               :nil_target_server, :nil_target_community, :different_community
             )
+
+            check_for_valid_configuration!
           end
 
           # @!visibility private
           def register_root_command(community_discord_id, command_name)
-            # Description must be less than 100 characters (Discord requirement)
             ::ESM.bot.register_application_command(
               command_name,
-              description.truncate(100),
+              description,
               server_id: community_discord_id
             ) do |builder, _permission_builder|
               register_arguments(builder)
@@ -213,8 +214,7 @@ module ESM
 
           # @!visibility private
           def register_subcommand(builder, command_name)
-            # Description must be less than 100 characters (Discord requirement)
-            builder.subcommand(command_name.to_sym, description.truncate(100), &method(:register_arguments))
+            builder.subcommand(command_name.to_sym, description, &method(:register_arguments))
           end
 
           # @!visibility private
@@ -241,6 +241,17 @@ module ESM
             end
 
             info!(command: command_name, status: :registered)
+          end
+
+          # @!visibility private
+          def check_for_valid_configuration!
+            if description.length > 100
+              raise ArgumentError, "#{name} - description cannot be longer than 100 characters"
+            end
+
+            if description.length < 1
+              raise ArgumentError, "#{name} - description must be at least 1 character long"
+            end
           end
         end
 

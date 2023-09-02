@@ -115,7 +115,7 @@ module ESM
       end
       private_constant :ArgumentContext
 
-      attr_reader :name, :type, :display_name, :command_name,
+      attr_reader :name, :type, :display_name, :command_class, :command_name,
         :default_value, :cast_type, :modifier,
         :description, :description_extra, :optional_text,
         :options, :validator
@@ -210,7 +210,8 @@ module ESM
         @name = name
         @type = type
         @display_name = (opts[:display_name] || name).to_sym
-        @command_name = opts[:command_name].to_sym
+        @command_class = opts[:command_class]
+        @command_name = command_class.command_name.to_sym
 
         @required = !!opts[:required]
         @default_value = opts[:default]
@@ -379,23 +380,26 @@ module ESM
         # choices must be hash
         # choice values must be string
         if options.key?(:choices)
-          raise ArgumentError, "#{command_name}:argument.#{self} - choices must be a hash" if !options[:choices].is_a?(Hash)
+          raise ArgumentError, "#{command_class}:argument.#{name} - choices must be a hash" if !options[:choices].is_a?(Hash)
 
           if options[:choices].values.any? { |v| !v.is_a?(String) }
-            raise ArgumentError, "#{command_name}:argument.#{self} - choices cannot contain non-string values"
+            raise ArgumentError, "#{command_class}:argument.#{name} - choices cannot contain non-string values"
           end
         end
 
         # min/max values can only be with integer/number type
         if options.key?(:min_value) || options.key?(:max_value)
           if [:integer, :number].exclude?(type)
-            raise ArgumentError, "#{command_name}:argument.#{self} - min/max values can only be used with integer or number types"
+            raise ArgumentError, "#{command_class}:argument.#{name} - min/max values can only be used with integer or number types"
           end
         end
 
-        # description has a maximum of 100 characters
         if description.length > 100
-          raise ArgumentError, "#{command_name}:argument.#{self} - description cannot be longer than 100 characters"
+          raise ArgumentError, "#{command_class}:argument.#{name} - description cannot be longer than 100 characters"
+        end
+
+        if description.length < 1
+          raise ArgumentError, "#{command_class}:argument.#{name} - description must be at least 1 character long"
         end
       end
     end
