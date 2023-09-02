@@ -2,13 +2,16 @@ require "bundler/setup"
 # require "bundler/gem_tasks"
 require "standalone_migrations"
 
-# HOTFIX: StandaloneMigrations 7.1.0 uses #exists?, which is removed in 3.2
-# They have yet to patch it 12023-Mar-04
-class File
-  class << self
-    alias_method :exists?, :exist?
-  end
-end
+# # HOTFIX: StandaloneMigrations 7.1.0 uses #exists?, which is removed in 3.2
+# # They have yet to patch it 12023-Mar-04
+# class File
+#   class << self
+#     alias_method :exists?, :exist?
+#   end
+# end
+
+# HOTFIX: StandaloneMigrations
+ENV["SCHEMA"] = File.join(ActiveRecord::Tasks::DatabaseTasks.db_dir, "schema.rb")
 
 StandaloneMigrations::Tasks.load_tasks
 

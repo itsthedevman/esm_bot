@@ -10,8 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2023_06_09_223251) do
-
+ActiveRecord::Schema[7.0].define(version: 2023_06_09_223251) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
   enable_extension "plpgsql"
@@ -21,8 +20,8 @@ ActiveRecord::Schema.define(version: 2023_06_09_223251) do
     t.string "token", null: false
     t.boolean "active", default: true
     t.string "comment"
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
     t.index ["token"], name: "index_api_tokens_on_token"
   end
 
@@ -59,9 +58,9 @@ ActiveRecord::Schema.define(version: 2023_06_09_223251) do
     t.boolean "allowed_in_text_channels", default: true
     t.boolean "whitelist_enabled", default: false
     t.json "whitelisted_role_ids", default: []
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.datetime "deleted_at"
+    t.datetime "created_at", precision: nil, null: false
+    t.datetime "updated_at", precision: nil, null: false
+    t.datetime "deleted_at", precision: nil
     t.index ["command_name"], name: "index_command_configurations_on_command_name"
     t.index ["community_id"], name: "index_command_configurations_on_community_id"
     t.index ["deleted_at"], name: "index_command_configurations_on_deleted_at"
@@ -86,9 +85,9 @@ ActiveRecord::Schema.define(version: 2023_06_09_223251) do
     t.string "command_prefix"
     t.boolean "welcome_message_enabled", default: true
     t.text "welcome_message", default: ""
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.datetime "deleted_at"
+    t.datetime "created_at", precision: nil, null: false
+    t.datetime "updated_at", precision: nil, null: false
+    t.datetime "deleted_at", precision: nil
     t.json "dashboard_access_role_ids", default: []
     t.index ["community_id"], name: "index_communities_on_community_id", unique: true
     t.index ["deleted_at"], name: "index_communities_on_deleted_at"
@@ -113,9 +112,9 @@ ActiveRecord::Schema.define(version: 2023_06_09_223251) do
     t.integer "cooldown_quantity"
     t.string "cooldown_type"
     t.integer "cooldown_amount", default: 0
-    t.datetime "expires_at"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "expires_at", precision: nil
+    t.datetime "created_at", precision: nil, null: false
+    t.datetime "updated_at", precision: nil, null: false
     t.index ["command_name", "steam_uid", "community_id"], name: "index_cooldowns_on_command_name_and_steam_uid_and_community_id"
     t.index ["command_name", "user_id", "community_id"], name: "index_cooldowns_on_command_name_and_user_id_and_community_id"
   end
@@ -125,14 +124,14 @@ ActiveRecord::Schema.define(version: 2023_06_09_223251) do
     t.string "version", null: false
     t.string "file"
     t.boolean "current_release"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "created_at", precision: nil, null: false
+    t.datetime "updated_at", precision: nil, null: false
     t.index ["current_release"], name: "index_downloads_on_current_release"
   end
 
   create_table "log_entries", force: :cascade do |t|
     t.integer "log_id", null: false
-    t.datetime "log_date", null: false
+    t.datetime "log_date", precision: nil, null: false
     t.string "file_name", null: false
     t.json "entries"
     t.index ["log_id", "log_date", "file_name"], name: "index_log_entries_on_log_id_and_log_date_and_file_name"
@@ -145,9 +144,9 @@ ActiveRecord::Schema.define(version: 2023_06_09_223251) do
     t.integer "server_id", null: false
     t.text "search_text"
     t.string "requestors_user_id"
-    t.datetime "expires_at"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "expires_at", precision: nil
+    t.datetime "created_at", precision: nil, null: false
+    t.datetime "updated_at", precision: nil, null: false
     t.index ["expires_at"], name: "index_logs_on_expires_at"
     t.index ["server_id"], name: "index_logs_on_server_id"
     t.index ["uuid"], name: "index_logs_on_uuid", unique: true
@@ -160,8 +159,8 @@ ActiveRecord::Schema.define(version: 2023_06_09_223251) do
     t.text "notification_description"
     t.string "notification_color"
     t.string "notification_category"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "created_at", precision: nil, null: false
+    t.datetime "updated_at", precision: nil, null: false
     t.index ["community_id"], name: "index_notifications_on_community_id"
   end
 
@@ -173,9 +172,9 @@ ActiveRecord::Schema.define(version: 2023_06_09_223251) do
     t.string "requested_from_channel_id", null: false
     t.string "command_name", null: false
     t.json "command_arguments"
-    t.datetime "expires_at"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "expires_at", precision: nil
+    t.datetime "created_at", precision: nil, null: false
+    t.datetime "updated_at", precision: nil, null: false
     t.index ["expires_at"], name: "index_requests_on_expires_at"
     t.index ["requestee_user_id", "uuid_short"], name: "index_requests_on_requestee_user_id_and_uuid_short", unique: true
     t.index ["uuid"], name: "index_requests_on_uuid"
@@ -187,9 +186,9 @@ ActiveRecord::Schema.define(version: 2023_06_09_223251) do
     t.text "mod_link"
     t.string "mod_version"
     t.boolean "mod_required", default: false, null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.datetime "deleted_at"
+    t.datetime "created_at", precision: nil, null: false
+    t.datetime "updated_at", precision: nil, null: false
+    t.datetime "deleted_at", precision: nil
     t.index ["deleted_at"], name: "index_server_mods_on_deleted_at"
     t.index ["server_id"], name: "index_server_mods_on_server_id"
   end
@@ -200,7 +199,7 @@ ActiveRecord::Schema.define(version: 2023_06_09_223251) do
     t.bigint "player_poptabs", default: 0
     t.bigint "locker_poptabs", default: 0
     t.bigint "respect", default: 0
-    t.datetime "deleted_at"
+    t.datetime "deleted_at", precision: nil
     t.string "reward_id"
     t.json "reward_vehicles"
     t.integer "cooldown_quantity"
@@ -240,7 +239,7 @@ ActiveRecord::Schema.define(version: 2023_06_09_223251) do
     t.integer "territory_lifetime", default: 7
     t.integer "server_restart_hour", default: 3
     t.integer "server_restart_min", default: 0
-    t.datetime "deleted_at"
+    t.datetime "deleted_at", precision: nil
     t.index ["deleted_at"], name: "index_server_settings_on_deleted_at"
     t.index ["server_id"], name: "index_server_settings_on_server_id"
   end
@@ -255,10 +254,10 @@ ActiveRecord::Schema.define(version: 2023_06_09_223251) do
     t.string "server_ip"
     t.string "server_port"
     t.string "server_version"
-    t.datetime "server_start_time"
-    t.datetime "disconnected_at"
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "server_start_time", precision: nil
+    t.datetime "disconnected_at", precision: nil
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
     t.index ["server_id"], name: "index_servers_on_server_id", unique: true
     t.index ["server_key"], name: "index_servers_on_server_key", unique: true
     t.index ["uuid"], name: "index_servers_on_uuid", unique: true
@@ -270,9 +269,9 @@ ActiveRecord::Schema.define(version: 2023_06_09_223251) do
     t.bigint "territory_purchase_price", null: false
     t.integer "territory_radius", null: false
     t.integer "territory_object_count", null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.datetime "deleted_at"
+    t.datetime "created_at", precision: nil, null: false
+    t.datetime "updated_at", precision: nil, null: false
+    t.datetime "deleted_at", precision: nil
     t.index ["deleted_at"], name: "index_territories_on_deleted_at"
     t.index ["server_id"], name: "index_territories_on_server_id"
     t.index ["territory_level"], name: "index_territories_on_territory_level"
@@ -284,8 +283,8 @@ ActiveRecord::Schema.define(version: 2023_06_09_223251) do
     t.string "file_name", null: false
     t.string "file_type", null: false
     t.integer "file_size", null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "created_at", precision: nil, null: false
+    t.datetime "updated_at", precision: nil, null: false
     t.index ["uuid"], name: "index_uploads_on_uuid"
   end
 
@@ -323,8 +322,8 @@ ActiveRecord::Schema.define(version: 2023_06_09_223251) do
     t.integer "longest_loss_streak", default: 0, null: false
     t.integer "total_losses", default: 0, null: false
     t.string "last_action"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "created_at", precision: nil, null: false
+    t.datetime "updated_at", precision: nil, null: false
     t.index ["server_id"], name: "index_user_gamble_stats_on_server_id"
     t.index ["user_id"], name: "index_user_gamble_stats_on_user_id"
   end
@@ -357,8 +356,8 @@ ActiveRecord::Schema.define(version: 2023_06_09_223251) do
     t.boolean "enabled", default: true, null: false
     t.boolean "user_accepted", default: false, null: false
     t.boolean "community_accepted", default: false, null: false
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
     t.index ["uuid"], name: "index_user_notification_routes_on_uuid"
   end
 
@@ -368,13 +367,13 @@ ActiveRecord::Schema.define(version: 2023_06_09_223251) do
     t.text "avatar"
     t.text "profile_url"
     t.string "profile_visibility"
-    t.datetime "profile_created_at"
+    t.datetime "profile_created_at", precision: nil
     t.boolean "community_banned", default: false
     t.boolean "vac_banned", default: false
     t.integer "number_of_vac_bans", default: 0
     t.integer "days_since_last_ban", default: 0
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "created_at", precision: nil, null: false
+    t.datetime "updated_at", precision: nil, null: false
   end
 
   create_table "users", force: :cascade do |t|
@@ -385,8 +384,8 @@ ActiveRecord::Schema.define(version: 2023_06_09_223251) do
     t.string "discord_access_token"
     t.string "discord_refresh_token"
     t.string "steam_uid"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "created_at", precision: nil, null: false
+    t.datetime "updated_at", precision: nil, null: false
     t.index ["discord_id"], name: "index_users_on_discord_id", unique: true
     t.index ["steam_uid"], name: "index_users_on_steam_uid"
   end
