@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-info!("Pre init started")
+timer = Timer.start!
 
 #############################
 # Must be ran before autoload
@@ -60,7 +60,4 @@ ESM.loader.tap do |loader|
   loader.ignore(ESM.root.join("lib", "esm", "esm.rb"))
 end
 
-#############################
-# No logger calls (with a hash) before this point
-
-info!("Pre init complete")
+info!("Completed in #{timer.stop!}s")

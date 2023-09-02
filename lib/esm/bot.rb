@@ -37,6 +37,7 @@ module ESM
     attr_reader :config, :metadata, :delivery_overseer
 
     def initialize
+      @timer = Timer.new
       @waiting_for = {}
       @mutex = Mutex.new
       @delivery_overseer = ESM::Bot::DeliveryOverseer.new
@@ -45,6 +46,8 @@ module ESM
     end
 
     def run
+      @timer.start!
+
       ESM::Command.load
 
       # Binds the Discord Events
@@ -93,8 +96,6 @@ module ESM
     end
 
     def esm_ready(_event)
-      info!(status: @esm_status)
-
       @metadata = ESM::BotAttribute.first_or_create
 
       if metadata.present?
@@ -131,9 +132,11 @@ module ESM
       ESM::Command.setup_event_hooks!
 
       @esm_status = :ready
+
       info!(
         status: @esm_status,
-        invite_url: invite_url(permission_bits: ESM::Bot::PERMISSION_BITS)
+        invite_url: invite_url(permission_bits: ESM::Bot::PERMISSION_BITS),
+        started_in: "#{@timer.stop!}s"
       )
     end
 

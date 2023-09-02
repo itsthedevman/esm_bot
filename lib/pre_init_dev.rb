@@ -1,14 +1,16 @@
 # frozen_string_literal: true
 
+timer = Timer.start!
+
 require "active_record_query_trace"
 
 # Allows seeing the backtrace for queries
 # Only use lines that pertain to ESM
+ActiveRecordQueryTrace.enabled = ENV["TRACE"] == "true"
 ActiveRecordQueryTrace.level = :custom
 ActiveRecordQueryTrace.backtrace_cleaner = lambda do |trace|
   trace.select { |line| line.match?("esm") }
 end
-ActiveRecordQueryTrace.enabled = ENV["TRACE"] == "true"
 
 ESM.logger.level = Logger::TRACE
 
@@ -17,3 +19,5 @@ Discordrb::LOGGER.debug = false
 
 # ActiveRecord logging
 ActiveRecord::Base.logger.level = Logger::INFO if ActiveRecord::Base.logger.present?
+
+info!("Completed in #{timer.stop!}s")

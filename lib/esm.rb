@@ -43,8 +43,7 @@
 ].each { |gem| require gem }
 
 #############################
-# Load Extensions
-#############################
+# Load extensions and other useful classes to have
 Dir["#{__dir__}/esm/extension/**/*.rb"].sort.each { |extension| require extension }
 
 require "otr-activerecord" if ENV["ESM_ENV"] != "production"
