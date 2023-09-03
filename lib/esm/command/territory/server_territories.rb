@@ -3,7 +3,7 @@
 module ESM
   module Command
     module Territory
-      class ServerTerritories < ESM::Command::Base
+      class ServerTerritories < ApplicationCommand
         command_type :admin
         command_namespace :territory, :admin, command_name: :list
 

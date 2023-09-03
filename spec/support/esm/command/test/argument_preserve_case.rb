@@ -3,7 +3,7 @@
 module ESM
   module Command
     module Test
-      class ArgumentPreserveCase < ESM::Command::Base
+      class ArgumentPreserveCase < ApplicationCommand
         argument :input, preserve: true
       end
     end

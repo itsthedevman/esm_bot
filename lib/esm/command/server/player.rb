@@ -4,7 +4,7 @@
 module ESM
   module Command
     module Server
-      class Player < ESM::Command::Base
+      class Player < ApplicationCommand
         command_type :admin
         command_namespace :server, :admin, command_name: :modify_player
 

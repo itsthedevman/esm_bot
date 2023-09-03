@@ -3,7 +3,7 @@
 module ESM
   module Command
     module Test
-      class ArgumentAlias < ESM::Command::Base
+      class ArgumentAlias < ApplicationCommand
       end
     end
   end

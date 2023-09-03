@@ -4,7 +4,7 @@
 module ESM
   module Command
     module General
-      class Register < ESM::Command::Base
+      class Register < ApplicationCommand
         command_type :player
         use_root_namespace
 

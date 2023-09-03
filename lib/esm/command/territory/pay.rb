@@ -3,7 +3,7 @@
 module ESM
   module Command
     module Territory
-      class Pay < ESM::Command::Base
+      class Pay < ApplicationCommand
         command_type :player
 
         requires :registration

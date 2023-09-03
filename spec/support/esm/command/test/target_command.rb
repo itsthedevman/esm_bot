@@ -3,7 +3,7 @@
 module ESM
   module Command
     module Test
-      class TargetCommand < ESM::Command::Base
+      class TargetCommand < ApplicationCommand
         command_type :player
 
         argument :target

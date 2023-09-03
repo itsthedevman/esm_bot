@@ -3,7 +3,7 @@
 module ESM
   module Command
     module Server
-      class Me < ESM::Command::Base
+      class Me < ApplicationCommand
         command_type :player
         command_namespace :server, command_name: :my_player
 

@@ -3,7 +3,7 @@
 module ESM
   module Command
     module Server
-      class Sqf < ESM::Command::Base
+      class Sqf < ApplicationCommand
         v2_variant!
 
         command_type :admin

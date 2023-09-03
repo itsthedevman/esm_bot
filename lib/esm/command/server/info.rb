@@ -3,7 +3,7 @@
 module ESM
   module Command
     module Server
-      class Info < ESM::Command::Base
+      class Info < ApplicationCommand
         command_type :admin
         command_namespace :server, :admin, command_name: :find
 

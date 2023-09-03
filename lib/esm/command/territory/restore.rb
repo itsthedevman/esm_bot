@@ -4,7 +4,7 @@
 module ESM
   module Command
     module Territory
-      class Restore < ESM::Command::Base
+      class Restore < ApplicationCommand
         command_type :admin
         command_namespace :territory, :admin
 

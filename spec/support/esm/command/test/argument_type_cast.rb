@@ -3,7 +3,7 @@
 module ESM
   module Command
     module Test
-      class ArgumentTypeCast < ESM::Command::Base
+      class ArgumentTypeCast < ApplicationCommand
         argument :string
         argument :integer, type: :integer
         argument :float, type: :float

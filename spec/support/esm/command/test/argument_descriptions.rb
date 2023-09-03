@@ -3,7 +3,7 @@
 module ESM
   module Command
     module Test
-      class ArgumentDescriptions < ESM::Command::Base
+      class ArgumentDescriptions < ApplicationCommand
         argument :required, description: "This argument is required"
         argument :optional, description: "This argument is optional", default: nil
         argument :optional_default, default: "optional"

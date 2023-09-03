@@ -4,7 +4,7 @@
 module ESM
   module Command
     module Server
-      class Reward < ESM::Command::Base
+      class Reward < ApplicationCommand
         SPAWN_LOCATIONS = ["virtual_garage", "player_decides"].freeze
 
         # TODO:

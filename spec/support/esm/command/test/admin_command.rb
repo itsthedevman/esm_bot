@@ -3,7 +3,7 @@
 module ESM
   module Command
     module Test
-      class AdminCommand < ESM::Command::Base
+      class AdminCommand < ApplicationCommand
         command_type :admin
 
         argument :community_id

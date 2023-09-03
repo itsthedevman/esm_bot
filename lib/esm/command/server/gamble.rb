@@ -3,7 +3,7 @@
 module ESM
   module Command
     module Server
-      class Gamble < ESM::Command::Base
+      class Gamble < ApplicationCommand
         command_type :player
 
         requires :registration

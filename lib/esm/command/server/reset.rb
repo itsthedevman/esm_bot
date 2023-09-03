@@ -3,7 +3,7 @@
 module ESM
   module Command
     module Server
-      class Reset < ESM::Command::Base
+      class Reset < ApplicationCommand
         command_type :admin
         command_namespace :server, :admin, command_name: :reset_player
 

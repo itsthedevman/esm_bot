@@ -3,7 +3,7 @@
 module ESM
   module Command
     module Server
-      class Stuck < ESM::Command::Base
+      class Stuck < ApplicationCommand
         command_type :player
 
         requires :registration

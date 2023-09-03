@@ -3,7 +3,7 @@
 module ESM
   module Command
     module Request
-      class Requests < ESM::Command::Base
+      class Requests < ApplicationCommand
         command_type :player
         command_namespace :request, command_name: :list
 

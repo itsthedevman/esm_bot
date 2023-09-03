@@ -3,7 +3,7 @@
 module ESM
   module Command
     module Request
-      class Accept < ESM::Command::Base
+      class Accept < ApplicationCommand
         command_type :player
 
         change_attribute :allowed_in_text_channels, default: false

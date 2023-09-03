@@ -3,7 +3,7 @@
 module ESM
   module Command
     module Pictures
-      class Doggo < ESM::Command::Base
+      class Doggo < ApplicationCommand
         command_type :player
 
         change_attribute :cooldown_time, modifiable: false, default: 5.seconds

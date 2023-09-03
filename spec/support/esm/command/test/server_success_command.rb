@@ -3,7 +3,7 @@
 module ESM
   module Command
     module Test
-      class ServerSuccessCommand < ESM::Command::Base
+      class ServerSuccessCommand < ApplicationCommand
         v2_variant!
 
         command_type :player

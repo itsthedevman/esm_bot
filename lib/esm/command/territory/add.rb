@@ -3,7 +3,7 @@
 module ESM
   module Command
     module Territory
-      class Add < ESM::Command::Base
+      class Add < ApplicationCommand
         command_type :player
         command_namespace :territory, command_name: :add_player
 

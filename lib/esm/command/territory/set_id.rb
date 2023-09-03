@@ -3,7 +3,7 @@
 module ESM
   module Command
     module Territory
-      class SetId < ESM::Command::Base
+      class SetId < ApplicationCommand
         command_type :player
 
         requires :registration

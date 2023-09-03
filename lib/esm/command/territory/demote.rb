@@ -4,7 +4,7 @@
 module ESM
   module Command
     module Territory
-      class Demote < ESM::Command::Base
+      class Demote < ApplicationCommand
         command_type :player
         command_namespace :territory, command_name: :demote_player
 

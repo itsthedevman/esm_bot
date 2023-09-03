@@ -64,7 +64,7 @@ module ESM
       @by_namespace_for_all = {}
 
       commands_needing_cached = []
-      ESM::Command::Base.subclasses.each do |command_class|
+      ApplicationCommand.subclasses.each do |command_class|
         # Background commands do not have types
         next if command_class.type.nil?
 

@@ -4,7 +4,7 @@
 module ESM
   module Command
     module My
-      class SteamUid < ESM::Command::Base
+      class SteamUid < ApplicationCommand
         command_type :player
 
         requires :registration

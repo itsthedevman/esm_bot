@@ -4,7 +4,7 @@
 module ESM
   module Command
     module Server
-      class SqfV1 < ESM::Command::Base
+      class SqfV1 < ApplicationCommand
         command_type :admin
 
         limit_to :text

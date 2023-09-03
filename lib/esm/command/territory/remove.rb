@@ -4,7 +4,7 @@
 module ESM
   module Command
     module Territory
-      class Remove < ESM::Command::Base
+      class Remove < ApplicationCommand
         command_type :player
         command_namespace :territory, command_name: :remove_player
 

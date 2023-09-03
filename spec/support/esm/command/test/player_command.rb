@@ -3,7 +3,7 @@
 module ESM
   module Command
     module Test
-      class PlayerCommand < ESM::Command::Base
+      class PlayerCommand < ApplicationCommand
         command_type :player
 
         def on_execute

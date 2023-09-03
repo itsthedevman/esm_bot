@@ -3,7 +3,7 @@
 module ESM
   module Command
     module My
-      class Preferences < ESM::Command::Base
+      class Preferences < ApplicationCommand
         TYPES = %w[
           all
           custom

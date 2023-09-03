@@ -3,7 +3,7 @@
 module ESM
   module Command
     module Pictures
-      class Snek < ESM::Command::Base
+      class Snek < ApplicationCommand
         command_type :player
 
         change_attribute :cooldown_time, modifiable: false, default: 5.seconds

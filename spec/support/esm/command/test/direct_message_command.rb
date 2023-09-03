@@ -3,7 +3,7 @@
 module ESM
   module Command
     module Test
-      class DirectMessageCommand < ESM::Command::Base
+      class DirectMessageCommand < ApplicationCommand
         command_type :player
         limit_to :dm
 

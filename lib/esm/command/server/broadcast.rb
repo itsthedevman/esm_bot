@@ -4,7 +4,7 @@
 module ESM
   module Command
     module Server
-      class Broadcast < ESM::Command::Base
+      class Broadcast < ApplicationCommand
         command_type :admin
         command_namespace :server, :admin
 
@@ -13,8 +13,10 @@ module ESM
 
         change_attribute :whitelist_enabled, default: true
 
-        argument :message, preserve: true
+        # Required: All variants require a message
+        argument :message, required: true, preserve: true
 
+        # Optional: Omitting defaults to "preview"
         argument(
           :broadcast_to,
           display_as: :to,

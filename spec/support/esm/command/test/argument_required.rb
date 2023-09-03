@@ -3,7 +3,7 @@
 module ESM
   module Command
     module Test
-      class ArgumentRequired < ESM::Command::Base
+      class ArgumentRequired < ApplicationCommand
         argument :input, description: "This argument is required"
       end
     end

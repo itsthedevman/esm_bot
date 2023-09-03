@@ -3,7 +3,7 @@
 module ESM
   module Command
     module Server
-      class Logs < ESM::Command::Base
+      class Logs < ApplicationCommand
         # Handles German, Italian, Spanish, and French
         TRANSLATED_MONTHS = {
           "gen" => "jan",

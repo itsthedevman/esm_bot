@@ -4,7 +4,7 @@
 module ESM
   module Command
     module Territory
-      class Promote < ESM::Command::Base
+      class Promote < ApplicationCommand
         command_type :player
         command_namespace :territory, command_name: :promote_player
 

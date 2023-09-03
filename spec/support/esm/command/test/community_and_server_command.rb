@@ -3,7 +3,7 @@
 module ESM
   module Command
     module Test
-      class CommunityAndServerCommand < ESM::Command::Base
+      class CommunityAndServerCommand < ApplicationCommand
         command_type :player
         requires :registration
 

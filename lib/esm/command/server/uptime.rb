@@ -4,7 +4,7 @@
 module ESM
   module Command
     module Server
-      class Uptime < ESM::Command::Base
+      class Uptime < ApplicationCommand
         command_type :player
 
         argument :server_id, display_name: :for

@@ -3,7 +3,7 @@
 module ESM
   module Command
     module Territory
-      class Territories < ESM::Command::Base
+      class Territories < ApplicationCommand
         command_type :player
         command_namespace :territory, command_name: :list
 
