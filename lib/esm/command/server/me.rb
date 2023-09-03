@@ -4,10 +4,22 @@ module ESM
   module Command
     module Server
       class Me < ApplicationCommand
-        command_type :player
-        command_namespace :server, command_name: :my_player
+        #################################
+        #
+        # Arguments (required first, then order matters)
+        #
 
+        # See Argument::DEFAULTS[:server_id]
         argument :server_id, display_name: :on
+
+        #
+        # Configuration
+        #
+
+        command_namespace :server, command_name: :my_player
+        command_type :player
+
+        #################################
 
         def on_execute
           if v2_target_server?

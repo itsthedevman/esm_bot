@@ -1,15 +1,26 @@
 # frozen_string_literal: true
 
-# New command? Make sure to create a migration to add the configuration to all communities
 module ESM
   module Command
     module Server
       class Reward < ApplicationCommand
-        command_type :player
+        #################################
+        #
+        # Arguments (required first, then order matters)
+        #
+
+        # See Argument::DEFAULTS[:server_id]
+        argument :server_id, display_name: :on
+
+        #
+        # Configuration
+        #
 
         change_attribute :cooldown_time, default: 1.second
 
-        argument :server_id, display_name: :on
+        command_type :player
+
+        #################################
 
         def on_execute
           # Check for pending requests

@@ -1,22 +1,35 @@
 # frozen_string_literal: true
 
-# New command? Make sure to create a migration to add the configuration to all communities
 module ESM
   module Command
     module Territory
       class Restore < ApplicationCommand
-        command_type :admin
-        command_namespace :territory, :admin
+        #################################
+        #
+        # Arguments (required first, then order matters)
+        #
 
-        limit_to :text
+        # See Argument::DEFAULTS[:territory_id]
+        argument :territory_id, display_name: :territory
+
+        # See Argument::DEFAULTS[:server_id]
+        argument :server_id, display_name: :on
+
+        #
+        # Configuration
+        #
 
         change_attribute :whitelist_enabled, default: true
 
-        argument :territory_id, display_name: :territory
-        argument :server_id, display_name: :on
+        command_namespace :territory, :admin
+        command_type :admin
+
+        limit_to :text
+
+        #################################
 
         def on_execute
-          check_owned_server!
+          check_for_owned_server!
           deliver!(query: "restore", territory_id: arguments.territory_id)
         end
 

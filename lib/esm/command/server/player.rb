@@ -1,27 +1,48 @@
 # frozen_string_literal: true
 
-# New command? Make sure to create a migration to add the configuration to all communities
 module ESM
   module Command
     module Server
       class Player < ApplicationCommand
-        command_type :admin
-        command_namespace :server, :admin, command_name: :modify_player
+        #################################
+        #
+        # Arguments (required first, then order matters)
+        #
 
-        limit_to :text
-
-        change_attribute :whitelist_enabled, default: true
-
+        # See Argument::DEFAULTS[:target]
         argument :target, display_name: :whom
+
+        # Required: Needed by command
         argument :action, required: true, checked_against: /m(?:oney)?|r(?:espect)?|l(?:ocker)?|h(?:eal)?|k(?:ill)?/
+
+        # See Argument::DEFAULTS[:server_id]
         argument :server_id, display_name: :on
-        argument(:amount, type: :integer, checked_against: /-?\d+/,
+
+        # Optional: Not required by heal or kill
+        argument(
+          :amount,
+          type: :integer,
+          checked_against: /-?\d+/,
           modifier: lambda do |argument|
             return unless arguments.type&.match(/h(?:eal)?|k(?:ill)?/i)
 
             # The types `heal` and `kill` don't require the value argument.
             argument.content = nil
-          end)
+          end
+        )
+
+        #
+        # Configuration
+        #
+
+        change_attribute :whitelist_enabled, default: true
+
+        command_namespace :server, :admin, command_name: :modify_player
+        command_type :admin
+
+        limit_to :text
+
+        #################################
 
         def on_execute
           check_registered_target_user! if target_user.is_a?(ESM::User)

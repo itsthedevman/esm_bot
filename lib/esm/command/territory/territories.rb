@@ -4,12 +4,24 @@ module ESM
   module Command
     module Territory
       class Territories < ApplicationCommand
-        command_type :player
-        command_namespace :territory, command_name: :list
+        #################################
+        #
+        # Arguments (required first, then order matters)
+        #
+
+        # See Argument::DEFAULTS[:server_id]
+        argument :server_id, display_name: :for
+
+        #
+        # Configuration
+        #
 
         change_attribute :allowed_in_text_channels, default: false
 
-        argument :server_id, display_name: :for
+        command_namespace :territory, command_name: :list
+        command_type :player
+
+        #################################
 
         def on_execute
           deliver!(query: "list_territories", uid: current_user.steam_uid)
@@ -26,9 +38,8 @@ module ESM
           end
         end
 
-        #########################
-        # Command Methods
-        #########################
+        private
+
         def check_for_no_territories!
           check_failed!(:no_territories, user: current_user.mention, server_id: target_server.server_id) if @response.blank?
         end

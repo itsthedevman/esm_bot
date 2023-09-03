@@ -4,13 +4,26 @@ module ESM
   module Command
     module Server
       class Stuck < ApplicationCommand
+        #################################
+        #
+        # Arguments (required first, then order matters)
+        #
+
+        # See Argument::DEFAULTS[:server_id]
+        argument :server_id, display_name: :on
+
+        #
+        # Configuration
+        #
+
         command_type :player
 
-        argument :server_id, display_name: :on
+        #################################
 
         def on_execute
           # Create a confirmation request to the requestee
           check_pending_request!
+
           add_request(
             to: current_user,
             description: I18n.t(
@@ -21,7 +34,11 @@ module ESM
           )
 
           # Remind them to check their PMs
-          embed = ESM::Embed.build(:success, description: I18n.t("commands.request.check_pm", user: current_user.mention))
+          embed = ESM::Embed.build(
+            :success,
+            description: I18n.t("commands.request.check_pm", user: current_user.mention)
+          )
+
           reply(embed)
         end
 

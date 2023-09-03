@@ -4,13 +4,27 @@ module ESM
   module Command
     module Server
       class Server < ApplicationCommand
-        command_type :player
-        command_namespace :server, command_name: :details
+        #################################
+        #
+        # Arguments (required first, then order matters)
+        #
 
+        # See Argument::DEFAULTS[:server_id]
+        argument :server_id, display_name: :for
+
+        #
+        # Configuration
+        #
+
+        command_namespace :server, command_name: :details
+        command_type :player
+
+        does_not_require :registration
+
+        # Reason: It's nice accessing the connection info even when it is offline
         skip_action :connected_server
 
-        argument :server_id, display_name: :for
-        does_not_require :registration
+        #################################
 
         def on_execute
           embed =

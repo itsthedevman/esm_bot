@@ -4,12 +4,28 @@ module ESM
   module Command
     module Territory
       class Add < ApplicationCommand
+        #################################
+        #
+        # Arguments (required first, then order matters)
+        #
+
+        # See Argument::DEFAULTS[:target]
+        argument :target, display_name: :whom
+
+        # See Argument::DEFAULTS[:territory_id]
+        argument :territory_id, display_name: :to
+
+        # See Argument::DEFAULTS[:server_id]
+        argument :server_id, display_name: :on
+
+        #
+        # Configuration
+        #
+
         command_type :player
         command_namespace :territory, command_name: :add_player
 
-        argument :target, display_name: :whom
-        argument :territory_id, display_name: :to
-        argument :server_id, display_name: :on
+        #################################
 
         def on_execute
           # Either a memer or admin trying to add themselves. Either way, the arma server handles this.
@@ -75,13 +91,6 @@ module ESM
               uid: current_user.steam_uid
             )
           end
-
-          # # Don't send the request accepted message if the requestor is the requestee
-          # return if same_user?
-
-          # embed = ESM::Embed.build(:success, description: I18n.t("commands.add.requestor_accepted", uuid: @request.uuid_short, target_user: target_user.distinct, territory_id: arguments.territory_id, server_id: target_server.server_id))
-
-          # reply(embed)
         end
       end
     end

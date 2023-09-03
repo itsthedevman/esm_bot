@@ -28,18 +28,32 @@ module ESM
           "déc" => "dec"
         }.freeze
 
-        command_type :admin
+        #################################
+        #
+        # Arguments (required first, then order matters)
+        #
+
+        # See Argument::DEFAULTS[:target]
+        argument :target, display_name: :for
+
+        # See Argument::DEFAULTS[:server_id]
+        argument :server_id, display_name: :on
+
+        #
+        # Configuration
+        #
+
+        change_attribute :whitelist_enabled, default: true
+
         command_namespace :server, :admin, command_name: :search_logs
+        command_type :admin
 
         limit_to :text
 
         # Since the argument is a modified target, the logic for nil_target_user will trigger
         skip_action :nil_target_user
 
-        change_attribute :whitelist_enabled, default: true
-
-        argument :target, display_name: :for
-        argument :server_id, display_name: :on
+        #################################
 
         def on_execute
           query = ""

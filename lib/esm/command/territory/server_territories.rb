@@ -4,23 +4,39 @@ module ESM
   module Command
     module Territory
       class ServerTerritories < ApplicationCommand
-        command_type :admin
-        command_namespace :territory, :admin, command_name: :list
+        #################################
+        #
+        # Arguments (required first, then order matters)
+        #
 
-        limit_to :text
+        # See Argument::DEFAULTS[:server_id]
+        argument :server_id, display_name: :on
+
+        # Optional: Has a default value
+        argument :order_by,
+          default: :territory_name,
+          type: :symbol,
+          choices: {
+            id: "ID",
+            territory_name: "Territory name",
+            owner_uid: "Owner UID"
+          }
+
+        #
+        # Configuration
+        #
 
         change_attribute :whitelist_enabled, default: true
 
-        argument :server_id, display_name: :on
+        command_namespace :territory, :admin, command_name: :list
+        command_type :admin
 
-        argument :order_by, default: :territory_name, type: :symbol, choices: {
-          id: "ID",
-          territory_name: "Territory name",
-          owner_uid: "Owner UID"
-        }
+        limit_to :text
+
+        #################################
 
         def on_execute
-          check_owned_server!
+          check_for_owned_server!
 
           if v2_target_server?
             query_arma("all_territories")
@@ -44,6 +60,8 @@ module ESM
           tables = build_territory_tables
           tables.each { |table| reply("```\n#{table}\n```") }
         end
+
+        private
 
         def build_territory_tables
           tables = []

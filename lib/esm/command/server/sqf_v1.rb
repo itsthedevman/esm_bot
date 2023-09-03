@@ -1,23 +1,37 @@
 # frozen_string_literal: true
 
-# New command? Make sure to create a migration to add the configuration to all communities
 module ESM
   module Command
     module Server
       class SqfV1 < ApplicationCommand
-        command_type :admin
+        #################################
+        #
+        # Arguments (required first, then order matters)
+        #
 
-        limit_to :text
-        skip_action :connected_server
+        # See Argument::DEFAULTS[:server_id]
+        argument :server_id, display_name: :on
+
+        # See Argument::DEFAULTS[:target]
+        argument :target
+
+        # Required: By the command
+        argument :code_to_execute, display_name: :code, required: true, preserve: true
+
+        #
+        # Configuration
+        #
 
         change_attribute :whitelist_enabled, default: true
 
-        argument :server_id, display_name: :on
-        argument :target
-        argument :code_to_execute, display_name: :code, preserve: true
+        command_type :admin
+
+        limit_to :text
+
+        #################################
 
         def on_execute
-          check_owned_server!
+          check_for_owned_server!
 
           execute_on =
             if target_user

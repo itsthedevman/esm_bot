@@ -1,14 +1,27 @@
 # frozen_string_literal: true
 
-# New command? Make sure to create a migration to add the configuration to all communities
 module ESM
   module Command
     module Territory
       class Upgrade < ApplicationCommand
+        #################################
+        #
+        # Arguments (required first, then order matters)
+        #
+
+        # See Argument::DEFAULTS[:territory_id]
+        argument :territory_id, display_name: :territory
+
+        # See Argument::DEFAULTS[:server_id]
+        argument :server_id, display_name: :on
+
+        #
+        # Configuration
+        #
+
         command_type :player
 
-        argument :territory_id, display_name: :territory
-        argument :server_id, display_name: :on
+        #################################
 
         def on_execute
           deliver!(

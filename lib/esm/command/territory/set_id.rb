@@ -4,11 +4,27 @@ module ESM
   module Command
     module Territory
       class SetId < ApplicationCommand
+        #################################
+        #
+        # Arguments (required first, then order matters)
+        #
+
+        # See Argument::DEFAULTS[:territory_id]
+        argument :old_territory_id, display_name: :from, template: :territory_id
+
+        # See Argument::DEFAULTS[:territory_id]
+        argument :new_territory_id, display_name: :to, template: :territory_id
+
+        # See Argument::DEFAULTS[:server_id]
+        argument :server_id, display_name: :on
+
+        #
+        # Configuration
+        #
+
         command_type :player
 
-        argument :old_territory_id, template: :territory_id, display_name: :from
-        argument :new_territory_id, template: :territory_id, display_name: :to
-        argument :server_id, display_name: :on
+        #################################
 
         def on_execute
           # Require at least 3 characters and a max of 30

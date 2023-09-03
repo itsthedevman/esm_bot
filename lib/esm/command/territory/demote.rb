@@ -1,16 +1,31 @@
 # frozen_string_literal: true
 
-# New command? Make sure to create a migration to add the configuration to all communities
 module ESM
   module Command
     module Territory
       class Demote < ApplicationCommand
-        command_type :player
-        command_namespace :territory, command_name: :demote_player
+        #################################
+        #
+        # Arguments (required first, then order matters)
+        #
 
+        # See Argument::DEFAULTS[:target]
         argument :target, display_name: :whom
+
+        # See Argument::DEFAULTS[:territory_id]
         argument :territory_id, display_name: :in
+
+        # See Argument::DEFAULTS[:server_id]
         argument :server_id, display_name: :on
+
+        #
+        # Configuration
+        #
+
+        command_namespace :territory, command_name: :demote_player
+        command_type :player
+
+        #################################
 
         def on_execute
           # Check for registered target_user. A steam_uid is valid here so don't check ESM::User::Ephemeral

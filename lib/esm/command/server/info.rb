@@ -4,16 +4,32 @@ module ESM
   module Command
     module Server
       class Info < ApplicationCommand
-        command_type :admin
-        command_namespace :server, :admin, command_name: :find
+        #################################
+        #
+        # Arguments (required first, then order matters)
+        #
 
-        limit_to :text
+        # See Argument::DEFAULTS[:target]
+        argument :target, display_name: :whom
+
+        # See Argument::DEFAULTS[:territory_id]
+        argument :territory_id, display_name: :territory
+
+        # See Argument::DEFAULTS[:server_id]
+        argument :server_id, display_name: :on
+
+        #
+        # Configuration
+        #
 
         change_attribute :whitelist_enabled, default: true
 
-        argument :target, display_name: :whom
-        argument :territory_id, display_name: :territory
-        argument :server_id, display_name: :on
+        command_namespace :server, :admin, command_name: :find
+        command_type :admin
+
+        limit_to :text
+
+        #################################
 
         def on_execute
           # Ensure we were given a target or territory ID

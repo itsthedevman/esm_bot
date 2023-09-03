@@ -4,23 +4,40 @@ module ESM
   module Command
     module Server
       class Sqf < ApplicationCommand
-        v2_variant!
+        #################################
+        #
+        # Arguments (required first, then order matters)
+        #
 
-        command_type :admin
-        command_namespace :server, :admin, command_name: :execute_code
+        # See Argument::DEFAULTS[:server_id]
+        argument :server_id, display_name: :on
 
-        limit_to :text
+        # Required: Needed by command
+        argument :target, required: true, check_against: /#{ESM::Regex::TARGET.source}|server|all|everyone/i
+
+        # Required: Needed by command
+        argument :code_to_execute, display_name: :code, required: true, preserve: true
+
+        #
+        # Configuration
+        #
 
         change_attribute :whitelist_enabled, default: true
 
+        command_namespace :server, :admin, command_name: :execute_code
+        command_type :admin
+
+        limit_to :text
+
+        # Argument 'target' will trigger this check, but not all values are 'target' values
         skip_action :nil_target_user
 
-        argument :server_id, display_name: :on
-        argument :target, check_against: /#{ESM::Regex::TARGET.source}|server|all|everyone/i
-        argument :code_to_execute, display_name: :code, preserve: true
+        v2_variant!
+
+        ################################
 
         def on_execute
-          check_owned_server!
+          check_for_owned_server!
           check_registered_target_user! if target_user.is_a?(ESM::User)
 
           execute_on =

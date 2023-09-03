@@ -4,15 +4,29 @@ module ESM
   module Command
     module Server
       class Reset < ApplicationCommand
-        command_type :admin
-        command_namespace :server, :admin, command_name: :reset_player
+        #################################
+        #
+        # Arguments (required first, then order matters)
+        #
 
-        limit_to :text
+        # See Argument::DEFAULTS[:target]
+        argument :target, display_name: :whom
+
+        # See Argument::DEFAULTS[:server_id]
+        argument :server_id, display_name: :on
+
+        #
+        # Configuration
+        #
 
         change_attribute :whitelist_enabled, default: true
 
-        argument :target, display_name: :whom
-        argument :server_id, display_name: :on
+        command_namespace :server, :admin, command_name: :reset_player
+        command_type :admin
+
+        limit_to :text
+
+        #################################
 
         def on_execute
           check_registered_target_user! if target_user.is_a?(ESM::User)
