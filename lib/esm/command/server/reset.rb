@@ -29,10 +29,10 @@ module ESM
         #################################
 
         def on_execute
-          check_registered_target_user! if target_user.is_a?(ESM::User)
+          check_for_registered_target_user! if target_user.is_a?(ESM::User)
 
           # Create a confirmation request to the requestee
-          check_pending_request!
+          check_for_pending_request!
           add_request(
             to: current_user,
             description: I18n.t(

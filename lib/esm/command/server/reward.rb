@@ -24,7 +24,7 @@ module ESM
 
         def on_execute
           # Check for pending requests
-          check_pending_request!
+          check_for_pending_request!
 
           # Check to see if the server has any rewards for the user before even sending the request
           check_for_reward_items!

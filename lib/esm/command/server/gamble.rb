@@ -29,7 +29,7 @@ module ESM
         def on_execute
           return reply(send_stats) if arguments.amount == "stats"
 
-          check_connected_server!
+          check_for_connected_server!
           check_for_bad_amount!
 
           deliver!(

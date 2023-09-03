@@ -13,7 +13,7 @@ module ESM
         argument :server_id, display_name: :on
 
         # Required: Needed by command
-        argument :target, required: true, check_against: /#{ESM::Regex::TARGET.source}|server|all|everyone/i
+        argument :target, required: true, checked_against: /#{ESM::Regex::TARGET.source}|server|all|everyone/i
 
         # Required: Needed by command
         argument :code_to_execute, display_name: :code, required: true, preserve: true
@@ -38,7 +38,7 @@ module ESM
 
         def on_execute
           check_for_owned_server!
-          check_registered_target_user! if target_user.is_a?(ESM::User)
+          check_for_registered_target_user! if target_user.is_a?(ESM::User)
 
           execute_on =
             case args.target

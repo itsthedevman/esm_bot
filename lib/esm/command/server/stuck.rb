@@ -22,7 +22,7 @@ module ESM
 
         def on_execute
           # Create a confirmation request to the requestee
-          check_pending_request!
+          check_for_pending_request!
 
           add_request(
             to: current_user,

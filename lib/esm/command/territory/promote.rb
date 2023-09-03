@@ -29,7 +29,7 @@ module ESM
 
         def on_execute
           # Check for registered target_user
-          check_registered_target_user! if target_user.is_a?(ESM::User)
+          check_for_registered_target_user! if target_user.is_a?(ESM::User)
 
           deliver!(
             function_name: "promotePlayer",

@@ -35,7 +35,7 @@ module ESM
 
           execute_on =
             if target_user
-              check_registered_target_user! if target_user.is_a?(ESM::User)
+              check_for_registered_target_user! if target_user.is_a?(ESM::User)
 
               # Return their steam uid
               target_uid
