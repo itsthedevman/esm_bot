@@ -16,6 +16,7 @@ module ESM
         end
 
         included do
+          class_attribute :abstract_class
           class_attribute :arguments
           class_attribute :attributes
           class_attribute :category
@@ -166,6 +167,7 @@ module ESM
 
           # @!visibility private
           def __disconnect_variables!
+            self.abstract_class = false
             self.arguments = {}
 
             self.attributes = {
@@ -197,12 +199,12 @@ module ESM
               :connected_server, :cooldown, :nil_target_user,
               :nil_target_server, :nil_target_community, :different_community
             )
-
-            check_for_valid_configuration!
           end
 
           # @!visibility private
           def register_root_command(community_discord_id, command_name)
+            check_for_valid_configuration!
+
             ::ESM.bot.register_application_command(
               command_name,
               description,
@@ -214,6 +216,8 @@ module ESM
 
           # @!visibility private
           def register_subcommand(builder, command_name)
+            check_for_valid_configuration!
+
             builder.subcommand(command_name.to_sym, description, &method(:register_arguments))
           end
 
@@ -228,7 +232,7 @@ module ESM
               end
 
               info!(
-                command: command_name,
+                command: usage,
                 argument: {name: argument.name, type: argument.type}
               )
 
@@ -240,11 +244,13 @@ module ESM
               )
             end
 
-            info!(command: command_name, status: :registered)
+            info!(command: usage, status: :registered)
           end
 
           # @!visibility private
           def check_for_valid_configuration!
+            return if abstract_class
+
             if description.length > 100
               raise ArgumentError, "#{name} - description cannot be longer than 100 characters"
             end

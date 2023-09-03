@@ -2,5 +2,6 @@
 
 module ESM
   class ApplicationCommand < ESM::Command::Base
+    self.abstract_class = true
   end
 end
