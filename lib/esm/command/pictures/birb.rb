@@ -4,11 +4,27 @@ module ESM
   module Command
     module Pictures
       class Birb < ApplicationCommand
-        command_type :player
+        SUB_REDDIT = %w[Birb birbs].freeze
+
+        module ErrorMessage
+          def self.birb_not_found(user:)
+            ESM::Embed.build do |e|
+              e.description = I18n.t("command_errors.birb_not_found", user: user)
+              e.color = :red
+            end
+          end
+        end
+
+        #################################
+        #
+        # Configuration
+        #
 
         change_attribute :cooldown_time, modifiable: false, default: 5.seconds
 
-        SUB_REDDIT = %w[Birb birbs].freeze
+        command_type :player
+
+        #################################
 
         def on_execute
           send_waiting_message
@@ -19,14 +35,7 @@ module ESM
           reply(link)
         end
 
-        module ErrorMessage
-          def self.birb_not_found(user:)
-            ESM::Embed.build do |e|
-              e.description = I18n.t("command_errors.birb_not_found", user: user)
-              e.color = :red
-            end
-          end
-        end
+        private
 
         def check_for_empty_link!
           return if link.present?
@@ -39,7 +48,10 @@ module ESM
           @link ||= lambda do
             10.times do
               response = begin
-                HTTParty.get("http://www.reddit.com/r/#{SUB_REDDIT.sample}/random.json", headers: {"User-agent": "ESM 2.0"})
+                HTTParty.get(
+                  "http://www.reddit.com/r/#{SUB_REDDIT.sample}/random.json",
+                  headers: {"User-agent": "ESM 2.0"}
+                )
               rescue URI::InvalidURIError
                 nil
               end

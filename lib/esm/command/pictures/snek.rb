@@ -4,11 +4,18 @@ module ESM
   module Command
     module Pictures
       class Snek < ApplicationCommand
+        SUB_REDDIT = %w[SnakesWithHats snek sneks snakeswearinghats].freeze
+
+        #################################
+        #
+        # Configuration
+        #
+
         command_type :player
 
         change_attribute :cooldown_time, modifiable: false, default: 5.seconds
 
-        SUB_REDDIT = %w[SnakesWithHats snek sneks snakeswearinghats].freeze
+        #################################
 
         def on_execute
           send_waiting_message
@@ -18,6 +25,8 @@ module ESM
           # Send the link
           reply(link)
         end
+
+        private
 
         def check_for_empty_link!
           return if link.present?

@@ -13,12 +13,15 @@ module ESM
         end
 
         #
-        # <Description>
+        # Returns the command's execution string, with or without arguments.
+        #   /command subcommand argument_1:value argument_2: value
         #
-        # @param overrides [<Type>] <description>
-        # @param with_args [<Type>] <description>
+        # @param overrides [Hash] Argument names and values to set.
+        #   These will override the default arguments. Ignored if with_args is false
         #
-        # @return [<Type>] <description>
+        # @param with_args [true/false] Should the arguments be included in result
+        #
+        # @return [String]
         #
         def usage(overrides: {}, with_args: true)
           command_statement = namespace[:segments].dup

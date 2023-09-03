@@ -1,17 +1,23 @@
 # frozen_string_literal: true
 
-# New command? Make sure to create a migration to add the configuration to all communities
 module ESM
   module Command
     module My
       class SteamUid < ApplicationCommand
-        command_type :player
-
-        requires :registration
+        #################################
+        #
+        # Configuration
+        #
 
         change_attribute :enabled, modifiable: false
         change_attribute :whitelist_enabled, modifiable: false
         change_attribute :whitelisted_role_ids, modifiable: false
+
+        command_type :player
+
+        requires :registration
+
+        #################################
 
         def on_execute
           embed =

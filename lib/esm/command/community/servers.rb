@@ -3,10 +3,22 @@
 module ESM
   module Command
     module Community
-      class Servers < ESM::Command::Base
+      class Servers < ApplicationCommand
+        #################################
+        #
+        # Arguments (required first, then order matters)
+        #
+
+        # See Argument::DEFAULTS[:community_id]
+        argument :community_id, display_name: :for
+
+        #
+        # Configuration
+        #
+
         command_type :player
 
-        argument :community_id, display_name: :for
+        #################################
 
         def on_execute
           servers = ESM::Server.where(community_id: target_community.id, server_visibility: :public)
@@ -19,9 +31,7 @@ module ESM
           end
         end
 
-        #########################
-        # Command Methods
-        #########################
+        private
 
         def check_for_no_servers!(servers)
           return if servers.present?

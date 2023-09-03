@@ -19,6 +19,24 @@ module ESM
           marxet_item_sold
         ].freeze
 
+        #################################
+        #
+        # Arguments (required first, then order matters)
+        #
+
+        # See Argument::DEFAULTS[:server_id]
+        argument :server_id, display_name: :for
+
+        # Optional: Omit to show current configuration
+        argument :action, choices: {allow: "Allow", deny: "Block"}
+
+        # Optional: Defaults to "all"
+        argument :type, default: "all", choices: TYPES.each_with_object({}) { |t, h| h[t] = t.titleize.humanize }
+
+        #
+        # Configuration
+        #
+
         command_type :player
 
         limit_to :dm
@@ -33,9 +51,7 @@ module ESM
         change_attribute :allowed_in_text_channels, modifiable: false
         change_attribute :cooldown_time, modifiable: false
 
-        argument :server_id, display_name: :for
-        argument :action, choices: {allow: "Allow", deny: "Block"}
-        argument :type, choices: TYPES.each_with_object({}) { |t, h| h[t] = t.titleize.humanize }
+        #################################
 
         def on_execute
           return send_preferences if arguments.action.nil?
@@ -56,9 +72,14 @@ module ESM
           preference.update(query)
 
           reply(
-            ESM::Embed.build(:success, description: ":white_check_mark: Your preferences for `#{target_server.server_id}` have been updated")
+            ESM::Embed.build(
+              :success,
+              description: ":white_check_mark: Your preferences for `#{target_server.server_id}` have been updated"
+            )
           )
         end
+
+        private
 
         def preference
           @preference ||= ESM::UserNotificationPreference.where(user_id: current_user.id, server_id: target_server.id).first_or_create

@@ -1,12 +1,31 @@
 # frozen_string_literal: true
 
-# New command? Make sure to create a migration to add the configuration to all communities
 module ESM
   module Command
     module Community
-      class ResetCooldown < ESM::Command::Base
-        command_type :admin
+      class ResetCooldown < ApplicationCommand
+        #################################
+        #
+        # Arguments (required first, then order matters)
+        #
+
+        # See Argument::DEFAULTS[:target]
+        argument :target, display_name: :for
+
+        # See Argument::DEFAULTS[:command]
+        argument :command
+
+        # See Argument::DEFAULTS[:server_id]
+        argument :server_id, display_name: :on
+
+        #
+        # Configuration
+        #
+
+        change_attribute :whitelist_enabled, default: true
+
         command_namespace :community, :admin
+        command_type :admin
 
         limit_to :text
         requires :registration
@@ -14,11 +33,7 @@ module ESM
         # Skip checking for the server since this is not dependent on the server being online.
         skip_action :connected_server
 
-        change_attribute :whitelist_enabled, default: true
-
-        argument :target, display_name: :for
-        argument :command
-        argument :server_id, display_name: :on
+        #################################
 
         def on_execute
           check_owned_server! if arguments.server_id
@@ -36,6 +51,8 @@ module ESM
           # Send the success message
           reply(success_embed)
         end
+
+        private
 
         def check_for_valid_command!
           return if arguments.command_name.nil?

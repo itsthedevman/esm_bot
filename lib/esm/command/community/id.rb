@@ -3,16 +3,23 @@
 module ESM
   module Command
     module Community
-      class Id < ESM::Command::Base
+      class Id < ApplicationCommand
+        #################################
+        #
+        # Configuration
+        #
+
+        change_attribute :allowed_in_text_channels, modifiable: false
+        change_attribute :cooldown_time, modifiable: false
+        change_attribute :enabled, modifiable: false
+        change_attribute :whitelist_enabled, modifiable: false
+        change_attribute :whitelisted_role_ids, modifiable: false
+
         command_type :player
 
         limit_to :text
 
-        change_attribute :enabled, modifiable: false
-        change_attribute :whitelist_enabled, modifiable: false
-        change_attribute :whitelisted_role_ids, modifiable: false
-        change_attribute :allowed_in_text_channels, modifiable: false
-        change_attribute :cooldown_time, modifiable: false
+        #################################
 
         def on_execute
           embed =

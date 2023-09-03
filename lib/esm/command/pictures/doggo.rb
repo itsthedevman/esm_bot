@@ -4,11 +4,18 @@ module ESM
   module Command
     module Pictures
       class Doggo < ApplicationCommand
-        command_type :player
+        SUB_REDDIT = %w[dogpictures rarepuppers puppies].freeze
+
+        #################################
+        #
+        # Configuration
+        #
 
         change_attribute :cooldown_time, modifiable: false, default: 5.seconds
 
-        SUB_REDDIT = %w[dogpictures rarepuppers puppies].freeze
+        command_type :player
+
+        #################################
 
         def on_execute
           send_waiting_message
@@ -18,6 +25,8 @@ module ESM
           # Send the link
           reply(link)
         end
+
+        private
 
         def check_for_empty_link!
           return if link.present?
@@ -30,7 +39,10 @@ module ESM
           @link ||= lambda do
             10.times do
               response = begin
-                HTTParty.get("http://www.reddit.com/r/#{SUB_REDDIT.sample}/random.json", headers: {"User-agent": "ESM 2.0"})
+                HTTParty.get(
+                  "http://www.reddit.com/r/#{SUB_REDDIT.sample}/random.json",
+                  headers: {"User-agent": "ESM 2.0"}
+                )
               rescue URI::InvalidURIError
                 nil
               end

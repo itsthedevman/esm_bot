@@ -234,7 +234,7 @@ module ESM
 
         # I prefer {value: "Display Name"}, Discord/rb wants it to be {"Display Name": "value"}
         if opts[:choices]
-          @options[:choices] = Hash.new(opts[:choices].map { |k, v| [v, k] })
+          @options[:choices] = opts[:choices].map { |k, v| [v.to_s, k.to_s] }.to_h
         end
 
         @description = load_locale_or_provided(opts[:description], "description")

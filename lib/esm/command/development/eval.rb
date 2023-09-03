@@ -3,17 +3,29 @@
 module ESM
   module Command
     module Development
-      class Eval < ESM::Command::Base
-        command_type :development
-        requires :dev
+      class Eval < ApplicationCommand
+        #################################
+        #
+        # Arguments (required first, then order matters)
+        #
 
+        argument :code, preserve: true, description: "Code to execute"
+
+        #
+        # Configuration
+        #
+
+        change_attribute :allowed_in_text_channels, modifiable: false
+        change_attribute :cooldown_time, modifiable: false
         change_attribute :enabled, modifiable: false
         change_attribute :whitelist_enabled, modifiable: false
         change_attribute :whitelisted_role_ids, modifiable: false
-        change_attribute :allowed_in_text_channels, modifiable: false
-        change_attribute :cooldown_time, modifiable: false
 
-        argument :code, regex: /.*/, preserve: true, description: "Code to execute"
+        command_type :development
+
+        requires :dev
+
+        #################################
 
         def on_execute
           code = arguments.code

@@ -3,19 +3,31 @@
 module ESM
   module Command
     module Community
-      class Mode < ESM::Command::Base
-        command_type :admin
-        command_namespace :community, :admin, command_name: :change_mode
+      class Mode < ApplicationCommand
+        #################################
+        #
+        # Arguments (required first, then order matters)
+        #
 
-        limit_to :dm
+        # See Argument::DEFAULTS[:community_id]
+        argument :community_id, display_name: :for
 
+        #
+        # Configuration
+        #
+
+        change_attribute :allowed_in_text_channels, modifiable: false, default: false
+        change_attribute :cooldown_time, modifiable: false
         change_attribute :enabled, modifiable: false
         change_attribute :whitelist_enabled, modifiable: false
         change_attribute :whitelisted_role_ids, modifiable: false
-        change_attribute :allowed_in_text_channels, modifiable: false, default: false
-        change_attribute :cooldown_time, modifiable: false
 
-        argument :community_id, display_name: :for
+        command_namespace :community, :admin, command_name: :change_mode
+        command_type :admin
+
+        limit_to :dm
+
+        #################################
 
         def on_execute
           check_for_owner!

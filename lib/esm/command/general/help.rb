@@ -3,17 +3,30 @@
 module ESM
   module Command
     module General
-      class Help < ESM::Command::Base
-        command_type :player
-        use_root_namespace
+      class Help < ApplicationCommand
+        #################################
+        #
+        # Arguments (required first, then order matters)
+        #
 
+        # Optional: Command expects this
+        argument :category, display_name: :with
+
+        #
+        # Configuration
+        #
+
+        change_attribute :allowed_in_text_channels, modifiable: false
+        change_attribute :cooldown_time, modifiable: false
         change_attribute :enabled, modifiable: false
         change_attribute :whitelist_enabled, modifiable: false
         change_attribute :whitelisted_role_ids, modifiable: false
-        change_attribute :allowed_in_text_channels, modifiable: false
-        change_attribute :cooldown_time, modifiable: false
 
-        argument :category, display_name: :with
+        command_type :player
+
+        use_root_namespace
+
+        #################################
 
         def on_execute
           case arguments.category
@@ -30,9 +43,8 @@ module ESM
           end
         end
 
-        #########################
-        # Command Methods
-        #########################
+        private
+
         def getting_started
           embed =
             ESM::Embed.build do |e|

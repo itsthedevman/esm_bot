@@ -4,11 +4,18 @@ module ESM
   module Command
     module Pictures
       class Meow < ApplicationCommand
+        SUB_REDDIT = %w[lolcats catpics catpictures Chonkers CatsStandingUp].freeze
+
+        #################################
+        #
+        # Configuration
+        #
+
         command_type :player
 
         change_attribute :cooldown_time, modifiable: false, default: 5.seconds
 
-        SUB_REDDIT = %w[lolcats catpics catpictures Chonkers CatsStandingUp].freeze
+        #################################
 
         def on_execute
           send_waiting_message
@@ -18,6 +25,8 @@ module ESM
           # Send the link
           reply(link)
         end
+
+        private
 
         def check_for_empty_link!
           return if link.present?
@@ -30,7 +39,10 @@ module ESM
           @link ||= lambda do
             10.times do
               response = begin
-                HTTParty.get("http://www.reddit.com/r/#{SUB_REDDIT.sample}/random.json", headers: {"User-agent": "ESM 2.0"})
+                HTTParty.get(
+                  "http://www.reddit.com/r/#{SUB_REDDIT.sample}/random.json",
+                  headers: {"User-agent": "ESM 2.0"}
+                )
               rescue URI::InvalidURIError
                 nil
               end

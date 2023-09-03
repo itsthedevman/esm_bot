@@ -3,15 +3,27 @@
 module ESM
   module Command
     module Community
-      class Whois < ESM::Command::Base
-        command_type :admin
-        command_namespace :community, :admin, command_name: :find_player
+      class Whois < ApplicationCommand
+        #################################
+        #
+        # Arguments (required first, then order matters)
+        #
 
-        limit_to :text
+        # See Argument::DEFAULTS[:target]
+        argument :target, display_name: :whom
+
+        #
+        # Configuration
+        #
 
         change_attribute :whitelist_enabled, default: true
 
-        argument :target, display_name: :whom
+        command_namespace :community, :admin, command_name: :find_player
+        command_type :admin
+
+        limit_to :text
+
+        #################################
 
         def on_execute
           check_for_user_access!
@@ -25,9 +37,8 @@ module ESM
           reply(embed)
         end
 
-        #########################
-        # Command Methods
-        #########################
+        private
+
         # Argument e is an embed
         def add_discord_info(e)
           discord_user = target_user.discord_user
