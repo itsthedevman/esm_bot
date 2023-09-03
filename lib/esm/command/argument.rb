@@ -4,27 +4,34 @@ module ESM
   module Command
     class Argument
       DEFAULTS = {
+        # Required: Majority of the time, this is needed.
         target: {
-          required: true,
           checked_against: ESM::Regex::TARGET,
+          description_extra: "commands.arguments.target.description_extra",
           description: "commands.arguments.target.description",
-          description_extra: "commands.arguments.target.description_extra"
+          required: true
         },
+
+        # Required: Majority of the time, this is needed.
         command: {
           checked_against: ->(context) { ESM::Command.include?(context.content) },
-          description: "commands.arguments.command.description"
+          description: "commands.arguments.command.description",
+          required: true
         },
+
+        # Required: No functionality to "guess" this
         territory_id: {
-          required: true,
           checked_against: ESM::Regex::TERRITORY_ID,
+          description_extra: "commands.arguments.territory_id.description_extra",
           description: "commands.arguments.territory_id.description",
-          description_extra: "commands.arguments.territory_id.description_extra"
+          required: true
         },
+
+        # Optional: UserDefault/CommunityDefault can be used. It will be validated so it is "semi-required"
         community_id: {
-          preserve: true,
           checked_against: ESM::Regex::COMMUNITY_ID,
-          description: "commands.arguments.community_id.description",
           description_extra: "commands.arguments.community_id.description_extra",
+          description: "commands.arguments.community_id.description",
           optional_text: "commands.arguments.community_id.optional_text",
           modifier: lambda do |context|
             if context.content.present?
@@ -54,11 +61,12 @@ module ESM
             # Nothing was provided and there was no default - it'll be validated later
           end
         },
+
+        # Optional: UserDefault/CommunityDefault can be used. It will be validated so it is "semi-required"
         server_id: {
-          preserve: true,
-          checked_against: ESM::Regex::SERVER_ID_OPTIONAL_COMMUNITY,
-          description: "commands.arguments.server_id.description",
+          checked_against: ESM::Regex::SERVER_ID,
           description_extra: "commands.arguments.server_id.description_extra",
+          description: "commands.arguments.server_id.description",
           optional_text: "commands.arguments.server_id.optional_text",
           modifier: lambda do |context|
             if context.content.present?
