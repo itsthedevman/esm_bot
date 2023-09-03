@@ -62,7 +62,7 @@ class Inquirer
   #
   def unset(*predicates)
     predicates.map(&:to_sym).each do |predicate|
-      next if @predicates.exclude(predicate)
+      next if @predicates.exclude?(predicate)
 
       instance_variable_set("@#{predicate}", false)
     end
