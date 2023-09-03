@@ -229,9 +229,13 @@ module ESM
         @validator = opts[:checked_against]
 
         @options = {required: @required}
-        @options[:choices] = opts[:choices] if opts[:choices]
         @options[:min_value] = opts[:min_value] if opts[:min_value]
         @options[:max_value] = opts[:max_value] if opts[:max_value]
+
+        # I prefer {value: "Display Name"}, Discord/rb wants it to be {"Display Name": "value"}
+        if opts[:choices]
+          @options[:choices] = Hash.new(opts[:choices].map { |k, v| [v, k] })
+        end
 
         @description = load_locale_or_provided(opts[:description], "description")
         @description_extra = load_locale_or_provided(opts[:description_extra], "description_extra").presence
