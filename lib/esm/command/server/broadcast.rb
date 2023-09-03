@@ -5,13 +5,10 @@ module ESM
   module Command
     module Server
       class Broadcast < ApplicationCommand
-        command_type :admin
-        command_namespace :server, :admin
-
-        limit_to :text
-        requires :registration
-
-        change_attribute :whitelist_enabled, default: true
+        #################################
+        #
+        # Arguments (required first, then order matters)
+        #
 
         # Required: All variants require a message
         argument :message, required: true, preserve: true
@@ -20,7 +17,7 @@ module ESM
         argument(
           :broadcast_to,
           display_as: :to,
-          regex: ESM::Regex::BROADCAST,
+          checked_against: ESM::Regex::BROADCAST,
           modifier: lambda do |argument|
             return if argument.content.blank?
             return if %w[all preview].include?(argument.content)
@@ -32,6 +29,21 @@ module ESM
             argument.content = "#{current_community.community_id}_#{argument.content}"
           end
         )
+
+        #
+        # Configuration
+        #
+
+        change_attribute :whitelist_enabled, default: true
+
+        command_namespace :server, :admin
+        command_type :admin
+
+        limit_to :text
+
+        requires :registration
+
+        #################################
 
         def on_execute
           check_for_message_length!
@@ -45,6 +57,7 @@ module ESM
           # Send a preview of the embed
           reply(broadcast_embed(server_ids: @server_id_sentence))
           reply("`------------------------------------------------------------------`")
+
           embed =
             ESM::Embed.build do |e|
               e.title = I18n.t("commands.broadcast.confirmation_embed.title")
@@ -55,16 +68,26 @@ module ESM
 
           # Send the confirmation request
           reply(embed)
+
           response = ESM.bot.await_response(current_user, expected: [I18n.t("yes"), I18n.t("no")], timeout: 120)
-          return reply(I18n.t("commands.broadcast.cancelation_reply")) if response.nil? || response.downcase == I18n.t("no").downcase
+          if response.nil? || response.downcase == I18n.t("no").downcase
+            return reply(I18n.t("commands.broadcast.cancellation_reply"))
+          end
 
           # Get all of the users to broadcast to
           users = load_users
           users.each { |user| ESM.bot.deliver(broadcast_embed(server_ids: @server_id_sentence), to: user.discord_id) }
 
           # Send the success message back
-          reply(ESM::Embed.build(:success, description: I18n.t("commands.broadcast.success_message", user: current_user.mention)))
+          reply(
+            ESM::Embed.build(
+              :success,
+              description: I18n.t("commands.broadcast.success_message", user: current_user.mention)
+            )
+          )
         end
+
+        private
 
         def broadcast_embed(server_ids: nil)
           # For the preview

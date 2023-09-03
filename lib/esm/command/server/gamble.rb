@@ -4,15 +4,29 @@ module ESM
   module Command
     module Server
       class Gamble < ApplicationCommand
+        #################################
+        #
+        # Arguments (required first, then order matters)
+        #
+
+        # Required: Needed by command
+        argument :amount, required: true, checked_against: /(?!-\d+$)\d+|half|all|stats/
+
+        # See Argument::DEFAULTS[:server_id]
+        argument :server_id, display_name: :on
+
+        #
+        # Configuration
+        #
+
         command_type :player
 
         requires :registration
 
-        # Skipped because of `stats` argument. This is manually checked in `#discord`
+        # Skipped because of amount:stats argument
         skip_action :connected_server
 
-        argument :amount, checked_against: /(?!-\d+$)\d+|half|all|stats/
-        argument :server_id, display_name: :on
+        #################################
 
         def on_execute
           return reply(send_stats) if arguments.amount == "stats"
@@ -34,9 +48,7 @@ module ESM
           send_results
         end
 
-        #########################
-        # Command Methods
-        #########################
+        private
 
         def check_for_bad_amount!
           return if %w[half all].include?(arguments.amount)

@@ -4,13 +4,23 @@ module ESM
   module Command
     module Request
       class Requests < ApplicationCommand
-        command_type :player
-        command_namespace :request, command_name: :list
+        #################################
+        #
+        # Configuration
+        #
 
         change_attribute :allowed_in_text_channels, default: false
 
+        command_namespace :request, command_name: :list
+        command_type :player
+
+        #################################
+
         def on_execute
-          requests = current_user.pending_requests.select(:uuid, :uuid_short, :command_name, :requestor_user_id, :expires_at).order(:command_name)
+          requests = current_user.pending_requests.select(
+            :uuid, :uuid_short, :command_name, :requestor_user_id, :expires_at
+          ).order(:command_name)
+
           return send_no_requests_message if requests.blank?
 
           embed = ESM::Embed.build do |e|
@@ -18,7 +28,9 @@ module ESM
 
             e.description = requests.map do |r|
               description = "`#{r.command_name}` - "
-              description += "#{r.requestor.distinct} - " if current_user.id != r.requestor_user_id # Performance optimization, only query if needed
+
+              # Performance optimization, only query if needed
+              description += "#{r.requestor.distinct} - " if current_user.id != r.requestor_user_id
 
               description + <<~STRING
                 Expires on #{r.expires_at}

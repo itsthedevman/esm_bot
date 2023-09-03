@@ -392,7 +392,9 @@ module ESM
         # choices must be hash
         # choice values must be string
         if options.key?(:choices)
-          raise ArgumentError, "#{command_class}:argument.#{name} - choices must be a hash" if !options[:choices].is_a?(Hash)
+          if !options[:choices].is_a?(Hash)
+            raise ArgumentError, "#{command_class}:argument.#{name} - choices must be a hash"
+          end
 
           if options[:choices].values.any? { |v| !v.is_a?(String) }
             raise ArgumentError, "#{command_class}:argument.#{name} - choices cannot contain non-string values"
