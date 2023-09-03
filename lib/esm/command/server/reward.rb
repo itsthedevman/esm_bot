@@ -7,8 +7,6 @@ module ESM
       class Reward < ApplicationCommand
         command_type :player
 
-        requires :registration
-
         change_attribute :cooldown_time, default: 1.second
 
         argument :server_id, display_name: :on

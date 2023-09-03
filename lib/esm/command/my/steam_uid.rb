@@ -15,8 +15,6 @@ module ESM
 
         command_type :player
 
-        requires :registration
-
         #################################
 
         def on_execute

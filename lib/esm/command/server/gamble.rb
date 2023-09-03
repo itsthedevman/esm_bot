@@ -21,8 +21,6 @@ module ESM
 
         command_type :player
 
-        requires :registration
-
         # Skipped because of amount:stats argument
         skip_action :connected_server
 

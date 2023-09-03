@@ -8,6 +8,7 @@ module ESM
         command_type :player
 
         argument :server_id, display_name: :for
+        does_not_require :registration
 
         def on_execute
           embed =

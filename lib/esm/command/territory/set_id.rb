@@ -6,8 +6,6 @@ module ESM
       class SetId < ApplicationCommand
         command_type :player
 
-        requires :registration
-
         argument :old_territory_id, template: :territory_id, display_name: :from
         argument :new_territory_id, template: :territory_id, display_name: :to
         argument :server_id, display_name: :on

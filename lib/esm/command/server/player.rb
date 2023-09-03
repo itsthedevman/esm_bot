@@ -9,7 +9,6 @@ module ESM
         command_namespace :server, :admin, command_name: :modify_player
 
         limit_to :text
-        requires :registration
 
         change_attribute :whitelist_enabled, default: true
 

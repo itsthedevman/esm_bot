@@ -6,8 +6,6 @@ module ESM
       class Stuck < ApplicationCommand
         command_type :player
 
-        requires :registration
-
         argument :server_id, display_name: :on
 
         def on_execute

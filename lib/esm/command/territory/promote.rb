@@ -8,8 +8,6 @@ module ESM
         command_type :player
         command_namespace :territory, command_name: :promote_player
 
-        requires :registration
-
         argument :target, display_name: :whom
         argument :territory_id, display_name: :in
         argument :server_id, display_name: :on

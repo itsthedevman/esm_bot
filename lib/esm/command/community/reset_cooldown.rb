@@ -28,7 +28,6 @@ module ESM
         command_type :admin
 
         limit_to :text
-        requires :registration
 
         # Skip checking for the server since this is not dependent on the server being online.
         skip_action :connected_server

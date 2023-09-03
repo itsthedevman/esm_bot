@@ -10,6 +10,7 @@ module ESM
         skip_action :connected_server
 
         argument :server_id, display_name: :for
+        does_not_require :registration
 
         def on_execute
           embed =

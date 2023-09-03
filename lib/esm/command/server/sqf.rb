@@ -10,7 +10,6 @@ module ESM
         command_namespace :server, :admin, command_name: :execute_code
 
         limit_to :text
-        requires :registration
 
         change_attribute :whitelist_enabled, default: true
 

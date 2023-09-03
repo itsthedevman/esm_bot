@@ -7,8 +7,6 @@ module ESM
         command_type :player
         command_namespace :territory, command_name: :list
 
-        requires :registration
-
         change_attribute :allowed_in_text_channels, default: false
 
         argument :server_id, display_name: :for

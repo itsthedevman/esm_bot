@@ -23,6 +23,8 @@ module ESM
 
         command_type :development
 
+        does_not_require :registration
+
         requires :dev
 
         #################################

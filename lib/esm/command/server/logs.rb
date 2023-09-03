@@ -32,7 +32,6 @@ module ESM
         command_namespace :server, :admin, command_name: :search_logs
 
         limit_to :text
-        requires :registration
 
         # Since the argument is a modified target, the logic for nil_target_user will trigger
         skip_action :nil_target_user

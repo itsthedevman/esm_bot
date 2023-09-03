@@ -41,8 +41,6 @@ module ESM
 
         limit_to :text
 
-        requires :registration
-
         #################################
 
         def on_execute

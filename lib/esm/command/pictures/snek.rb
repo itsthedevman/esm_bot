@@ -11,9 +11,11 @@ module ESM
         # Configuration
         #
 
+        change_attribute :cooldown_time, modifiable: false, default: 5.seconds
+
         command_type :player
 
-        change_attribute :cooldown_time, modifiable: false, default: 5.seconds
+        does_not_require :registration
 
         #################################
 

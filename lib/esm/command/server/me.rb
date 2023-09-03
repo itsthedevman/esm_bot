@@ -7,8 +7,6 @@ module ESM
         command_type :player
         command_namespace :server, command_name: :my_player
 
-        requires :registration
-
         argument :server_id, display_name: :on
 
         def on_execute

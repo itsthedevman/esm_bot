@@ -17,6 +17,8 @@ module ESM
 
         command_type :player
 
+        does_not_require :registration
+
         limit_to :text
 
         #################################

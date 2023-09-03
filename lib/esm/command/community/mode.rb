@@ -25,6 +25,8 @@ module ESM
         command_namespace :community, :admin, command_name: :change_mode
         command_type :admin
 
+        does_not_require :registration
+
         limit_to :dm
 
         #################################

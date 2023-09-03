@@ -8,7 +8,6 @@ module ESM
         command_type :admin
 
         limit_to :text
-        requires :registration
         skip_action :connected_server
 
         change_attribute :whitelist_enabled, default: true

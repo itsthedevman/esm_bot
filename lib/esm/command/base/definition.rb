@@ -94,6 +94,11 @@ module ESM
             self
           end
 
+          def does_not_require(*keys)
+            requirements.unset(*keys)
+            self
+          end
+
           #
           # A list of check names that should be skipped during the lifecycle
           #
@@ -195,6 +200,10 @@ module ESM
             self.type = :player
 
             self.requirements = Inquirer.new(:dev, :registration)
+
+            # Require registration by default
+            requirements.set(:registration)
+
             self.skipped_actions = Inquirer.new(
               :connected_server, :cooldown, :nil_target_user,
               :nil_target_server, :nil_target_community, :different_community

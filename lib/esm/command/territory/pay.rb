@@ -6,8 +6,6 @@ module ESM
       class Pay < ApplicationCommand
         command_type :player
 
-        requires :registration
-
         argument :territory_id, display_name: :territory
         argument :server_id, display_name: :on
 

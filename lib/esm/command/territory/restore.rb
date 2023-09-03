@@ -9,7 +9,6 @@ module ESM
         command_namespace :territory, :admin
 
         limit_to :text
-        requires :registration
 
         change_attribute :whitelist_enabled, default: true
 

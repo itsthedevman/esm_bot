@@ -21,6 +21,9 @@ module ESM
         command_namespace :community, :admin, command_name: :find_player
         command_type :admin
 
+        # Useful command and some people don't want to register
+        does_not_require :registration
+
         limit_to :text
 
         #################################

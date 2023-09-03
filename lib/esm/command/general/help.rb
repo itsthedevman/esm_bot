@@ -24,6 +24,8 @@ module ESM
 
         command_type :player
 
+        does_not_require :registration
+
         use_root_namespace
 
         #################################
