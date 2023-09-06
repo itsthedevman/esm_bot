@@ -283,7 +283,7 @@ module ESM
           @name = command_class.command_name
           @category = command_class.category
           @attributes = attributes.to_istruct
-          @arguments = ESM::Command::Arguments.new(**command_class.arguments)
+          @arguments = ESM::Command::Arguments.new(self, **command_class.arguments)
 
           # Mainly for specs, but does give performance analytics (which is a nice bonus)
           @timers = Timers.new(name)

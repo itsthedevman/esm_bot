@@ -23,8 +23,8 @@ module ESM
             self[name] = template.transform_and_validate!(inbound_arguments[template.display_name], command)
 
             nil
-          rescue ESM::Exception::InvalidArgument => argument
-            argument
+          rescue ESM::Exception::InvalidArgument => e
+            e.data
           end
 
         # All the arguments are valid
@@ -36,7 +36,7 @@ module ESM
             e.description = invalid_arguments.format(&:help_documentation)
 
             help_command = ESM::Command.get(:help)
-            e.footer = "For more information, use `#{help_command.usage(arguments: {category: command.command_name})}`"
+            e.footer = "For more information, use `#{help_command.usage(overrides: {category: command.usage(with_args: false)})}`"
           end
 
         raise ESM::Exception::CheckFailure, embed

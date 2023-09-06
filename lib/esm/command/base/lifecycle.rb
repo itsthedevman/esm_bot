@@ -24,7 +24,7 @@ module ESM
 
             command = new
             command = command.as_v1_variant if v1_variant? && !command.v2_target_server?
-            command.execute(event)
+            command.execute(ESM::Event::ApplicationCommand.new(event))
           rescue => e
             # This occurs if event.defer fails due to Discord dropping the interaction before the bot had a chance to process it
             return if command.nil?
@@ -49,11 +49,12 @@ module ESM
         def execute(event)
           @event = event
 
-          if event.is_a?(Discordrb::Events::ApplicationCommandEvent)
+          if event.is_a?(ESM::Event::ApplicationCommand)
             timers.time!(:from_discord) do
               from_discord
             end
           else
+            # V1
             timers.time!(:from_server) do
               from_server
             end
@@ -64,8 +65,6 @@ module ESM
 
         #
         # Called internally by #execute, this method handles when a command has been executed on Discord.
-        #
-        # @param discord_event [Discordrb::ApplicationCommandEvent]
         #
         def from_discord
           # Check for these BEFORE validating the arguments so even if an argument was invalid, it doesn't matter since these take priority

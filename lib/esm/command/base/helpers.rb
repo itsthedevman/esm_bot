@@ -7,8 +7,9 @@ module ESM
         extend ActiveSupport::Concern
 
         class_methods do
-          def usage
-            new.usage(with_args: false)
+          def usage(opts = {})
+            opts[:with_args] ||= false
+            new.usage(**opts)
           end
         end
 
@@ -19,11 +20,12 @@ module ESM
         # @param overrides [Hash] Argument names and values to set.
         #   These will override the default arguments. Ignored if with_args is false
         #
-        # @param with_args [true/false] Should the arguments be included in result
+        # @param with_args [true/false] Should the arguments be included in result?
+        # @param with_slash [true/false] Should the result start with a slash?
         #
         # @return [String]
         #
-        def usage(overrides: {}, with_args: true)
+        def usage(overrides: {}, with_args: true, with_slash: true)
           command_statement = namespace[:segments].dup
           command_statement << namespace[:command_name]
 
@@ -47,7 +49,9 @@ module ESM
             end
           end
 
-          "/#{command_statement.join(" ")}"
+          command_statement = command_statement.join(" ")
+          command_statement.prepend("/") if with_slash
+          command_statement
         end
 
         #

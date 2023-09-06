@@ -253,6 +253,8 @@ module ESM
       end
 
       def transform_and_validate!(input, command)
+        raise ArgumentError, "Invalid command argument" unless command.is_a?(ApplicationCommand)
+
         context = ArgumentContext.new(content: format(input))
 
         # Arguments can opt to modify the parsed value (this is how auto-fill works)
@@ -377,7 +379,7 @@ module ESM
 
         success =
           case validator
-          when Regex, String
+          when Regexp, String
             content.match?(validator)
           when Proc
             command.instance_exec(content, &validator)
