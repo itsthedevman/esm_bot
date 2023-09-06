@@ -26,9 +26,20 @@ module ESM
       return if command_name.blank?
 
       command_name = command_name.to_s unless command_name.is_a?(String)
+      command_name = command_name[1..] if command_name.start_with?("/")
 
-      # Find by name or by its usage (allowing / or no /)
-      all.find { |command| command_name == command.command_name || command.usage.include?(command_name) }
+      # Find by name or by its usage
+      all.find do |command|
+        # OG command name check
+        next true if command.command_name == command_name
+
+        # Slash command usage check
+        usage = command.usage(with_slash: false, with_args: false)
+        next true if usage == command_name
+
+        # Slash command "subgroup" (the last part of the slash usage)
+        next true if usage.split(" ").last == command_name
+      end
     end
 
     def self.get(command_name)

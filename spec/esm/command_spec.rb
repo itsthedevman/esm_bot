@@ -1,40 +1,129 @@
 # frozen_string_literal: true
 
 describe ESM::Command do
-  let(:event) { OpenStruct.new(channel: nil) }
+  subject(:commands) { described_class }
 
-  it "has commands" do
-    ESM::Command.load
-    expect(ESM.bot.commands).not_to be_blank
-  end
+  context "when ESM has commands" do
+    it do
+      expect(commands.all).not_to be_empty
+    end
 
-  it "has cached the commands" do
-    expect(ESM::Command.all).not_to be_empty
-  end
+    it "is organized by type" do
+      expect(commands.by_type[:player]).not_to be_empty
+      expect(commands.by_type[:admin]).not_to be_empty
+    end
 
-  it "organizes by type" do
-    %i[player admin].each do |type|
-      expect(ESM::Command.by_type[type]).not_to be_empty
+    it "organized by namespace for server" do
+      expect(commands.by_namespace_for_server).to match(
+        a_hash_including(
+          territory: a_hash_including(
+            admin: a_hash_including(:list, :restore)
+          ),
+          server: a_hash_including(
+            admin: a_hash_including(
+              :execute_code, :reset_player, :modify_player,
+              :search_logs, :find, :broadcast
+            )
+          ),
+          community: a_hash_including(
+            admin: a_hash_including(
+              :find_player, :reset_cooldown, :change_mode
+            )
+          )
+        )
+      )
+    end
+
+    it "organized by namespace for global" do
+      expect(commands.by_namespace_for_global).to match(
+        a_hash_including(
+          territory: a_hash_including(
+            :upgrade, :list, :set_id, :remove_player, :promote_player,
+            :pay, :demote_player, :add_player
+          ),
+          server: a_hash_including(
+            :uptime, :stuck, :details, :reward, :my_player, :gamble
+          ),
+          request: a_hash_including(:list, :decline, :accept),
+          pictures: a_hash_including(:snek, :meow, :doggo, :birb),
+          my: a_hash_including(:steam_uid, :preferences),
+          register: be < ESM::ApplicationCommand,
+          help: be < ESM::ApplicationCommand,
+          community: a_hash_including(:servers, :id)
+        )
+      )
+    end
+
+    it "organized by namespace for all" do
+      expect(commands.by_namespace_for_all).to match(
+        a_hash_including(
+          territory: a_hash_including(
+            :upgrade, :list, :set_id, :remove_player, :promote_player,
+            :pay, :demote_player, :add_player, :admin
+          ),
+          server: a_hash_including(
+            :uptime, :stuck, :details, :reward, :my_player, :gamble, :admin
+          ),
+          request: a_hash_including(:list, :decline, :accept),
+          pictures: a_hash_including(:snek, :meow, :doggo, :birb),
+          my: a_hash_including(:steam_uid, :preferences),
+          register: be < ESM::ApplicationCommand,
+          help: be < ESM::ApplicationCommand,
+          community: a_hash_including(:servers, :id, :admin)
+        )
+      )
     end
   end
 
-  describe "#include?" do
-    it "has command" do
-      expect(ESM::Command.include?("help")).to be(true)
+  describe ".[]" do
+    context "when the input is a 'OG command name'" do
+      it do
+        expect(commands["help"]).to be(ESM::Command::General::Help)
+      end
     end
 
-    it "does not have command" do
-      expect(ESM::Command.include?("This command cannot exist")).to be(false)
+    context "when the input is a 'slash command'" do
+      it do
+        expect(commands["/community servers"]).to be(ESM::Command::Community::Servers)
+      end
+    end
+
+    context "when the input is a 'slash command' without a slash" do
+      it do
+        expect(commands["server my_player"]).to be(ESM::Command::Server::Me)
+      end
+    end
+
+    context "when the input is the end of a 'slash command'" do
+      it do
+        expect(commands["promote_player"]).to be(ESM::Command::Territory::Promote)
+      end
+    end
+
+    context "when the input is invalid" do
+      it do
+        expect(commands["this command cannot exist"]).to be(nil)
+      end
     end
   end
 
-  describe "#[]" do
-    it "returns a command" do
-      expect(ESM::Command["help"]).not_to be_nil
+  describe ".get" do
+    it "is aliased correctly" do
+      expect(commands.get("birb")).to be(ESM::Command::Pictures::Birb)
+    end
+  end
+
+  describe ".include?" do
+    context "when the command exists" do
+      it do
+        expect(commands.include?("help")).to be(true)
+      end
     end
 
-    it "returns nil" do
-      expect(ESM::Command["This command cannot exist"]).to be_nil
+    context "when the command does not exist" do
+      it do
+        expect(commands.include?("This command cannot exist")).to be(false)
+      end
     end
   end
 end
