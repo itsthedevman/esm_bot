@@ -1,49 +1,16 @@
 # frozen_string_literal: true
 
 describe ESM::Command::Server::Server, category: "command" do
-  let!(:command) { ESM::Command::Server::Server.new }
-
-  it "is valid" do
-    expect(command).not_to be_nil
-  end
-
-  it "has 1 argument" do
-    expect(command.arguments.size).to eq(1)
-  end
-
-  it "has a description" do
-    expect(command.description).not_to be_blank
-  end
-
-  it "has examples" do
-    expect(command.example).not_to be_blank
-  end
+  include_context "command_v1"
+  include_examples "validate_command"
 
   describe "#execute" do
-    let!(:community) { ESM::Test.community }
-    let!(:server) { ESM::Test.server }
-    let!(:user) { ESM::Test.user }
-    let!(:wsc) { WebsocketClient.new(server) }
-    let(:connection) { ESM::Websocket.connections[server.server_id] }
-
-    before do
-      wait_for { wsc.connected? }.to be(true)
-    end
-
-    after do
-      wsc.disconnect!
-    end
-
     it "returns invalid server" do
-      command_statement = command.statement(server_id: "esm_test")
-      event = CommandEvent.create(command_statement, user: user, channel_type: :text)
-      expect { command.execute(event) }.to raise_error(ESM::Exception::CheckFailure)
+      expect { execute!(server_id: "esm_test") }.to raise_error(ESM::Exception::CheckFailure)
     end
 
     it "returns an embed" do
-      command_statement = command.statement(server_id: server.server_id)
-      event = CommandEvent.create(command_statement, user: user, channel_type: :text)
-      expect { command.execute(event) }.not_to raise_error
+      expect { execute!(server_id: server.server_id) }.not_to raise_error
       response = ESM::Test.messages.first.second
 
       # Reload because the server updates when the WSC connects
@@ -64,10 +31,7 @@ describe ESM::Command::Server::Server, category: "command" do
 
     it "works on an offline server" do
       wsc.disconnect!
-
-      command_statement = command.statement(server_id: server.server_id)
-      event = CommandEvent.create(command_statement, user: user, channel_type: :text)
-      expect { command.execute(event) }.not_to raise_error
+      expect { execute!(server_id: server.server_id) }.not_to raise_error
     end
   end
 end

@@ -2,7 +2,7 @@
 
 # Set to zero for indefinite
 SPEC_TIMEOUT_SECONDS = 3
-LOG_LEVEL = :debug
+LOG_LEVEL = :error
 
 RSpec.configure do |config|
   require_relative "./spec_helper_pre_init"
@@ -21,11 +21,7 @@ RSpec.configure do |config|
 
   config.before :suite do
     FactoryBot.find_definitions
-    DatabaseCleaner.strategy = :truncation
-
-    ESM::ExileTerritory.delete_all
-  rescue ActiveRecord::ConnectionNotEstablished
-    raise "Unable to connect to the Exile MySQL server. Please ensure it is running before trying again"
+    DatabaseCleaner.strategy = :deletion
   end
 
   config.after :suite do
@@ -34,36 +30,39 @@ RSpec.configure do |config|
   end
 
   config.around do |example|
-    DatabaseCleaner.cleaning do
-      ESM::Test.reset!
+    ESM::Test.reset!
 
-      # Ensure the server is paused. This can be resumed on demand (see spec_context/connection_context.rb)
-      ESM::Connection::Server.pause
-
-      trace!(
-        example_group: example.example_group&.description,
-        example: example.description
-      )
-
-      # Run the test!
-      example.run
-
-      # Ensure every message is either replied to or timed out
-      connection_server = ESM::Connection::Server.instance
-      if example.metadata[:requires_connection]
-        wait_for {
-          connection_server.message_overseer.size
-        }.to(eq(0), connection_server.message_overseer.mailbox.to_s)
+    if example.metadata[:requires_connection]
+      begin
+        ESM::ExileTerritory.delete_all
+      rescue ActiveRecord::ConnectionNotEstablished
+        raise "Unable to connect to the Exile MySQL server. Please ensure it is running before trying again"
       end
-
-      # Pause the server in case it was started in the test
-      ESM::Connection::Server.pause
-
-      connection_server&.disconnect_all!
-      connection_server&.message_overseer&.remove_all!
-
-      ESM::Websocket.remove_all_connections!
     end
+
+    trace!(
+      example_group: example.example_group&.description,
+      example: example.description
+    )
+
+    # Run the test!
+    DatabaseCleaner.cleaning { example.run }
+
+    # Ensure every message is either replied to or timed out
+    connection_server = ESM::Connection::Server.instance
+    if example.metadata[:requires_connection]
+      wait_for {
+        connection_server.message_overseer.size
+      }.to(eq(0), connection_server.message_overseer.mailbox.to_s)
+    end
+
+    # Pause the server in case it was started in the test
+    ESM::Connection::Server.pause
+
+    connection_server&.disconnect_all!
+    connection_server&.message_overseer&.remove_all!
+
+    ESM::Websocket.remove_all_connections!
   end
 
   config.before(:context, :territory_admin_bypass) do

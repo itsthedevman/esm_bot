@@ -123,7 +123,8 @@ module ESM
       end
       private_constant :ArgumentContext
 
-      attr_reader :name, :type, :display_name, :command_class, :command_name,
+      attr_reader :name, :type, :discord_type,
+        :display_name, :command_class, :command_name,
         :default_value, :cast_type, :modifier,
         :description, :description_extra, :optional_text,
         :options, :validator
@@ -216,7 +217,8 @@ module ESM
         opts = DEFAULTS[template_name].merge(opts) if DEFAULTS.key?(template_name)
 
         @name = name
-        @type = type
+        @type = type.to_sym
+        @discord_type = Discordrb::Interactions::OptionBuilder::TYPES[@type]
         @display_name = (opts[:display_name] || name).to_sym
         @command_class = opts[:command_class]
         @command_name = command_class.command_name.to_sym
