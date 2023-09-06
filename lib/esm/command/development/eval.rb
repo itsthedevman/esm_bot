@@ -27,6 +27,8 @@ module ESM
 
         requires :dev
 
+        use_root_namespace
+
         #################################
 
         def on_execute
