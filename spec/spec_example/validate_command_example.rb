@@ -19,9 +19,9 @@ RSpec.shared_examples("validate_command") do
   end
 
   it "has valid description text for every argument" do
-    command.arguments.each do |argument|
-      name = argument.name
-      description = argument.opts[:description]
+    command.arguments.each do |name, value|
+      argument = command.arguments.templates[name]
+      description = argument.description
 
       expect(description).not_to be_nil, "Argument \"#{name}\" has a nil description"
       expect(description.match?(/^translation missing/i)).to be(false), "Argument \"#{name}\" does not have a valid entry. Ensure `commands.#{command.name}.arguments.#{name}` exists in `config/locales/commands/#{name}/en.yml`"

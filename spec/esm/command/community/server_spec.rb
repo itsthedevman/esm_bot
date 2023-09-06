@@ -1,10 +1,12 @@
 # frozen_string_literal: true
 
 describe ESM::Command::Server::Server, category: "command" do
-  include_context "command_v1"
+  include_context "command"
   include_examples "validate_command"
 
   describe "#execute" do
+    include_context "connection_v1"
+
     it "returns invalid server" do
       expect { execute!(server_id: "esm_test") }.to raise_error(ESM::Exception::CheckFailure)
     end
