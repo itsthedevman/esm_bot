@@ -34,7 +34,7 @@ module ESM
       def find_or_initialize_user
         user = ESM::User.find_by_discord_id(@owner.id)
         @new_user = user.nil?
-        @new_user ? ESM::User.create!(discord_id: @owner.id, discord_username: @owner.name, discord_discriminator: @owner.discriminator) : user
+        @new_user ? ESM::User.create!(discord_id: @owner.id, discord_username: @owner.name) : user
       end
 
       def update_community_name

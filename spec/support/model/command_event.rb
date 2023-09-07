@@ -25,7 +25,6 @@ class CommandEvent
       "pinned" => false,
       "author" => {
         "id" => user.discord_id,
-        "discriminator" => user.discord_discriminator,
         "username" => user.discord_username
       }
     }

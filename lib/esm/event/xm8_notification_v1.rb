@@ -250,7 +250,7 @@ module ESM
 
             direct_message_status = I18n.t(
               "xm8_notifications.log.message_statuses.values.direct_message.#{direct_message}",
-              user: "#{user.discord_username}##{user.discord_discriminator}",
+              user: user.discord_username,
               steam_uid: user.steam_uid
             )
 

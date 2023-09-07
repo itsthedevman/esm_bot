@@ -18,7 +18,6 @@ FactoryBot.define do
 
     discord_id { user[:id] }
     discord_username { user[:name] }
-    discord_discriminator { user[:discriminator] }
     steam_uid { user[:steam_uid] }
     guild_type { :primary }
 
@@ -34,7 +33,6 @@ FactoryBot.define do
 
       discord_id { user[:id] }
       discord_username { discord_user.username }
-      discord_discriminator { discord_user.discriminator }
       steam_uid { user[:steam_uid] }
       guild_type { :primary }
     end
@@ -56,7 +54,6 @@ FactoryBot.define do
 
       discord_id { user[:id] }
       discord_username { user[:name] }
-      discord_discriminator { user[:discriminator] }
       steam_uid { user[:steam_uid] }
       guild_type { :secondary }
     end
@@ -77,7 +74,6 @@ FactoryBot.define do
 
       discord_id { user[:id] }
       discord_username { user[:name] }
-      discord_discriminator { user[:discriminator] }
       role_id { user[:role_id] }
     end
 
@@ -99,7 +95,6 @@ FactoryBot.define do
 
       discord_id { user[:id] }
       discord_username { user[:name] }
-      discord_discriminator { user[:discriminator] }
     end
   end
 end
