@@ -6,8 +6,6 @@ en:
         description_extra: |-
           Community IDs are composed of a few characters that are configured by the server owner
           You may find this by by using the `/community id` on the Discord server for that community
-
-          This argument may be configured to be "autofilled" (also called "defaulted") by you via the [Player dashboard]()
         optional_text: This argument may be excluded if a community is set as a default for you, or the Discord community if you are using this command in a text channel
       target:
         description: "The user that you want to run this command on"
@@ -21,7 +19,6 @@ en:
         description_extra: |-
           Server IDs are composed of a community ID and a custom name, separated by an underscore
           For example: `esm_malden`, `esm_tanoa`, and `esm_some_awesome_server`
-          You may also configure defaults and aliases for this argument via the Player Dashboard on my website
         optional_text: This argument may be excluded if a server is set as a default for you, or the Discord community if you are using this command in a text channel
       territory_id:
         description: "The ID for the territory that you want to run this command on"

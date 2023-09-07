@@ -32,16 +32,24 @@ module ESM
             if current_channel.text? && !notify_when_disabled?
               check_failed!(exception_class: ESM::Exception::CheckFailureNoMessage)
             else
-              check_failed!(:command_not_enabled, user: current_user.mention, command_name: name)
+              check_failed!(
+                :command_not_enabled,
+                user: current_user.mention,
+                command_name: usage(with_args: false)
+              )
             end
           end
 
-          if !whitelisted?
-            check_failed!(:not_whitelisted, user: current_user.mention, command_name: name)
+          if !allowlisted?
+            check_failed!(:not_allowlisted, user: current_user.mention, command_name: usage(with_args: false))
           end
 
           if !allowed?
-            check_failed!(:not_allowed_in_text_channels, user: current_user.mention, command_name: name)
+            check_failed!(
+              :not_allowed_in_text_channels,
+              user: current_user.mention,
+              command_name: usage(with_args: false)
+            )
           end
         end
 
@@ -56,12 +64,20 @@ module ESM
           return if !on_cooldown?
 
           if current_cooldown.cooldown_type == "times"
-            check_failed!(:on_cooldown_useage, user: current_user.mention, command_name: name)
+            check_failed!(
+              :on_cooldown_useage,
+              user: current_user.mention,
+              command_name: usage(with_args: false)
+            )
+
             return
           end
 
           check_failed!(
-            :on_cooldown_time_left, user: current_user.mention, time_left: current_cooldown.to_s, command_name: name
+            :on_cooldown_time_left,
+            user: current_user.mention,
+            time_left: current_cooldown.to_s,
+            command_name: usage(with_args: false)
           )
         end
 
@@ -176,7 +192,11 @@ module ESM
           # I don't use `unless` often, but in this case, it simplifies the logic.
           return unless type == :admin && target_community && (current_community.id != target_community.id)
 
-          check_failed!(:player_mode_command_not_available, user: current_user.mention, command_name: name)
+          check_failed!(
+            :player_mode_command_not_available,
+            user: current_user.mention,
+            command_name: usage(with_args: false)
+          )
         end
 
         def check_for_different_community!

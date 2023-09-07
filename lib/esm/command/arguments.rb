@@ -9,6 +9,9 @@ module ESM
         @command = command
         @templates = templates.symbolize_keys
 
+        # Map the display name to the name itself
+        @display_name_mapping = templates.values.each_with_object({}) { |a, hash| hash[a.display_name] = a.name }
+
         prepare
       end
 
@@ -59,6 +62,13 @@ module ESM
         end
       end
 
+      def template(name)
+        name = name.to_sym
+        mapping = @display_name_mapping[name] || name
+
+        templates[mapping]
+      end
+
       ###
       # Allows referencing arguments that may not exist on the current command, but does on others
       def method_missing(method_name, *arguments, &block)
@@ -76,10 +86,19 @@ module ESM
       def prepare
         return if templates.empty?
 
-        templates.keys.each do |name|
+        templates.values.each do |argument|
+          name = argument.name
+
+          # self[server_id] = nil
           self[name] = nil
 
+          # self.server_id
           define_method(name) { self[name] }
+
+          # self.for #=> server_id
+          define_method(argument.display_name) { self[name] }
+
+          # self.server_id = value
           define_method("#{name}=") { |value| self[name] = value }
         end
       end

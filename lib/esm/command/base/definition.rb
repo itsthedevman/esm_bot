@@ -177,8 +177,8 @@ module ESM
 
             self.attributes = {
               enabled: Define.new(default: true),
-              whitelist_enabled: Define.new(default: false),
-              whitelisted_role_ids: Define.new(default: []),
+              allowlist_enabled: Define.new(default: false),
+              allowlisted_role_ids: Define.new(default: []),
               allowed_in_text_channels: Define.new(default: true),
               cooldown_time: Define.new(default: 2.seconds)
             }

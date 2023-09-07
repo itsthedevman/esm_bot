@@ -19,7 +19,7 @@ module ESM
         # Configuration
         #
 
-        change_attribute :whitelist_enabled, default: true
+        change_attribute :allowlist_enabled, default: true
 
         command_namespace :server, :admin, command_name: :reset_player
         command_type :admin

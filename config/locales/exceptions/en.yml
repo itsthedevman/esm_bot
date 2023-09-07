@@ -35,7 +35,7 @@ en:
     text_only: "Hey %{user}, this command can only be used in a Discord server's **text channel**.\n\n__I will not be able to process your request in this channel__"
     dm_only: "Hey %{user}, this command can only be used in a **Direct Message** with me.\n\nJust right click my name, click **Message**, and send it there"
     command_not_enabled: "Hey %{user}, `%{command_name}` is not enabled for this community"
-    not_whitelisted: "Hey %{user}, you do not have permission to use `%{command_name}`"
+    not_allowlisted: "Hey %{user}, you do not have permission to use `%{command_name}`"
     not_allowed_in_text_channels: "Hey %{user}, `%{command_name}` is not allowed in this Discord's channels.\nTry sending me this command via a **Direct Message**. Just right click my name, click **Message**, and send it there"
     on_cooldown_time_left: "Hey %{user}, you're on cooldown for `%{command_name}`.\nYou have **%{time_left}** left before you can use it again"
     on_cooldown_useage: "Hey %{user}, you've exceeded the amount of times you may use `%{command_name}`."

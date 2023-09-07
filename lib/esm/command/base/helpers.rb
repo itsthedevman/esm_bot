@@ -234,12 +234,12 @@ module ESM
         end
 
         #
-        # Does this command have a whitelist enabled?
+        # Does this command have the allowlist enabled?
         #
         # @return [Boolean]
         #
-        def whitelist_enabled?
-          @whitelist_enabled || false
+        def allowlist_enabled?
+          @allowlist_enabled || false
         end
 
         #

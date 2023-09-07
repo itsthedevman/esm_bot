@@ -156,7 +156,7 @@ module ESM
 
     # Fires when a member joins a Discord server
     def esm_member_join(event)
-      return if ESM.env.development? && ESM.config.dev_user_whitelist.include?(event.user.id.to_s)
+      return if ESM.env.development? && ESM.config.dev_user_allowlist.include?(event.user.id.to_s)
 
       ESM::Event::MemberJoin.new(event).run!
     end

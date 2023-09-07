@@ -35,15 +35,15 @@ module ESM
           end
         end
 
-        def whitelisted?
-          whitelist_enabled =
+        def allowlisted?
+          allowlist_enabled =
             if community_permissions?
-              community_permissions.whitelist_enabled?
+              community_permissions.allowlist_enabled?
             else
-              attributes.whitelist_enabled&.default || type == :admin
+              attributes.allowlist_enabled&.default || type == :admin
             end
 
-          return true if !whitelist_enabled
+          return true if !allowlist_enabled
 
           community = target_community || current_community
           return false if community.nil?
@@ -52,17 +52,17 @@ module ESM
           guild_member = current_user.on(server)
           return false if guild_member.nil?
 
-          whitelisted_role_ids =
+          allowlisted_role_ids =
             if community_permissions?
-              community_permissions.whitelisted_role_ids
+              community_permissions.allowlisted_role_ids
             else
-              attributes.whitelisted_role_ids&.default || []
+              attributes.allowlisted_role_ids&.default || []
             end
 
           return true if guild_member.permission?(:administrator)
-          return false if whitelisted_role_ids.empty?
+          return false if allowlisted_role_ids.empty?
 
-          whitelisted_role_ids.any? { |role_id| guild_member.role?(role_id.to_i) }
+          allowlisted_role_ids.any? { |role_id| guild_member.role?(role_id.to_i) }
         end
 
         # Is the command allowed in this text channel?

@@ -156,16 +156,16 @@ module ESM
               true
             end
 
-          whitelist_enabled =
-            if (define = command.attributes.whitelist_enabled)
+          allowlist_enabled =
+            if (define = command.attributes.allowlist_enabled)
               define.default
             else
               command.type == :admin
             end
 
           # Except this one, but it just looks nice this way
-          whitelisted_role_ids =
-            if (define = command.attributes.whitelisted_role_ids)
+          allowlisted_role_ids =
+            if (define = command.attributes.allowlisted_role_ids)
               define.default
             else
               []
@@ -177,8 +177,8 @@ module ESM
             cooldown_quantity: cooldown_quantity,
             cooldown_type: cooldown_type,
             allowed_in_text_channels: allowed_in_text_channels,
-            whitelist_enabled: whitelist_enabled,
-            whitelisted_role_ids: whitelisted_role_ids
+            allowlist_enabled: allowlist_enabled,
+            allowlisted_role_ids: allowlisted_role_ids
           }
         end
     end

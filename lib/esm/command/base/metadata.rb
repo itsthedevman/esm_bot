@@ -21,13 +21,13 @@ module ESM
             text_only: text_only?,
             dev_only: dev_only?,
             registration_required: registration_required?,
-            whitelist_enabled: whitelist_enabled?,
+            allowlist_enabled: allowlist_enabled?,
             on_cooldown: on_cooldown?,
             permissions: {
               config: community_permissions&.attributes,
               enabled: enabled?,
               allowed: allowed?,
-              whitelisted: whitelisted?,
+              allowlisted: allowlisted?,
               notify_when_disabled: notify_when_disabled?,
               cooldown_time: cooldown_time
             }

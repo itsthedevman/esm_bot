@@ -63,11 +63,11 @@ en:
           title: Player Commands
           description: |-
             These commands are for players to interact with their character in game. They are primarily used in a Direct Message with me, but can be available to use in a community's Discord server or on your own with Player Mode Enabled.
-            Please note, communities have the ability to disable or whitelist commands for their servers, regardless of where the command is used.
+            Please note, communities have the ability to disable or limit access to commands for their servers, regardless of where the command is used.
             More information about a particular command can be found by using `/help with:<command_name>`, replacing `<command_name>` with the name of the command! For example: `/help with:servers` or using the slash variant `/help with:/community servers`
         admin:
           title: Admin Commands
-          description: These commands are locked by default and may only be used by a community's admins and the whitelisted roles.
+          description: These commands are locked by default and may only be used by a community's admins and any allowed roles.
         development:
           title: Development Commands
           description: These commands are only available in development mode.
@@ -75,7 +75,7 @@ en:
         title: "`%{name}` Documentation"
         note: "**Note:**"
         limited_to: This command is available only in a %{channel_type} channel with me.
-        whitelist_enabled: This command may be available only to certain roles.
+        allowlist_enabled: This command may be available only to certain roles.
         usage: "**__Usage__**"
         arguments: "**__Arguments__**"
         examples: "**__Examples__**"

@@ -3,7 +3,7 @@
 module ESM
   class Websocket
     class ServerRequest
-      WHITELISTED_SERVER_COMMANDS = %w[
+      ALLOWLISTED_SERVER_COMMANDS = %w[
         server_initialization
         xm8_notification
         discord_log
@@ -75,7 +75,7 @@ module ESM
       # @private
       # Processes server command that doesn't come from a request.
       def process_server_command
-        return if !WHITELISTED_SERVER_COMMANDS.include?(@message.command)
+        return if !ALLOWLISTED_SERVER_COMMANDS.include?(@message.command)
 
         # Build the class and call it
         "ESM::Event::#{@message.command.classify}V1".constantize.new(

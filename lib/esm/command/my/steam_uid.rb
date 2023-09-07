@@ -10,8 +10,8 @@ module ESM
         #
 
         change_attribute :enabled, modifiable: false
-        change_attribute :whitelist_enabled, modifiable: false
-        change_attribute :whitelisted_role_ids, modifiable: false
+        change_attribute :allowlist_enabled, modifiable: false
+        change_attribute :allowlisted_role_ids, modifiable: false
 
         command_type :player
 

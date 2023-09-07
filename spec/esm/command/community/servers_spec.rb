@@ -12,7 +12,7 @@ describe ESM::Command::Community::Servers, category: "command" do
     it "returns no servers" do
       community.servers.destroy_all
 
-      expect { execute!(fail_on_raise: false, community_id: community.community_id) }.to raise_error(
+      expect { execute!(community_id: community.community_id) }.to raise_error(
         ESM::Exception::CheckFailure, /i was unable to find any registered servers/i
       )
     end
