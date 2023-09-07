@@ -56,15 +56,21 @@ module ESM
 
         counter = 0
         loop do
-          counter += 1
-          user = FactoryBot.build(*args)
-
           if counter > 10
-            ap ESM::User.all.to_a
             raise "Failed to create unique user. Decrease number of calls to ESM::Test.user or add more users to test_data.yml"
           end
 
-          return user if user.save
+          counter += 1
+
+          user = FactoryBot.build(*args)
+          existing_user_query = ESM::User.where(discord_id: user.discord_id).or(
+            ESM::User.where(steam_uid: user.steam_uid)
+          )
+
+          next if existing_user_query.exists?
+
+          user.save!
+          return user
         end
       end
 
