@@ -9,14 +9,11 @@ module ESM
     attribute :cooldown_quantity, :integer, default: 2
     attribute :cooldown_type, :string, default: "seconds"
     attribute :allowed_in_text_channels, :boolean, default: true
-    attribute :whitelist_enabled, :boolean, default: false
-    attribute :whitelisted_role_ids, :json, default: []
+    attribute :allowlist_enabled, :boolean, default: false
+    attribute :allowlisted_role_ids, :json, default: []
     attribute :created_at, :datetime
     attribute :updated_at, :datetime
 
     belongs_to :community
-
-    alias_attribute :allowlist_enabled, :whitelist_enabled
-    alias_attribute :allowlisted_role_ids, :whitelisted_role_ids
   end
 end

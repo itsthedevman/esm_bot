@@ -7,7 +7,6 @@ module ESM
 
     attribute :discord_id, :string
     attribute :discord_username, :string
-    attribute :discord_discriminator, :string
     attribute :discord_avatar, :text, default: nil
     attribute :discord_access_token, :string, default: nil
     attribute :discord_refresh_token, :string, default: nil

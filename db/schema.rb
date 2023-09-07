@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2023_06_09_223251) do
+ActiveRecord::Schema[7.0].define(version: 2023_09_07_230118) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
   enable_extension "plpgsql"
@@ -56,8 +56,8 @@ ActiveRecord::Schema[7.0].define(version: 2023_06_09_223251) do
     t.integer "cooldown_quantity", default: 2
     t.string "cooldown_type", default: "seconds"
     t.boolean "allowed_in_text_channels", default: true
-    t.boolean "whitelist_enabled", default: false
-    t.json "whitelisted_role_ids", default: []
+    t.boolean "allowlist_enabled", default: false
+    t.json "allowlisted_role_ids", default: []
     t.datetime "created_at", precision: nil, null: false
     t.datetime "updated_at", precision: nil, null: false
     t.datetime "deleted_at", precision: nil
@@ -379,7 +379,6 @@ ActiveRecord::Schema[7.0].define(version: 2023_06_09_223251) do
   create_table "users", force: :cascade do |t|
     t.string "discord_id", null: false
     t.string "discord_username", null: false
-    t.string "discord_discriminator", null: false
     t.text "discord_avatar"
     t.string "discord_access_token"
     t.string "discord_refresh_token"
