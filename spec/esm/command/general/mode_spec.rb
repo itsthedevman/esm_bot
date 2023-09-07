@@ -1,106 +1,97 @@
 # frozen_string_literal: true
 
 describe ESM::Command::Community::Mode, category: "command" do
-  let!(:command) { ESM::Command::Community::Mode.new }
-
-  it "should be valid" do
-    expect(command).not_to be_nil
+  include_context "command" do
+    let!(:user_args) { [:owner] }
   end
 
-  it "should have 2 arguments" do
-    expect(command.arguments.size).to eq(2)
-  end
-
-  it "should have a description" do
-    expect(command.description).not_to be_blank
-  end
-
-  it "should have examples" do
-    expect(command.example).not_to be_blank
-  end
+  include_examples "validate_command"
 
   describe "#execute" do
-    # This requires an owner user
-    let!(:community) { ESM::Test.community }
-    let!(:owner) { create(:developer) }
+    context "when player mode is enabled" do
+      before do
+        community.update(player_mode_enabled: true)
+      end
 
-    it "should disable player mode and return an embed" do
-      community.update(player_mode_enabled: true)
+      it "disables player mode" do
+        execution_args = {
+          send_as: user,
+          channel_type: :dm,
+          arguments: {community_id: community.community_id}
+        }
 
-      command_statement = command.statement(community_id: community.community_id, mode: "server")
-      event = CommandEvent.create(command_statement, user: owner, channel_type: :dm)
-      expect { command.execute(event) }.not_to raise_error
+        execute!(**execution_args)
 
-      response = ESM::Test.messages.first.second
-      expect(response).not_to be_nil
-      community.reload
+        response = ESM::Test.messages.first.content
+        expect(response).not_to be_nil
 
-      expect(community.player_mode_enabled?).to be(false)
+        community.reload
+        expect(community.player_mode_enabled?).to be(false)
 
-      expect(response.description).to eq(I18n.t("commands.mode.disabled", community_name: community.name))
-      expect(response.color).to eq(ESM::Color::Toast::GREEN)
-    end
-
-    it "should enable player mode and return an embed" do
-      community.update(player_mode_enabled: false)
-
-      command_statement = command.statement(community_id: community.community_id, mode: "player")
-      event = CommandEvent.create(command_statement, user: owner, channel_type: :dm)
-      expect { command.execute(event) }.not_to raise_error
-
-      response = ESM::Test.messages.first.second
-      expect(response).not_to be_nil
-      community.reload
-
-      expect(community.player_mode_enabled?).to be(true)
-
-      expect(response.description).to eq(I18n.t("commands.mode.enabled", community_name: community.name))
-      expect(response.color).to eq(ESM::Color::Toast::GREEN)
-    end
-
-    it "should raise same_mode error (server)" do
-      community.update(player_mode_enabled: false)
-      command_statement = command.statement(community_id: community.community_id, mode: "server")
-      event = CommandEvent.create(command_statement, user: owner, channel_type: :dm)
-
-      expect { command.execute(event) }.to raise_error do |error|
-        embed = error.data
-        expect(embed.description).to match(/like there's nothing to change! you already have player mode disabled/i)
+        expect(response.description).to eq(I18n.t("commands.mode.disabled", community_name: community.name))
+        expect(response.color).to eq(ESM::Color::Toast::GREEN)
       end
     end
 
-    it "should raise same_mode error (player)" do
-      community.update(player_mode_enabled: true)
-      command_statement = command.statement(community_id: community.community_id, mode: "player")
-      event = CommandEvent.create(command_statement, user: owner, channel_type: :dm)
+    context "when player mode is disabled" do
+      before do
+        community.update(player_mode_enabled: false)
+      end
 
-      expect { command.execute(event) }.to raise_error do |error|
-        embed = error.data
-        expect(embed.description).to match(/like there's nothing to change! you already have player mode enabled/i)
+      it "enables player mode" do
+        execution_args = {
+          send_as: user,
+          channel_type: :dm,
+          arguments: {community_id: community.community_id}
+        }
+
+        execute!(**execution_args)
+
+        response = ESM::Test.messages.first.content
+        expect(response).not_to be_nil
+        community.reload
+
+        expect(community.player_mode_enabled?).to be(true)
+
+        expect(response.description).to eq(I18n.t("commands.mode.enabled", community_name: community.name))
+        expect(response.color).to eq(ESM::Color::Toast::GREEN)
+      end
+
+      context "when there are servers" do
+        before do
+          # Create a server so there is one
+          ESM::Test.server
+        end
+
+        it "raises an exception" do
+          execution_args = {
+            send_as: user,
+            channel_type: :dm,
+            arguments: {community_id: community.community_id}
+          }
+
+          expect { execute!(**execution_args) }.to raise_error do |error|
+            embed = error.data
+            expect(embed.description).to match(/in order to enable player mode you must remove any servers you've registered via my/i)
+          end
+        end
       end
     end
 
-    it "should raise servers error" do
-      # We need to create a server
-      ESM::Test.server
-      community.update(player_mode_enabled: false)
-      command_statement = command.statement(community_id: community.community_id, mode: "player")
-      event = CommandEvent.create(command_statement, user: owner, channel_type: :dm)
+    context "when the user is not the owner" do
+      it "raises an exception" do
+        non_owner = ESM::Test.user
 
-      expect { command.execute(event) }.to raise_error do |error|
-        embed = error.data
-        expect(embed.description).to match(/in order to enable player mode, you must remove any servers you have added to me via my/i)
-      end
-    end
+        execution_args = {
+          send_as: non_owner,
+          channel_type: :dm,
+          arguments: {community_id: community.community_id}
+        }
 
-    it "should not be allowed" do
-      non_owner = ESM::Test.user
-      command_statement = command.statement(community_id: community.community_id, mode: "player")
-      event = CommandEvent.create(command_statement, user: non_owner, channel_type: :dm)
-
-      expect { command.execute(event) }.to raise_error do |error|
-        embed = error.data
-        expect(embed.description).to match(/only the owner of this community has access to this command/i)
+        expect { execute!(**execution_args) }.to raise_error do |error|
+          embed = error.data
+          expect(embed.description).to match(/only the owner of this community has access to this command/i)
+        end
       end
     end
   end

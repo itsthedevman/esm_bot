@@ -80,5 +80,26 @@ FactoryBot.define do
       discord_discriminator { user[:discriminator] }
       role_id { user[:role_id] }
     end
+
+    trait :owner do
+      transient do
+        user do
+          owner_id = ESM::Test.data[guild_type][:owner_id]
+          raise "'owner_id' entry in '#{guild_type}' test data is invalid" if owner_id.blank?
+
+          discord_user = ESM.bot.user(owner_id)
+
+          {
+            id: owner_id,
+            name: discord_user.username,
+            discriminator: discord_user.discriminator
+          }
+        end
+      end
+
+      discord_id { user[:id] }
+      discord_username { user[:name] }
+      discord_discriminator { user[:discriminator] }
+    end
   end
 end

@@ -32,7 +32,7 @@ describe ESM::Command::Territory::ServerTerritories, category: "command" do
       before do
         # Grant everyone access to use this command
         configuration = community.command_configurations.where(command_name: "server_territories").first
-        configuration.update(whitelist_enabled: false)
+        configuration.update(allowlist_enabled: false)
 
         wait_for { wsc.connected? }.to be(true)
       end

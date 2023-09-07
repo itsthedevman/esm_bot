@@ -12,8 +12,8 @@ RSpec.shared_examples("validate_command") do
   it "has the required defines" do
     defines = command.attributes.to_h
     expect(defines).to have_key(:enabled)
-    expect(defines).to have_key(:whitelist_enabled)
-    expect(defines).to have_key(:whitelisted_role_ids)
+    expect(defines).to have_key(:allowlist_enabled)
+    expect(defines).to have_key(:allowlisted_role_ids)
     expect(defines).to have_key(:allowed_in_text_channels)
     expect(defines).to have_key(:cooldown_time)
   end

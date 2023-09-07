@@ -8,7 +8,7 @@ FactoryBot.define do
     cooldown_quantity { 2 }
     cooldown_type { "seconds" }
     allowed_in_text_channels { true }
-    whitelist_enabled { false }
-    whitelisted_role_ids { [] }
+    allowlist_enabled { false }
+    allowlisted_role_ids { [] }
   end
 end

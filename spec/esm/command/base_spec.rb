@@ -40,10 +40,10 @@ describe ESM::Command::Base do
       expect(command.attributes).not_to be_nil
       expect(command.attributes.enabled.modifiable).to be(true)
       expect(command.attributes.enabled.default).to be(true)
-      expect(command.attributes.whitelist_enabled.modifiable).to be(true)
-      expect(command.attributes.whitelist_enabled.default).to eq(false)
-      expect(command.attributes.whitelisted_role_ids.modifiable).to be(true)
-      expect(command.attributes.whitelisted_role_ids.default).to eq([])
+      expect(command.attributes.allowlist_enabled.modifiable).to be(true)
+      expect(command.attributes.allowlist_enabled.default).to eq(false)
+      expect(command.attributes.allowlisted_role_ids.modifiable).to be(true)
+      expect(command.attributes.allowlisted_role_ids.default).to eq([])
       expect(command.attributes.allowed_in_text_channels.modifiable).to be(true)
       expect(command.attributes.allowed_in_text_channels.default).to be(true)
       expect(command.attributes.cooldown_time.modifiable).to be(true)
@@ -658,27 +658,27 @@ describe ESM::Command::Base do
     end
 
     let!(:configuration) { ESM::CommandConfiguration.where(command_name: command.name).first }
-    let(:whitelisted_role_ids) { community.role_ids }
+    let(:allowlisted_role_ids) { community.role_ids }
 
     describe "Text Channel" do
       describe "Allowed" do
-        it "enabled: true, whitelist_enabled: false, whitelisted: false, allowed: true" do
+        it "enabled: true, allowlist_enabled: false, allowlisted: false, allowed: true" do
           configuration.update!(
             enabled: true,
-            whitelist_enabled: false,
-            whitelisted_role_ids: [],
+            allowlist_enabled: false,
+            allowlisted_role_ids: [],
             allowed_in_text_channels: true
           )
 
           execute!(community_id: community.community_id)
         end
 
-        it "enabled: true, whitelist_enabled: true, whitelisted: true, allowed: true" do
+        it "enabled: true, allowlist_enabled: true, allowlisted: true, allowed: true" do
           role_user = ESM::Test.user(:with_role)
           configuration.update!(
             enabled: true,
-            whitelist_enabled: true,
-            whitelisted_role_ids: whitelisted_role_ids,
+            allowlist_enabled: true,
+            allowlisted_role_ids: allowlisted_role_ids,
             allowed_in_text_channels: true
           )
 
@@ -688,11 +688,11 @@ describe ESM::Command::Base do
       end
 
       describe "Denied" do
-        it "enabled: false, whitelist_enabled: false, whitelisted: false, allowed: false" do
+        it "enabled: false, allowlist_enabled: false, allowlisted: false, allowed: false" do
           configuration.update!(
             enabled: false,
-            whitelist_enabled: false,
-            whitelisted_role_ids: [],
+            allowlist_enabled: false,
+            allowlisted_role_ids: [],
             allowed_in_text_channels: false
           )
 
@@ -726,11 +726,11 @@ describe ESM::Command::Base do
           expect(ESM::Test.messages.size).to eq(0)
         end
 
-        it "enabled: false, whitelist_enabled: false, whitelisted: false, allowed: true" do
+        it "enabled: false, allowlist_enabled: false, allowlisted: false, allowed: true" do
           configuration.update!(
             enabled: false,
-            whitelist_enabled: false,
-            whitelisted_role_ids: [],
+            allowlist_enabled: false,
+            allowlisted_role_ids: [],
             allowed_in_text_channels: true
           )
 
@@ -739,11 +739,11 @@ describe ESM::Command::Base do
           }.to raise_error(ESM::Exception::CheckFailure, /not enabled/i)
         end
 
-        it "enabled: false, whitelist_enabled: true, whitelisted: false, allowed: false" do
+        it "enabled: false, allowlist_enabled: true, allowlisted: false, allowed: false" do
           configuration.update!(
             enabled: false,
-            whitelist_enabled: true,
-            whitelisted_role_ids: [],
+            allowlist_enabled: true,
+            allowlisted_role_ids: [],
             allowed_in_text_channels: false
           )
 
@@ -752,11 +752,11 @@ describe ESM::Command::Base do
           }.to raise_error(ESM::Exception::CheckFailure, /not enabled/i)
         end
 
-        it "enabled: false, whitelist_enabled: true, whitelisted: true, allowed: false" do
+        it "enabled: false, allowlist_enabled: true, allowlisted: true, allowed: false" do
           configuration.update!(
             enabled: false,
-            whitelist_enabled: true,
-            whitelisted_role_ids: whitelisted_role_ids,
+            allowlist_enabled: true,
+            allowlisted_role_ids: allowlisted_role_ids,
             allowed_in_text_channels: false
           )
 
@@ -765,11 +765,11 @@ describe ESM::Command::Base do
           }.to raise_error(ESM::Exception::CheckFailure, /not enabled/i)
         end
 
-        it "enabled: false, whitelist_enabled: true, whitelisted: true, allowed: true" do
+        it "enabled: false, allowlist_enabled: true, allowlisted: true, allowed: true" do
           configuration.update!(
             enabled: false,
-            whitelist_enabled: true,
-            whitelisted_role_ids: whitelisted_role_ids,
+            allowlist_enabled: true,
+            allowlisted_role_ids: allowlisted_role_ids,
             allowed_in_text_channels: true
           )
 
@@ -778,11 +778,11 @@ describe ESM::Command::Base do
           }.to raise_error(ESM::Exception::CheckFailure, /not enabled/i)
         end
 
-        it "enabled: true, whitelist_enabled: false, whitelisted: false, allowed: false" do
+        it "enabled: true, allowlist_enabled: false, allowlisted: false, allowed: false" do
           configuration.update!(
             enabled: true,
-            whitelist_enabled: false,
-            whitelisted_role_ids: [],
+            allowlist_enabled: false,
+            allowlisted_role_ids: [],
             allowed_in_text_channels: false
           )
 
@@ -791,12 +791,12 @@ describe ESM::Command::Base do
           }.to raise_error(ESM::Exception::CheckFailure, /not allowed/i)
         end
 
-        it "enabled: true, whitelist_enabled: true, whitelisted: false, allowed: true" do
+        it "enabled: true, allowlist_enabled: true, allowlisted: false, allowed: true" do
           role_user = ESM::Test.user(:with_role)
           configuration.update!(
             enabled: true,
-            whitelist_enabled: true,
-            whitelisted_role_ids: [],
+            allowlist_enabled: true,
+            allowlisted_role_ids: [],
             allowed_in_text_channels: true
           )
 
@@ -805,11 +805,11 @@ describe ESM::Command::Base do
           }.to raise_error(ESM::Exception::CheckFailure, /not have permission/i)
         end
 
-        it "enabled: true, whitelist_enabled: true, whitelisted: true, allowed: false" do
+        it "enabled: true, allowlist_enabled: true, allowlisted: true, allowed: false" do
           configuration.update!(
             enabled: true,
-            whitelist_enabled: true,
-            whitelisted_role_ids: whitelisted_role_ids,
+            allowlist_enabled: true,
+            allowlisted_role_ids: allowlisted_role_ids,
             allowed_in_text_channels: false
           )
 
@@ -822,46 +822,46 @@ describe ESM::Command::Base do
 
     describe "Private Message" do
       describe "Allowed" do
-        it "enabled: true, whitelist_enabled: false, whitelisted: false, allowed: true" do
+        it "enabled: true, allowlist_enabled: false, allowlisted: false, allowed: true" do
           configuration.update!(
             enabled: true,
-            whitelist_enabled: false,
-            whitelisted_role_ids: [],
+            allowlist_enabled: false,
+            allowlisted_role_ids: [],
             allowed_in_text_channels: true
           )
 
           execute!(channel_type: :pm, community_id: community.community_id)
         end
 
-        it "enabled: true, whitelist_enabled: true, whitelisted: true, allowed: true" do
+        it "enabled: true, allowlist_enabled: true, allowlisted: true, allowed: true" do
           role_user = ESM::Test.user(:with_role)
           configuration.update!(
             enabled: true,
-            whitelist_enabled: true,
-            whitelisted_role_ids: whitelisted_role_ids,
+            allowlist_enabled: true,
+            allowlisted_role_ids: allowlisted_role_ids,
             allowed_in_text_channels: true
           )
 
           execute!(send_as: role_user, channel_type: :pm, community_id: community.community_id)
         end
 
-        it "enabled: true, whitelist_enabled: false, whitelisted: false, allowed: false" do
+        it "enabled: true, allowlist_enabled: false, allowlisted: false, allowed: false" do
           configuration.update!(
             enabled: true,
-            whitelist_enabled: false,
-            whitelisted_role_ids: [],
+            allowlist_enabled: false,
+            allowlisted_role_ids: [],
             allowed_in_text_channels: false
           )
 
           execute!(channel_type: :pm, community_id: community.community_id)
         end
 
-        it "enabled: true, whitelist_enabled: true, whitelisted: true, allowed: false" do
+        it "enabled: true, allowlist_enabled: true, allowlisted: true, allowed: false" do
           role_user = ESM::Test.user(:with_role)
           configuration.update!(
             enabled: true,
-            whitelist_enabled: true,
-            whitelisted_role_ids: whitelisted_role_ids,
+            allowlist_enabled: true,
+            allowlisted_role_ids: allowlisted_role_ids,
             allowed_in_text_channels: false
           )
 
@@ -892,11 +892,11 @@ describe ESM::Command::Base do
           }.to raise_error(ESM::Exception::CheckFailure, /not enabled/i)
         end
 
-        it "enabled: false, whitelist_enabled: false, whitelisted: false, allowed: false" do
+        it "enabled: false, allowlist_enabled: false, allowlisted: false, allowed: false" do
           configuration.update!(
             enabled: false,
-            whitelist_enabled: false,
-            whitelisted_role_ids: [],
+            allowlist_enabled: false,
+            allowlisted_role_ids: [],
             allowed_in_text_channels: false
           )
 
@@ -905,11 +905,11 @@ describe ESM::Command::Base do
           }.to raise_error(ESM::Exception::CheckFailure, /not enabled/i)
         end
 
-        it "enabled: false, whitelist_enabled: false, whitelisted: false, allowed: true" do
+        it "enabled: false, allowlist_enabled: false, allowlisted: false, allowed: true" do
           configuration.update!(
             enabled: false,
-            whitelist_enabled: false,
-            whitelisted_role_ids: [],
+            allowlist_enabled: false,
+            allowlisted_role_ids: [],
             allowed_in_text_channels: true
           )
 
@@ -918,11 +918,11 @@ describe ESM::Command::Base do
           }.to raise_error(ESM::Exception::CheckFailure, /not enabled/i)
         end
 
-        it "enabled: false, whitelist_enabled: true, whitelisted: false, allowed: false" do
+        it "enabled: false, allowlist_enabled: true, allowlisted: false, allowed: false" do
           configuration.update!(
             enabled: false,
-            whitelist_enabled: true,
-            whitelisted_role_ids: [],
+            allowlist_enabled: true,
+            allowlisted_role_ids: [],
             allowed_in_text_channels: false
           )
 
@@ -936,11 +936,11 @@ describe ESM::Command::Base do
           }.to raise_error(ESM::Exception::CheckFailure, /not enabled/i)
         end
 
-        it "enabled: false, whitelist_enabled: true, whitelisted: true, allowed: false" do
+        it "enabled: false, allowlist_enabled: true, allowlisted: true, allowed: false" do
           configuration.update!(
             enabled: false,
-            whitelist_enabled: true,
-            whitelisted_role_ids: community.role_ids,
+            allowlist_enabled: true,
+            allowlisted_role_ids: community.role_ids,
             allowed_in_text_channels: false
           )
 
@@ -954,11 +954,11 @@ describe ESM::Command::Base do
           }.to raise_error(ESM::Exception::CheckFailure, /not enabled/i)
         end
 
-        it "enabled: false, whitelist_enabled: true, whitelisted: true, allowed: true" do
+        it "enabled: false, allowlist_enabled: true, allowlisted: true, allowed: true" do
           configuration.update!(
             enabled: false,
-            whitelist_enabled: true,
-            whitelisted_role_ids: whitelisted_role_ids,
+            allowlist_enabled: true,
+            allowlisted_role_ids: allowlisted_role_ids,
             allowed_in_text_channels: true
           )
 
@@ -967,12 +967,12 @@ describe ESM::Command::Base do
           }.to raise_error(ESM::Exception::CheckFailure, /not enabled/i)
         end
 
-        it "enabled: true, whitelist_enabled: true, whitelisted: false, allowed: true" do
+        it "enabled: true, allowlist_enabled: true, allowlisted: false, allowed: true" do
           role_user = ESM::Test.user(:with_role)
           configuration.update!(
             enabled: true,
-            whitelist_enabled: true,
-            whitelisted_role_ids: [],
+            allowlist_enabled: true,
+            allowlisted_role_ids: [],
             allowed_in_text_channels: true
           )
 
