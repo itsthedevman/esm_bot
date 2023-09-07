@@ -16,7 +16,7 @@ module ESM
 
     belongs_to :community
 
-    alias_method :allowlist_enabled?, :whitelist_enabled?
-    alias_method :allowlisted_role_ids, :whitelisted_role_ids
+    alias_attribute :allowlist_enabled, :whitelist_enabled
+    alias_attribute :allowlisted_role_ids, :whitelisted_role_ids
   end
 end

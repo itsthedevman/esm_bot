@@ -33,10 +33,12 @@ module ESM
 
         def on_execute
           check_for_owner!
-          check_for_active_servers! if enable_player_mode?
+
+          enable_player_mode = !target_community.player_mode_enabled?
+          check_for_active_servers! if enable_player_mode
 
           # Flip it, flip it good
-          target_community.update!(player_mode_enabled: enable_player_mode?)
+          target_community.update!(player_mode_enabled: enable_player_mode)
 
           # Reply back
           embed =
@@ -52,11 +54,6 @@ module ESM
         end
 
         private
-
-        # Attempt to flip the value and see what happens :D
-        def enable_player_mode?
-          @enable_player_mode ||= !target_community.player_mode_enabled?
-        end
 
         def check_for_active_servers!
           check_failed!(:servers_exist, user: current_user.mention) if target_community.servers.any?

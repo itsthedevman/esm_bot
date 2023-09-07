@@ -13,6 +13,12 @@ module ESM
           def initialize(modifiable: true, default: nil)
             super(modifiable: modifiable, default: default)
           end
+
+          def default?
+            return false if default.nil?
+
+            !!default
+          end
         end
 
         included do

@@ -40,7 +40,7 @@ module ESM
             if community_permissions?
               community_permissions.allowlist_enabled?
             else
-              attributes.allowlist_enabled&.default || type == :admin
+              !!attributes.allowlist_enabled.default
             end
 
           return true if !allowlist_enabled
@@ -56,7 +56,7 @@ module ESM
             if community_permissions?
               community_permissions.allowlisted_role_ids
             else
-              attributes.allowlisted_role_ids&.default || []
+              attributes.allowlisted_role_ids.default || []
             end
 
           return true if guild_member.permission?(:administrator)
@@ -69,12 +69,12 @@ module ESM
         def allowed?
           return true if current_channel.pm?
           return true if current_community&.player_mode_enabled?
+          return community_permissions.allowed_in_text_channels? if community_permissions?
 
-          if community_permissions?
-            community_permissions.allowed_in_text_channels?
-          else
-            attributes.allowed_in_text_channels&.default || true
-          end
+          allowed_define = attributes.allowed_in_text_channels
+          return allowed_define.default if allowed_define.default?
+
+          true
         end
       end
     end
