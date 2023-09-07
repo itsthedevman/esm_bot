@@ -150,7 +150,7 @@ module ESM
 
             # Create the user if its nil
             user = ESM::User.new(discord_id: target) if user.nil?
-            user.update(discord_username: discord_user.username, discord_avatar: discord_user.avatar_url)
+            user.update!(discord_username: discord_user.username, discord_avatar: discord_user.avatar_url)
 
             # Save some cycles
             user.instance_variable_set(:@discord_user, discord_user)

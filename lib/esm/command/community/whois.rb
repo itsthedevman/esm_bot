@@ -33,8 +33,8 @@ module ESM
 
           embed =
             ESM::Embed.build do |e|
-              add_discord_info(e) if target_user.discord_user.is_a?(Discordrb::User)
-              add_steam_info(e) if target_user.registered?
+              add_discord_info(e) if target_user.is_a?(ESM::User)
+              add_steam_info(e)
             end
 
           reply(embed)
@@ -97,7 +97,7 @@ module ESM
           return if current_user.developer?
 
           # This is just a steam uid, go ahead and allow it.
-          return if !target_user.is_a?(ESM::User::Ephemeral)
+          return if target_user.is_a?(ESM::User::Ephemeral)
 
           # Ensure the user in question is a member of the current Discord. This keeps players from inviting ESM and abusing the command to find admins of other servers.
           return if current_community.discord_server.member(target_user.discord_id.to_i).present?
