@@ -15,7 +15,8 @@ module ESM
             # Calls .seconds, .days, .months, etc
             community_permissions.cooldown_quantity.send(community_permissions.cooldown_type)
           else
-            attributes.cooldown_time&.default || 2.seconds
+            cooldown_time = attributes.cooldown_time
+            cooldown_time.default? ? cooldown_time.default : 2.seconds
           end
         end
 
@@ -23,7 +24,8 @@ module ESM
           if community_permissions?
             community_permissions.enabled?
           else
-            attributes.enabled&.default || true
+            enabled = attributes.enabled
+            enabled.default? ? enabled.default : true
           end
         end
 
@@ -35,15 +37,17 @@ module ESM
           end
         end
 
-        def allowlisted?
-          allowlist_enabled =
-            if community_permissions?
-              community_permissions.allowlist_enabled?
-            else
-              !!attributes.allowlist_enabled.default
-            end
+        def allowlist_enabled?
+          if community_permissions?
+            community_permissions.allowlist_enabled?
+          else
+            allowlist_enabled = attributes.allowlist_enabled
+            allowlist_enabled.default? ? allowlist_enabled.default : false
+          end
+        end
 
-          return true if !allowlist_enabled
+        def allowlisted?
+          return true if !allowlist_enabled?
 
           community = target_community || current_community
           return false if community.nil?
