@@ -34,7 +34,8 @@ module ESM
         #
 
         # See Argument::DEFAULTS[:target]
-        argument :target, display_name: :for
+        # Checked against: This is removed because target can be a standard target or anything else
+        argument :target, display_name: :for, checked_against: nil
 
         # See Argument::DEFAULTS[:server_id]
         argument :server_id, display_name: :on

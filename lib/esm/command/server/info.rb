@@ -9,16 +9,16 @@ module ESM
         # Arguments (required first, then order matters)
         #
 
+        # See Argument::DEFAULTS[:server_id]
+        argument :server_id, display_name: :on
+
         # See Argument::DEFAULTS[:target]
         # Optional: This command works for players or territories
-        argument :target, required: false, display_name: :whom
+        argument :target, display_name: :whom, required: false
 
         # See Argument::DEFAULTS[:territory_id]
         # Optional: This command works for players or territories
-        argument :territory_id, required: false, display_name: :territory
-
-        # See Argument::DEFAULTS[:server_id]
-        argument :server_id, display_name: :on
+        argument :territory_id, display_name: :territory, required: false
 
         #
         # Configuration
