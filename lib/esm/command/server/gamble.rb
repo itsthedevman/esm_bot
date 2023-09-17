@@ -10,7 +10,7 @@ module ESM
         #
 
         # Required: Needed by command
-        argument :amount, required: true, checked_against: /(?!-\d+$)\d+|half|all|stats/
+        argument :amount, checked_against: /(?!-\d+$)\d+|half|all|stats/
 
         # See Argument::DEFAULTS[:server_id]
         argument :server_id, display_name: :on
@@ -27,7 +27,7 @@ module ESM
         #################################
 
         def on_execute
-          return reply(send_stats) if arguments.amount == "stats"
+          return reply(send_stats) if arguments.amount.nil? || arguments.amount == "stats"
 
           check_for_connected_server!
           check_for_bad_amount!
@@ -37,7 +37,7 @@ module ESM
             uid: current_user.steam_uid,
             amount: arguments.amount,
             id: current_user.discord_id,
-            name: current_user.name
+            name: current_user.username
           )
         end
 

@@ -17,6 +17,7 @@ en:
 
         ```
         /server gamble amount:stats on:esm_namalsk
+        /server gamble on:esm_namalsk
         ```Displays gambling statistics for server `esm_namalsk`
       arguments:
         amount:
