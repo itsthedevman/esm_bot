@@ -257,7 +257,15 @@ module ESM
       counter = 0
       match = nil
       invalid_response = format_invalid_response(expected)
-      responding_user = user(responding_user)
+
+      responding_user =
+        if responding_user.is_a?(String)
+          user(responding_user)
+        elsif responding_user.is_a?(ESM::User)
+          responding_user.discord_user
+        else
+          responding_user
+        end
 
       while match.nil? && counter < 99
         response =
@@ -272,7 +280,12 @@ module ESM
         break if response.nil?
 
         # Parse the match from the event
-        match = response.message.content.match(Regexp.new("(#{expected.map(&:downcase).join("|")})", Regexp::IGNORECASE))
+        match = response.message.content.match(
+          Regexp.new(
+            "(#{expected.map(&:downcase).join("|")})",
+            Regexp::IGNORECASE
+          )
+        )
 
         # We found what we were looking for
         break if !match.nil?
