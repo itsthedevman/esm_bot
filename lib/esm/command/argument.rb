@@ -349,9 +349,9 @@ module ESM
 
       def format(value)
         value =
-          if value.present?
+          if value.is_a?(String)
             preserve_case? ? value.strip : value.downcase.strip
-          elsif default_value?
+          elsif value.nil? && default_value?
             default
           else
             value
@@ -376,15 +376,17 @@ module ESM
       end
 
       def check_for_valid_content!(command, content)
-        return if optional? && content.blank?
+        return if validator.nil? && optional? && content.blank?
         return unless validator
 
         success =
           case validator
           when Regexp, String
-            content.match?(validator)
+            content.to_s.match?(validator)
           when Proc
             command.instance_exec(content, &validator)
+          when Array
+            validator.include?(content)
           end
 
         return if success
