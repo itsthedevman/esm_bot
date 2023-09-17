@@ -376,7 +376,7 @@ module ESM
       end
 
       def check_for_valid_content!(command, content)
-        return if content.nil? && required?
+        return if optional? && content.blank?
         return unless validator
 
         success =

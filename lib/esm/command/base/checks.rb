@@ -12,7 +12,7 @@ module ESM
           # DM commands are allowed in player mode
           return if current_community&.player_mode_enabled?
 
-          check_failed!(:dm_only, user: current_user.mention) if dm_only? && !current_channel.dm?
+          check_failed!(:dm_only, user: current_user.mention) if dm_only? && !current_channel.pm?
         end
 
         def check_for_owner!

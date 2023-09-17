@@ -203,7 +203,7 @@ module ESM
         # @return [Boolean]
         #
         def dm_only?
-          @limited_to == :dm
+          limited_to == :dm
         end
 
         #
@@ -212,7 +212,7 @@ module ESM
         # @return [Boolean]
         #
         def text_only?
-          @limited_to == :text
+          limited_to == :text
         end
 
         #
@@ -231,15 +231,6 @@ module ESM
         #
         def registration_required?
           requirements.registration?
-        end
-
-        #
-        # Does this command have the allowlist enabled?
-        #
-        # @return [Boolean]
-        #
-        def allowlist_enabled?
-          @allowlist_enabled || false
         end
 
         #

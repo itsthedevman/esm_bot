@@ -97,7 +97,7 @@ module ESM
             e.title = I18n.t("commands.broadcast.broadcast_embed.title", community_name: current_community.community_name, server_ids: server_ids)
             e.description = arguments.message
             e.color = :orange
-            e.footer = I18n.t("commands.broadcast.broadcast_embed.footer", prefix: prefix)
+            e.footer = I18n.t("commands.broadcast.broadcast_embed.footer")
           end
         end
 
