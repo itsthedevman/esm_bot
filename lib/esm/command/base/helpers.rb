@@ -119,7 +119,7 @@ module ESM
         #
         def target_user
           @target_user ||= begin
-            return if arguments.target.nil?
+            return unless arguments.target&.match?(ESM::Regex::TARGET)
 
             # This could be a steam_uid, discord id, or mention
             target = arguments.target
