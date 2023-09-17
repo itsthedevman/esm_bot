@@ -3,6 +3,7 @@ RSpec.shared_context("connection_v1") do
   let!(:server) { ESM::Test.server }
   let!(:wsc) { WebsocketClient.new(server) }
   let(:connection) { ESM::Websocket.connections[server.server_id] }
+  let(:response) { command.response }
 
   before do
     wait_for { wsc.connected? }.to be(true)
