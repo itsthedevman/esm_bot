@@ -13,11 +13,18 @@ RSpec.shared_context("command") do
   # @param send_as [ESM::User] The user to send the message as. Defaults to the `user` let binding
   # @param command_override [ESM::Command] The command to execute. Defaults to the `command` let binding
   # @param channel [Discordrb::Channel, nil] The channel to execute the command in
-  # @param **command_args [Hash] Any arguments the command is expecting as key: value pairs
+  # @param arguments [Hash] Any arguments the command is expecting as key: value pairs
+  # @param prompt_response [String, nil] Optional. The value to set as the user's "response" to ESM prompting them
   #
-  def execute!(channel_type: :text, send_as: user, command: self.command, channel: nil, arguments: {})
+  def execute!(**opts)
+    channel_type = opts.delete(:channel_type) || :text
+    send_as = opts.delete(:user) || user
+    command = opts.delete(:command) || self.command
+    arguments = opts.delete(:arguments) || {}
+    prompt_response = opts.delete(:prompt_response)
+
     channel =
-      if channel
+      if (channel = opts.delete(:channel))
         channel
       elsif channel_type == :text
         ESM::Test.data[user.guild_type][:channels].sample
@@ -56,12 +63,17 @@ RSpec.shared_context("command") do
       data[:data][:options] = [{type: 1, name: command.command_name, options: options}]
     end
 
-    event = Discordrb::Events::ApplicationCommandEvent.new(data.deep_stringify_keys, ESM.bot)
+    respond_to_prompt(prompt_response) if prompt_response
 
+    event = Discordrb::Events::ApplicationCommandEvent.new(data.deep_stringify_keys, ESM.bot)
     command.execute(ESM::Event::ApplicationCommand.new(event))
   end
 
   def wait_for_completion!(event = :on_execute)
     wait_for { command.timers.public_send(event.to_sym).finished? }.to be(true)
+  end
+
+  def respond_to_prompt(response)
+    ESM::Test.response = response
   end
 end

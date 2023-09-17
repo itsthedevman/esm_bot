@@ -17,7 +17,7 @@ FactoryBot.define do
     # attribute :created_at, :datetime
     # attribute :updated_at, :datetime
     command_name { "base" }
-    cooldown_quantity { 10 }
+    cooldown_quantity { 2 }
     cooldown_type { "seconds" }
     expires_at { 1.second.ago }
 
