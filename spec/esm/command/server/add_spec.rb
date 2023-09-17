@@ -1,121 +1,114 @@
 # frozen_string_literal: true
 
 describe ESM::Command::Territory::Add, category: "command" do
-  let!(:command) { ESM::Command::Territory::Add.new }
-
   describe "V1" do
-    it "should be valid" do
-      expect(command).not_to be_nil
-    end
-
-    it "should have 3 argument" do
-      expect(command.arguments.size).to eq(3)
-    end
-
-    it "should have a description" do
-      expect(command.description).not_to be_blank
-    end
-
-    it "should have examples" do
-      expect(command.example).not_to be_blank
-    end
+    include_context "command"
+    include_examples "validate_command"
 
     describe "#execute" do
-      let!(:community) { ESM::Test.community }
-      let!(:server) { ESM::Test.server }
-      let!(:user) { ESM::Test.user }
-      let(:second_user) { ESM::Test.user }
-      let!(:wsc) { WebsocketClient.new(server) }
-      let(:connection) { ESM::Websocket.connections[server.server_id] }
-      let(:response) { command.response }
+      include_context "connection_v1"
 
-      before do
-        wait_for { wsc.connected? }.to be(true)
-      end
+      context "when the target user is unregistered" do
+        it "raises an exception" do
+          second_user.update(steam_uid: nil)
 
-      after do
-        wsc.disconnect!
-      end
+          execution_args = {
+            channel_type: :dm,
+            arguments: {
+              server_id: server.server_id,
+              territory_id: Faker::Crypto.md5[0, 5],
+              target: second_user.mention
+            }
+          }
 
-      it "should not allow an unregistered user" do
-        second_user.update(steam_uid: nil)
-        command_statement = command.statement(
-          server_id: server.server_id,
-          territory_id: Faker::Crypto.md5[0, 5],
-          target: second_user.mention
-        )
-
-        event = CommandEvent.create(command_statement, user: user, channel_type: :dm)
-
-        expect { command.execute(event) }.to raise_error(ESM::Exception::CheckFailure) do |error|
-          embed = error.data
-          expect(embed.description).to match(/has not registered with me yet. tell them to head over/i)
+          expect { execute!(**execution_args) }.to raise_error(ESM::Exception::CheckFailure) do |error|
+            embed = error.data
+            expect(embed.description).to match(/#{second_user.mention} has not registered with me yet. tell them to head over/i)
+          end
         end
       end
 
-      it "should add (Different user)" do
-        command_statement = command.statement(
-          server_id: server.server_id,
-          territory_id: Faker::Crypto.md5[0, 5],
-          target: second_user.mention
-        )
+      context "when the target is an unregistered steam uid" do
+        it "raises an exception" do
+          steam_uid = second_user.steam_uid
+          second_user.update(steam_uid: "")
 
-        event = CommandEvent.create(command_statement, user: user, channel_type: :dm)
-        expect { command.execute(event) }.not_to raise_error
-        wait_for { ESM::Test.messages.size }.to eq(2)
+          execution_args = {
+            channel_type: :dm,
+            arguments: {
+              server_id: server.server_id,
+              territory_id: Faker::Crypto.md5[0, 5],
+              target: steam_uid
+            }
+          }
 
-        embed = ESM::Test.messages.first.second
-
-        # Checks for requestors message
-        expect(embed).not_to be_nil
-
-        # Checks for requestees message
-        expect(ESM::Test.messages.size).to eq(2)
-
-        # Process the request
-        request = command.request
-        expect(request).not_to be_nil
-
-        # Respond to the request
-        request.respond(true)
-
-        # Reset so we can track the response
-        ESM::Test.messages.clear
-
-        # Wait for the server to respond
-        wait_for { ESM::Test.messages.size }.to eq(2)
-
-        expect(ESM::Test.messages.size).to eq(2)
+          expect { execute!(**execution_args) }.to raise_error(ESM::Exception::CheckFailure) do |error|
+            expect(error.data.description).to match(/hey #{user.mention}, #{steam_uid} has not registered with me yet/i)
+          end
+        end
       end
 
-      it "should add (Same user / Territory Admin)" do
-        command_statement = command.statement(server_id: server.server_id, territory_id: Faker::Crypto.md5[0, 5], target: user.mention)
-        event = CommandEvent.create(command_statement, user: user, channel_type: :dm)
+      context "when the target user is registered" do
+        it "adds the user" do
+          execute!(
+            channel_type: :dm,
+            arguments: {
+              server_id: server.server_id,
+              territory_id: Faker::Crypto.md5[0, 5],
+              target: second_user.mention
+            }
+          )
 
-        expect { command.execute(event) }.not_to raise_error
-        expect(ESM::Test.messages.size).to eq(0)
+          wait_for { ESM::Test.messages.size }.to eq(2)
 
-        # We don't create a request for this
-        expect(ESM::Request.all.size).to eq(0)
+          embed = ESM::Test.messages.first.content
 
-        # Reset so we can track the response
-        ESM::Test.messages.clear
+          # Checks for requestors message
+          expect(embed).not_to be_nil
 
-        # Wait for the server to respond
-        wait_for { ESM::Test.messages.size }.to eq(1)
+          # Checks for requestees message
+          expect(ESM::Test.messages.size).to eq(2)
 
-        expect(ESM::Test.messages.size).to eq(1)
+          # Process the request
+          request = command.request
+          expect(request).not_to be_nil
+
+          # Respond to the request
+          request.respond(true)
+
+          # Reset so we can track the response
+          ESM::Test.messages.clear
+
+          # Wait for the server to respond
+          wait_for { ESM::Test.messages.size }.to eq(2)
+
+          expect(ESM::Test.messages.size).to eq(2)
+        end
       end
 
-      it "should not allow adding by non-registered steam uid" do
-        steam_uid = second_user.steam_uid
-        second_user.update(steam_uid: "")
+      context "when the user is a territory admin" do
+        it "adds the user" do
+          execute!(
+            channel_type: :dm,
+            arguments: {
+              server_id: server.server_id,
+              territory_id: Faker::Crypto.md5[0, 5],
+              target: user.mention
+            }
+          )
 
-        command_statement = command.statement(server_id: server.server_id, territory_id: Faker::Crypto.md5[0, 5], target: steam_uid)
-        event = CommandEvent.create(command_statement, user: user, channel_type: :dm)
+          expect(ESM::Test.messages.size).to eq(0)
 
-        expect { command.execute(event) }.to raise_error do |error|
-          expect(error.data.description).to match(/hey .+, .+ has not registered with me yet/i)
+          # We don't create a request for this
+          expect(ESM::Request.all.size).to eq(0)
+
+          # Reset so we can track the response
+          ESM::Test.messages.clear
+
+          # Wait for the server to respond
+          wait_for { ESM::Test.messages.size }.to eq(1)
+
+          expect(ESM::Test.messages.size).to eq(1)
         end
       end
     end
@@ -149,7 +142,7 @@ describe ESM::Command::Territory::Add, category: "command" do
       end
 
       it "adds the user and logs to Discord" do
-        execute!(server_id: server.server_id, territory_id: territory.encoded_id, target: second_user.steam_uid)
+        execute!(arguments: {server_id: server.server_id, territory_id: territory.encoded_id, target: second_user.steam_uid})
 
         # Initial request and the notice
         wait_for { ESM::Test.messages.size }.to eq(2)
@@ -217,7 +210,7 @@ describe ESM::Command::Territory::Add, category: "command" do
         # However, user is a territory admin
         territory.revoke_membership(user.steam_uid)
 
-        execute!(server_id: server.server_id, territory_id: territory.encoded_id, target: second_user.steam_uid)
+        execute!(arguments: {server_id: server.server_id, territory_id: territory.encoded_id, target: second_user.steam_uid})
         wait_for { ESM::Test.messages.size }.to eq(2)
 
         # 1: Request
@@ -238,7 +231,7 @@ describe ESM::Command::Territory::Add, category: "command" do
         # However, user is a territory admin
         territory.revoke_membership(user.steam_uid)
 
-        execute!(server_id: server.server_id, territory_id: territory.encoded_id, target: user.steam_uid)
+        execute!(arguments: {server_id: server.server_id, territory_id: territory.encoded_id, target: user.steam_uid})
 
         # No request message is sent for oneself
         # 1: Success message
@@ -256,10 +249,11 @@ describe ESM::Command::Territory::Add, category: "command" do
 
         expect {
           execute!(
-            server_id: server.server_id,
-            territory_id: territory.encoded_id,
-            target: second_user_steam_uid,
-            fail_on_raise: false
+            arguments: {
+              server_id: server.server_id,
+              territory_id: territory.encoded_id,
+              target: second_user_steam_uid
+            }
           )
         }.to raise_error do |error|
           expect(error.data.description).to match(/hey .+, .+ has not registered with me yet/i)
@@ -270,7 +264,7 @@ describe ESM::Command::Territory::Add, category: "command" do
         it "handles NullFlag" do
           territory.delete_flag
 
-          execute!(server_id: server.server_id, territory_id: territory.encoded_id, target: second_user.steam_uid)
+          execute!(arguments: {server_id: server.server_id, territory_id: territory.encoded_id, target: second_user.steam_uid})
           wait_for { ESM::Test.messages.size }.to eq(2)
 
           # 1: Request
@@ -294,7 +288,7 @@ describe ESM::Command::Territory::Add, category: "command" do
         it "handles MissingAccess" do
           territory.revoke_membership(user.steam_uid)
 
-          execute!(server_id: server.server_id, territory_id: territory.encoded_id, target: second_user.steam_uid)
+          execute!(arguments: {server_id: server.server_id, territory_id: territory.encoded_id, target: second_user.steam_uid})
           wait_for { ESM::Test.messages.size }.to eq(2)
 
           # 1: Request
@@ -316,7 +310,7 @@ describe ESM::Command::Territory::Add, category: "command" do
         end
 
         it "handles InvalidAdd" do
-          execute!(server_id: server.server_id, territory_id: territory.encoded_id, target: user.steam_uid)
+          execute!(arguments: {server_id: server.server_id, territory_id: territory.encoded_id, target: user.steam_uid})
 
           # No request message is sent for oneself
           # 1: Player failure message
@@ -336,7 +330,7 @@ describe ESM::Command::Territory::Add, category: "command" do
           territory.owner_uid = second_user.steam_uid
           territory.save!
 
-          execute!(server_id: server.server_id, territory_id: territory.encoded_id, target: second_user.steam_uid)
+          execute!(arguments: {server_id: server.server_id, territory_id: territory.encoded_id, target: second_user.steam_uid})
           wait_for { ESM::Test.messages.size }.to eq(2)
 
           # 1: Request
@@ -356,7 +350,7 @@ describe ESM::Command::Territory::Add, category: "command" do
           territory.build_rights << second_user.steam_uid
           territory.save!
 
-          execute!(server_id: server.server_id, territory_id: territory.encoded_id, target: second_user.steam_uid)
+          execute!(arguments: {server_id: server.server_id, territory_id: territory.encoded_id, target: second_user.steam_uid})
           wait_for { ESM::Test.messages.size }.to eq(2)
 
           # 1: Request

@@ -405,7 +405,7 @@ module ESM
 
             # Don't look for the requestor because multiple different people could attempt to invite them
             # requestor_user_id: current_user.esm_user.id,
-            query = ESM::Request.where(requestee_user_id: requestee.esm_user.id, command_name: command_name)
+            query = ESM::Request.where(requestee_user_id: requestee.id, command_name: command_name)
 
             arguments.to_h.each do |name, value|
               query = query.where("command_arguments->>'#{name}' = ?", value)

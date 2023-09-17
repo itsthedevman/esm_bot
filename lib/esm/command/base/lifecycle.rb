@@ -108,12 +108,11 @@ module ESM
         # @note Don't load `target_user` from the request. If the arguments contain a target, it will handle it
         def from_request(request)
           @request = request
-
-          # Initialize our command from the request
-          arguments.from_hash(request.command_arguments) if request.command_arguments.present?
-
           @current_channel = ESM.bot.channel(request.requested_from_channel_id)
           @current_user = request.requestor.discord_user
+
+          # Initialize our command from the request
+          arguments.merge!(request.command_arguments.symbolize_keys) if request.command_arguments.present?
 
           if @request.accepted
             request_accepted
