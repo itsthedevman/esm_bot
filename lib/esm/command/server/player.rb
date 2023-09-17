@@ -13,7 +13,7 @@ module ESM
         argument :target, display_name: :whom
 
         # Required: Needed by command
-        argument :action, required: true, checked_against: /m(?:oney)?|r(?:espect)?|l(?:ocker)?|h(?:eal)?|k(?:ill)?/
+        argument :action, required: true, checked_against: %w[money m respect r locker l heal h kill k]
 
         # See Argument::DEFAULTS[:server_id]
         argument :server_id, display_name: :on
@@ -22,11 +22,15 @@ module ESM
         argument(
           :amount,
           type: :integer,
-          checked_against: /-?\d+/,
-          modifier: lambda do |argument|
-            return unless arguments.type&.match(/h(?:eal)?|k(?:ill)?/i)
+          checked_against: lambda do |content|
+            return true if %w[heal h kill k].include?(arguments.action)
 
-            # The types `heal` and `kill` don't require the value argument.
+            !content.nil?
+          end,
+          modifier: lambda do |argument|
+            return unless %w[heal h kill k].include?(arguments.action)
+
+            # The actions `heal` and `kill` don't require this argument.
             argument.content = nil
           end
         )
