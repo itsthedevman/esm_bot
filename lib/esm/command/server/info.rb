@@ -10,10 +10,12 @@ module ESM
         #
 
         # See Argument::DEFAULTS[:target]
-        argument :target, display_name: :whom
+        # Optional: This command works for players or territories
+        argument :target, required: false, display_name: :whom
 
         # See Argument::DEFAULTS[:territory_id]
-        argument :territory_id, display_name: :territory
+        # Optional: This command works for players or territories
+        argument :territory_id, required: false, display_name: :territory
 
         # See Argument::DEFAULTS[:server_id]
         argument :server_id, display_name: :on
