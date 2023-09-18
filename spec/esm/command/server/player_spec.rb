@@ -21,7 +21,7 @@ describe ESM::Command::Server::Player, category: "command" do
       end
 
       context "when the type is 'money'" do
-        it "attempts to modify the player's money" do
+        it "modifies the player's money" do
           execute!(
             arguments: {
               server_id: server.server_id,
@@ -48,7 +48,7 @@ describe ESM::Command::Server::Player, category: "command" do
       end
 
       context "when the type is the shorthand 'm'" do
-        it "attempts to modify the player's money" do
+        it "modifies the player's money" do
           execute!(
             arguments: {
               server_id: server.server_id,
@@ -73,7 +73,7 @@ describe ESM::Command::Server::Player, category: "command" do
       end
 
       context "when the type is 'locker'" do
-        it "attempts to modify the player's locker" do
+        it "modifies the player's locker" do
           execute!(
             arguments: {
               server_id: server.server_id,
@@ -100,7 +100,7 @@ describe ESM::Command::Server::Player, category: "command" do
       end
 
       context "when the type is the shorthand 'l'" do
-        it "attempts to modify the player's locker" do
+        it "modifies the player's locker" do
           execute!(
             arguments: {
               server_id: server.server_id,
@@ -125,7 +125,7 @@ describe ESM::Command::Server::Player, category: "command" do
       end
 
       context "when the type is 'respect'" do
-        it "attempts to modify the player's respect" do
+        it "modifies the player's respect" do
           execute!(
             arguments: {
               server_id: server.server_id,
@@ -152,7 +152,7 @@ describe ESM::Command::Server::Player, category: "command" do
       end
 
       context "when the type is the shorthand 'r'" do
-        it "attempts to modify the player's respect" do
+        it "modifies the player's respect" do
           execute!(
             arguments: {
               server_id: server.server_id,
@@ -177,7 +177,7 @@ describe ESM::Command::Server::Player, category: "command" do
       end
 
       context "when the type is 'heal'" do
-        it "attempts to heal the player" do
+        it "heals the player" do
           execute!(
             arguments: {
               server_id: server.server_id,
@@ -204,7 +204,7 @@ describe ESM::Command::Server::Player, category: "command" do
       end
 
       context "when the type is the shorthand 'h'" do
-        it "attempts to heal the player" do
+        it "heals the player" do
           execute!(
             arguments: {
               server_id: server.server_id,
@@ -228,7 +228,7 @@ describe ESM::Command::Server::Player, category: "command" do
       end
 
       context "when the type is 'kill'" do
-        it "attempts to kill the player" do
+        it "kills the player" do
           execute!(
             arguments: {
               server_id: server.server_id,
@@ -255,7 +255,7 @@ describe ESM::Command::Server::Player, category: "command" do
       end
 
       context "when the type is the shorthand 'k'" do
-        it "attempts to kill the player" do
+        it "kills the player" do
           execute!(
             arguments: {
               server_id: server.server_id,

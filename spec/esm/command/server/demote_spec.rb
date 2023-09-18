@@ -10,7 +10,7 @@ describe ESM::Command::Territory::Demote, category: "command" do
     let(:territory_id) { Faker::Alphanumeric.alphanumeric(number: 3..30) }
 
     context "when the command is executed correctly" do
-      it "attempts to demote the target user" do
+      it "demotes the target user" do
         request = execute!(
           arguments: {
             server_id: server.server_id,
@@ -50,7 +50,7 @@ describe ESM::Command::Territory::Demote, category: "command" do
     end
 
     context "when the target is an unregistered steam uid" do
-      it "attempts to demote the user" do
+      it "demotes the user" do
         steam_uid = second_user.steam_uid
         second_user.update(steam_uid: "")
 

@@ -8,7 +8,7 @@ describe ESM::Command::Server::Gamble, category: "command" do
     include_context "connection_v1"
 
     context "when the amount is a number" do
-      it "attempts to gamble with the amount of poptabs on the server" do
+      it "gambles with the amount of poptabs on the server" do
         request = execute!(channel_type: :dm, arguments: {server_id: server.server_id, amount: "300"})
 
         expect(request).not_to be_nil
@@ -23,7 +23,7 @@ describe ESM::Command::Server::Gamble, category: "command" do
     end
 
     context "when the amount is 'half'" do
-      it "attempts to gamble half of the user's poptabs on the server" do
+      it "gambles half of the user's poptabs on the server" do
         request = execute!(channel_type: :dm, arguments: {server_id: server.server_id, amount: "half"})
 
         expect(request).not_to be_nil
@@ -38,7 +38,7 @@ describe ESM::Command::Server::Gamble, category: "command" do
     end
 
     context "when the amount is 'all'" do
-      it "should execute (all)" do
+      it "gambles all of the players money" do
         request = execute!(channel_type: :dm, arguments: {server_id: server.server_id, amount: "all"})
         expect(request).not_to be_nil
         wait_for { connection.requests }.to be_blank
