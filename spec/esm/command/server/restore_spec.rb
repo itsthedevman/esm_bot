@@ -1,77 +1,44 @@
 # frozen_string_literal: true
 
 describe ESM::Command::Territory::Restore, category: "command" do
-  let!(:command) { ESM::Command::Territory::Restore.new }
-  let(:territory_id) { Faker::Alphanumeric.alphanumeric(number: 3..30) }
-
-  it "should be valid" do
-    expect(command).not_to be_nil
-  end
-
-  it "should have 2 argument" do
-    expect(command.arguments.size).to eq(2)
-  end
-
-  it "should have a description" do
-    expect(command.description).not_to be_blank
-  end
-
-  it "should have examples" do
-    expect(command.example).not_to be_blank
-  end
+  include_context "command"
+  include_examples "validate_command"
 
   describe "#execute" do
-    let!(:community) { ESM::Test.community }
-    let!(:server) { ESM::Test.server }
-    let!(:user) { ESM::Test.user }
+    include_context "connection_v1"
 
-    let(:second_community) { ESM::Test.second_community }
-    let(:second_server) { ESM::Test.second_server }
-
-    let!(:wsc) { WebsocketClient.new(server) }
-    let(:connection) { ESM::Websocket.connections[server.server_id] }
-    let(:response) { command.response }
+    let(:territory_id) { Faker::Alphanumeric.alphanumeric(number: 3..30) }
 
     before do
-      wait_for { wsc.connected? }.to be(true)
-
       grant_command_access!(community, "restore")
     end
 
-    after do
-      wsc.disconnect!
+    context "when the territory has been soft deleted due to missing payment" do
+      it "restores the territory" do
+        wsc.flags.SUCCESS = true
+
+        request = execute!(arguments: {server_id: server.server_id, territory_id: territory_id})
+        expect(request).not_to be_nil
+        wait_for { connection.requests }.to be_blank
+        wait_for { ESM::Test.messages.size }.to eq(1)
+
+        embed = ESM::Test.messages.first.content
+        expect(embed.description).to eq("Hey #{user.mention}, `#{territory_id}` has been restored")
+      end
     end
 
-    it "!restore (success)" do
-      wsc.flags.SUCCESS = true
+    context "when the territory has been hard deleted from the database" do
+      it "fails to restore the territory and returns a message" do
+        wsc.flags.SUCCESS = false
 
-      command_statement = command.statement(server_id: server.server_id, territory_id: territory_id)
-      event = CommandEvent.create(command_statement, user: user, channel_type: :text)
+        request = execute!(arguments: {server_id: server.server_id, territory_id: territory_id})
+        expect(request).not_to be_nil
+        wait_for { connection.requests }.to be_blank
+        wait_for { ESM::Test.messages.size }.to eq(1)
 
-      request = nil
-      expect { request = command.execute(event) }.not_to raise_error
-      expect(request).not_to be_nil
-      wait_for { connection.requests }.to be_blank
-      wait_for { ESM::Test.messages.size }.to eq(1)
-
-      embed = ESM::Test.messages.first.second
-      expect(embed.description).to eq("Hey #{user.mention}, `#{territory_id}` has been restored")
-    end
-
-    it "!restore (failure)" do
-      wsc.flags.SUCCESS = false
-
-      command_statement = command.statement(server_id: server.server_id, territory_id: territory_id)
-      event = CommandEvent.create(command_statement, user: user, channel_type: :text)
-
-      request = nil
-      expect { request = command.execute(event) }.not_to raise_error
-      expect(request).not_to be_nil
-      wait_for { connection.requests }.to be_blank
-      wait_for { ESM::Test.messages.size }.to eq(1)
-
-      embed = ESM::Test.messages.first.second
-      expect(embed.description).to eq("I'm sorry #{user.mention}, `#{territory_id}` no longer exists on `#{server.server_id}`.")
+        embed = ESM::Test.messages.first.content
+        expect(embed.description).to eq("I'm sorry #{user.mention}, `#{territory_id}` no longer exists on `#{server.server_id}`.")
+      end
     end
   end
 end
