@@ -17,15 +17,15 @@ module ESM
           :broadcast_to,
           display_as: :to,
           checked_against: ESM::Regex::BROADCAST,
-          modifier: lambda do |argument|
-            return if argument.content.blank?
-            return if %w[all preview].include?(argument.content)
+          modifier: lambda do |content|
+            return if content.blank?
+            return content if %w[all preview].include?(content)
 
             # If we start with a community ID, just accept the match
-            return if argument.content.match("^#{ESM::Regex::COMMUNITY_ID_OPTIONAL.source}_")
+            return content if content.match("^#{ESM::Regex::COMMUNITY_ID_OPTIONAL.source}_")
 
             # Add the community ID to the front of the match
-            argument.content = "#{current_community.community_id}_#{argument.content}"
+            "#{current_community.community_id}_#{content}"
           end
         )
 

@@ -14,7 +14,7 @@ module ESM
 
         # Required: Majority of the time, this is needed.
         command: {
-          checked_against: ->(context) { ESM::Command.include?(context.content) },
+          checked_against: ->(context) { ESM::Command.include?(content) },
           description: "commands.arguments.command.description",
           required: true
         },
@@ -33,32 +33,24 @@ module ESM
           description_extra: "commands.arguments.community_id.description_extra",
           description: "commands.arguments.community_id.description",
           optional_text: "commands.arguments.community_id.optional_text",
-          modifier: lambda do |context|
-            if context.content.present?
+          modifier: lambda do |content|
+            if content.present?
               # User alias
-              if (id_alias = current_user.id_aliases.find_community_alias(context.content))
-                context.content = id_alias.community.community_id
-                return
+              if (id_alias = current_user.id_aliases.find_community_alias(content))
+                content = id_alias.community.community_id
               end
 
-              return # Keep whatever was given - it'll be validated later
+              return content
             end
 
-            # Nothing was provided for this argument
-            # Attempt to find and use a default
-
-            # User default
+            # content == nil, attempt to find and use a default
             if current_user.id_defaults.community_id
-              context.content = current_user.id_defaults.community.community_id
-              return
+              # User default
+              current_user.id_defaults.community.community_id
+            elsif current_channel.text?
+              # Community autofill
+              current_community.community_id
             end
-
-            # Community autofill
-            if current_channel.text?
-              context.content = current_community.community_id
-            end
-
-            # Nothing was provided and there was no default - it'll be validated later
           end
         },
 
@@ -68,52 +60,41 @@ module ESM
           description_extra: "commands.arguments.server_id.description_extra",
           description: "commands.arguments.server_id.description",
           optional_text: "commands.arguments.server_id.optional_text",
-          modifier: lambda do |context|
-            if context.content.present?
+          modifier: lambda do |content|
+            if content.present?
               # User provided - Starts with a community ID
-              return if context.content.match("#{ESM::Regex::COMMUNITY_ID_OPTIONAL.source}_")
+              return content if content.match("#{ESM::Regex::COMMUNITY_ID_OPTIONAL.source}_")
 
               # User alias
-              if (id_alias = current_user.id_aliases.find_server_alias(context.content))
-                context.content = id_alias.server.server_id
-                return
+              if (id_alias = current_user.id_aliases.find_server_alias(content))
+                return id_alias.server.server_id
               end
 
               # Community autofill
-              if current_channel.text? && current_community.servers.by_server_id_fuzzy(context.content).any?
-                context.content = "#{current_community.community_id}_#{context.content}"
+              if current_channel.text? && current_community.servers.by_server_id_fuzzy(content).any?
+                return "#{current_community.community_id}_#{content}"
               end
 
-              return # Keep whatever was given - it'll be validated later
+              return content
             end
 
-            # Nothing was provided for this argument
-            # Attempt to find and use a default
-
-            # Community Defaults
+            # content == nil, attempt to find and use a default
             if current_channel.text?
+              # Community Defaults
+
               # Channel default
               channel_default = current_community.id_defaults.for_channel(current_channel)
-              if channel_default&.server_id
-                context.content = channel_default.server.server_id
-                return
-              end
+              return channel_default.server.server_id if channel_default&.server_id
 
               # Global default
               global_default = current_community.id_defaults.global
-              if global_default&.server_id
-                context.content = global_default.server.server_id
-                return
-              end
+              return global_default.server.server_id if global_default&.server_id
+            elsif current_user.id_defaults.server_id
+              # User Default
+              current_user.id_defaults.server.server_id
             end
 
-            # User Default
-            if current_user.id_defaults.server_id
-              context.content = current_user.id_defaults.server.server_id
-              return
-            end
-
-            # Nothing was provided and there was no default - it'll be validated later
+            # this is nil by this point
           end
         }
       }.freeze
@@ -125,7 +106,7 @@ module ESM
 
       attr_reader :name, :type, :discord_type,
         :display_name, :command_class, :command_name,
-        :default_value, :cast_type, :modifier,
+        :default_value, :modifier,
         :description, :description_extra, :optional_text,
         :options, :checked_against
 
@@ -187,13 +168,6 @@ module ESM
       #     Optional.
       #     Default: false
       #
-      #   @option opts [Symbol, Proc] :type_caster
-      #     Performs extra casting once the value is received from Discord
-      #       If the value is a Symbol, it will be be checked against the available options.
-      #       If the value is a Proc, it will be called and the raw value passed in.
-      #     Optional.
-      #     Valid options: :json, :symbol
-      #
       #   @option opts [Proc] :modifier
       #     A block of code used to modify this argument's value before validation
       #     Optional.
@@ -226,7 +200,6 @@ module ESM
         @required = !!opts[:required]
         @default_value = opts[:default]
         @preserve_case = !!opts[:preserve_case]
-        @type_caster = opts[:type_caster]
         @modifier = opts[:modifier] || ->(_) {}
         @checked_against = opts[:checked_against]
 
@@ -257,13 +230,16 @@ module ESM
       def transform_and_validate!(input, command)
         raise ArgumentError, "Invalid command argument" unless command.is_a?(ApplicationCommand)
 
-        context = ArgumentContext.new(content: format(input))
+        content =
+          if input.is_a?(String)
+            preserve_case? ? input.strip : input.downcase.strip
+          elsif input.nil? && default_value?
+            default_value
+          else
+            input
+          end
 
-        # Arguments can opt to modify the parsed value (this is how auto-fill works)
-        command.instance_exec(context, &modifier) if modifier?
-
-        # Now that potential modification is done, pull the content back out
-        content = context.content
+        content = command.instance_exec(content, &modifier) if modifier?
 
         debug!(
           argument: to_h.except(:description, :description_extra),
@@ -327,7 +303,6 @@ module ESM
           description_extra: description_extra,
           optional_text: optional_text,
           default_value: default_value,
-          cast_type: cast_type,
           modifier: modifier,
           checked_against: checked_against
         }
@@ -345,34 +320,6 @@ module ESM
         else
           localized
         end
-      end
-
-      def format(value)
-        value =
-          if value.is_a?(String)
-            preserve_case? ? value.strip : value.downcase.strip
-          elsif value.nil? && default_value?
-            default
-          else
-            value
-          end
-
-        cast_to_type(value)
-      end
-
-      def cast_to_type(value)
-        return if value.nil?
-
-        case type
-        when :json
-          ESM::JSON.parse(value)
-        when :symbol
-          value.to_sym
-        else
-          value
-        end
-      rescue
-        value
       end
 
       def check_for_valid_content!(command, content)

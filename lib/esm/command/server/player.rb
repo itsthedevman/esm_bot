@@ -26,11 +26,11 @@ module ESM
             if: ->(_a, _c) { %w[money m respect r locker l].include?(arguments.action) },
             validator: ->(content) { !content.nil? }
           },
-          modifier: lambda do |argument|
-            return unless %w[heal h kill k].include?(arguments.action)
+          modifier: lambda do |content|
+            return content unless %w[heal h kill k].include?(arguments.action)
 
             # The actions `heal` and `kill` don't require this argument.
-            argument.content = nil
+            nil
           end
         )
 
