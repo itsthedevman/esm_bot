@@ -9,7 +9,7 @@ describe ESM::Command::Territory::Promote, category: "command" do
 
     let(:territory_id) { Faker::Alphanumeric.alphanumeric(number: 3..30) }
 
-    context "when the command executes correctly" do
+    context "when the target is a registered user" do
       it "promotes the user" do
         request = execute!(
           arguments: {

@@ -6,9 +6,9 @@ module ESM
     COMMUNITY_ID = /\S+/i
     DISCORD_TAG = /<@[&!]?\d+>/
     DISCORD_TAG_ONLY = /^#{DISCORD_TAG.source}$/
-    DISCORD_ID = /\d{18,19}/
+    DISCORD_ID = /\d{17,}/
     DISCORD_ID_ONLY = /^#{DISCORD_ID.source}$/
-    STEAM_UID = /\d{17}/
+    STEAM_UID = /7656\d+/
     STEAM_UID_ONLY = /^#{STEAM_UID.source}$/
     TARGET = /#{DISCORD_TAG.source}|#{DISCORD_ID.source}|#{STEAM_UID.source}/
     SERVER_ID_OPTIONAL_COMMUNITY = /(?:\S+_)?\S+/
