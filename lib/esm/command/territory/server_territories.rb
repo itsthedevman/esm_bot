@@ -15,12 +15,12 @@ module ESM
         # Optional: Has a default value
         argument :order_by,
           default: :territory_name,
-          type: :symbol,
           choices: {
             id: "ID",
             territory_name: "Territory name",
             owner_uid: "Owner UID"
-          }
+          },
+          checked_against: ["id", "territory_name", "owner_uid"]
 
         #
         # Configuration

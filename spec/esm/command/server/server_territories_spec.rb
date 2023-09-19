@@ -2,92 +2,63 @@
 
 describe ESM::Command::Territory::ServerTerritories, category: "command" do
   describe "V1" do
-    let!(:command) { ESM::Command::Territory::ServerTerritories.new }
-
-    it "should be valid" do
-      expect(command).not_to be_nil
-    end
-
-    it "should have 2 argument" do
-      expect(command.arguments.size).to eq(2)
-    end
-
-    it "should have a description" do
-      expect(command.description).not_to be_blank
-    end
-
-    it "should have examples" do
-      expect(command.example).not_to be_blank
-    end
+    include_context "command"
+    include_examples "validate_command"
 
     describe "#execute" do
-      let!(:community) { ESM::Test.community }
-      let!(:server) { ESM::Test.server }
-      let!(:user) { ESM::Test.user }
-      let(:second_user) { ESM::Test.user }
-      let!(:wsc) { WebsocketClient.new(server) }
-      let(:connection) { ESM::Websocket.connections[server.server_id] }
-      let(:response) { command.response }
+      include_context "connection_v1"
 
       before do
-        # Grant everyone access to use this command
-        configuration = community.command_configurations.where(command_name: "server_territories").first
-        configuration.update(allowlist_enabled: false)
-
-        wait_for { wsc.connected? }.to be(true)
+        grant_command_access!(community, "server_territories")
       end
 
-      after do
-        wsc.disconnect!
+      context "when no order was provided" do
+        it "orders the results by id" do
+          execute!(arguments: {server_id: server.server_id})
+          wait_for { ESM::Test.messages.size }.to be > 3
+        end
       end
 
-      it "should return (Default)" do
-        request = nil
-        command_statement = command.statement(server_id: server.server_id)
-        event = CommandEvent.create(command_statement, user: user, channel_type: :text)
+      context "when the order is by name" do
+        it "orders the results by name" do
+          execute!(arguments: {server_id: server.server_id, order_by: "territory_name"})
 
-        expect { request = command.execute(event) }.not_to raise_error
-        expect(request).not_to be_nil
-        wait_for { ESM::Test.messages.size }.to be > 3
+          request = connection.requests.first
+          expect(request).not_to be_nil
+          wait_for { connection.requests }.to be_blank
+          wait_for { ESM::Test.messages.size }.to be > 3
+
+          expect(response).to eq(request.response.sort_by(&:territory_name))
+        end
       end
 
-      it "should return (Sorted by territory name)" do
-        command_statement = command.statement(server_id: server.server_id, order_by: "territory_name")
-        event = CommandEvent.create(command_statement, user: user, channel_type: :text)
+      context "when the order is by owner uid" do
+        it "orders the results by owner uid" do
+          execute!(arguments: {server_id: server.server_id, order_by: "owner_uid"})
 
-        expect { command.execute(event) }.not_to raise_error
-        request = connection.requests.first
+          request = connection.requests.first
+          expect(request).not_to be_nil
+          wait_for { connection.requests }.to be_blank
+          wait_for { ESM::Test.messages.size }.to be > 3
 
-        expect(request).not_to be_nil
-        wait_for { connection.requests }.to be_blank
-        wait_for { ESM::Test.messages.size }.to be > 3
-        expect(response).to eq(request.response.sort_by(&:territory_name))
+          expect(response).to eq(request.response.sort_by(&:owner_uid))
+        end
       end
 
-      it "should return (Sorted by owner uid)" do
-        command_statement = command.statement(server_id: server.server_id, order_by: "owner_uid")
-        event = CommandEvent.create(command_statement, user: user, channel_type: :text)
+      context "when there are no territories" do
+        it "returns a default message" do
+          wsc.flags.RETURN_NO_TERRITORIES = true
 
-        expect { command.execute(event) }.not_to raise_error
-        request = connection.requests.first
+          execute!(arguments: {server_id: server.server_id, order_by: "owner_uid"})
 
-        expect(request).not_to be_nil
-        wait_for { connection.requests }.to be_blank
-        wait_for { ESM::Test.messages.size }.to be > 3
-        expect(response).to eq(request.response.sort_by(&:owner_uid))
-      end
+          wait_for { connection.requests }.to be_blank
+          wait_for { ESM::Test.messages.size }.to eq(1)
 
-      it "should return (No territories)" do
-        wsc.flags.RETURN_NO_TERRITORIES = true
-        request = nil
-        command_statement = command.statement(server_id: server.server_id, order_by: "owner_uid")
-        event = CommandEvent.create(command_statement, user: user, channel_type: :text)
-
-        expect { request = command.execute(event) }.not_to raise_error
-        expect(request).not_to be_nil
-        wait_for { connection.requests }.to be_blank
-        wait_for { ESM::Test.messages.size }.to eq(1)
-        expect(ESM::Test.messages.first.second.description).to eq("Hey #{user.mention}, I was unable to find any territories on `#{server.server_id}`")
+          embed = ESM::Test.messages.first.content
+          expect(embed.description).to eq(
+            "Hey #{user.mention}, I was unable to find any territories on `#{server.server_id}`"
+          )
+        end
       end
     end
   end
