@@ -127,7 +127,7 @@ module ESM
         :display_name, :command_class, :command_name,
         :default_value, :cast_type, :modifier,
         :description, :description_extra, :optional_text,
-        :options, :validator
+        :options, :checked_against
 
       #
       # A configurable representation of a command argument
@@ -228,7 +228,7 @@ module ESM
         @preserve_case = !!opts[:preserve_case]
         @type_caster = opts[:type_caster]
         @modifier = opts[:modifier] || ->(_) {}
-        @validator = opts[:checked_against]
+        @checked_against = opts[:checked_against]
 
         @options = {required: @required}
         @options[:min_value] = opts[:min_value] if opts[:min_value]
@@ -329,7 +329,7 @@ module ESM
           default_value: default_value,
           cast_type: cast_type,
           modifier: modifier,
-          validator: validator
+          checked_against: checked_against
         }
       end
 
@@ -376,8 +376,16 @@ module ESM
       end
 
       def check_for_valid_content!(command, content)
-        return if validator.nil? && optional? && content.blank?
-        return unless validator
+        validator, validate_if =
+          if checked_against.is_a?(Hash)
+            [checked_against[:validator], checked_against[:if]]
+          else
+            [checked_against, nil]
+          end
+
+        validate_if = ->(argument, content) { !(argument.optional? && content.blank?) } if validate_if.nil?
+
+        return unless command.instance_exec(self, content, &validate_if)
 
         success =
           case validator

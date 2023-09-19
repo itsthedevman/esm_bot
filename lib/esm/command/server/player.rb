@@ -22,11 +22,10 @@ module ESM
         argument(
           :amount,
           type: :integer,
-          checked_against: lambda do |content|
-            return true if %w[heal h kill k].include?(arguments.action)
-
-            !content.nil?
-          end,
+          checked_against: {
+            if: ->(_a, _c) { %w[money m respect r locker l].include?(arguments.action) },
+            validator: ->(content) { !content.nil? }
+          },
           modifier: lambda do |argument|
             return unless %w[heal h kill k].include?(arguments.action)
 
