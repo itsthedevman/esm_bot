@@ -9,11 +9,12 @@ module ESM
         # Arguments (required first, then order matters)
         #
 
-        # See Argument::DEFAULTS[:target]
-        argument :target, display_name: :whom
-
         # See Argument::DEFAULTS[:server_id]
         argument :server_id, display_name: :on
+
+        # See Argument::DEFAULTS[:target]
+        # Optional: Omitting resets all
+        argument :target, display_name: :whom, required: false
 
         #
         # Configuration
