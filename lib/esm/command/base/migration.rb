@@ -33,7 +33,7 @@ module ESM
         # V1: This is called when the message is received from the server
         #
         def from_server
-          load_v1_code!
+          load_v1_code! if v1_code_needed?
 
           # Event is always an array. 90% of the time, event size will only be 1
           # This just makes typing a little easier when writing commands
