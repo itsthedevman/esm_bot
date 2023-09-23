@@ -339,8 +339,9 @@ module ESM
             [checked_against, nil]
           end
 
-        validate_if = ->(argument, content) { !(argument.optional? && content.blank?) } if validate_if.nil?
+        return unless validator
 
+        validate_if = ->(argument, content) { !(argument.optional? && content.blank?) } if validate_if.nil?
         return unless command.instance_exec(self, content, &validate_if)
 
         success =
