@@ -11,18 +11,12 @@ module ESM
       module Migration
         extend ActiveSupport::Concern
 
-        class_methods do
-          def v2_variant!
-            self.has_v1_variant = true
-          end
+        def v1_code_needed?
+          defined?(self.class::V1) && !v2_target_server?
+        end
 
-          def v1_variant?
-            !!has_v1_variant
-          end
-
-          def as_v1_variant
-            ESM::Command.get_v1(self.class.command_name).new(**arguments)
-          end
+        def load_v1_code!
+          extend(self.class::V1) # Overwrites V2 logic
         end
 
         # V1
@@ -39,6 +33,8 @@ module ESM
         # V1: This is called when the message is received from the server
         #
         def from_server
+          load_v1_code!
+
           # Event is always an array. 90% of the time, event size will only be 1
           # This just makes typing a little easier when writing commands
           @response = (event.size == 1) ? event.first : event
@@ -99,10 +95,6 @@ module ESM
 
         def v2_target_server?
           !!target_server&.v2?
-        end
-
-        def v2?
-          !name.ends_with?("_v1")
         end
       end
     end

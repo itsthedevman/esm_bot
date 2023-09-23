@@ -23,7 +23,6 @@ module ESM
             event.defer(ephemeral: false)
 
             command = new
-            command = command.as_v1_variant if v1_variant? && !command.v2_target_server?
             command.execute(ESM::Event::ApplicationCommand.new(event))
           rescue => e
             # This occurs if event.defer fails due to Discord dropping the interaction before the bot had a chance to process it
@@ -92,6 +91,8 @@ module ESM
           # Now execute the command
           result = nil
           timers.time!(:on_execute) do
+            load_v1_code! if v1_code_needed? # V1
+
             result = on_execute
           end
 
@@ -114,13 +115,17 @@ module ESM
           # Initialize our command from the request
           arguments.merge!(request.command_arguments.symbolize_keys) if request.command_arguments.present?
 
-          if @request.accepted
-            request_accepted
-          else
-            # Reset the cooldown since the request was declined.
-            current_cooldown.reset! if current_cooldown.present?
+          timers.time!(:from_request) do
+            load_v1_code! if v1_code_needed? # V1
 
-            request_declined
+            if @request.accepted
+              request_accepted
+            else
+              # Reset the cooldown since the request was declined.
+              current_cooldown.reset! if current_cooldown.present?
+
+              request_declined
+            end
           end
         end
 

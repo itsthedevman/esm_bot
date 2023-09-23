@@ -30,7 +30,6 @@ module ESM
           class_attribute :description
           class_attribute :description_extra
           class_attribute :example
-          class_attribute :has_v1_variant
           class_attribute :limited_to
           class_attribute :namespace
           class_attribute :requirements
@@ -149,7 +148,6 @@ module ESM
               type: type,
               category: category,
               namespace: namespace,
-              has_v1_variant: has_v1_variant,
               limited_to: limited_to,
               attributes: attributes,
               requirements: requirements.to_h,
@@ -190,18 +188,16 @@ module ESM
             }
 
             # ESM::Command::Territory::SetId => set_id
-            name = self.name.demodulize.underscore.downcase
-            self.command_name = name.sub("_v1", "")
+            self.command_name = name.demodulize.underscore.downcase
 
             # ESM::Command::Request::Accept => system
             self.category = module_parent.name.demodulize.downcase
 
             command_namespace(category.to_sym) # Sets the default namespace to be: /<category> <command_name>
 
-            self.description = I18n.t("commands.#{name}.description", default: "")
-            self.description_extra = I18n.t("commands.#{name}.description_extra", default: nil)
-            self.example = I18n.t("commands.#{name}.example", default: "")
-            self.has_v1_variant = false
+            self.description = I18n.t("commands.#{command_name}.description", default: "")
+            self.description_extra = I18n.t("commands.#{command_name}.description_extra", default: nil)
+            self.example = I18n.t("commands.#{command_name}.example", default: "")
             self.limited_to = nil
             self.type = :player
 
