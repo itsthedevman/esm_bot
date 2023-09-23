@@ -143,7 +143,7 @@ describe ESM::Command::Server::Sqf, category: "command" do
     end
   end
 
-  xdescribe "V2", v2: true do
+  describe "V2", v2: true do
     include_context "command"
     include_examples "validate_command"
 
