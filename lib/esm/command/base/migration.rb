@@ -39,11 +39,10 @@ module ESM
         # V1: This is called when the message is received from the server
         #
         def from_server
-          parameters = event
-
-          # Parameters is always an array. 90% of the time, parameters size will only be 1
+          # Event is always an array. 90% of the time, event size will only be 1
           # This just makes typing a little easier when writing commands
-          @response = (parameters.size == 1) ? parameters.first : parameters
+          @response = (event.size == 1) ? event.first : event
+          self.event = @response
 
           # Trigger the callback
           on_response(nil, nil)

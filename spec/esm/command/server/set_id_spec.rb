@@ -1,119 +1,107 @@
 # frozen_string_literal: true
 
 describe ESM::Command::Territory::SetId, category: "command" do
-  let!(:command) { ESM::Command::Territory::SetId.new }
-
-  it "should be valid" do
-    expect(command).not_to be_nil
-  end
-
-  it "should have 3 argument" do
-    expect(command.arguments.size).to eq(3)
-  end
-
-  it "should have a description" do
-    expect(command.description).not_to be_blank
-  end
-
-  it "should have examples" do
-    expect(command.example).not_to be_blank
-  end
+  include_context "command"
+  include_examples "validate_command"
 
   describe "#execute" do
-    let!(:community) { ESM::Test.community }
-    let!(:server) { ESM::Test.server }
-    let!(:user) { ESM::Test.user }
-    let!(:wsc) { WebsocketClient.new(server) }
-    let(:connection) { ESM::Websocket.connections[server.server_id] }
-    let(:response) { command.response }
+    include_context "connection_v1"
 
-    before do
-      wait_for { wsc.connected? }.to be(true)
+    context "when the old and new IDs are valid" do
+      it "changes the ID and returns a success method" do
+        request = execute!(
+          channel_type: :dm,
+          arguments: {
+            server_id: server.server_id,
+            old_territory_id: Faker::Alphanumeric.alphanumeric(number: 3..30),
+            new_territory_id: Faker::Alphanumeric.alphanumeric(number: 3..20)
+          }
+        )
+
+        expect(request).not_to be_nil
+        wait_for { connection.requests }.to be_blank
+        wait_for { ESM::Test.messages.size }.to eq(1)
+
+        embed = ESM::Test.messages.first.content
+        expect(embed.description).to match(/you can now use this id wherever/i)
+        expect(embed.color).to eq(ESM::Color::Toast::GREEN)
+      end
     end
 
-    after do
-      wsc.disconnect!
+    context "when the provided ID is less than 3 characters" do
+      it "raises an exception" do
+        execution_args = {
+          channel_type: :dm,
+          arguments: {
+            server_id: server.server_id,
+            old_territory_id: Faker::Alphanumeric.alphanumeric(number: 2),
+            new_territory_id: Faker::Alphanumeric.alphanumeric(number: 2)
+          }
+        }
+
+        expect { execute!(**execution_args) }.to raise_error(ESM::Exception::CheckFailure, /must be at least 3/i)
+      end
     end
 
-    it "should return" do
-      request = nil
-      statement = command.statement(
-        server_id: server.server_id,
-        old_territory_id: Faker::Alphanumeric.alphanumeric(number: 3..30),
-        new_territory_id: Faker::Alphanumeric.alphanumeric(number: 3..20)
-      )
+    context "when the provided ID is more than 20 characters" do
+      it "raises an exception" do
+        execution_args = {
+          channel_type: :dm,
+          arguments: {
+            server_id: server.server_id,
+            old_territory_id: Faker::Alphanumeric.alphanumeric(number: 21),
+            new_territory_id: Faker::Alphanumeric.alphanumeric(number: 21)
+          }
+        }
 
-      event = CommandEvent.create(statement, user: user, channel_type: :dm)
-      expect { request = command.execute(event) }.not_to raise_error
-      expect(request).not_to be_nil
-      wait_for { connection.requests }.to be_blank
-      wait_for { ESM::Test.messages.size }.to eq(1)
-
-      embed = ESM::Test.messages.first.second
-      expect(embed.description).to match(/you can now use this id wherever/i)
-      expect(embed.color).to eq(ESM::Color::Toast::GREEN)
+        expect { execute!(**execution_args) }.to raise_error(ESM::Exception::CheckFailure, /cannot be longer than 20/i)
+      end
     end
 
-    it "should error (Minimum characters)" do
-      statement = command.statement(
-        server_id: server.server_id,
-        old_territory_id: Faker::Alphanumeric.alphanumeric(number: 2),
-        new_territory_id: Faker::Alphanumeric.alphanumeric(number: 2)
-      )
-      event = CommandEvent.create(statement, user: user, channel_type: :dm)
+    context "when the server rejects the request" do
+      it "returns an error from the server" do
+        wsc.flags.FAIL_WITH_REASON = true
 
-      expect { command.execute(event) }.to raise_error(ESM::Exception::CheckFailure, /must be at least 3/i)
+        request = execute!(
+          channel_type: :dm,
+          arguments: {
+            server_id: server.server_id,
+            old_territory_id: Faker::Alphanumeric.alphanumeric(number: 3..30),
+            new_territory_id: Faker::Alphanumeric.alphanumeric(number: 3..20)
+          }
+        )
+
+        expect(request).not_to be_nil
+        wait_for { connection.requests }.to be_blank
+        wait_for { ESM::Test.messages.size }.to eq(1)
+
+        embed = ESM::Test.messages.first.content
+        expect(embed.description).to match(/some reason/i)
+        expect(embed.color).to eq(ESM::Color::Toast::RED)
+      end
     end
 
-    it "should error (Maximum characters)" do
-      statement = command.statement(
-        server_id: server.server_id,
-        old_territory_id: Faker::Alphanumeric.alphanumeric(number: 21),
-        new_territory_id: Faker::Alphanumeric.alphanumeric(number: 21)
-      )
-      event = CommandEvent.create(statement, user: user, channel_type: :dm)
+    context "when the user is not the owner" do
+      it "returns an error from the server" do
+        wsc.flags.FAIL_WITHOUT_REASON = true
 
-      expect { command.execute(event) }.to raise_error(ESM::Exception::CheckFailure, /cannot be longer than 20/i)
-    end
+        request = execute!(
+          channel_type: :dm,
+          arguments: {
+            server_id: server.server_id,
+            old_territory_id: Faker::Alphanumeric.alphanumeric(number: 3..30),
+            new_territory_id: Faker::Alphanumeric.alphanumeric(number: 3..20)
+          }
+        )
 
-    it "should error (DLL Reason)" do
-      request = nil
-      statement = command.statement(
-        server_id: server.server_id,
-        old_territory_id: Faker::Alphanumeric.alphanumeric(number: 3..20),
-        new_territory_id: Faker::Alphanumeric.alphanumeric(number: 3..20)
-      )
-      event = CommandEvent.create(statement, user: user, channel_type: :dm)
+        expect(request).not_to be_nil
+        wait_for { connection.requests }.to be_blank
+        wait_for { ESM::Test.messages.size }.to eq(1)
 
-      wsc.flags.FAIL_WITH_REASON = true
-      expect { request = command.execute(event) }.not_to raise_error
-      expect(request).not_to be_nil
-      wait_for { connection.requests }.to be_blank
-      wait_for { ESM::Test.messages.size }.to eq(1)
-
-      embed = ESM::Test.messages.first.second
-      expect(embed.description).to match(/some reason/i)
-      expect(embed.color).to eq(ESM::Color::Toast::RED)
-    end
-
-    it "should error (Permission denied)" do
-      request = nil
-      statement = command.statement(
-        server_id: server.server_id,
-        old_territory_id: Faker::Alphanumeric.alphanumeric(number: 3..20),
-        new_territory_id: Faker::Alphanumeric.alphanumeric(number: 3..20)
-      )
-      event = CommandEvent.create(statement, user: user, channel_type: :dm)
-
-      wsc.flags.FAIL_WITHOUT_REASON = true
-      expect { request = command.execute(event) }.not_to raise_error
-      expect(request).not_to be_nil
-      wait_for { connection.requests }.to be_blank
-      wait_for { ESM::Test.messages.size }.to eq(1)
-
-      embed = ESM::Test.messages.first.second
-      expect(embed.description).to match(/you are not allowed to do that/i)
-      expect(embed.color).to eq(ESM::Color::Toast::RED)
+        embed = ESM::Test.messages.first.content
+        expect(embed.description).to match(/you are not allowed to do that/i)
+        expect(embed.color).to eq(ESM::Color::Toast::RED)
+      end
     end
   end
 end

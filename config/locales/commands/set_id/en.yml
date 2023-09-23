@@ -17,4 +17,4 @@ en:
         new_territory_id:
           description: The new territory ID to use.
           description_extra: This ID can be 3 to 20 characters long and can **only contain letters, numbers, and underscores**.
-      success_message: ":confetti_ball: \nTerritory `%{old_territory_id}`'s ID is now `%{new_territory_id}`. You can now use this ID wherever a command requires `<territory_id>`\nFor example: ```pay %{server_id} %{new_territory_id}```"
+      success_message: ":confetti_ball: \nTerritory `%{old_territory_id}`'s ID is now `%{new_territory_id}`. You can now use this ID wherever a command requires `<territory_id>`\nFor example: ```/territory pay %{server_id} %{new_territory_id}```"

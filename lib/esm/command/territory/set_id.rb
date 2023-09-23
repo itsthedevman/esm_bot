@@ -27,7 +27,7 @@ module ESM
         #################################
 
         def on_execute
-          # Require at least 3 characters and a max of 30
+          # Require at least 3 characters and a max of 20
           check_for_minimum_characters!
           check_for_maximum_characters!
 
@@ -67,7 +67,11 @@ module ESM
           skip_action(:cooldown)
 
           # DLL Reason. This is a weird one since I can't localize the message
-          check_failed! { ESM::Embed.build(:error, description: "I'm sorry #{current_user.mention}, #{@response.reason}") } if @response.reason
+          if @response.reason
+            check_failed! do
+              ESM::Embed.build(:error, description: "I'm sorry #{current_user.mention}, #{@response.reason}")
+            end
+          end
 
           check_failed!(:access_denied, user: current_user.mention)
         end
@@ -77,7 +81,6 @@ module ESM
             :success,
             description: I18n.t(
               "commands.set_id.success_message",
-              prefix: prefix,
               server_id: target_server.server_id,
               old_territory_id: arguments.old_territory_id,
               new_territory_id: arguments.new_territory_id
