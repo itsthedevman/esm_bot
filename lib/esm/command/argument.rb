@@ -14,7 +14,7 @@ module ESM
 
         # Required: Majority of the time, this is needed.
         command: {
-          checked_against: ->(context) { ESM::Command.include?(content) },
+          checked_against: ->(content) { ESM::Command.include?(content) },
           description: "commands.arguments.command.description",
           required: true
         },

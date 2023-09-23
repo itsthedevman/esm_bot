@@ -10,13 +10,14 @@ module ESM
         #
 
         # See Argument::DEFAULTS[:target]
-        argument :target, display_name: :for
+        # Optional:
+        argument :target, required: false, display_name: :for
 
         # See Argument::DEFAULTS[:command]
-        argument :command
+        argument :command, required: false
 
         # See Argument::DEFAULTS[:server_id]
-        argument :server_id, display_name: :on
+        argument :server_id, required: false, display_name: :on
 
         #
         # Configuration
@@ -54,10 +55,10 @@ module ESM
         private
 
         def check_for_valid_command!
-          return if arguments.command_name.nil?
-          return if ESM::Command.include?(arguments.command_name)
+          return if arguments.command.nil?
+          return if ESM::Command.include?(arguments.command)
 
-          check_failed!(:invalid_command, user: current_user.mention, command_name: arguments.command_name)
+          check_failed!(:invalid_command, user: current_user.mention, command_name: arguments.command)
         end
 
         def confirmation_embed
@@ -77,8 +78,8 @@ module ESM
 
             # Command
             description +=
-              if arguments.command_name
-                I18n.t("#{namespace_prefix}.description.one_command", command_name: arguments.command_name)
+              if arguments.command
+                I18n.t("#{namespace_prefix}.description.one_command", command_name: arguments.command)
               else
                 I18n.t("#{namespace_prefix}.description.all_commands")
               end
@@ -101,7 +102,7 @@ module ESM
           query = query.or(ESM::Cooldown.where(user_id: target_user.id, steam_uid: target_user.steam_uid)) if target_user
 
           # Check for command_name and/or server_id if we've been given one
-          query = query.where(command_name: arguments.command_name) if !arguments.command_name.nil?
+          query = query.where(command_name: arguments.command) if !arguments.command.nil?
           query = query.where(server_id: target_server.id) if !arguments.server_id.nil?
 
           query
@@ -124,8 +125,8 @@ module ESM
 
             # Command
             description +=
-              if arguments.command_name
-                I18n.t("#{namespace_prefix}.description.one_command", command_name: arguments.command_name)
+              if arguments.command
+                I18n.t("#{namespace_prefix}.description.one_command", command_name: arguments.command)
               else
                 I18n.t("#{namespace_prefix}.description.all_commands")
               end

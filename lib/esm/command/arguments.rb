@@ -3,10 +3,10 @@
 module ESM
   module Command
     class Arguments < Hash
-      attr_reader :templates, :command
+      attr_reader :templates, :command_instance
 
       def initialize(command = nil, **templates)
-        @command = command
+        @command_instance = command
         @templates = templates.symbolize_keys
 
         # Map the display name to the name itself
@@ -23,7 +23,7 @@ module ESM
         invalid_arguments =
           templates.filter_map do |(name, template)|
             # Apply pre-defined transformations and then validate the content
-            self[name] = template.transform_and_validate!(inbound_arguments[template.display_name], command)
+            self[name] = template.transform_and_validate!(inbound_arguments[template.display_name], command_instance)
 
             nil
           rescue ESM::Exception::InvalidArgument => e
@@ -39,7 +39,7 @@ module ESM
             e.description = invalid_arguments.format(&:help_documentation)
 
             help_command = ESM::Command.get(:help)
-            e.footer = "For more information, use `#{help_command.usage(overrides: {category: command.usage(with_args: false)})}`"
+            e.footer = "For more information, use `#{help_command.usage(overrides: {category: command_instance.usage(with_args: false)})}`"
           end
 
         raise ESM::Exception::CheckFailure, embed
@@ -48,7 +48,7 @@ module ESM
       def inspect
         ESM::JSON.pretty_generate(
           values: self,
-          command: command&.command_name,
+          command: command_instance&.command_name,
           templates: templates.map(&:to_h)
         )
       end

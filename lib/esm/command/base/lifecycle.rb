@@ -73,7 +73,7 @@ module ESM
           check_for_permissions!
 
           # Now ensure the user hasn't smoked too much lead
-          arguments.validate!(**event.options.symbolize_keys, command: self)
+          arguments.validate!(**event.options.symbolize_keys)
 
           # Adding a comment to make this look better is always a weird idea
           info!(to_h)
