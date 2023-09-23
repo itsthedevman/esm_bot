@@ -20,7 +20,7 @@ module ESM
           end
         end
 
-        def enabled?
+        def command_enabled?
           if community_permissions?
             community_permissions.enabled?
           else
@@ -29,7 +29,7 @@ module ESM
           end
         end
 
-        def notify_when_disabled?
+        def notify_when_command_disabled?
           if community_permissions?
             community_permissions.notify_when_disabled?
           else
@@ -37,7 +37,7 @@ module ESM
           end
         end
 
-        def allowlist_enabled?
+        def command_allowlist_enabled?
           if community_permissions?
             community_permissions.allowlist_enabled?
           else
@@ -46,8 +46,8 @@ module ESM
           end
         end
 
-        def allowlisted?
-          return true if !allowlist_enabled?
+        def command_allowed?
+          return true if !command_allowlist_enabled?
 
           community = target_community || current_community
           return false if community.nil?
@@ -70,7 +70,7 @@ module ESM
         end
 
         # Is the command allowed in this text channel?
-        def allowed?
+        def command_allowed_in_channel?
           return true if current_channel.pm?
           return true if current_community&.player_mode_enabled?
           return community_permissions.allowed_in_text_channels? if community_permissions?

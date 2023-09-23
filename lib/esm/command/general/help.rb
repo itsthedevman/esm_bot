@@ -123,9 +123,9 @@ module ESM
               description = ["*This command used to be `!#{command.command_name}`*", command.description, ""]
 
               # Adds a note about being limited to DM or Text
-              description << I18n.t("commands.help.command.note") if command.limited_to || command.allowlist_enabled?
+              description << I18n.t("commands.help.command.note") if command.limited_to || command.command_allowlist_enabled?
               description << I18n.t("commands.help.command.limited_to", channel_type: I18n.t(command.limited_to)) if command.limited_to
-              description << I18n.t("commands.help.command.allowlist_enabled") if command.allowlist_enabled?
+              description << I18n.t("commands.help.command.allowlist_enabled") if command.command_allowlist_enabled?
               e.description = description
 
               # Usage

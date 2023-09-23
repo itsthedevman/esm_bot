@@ -26,10 +26,10 @@ module ESM
         end
 
         def check_for_permissions!
-          if !enabled?
+          if !command_enabled?
             # If the community doesn't want to send a message, don't send a message.
             # This only applies to text channels. The user needs to know why the bot is not replying to their message
-            if current_channel.text? && !notify_when_disabled?
+            if current_channel.text? && !notify_when_command_disabled?
               check_failed!(exception_class: ESM::Exception::CheckFailureNoMessage)
             else
               check_failed!(
@@ -40,11 +40,11 @@ module ESM
             end
           end
 
-          if !allowlisted?
+          if !command_allowed?
             check_failed!(:not_allowlisted, user: current_user.mention, command_name: usage(with_args: false))
           end
 
-          if !allowed?
+          if !command_allowed_in_channel?
             check_failed!(
               :not_allowed_in_text_channels,
               user: current_user.mention,

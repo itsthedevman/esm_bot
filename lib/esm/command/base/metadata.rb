@@ -21,14 +21,14 @@ module ESM
             text_only: text_only?,
             dev_only: dev_only?,
             registration_required: registration_required?,
-            allowlist_enabled: allowlist_enabled?,
             on_cooldown: on_cooldown?,
             permissions: {
               config: community_permissions&.attributes,
-              enabled: enabled?,
-              allowed: allowed?,
-              allowlisted: allowlisted?,
-              notify_when_disabled: notify_when_disabled?,
+              allowlist_enabled: command_allowlist_enabled?,
+              enabled: command_enabled?,
+              allowed: command_allowed_in_channel?,
+              allowlisted: command_allowed?,
+              notify_when_disabled: notify_when_command_disabled?,
               cooldown_time: cooldown_time
             }
           }
