@@ -200,7 +200,7 @@ module ESM
         @required = !!opts[:required]
         @default_value = opts[:default]
         @preserve_case = !!opts[:preserve_case]
-        @modifier = opts[:modifier] || ->(_) {}
+        @modifier = opts[:modifier]
         @checked_against = opts[:checked_against]
 
         @options = {required: @required}
@@ -230,7 +230,7 @@ module ESM
       def transform_and_validate!(input, command)
         raise ArgumentError, "Invalid command argument" unless command.is_a?(ApplicationCommand)
 
-        content =
+        sanitized_content =
           if input.is_a?(String)
             preserve_case? ? input.strip : input.downcase.strip
           elsif input.nil? && default_value?
@@ -239,12 +239,21 @@ module ESM
             input
           end
 
-        content = command.instance_exec(content, &modifier) if modifier?
+        content =
+          if modifier?
+            command.instance_exec(sanitized_content, &modifier)
+          else
+            sanitized_content
+          end
 
         debug!(
-          argument: to_h.except(:description, :description_extra),
+          argument: to_h.except(:description, :description_extra, :optional_text),
           input: input,
-          output: {
+          before: {
+            type: sanitized_content.class.name,
+            content: sanitized_content
+          },
+          after: {
             type: content.class.name,
             content: content
           }
