@@ -80,30 +80,6 @@ module ESM
       end
     end
 
-    # exception embed for when the user tries to run a Text only command in PM
-    class CommandTextOnly < DataError
-      def initialize(user)
-        super("")
-        @data =
-          ESM::Embed.build do |e|
-            e.description = I18n.t("exceptions.text_only", user: user)
-            e.color = :red
-          end
-      end
-    end
-
-    # exception embed for when the user tries to run a PM only command in Text channel
-    class CommandDMOnly < DataError
-      def initialize(user)
-        super("")
-        @data =
-          ESM::Embed.build do |e|
-            e.description = I18n.t("exceptions.dm_only", user: user)
-            e.color = :red
-          end
-      end
-    end
-
     # Raised when ESM can't find a channel passed into it's deliver method.
     class ChannelNotFound < Error
       def initialize(message, channel)
