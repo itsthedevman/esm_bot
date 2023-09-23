@@ -38,7 +38,7 @@ module ESM
           # Event is always an array. 90% of the time, event size will only be 1
           # This just makes typing a little easier when writing commands
           @response = (event.size == 1) ? event.first : event
-          self.event = @response
+          self.event = nil
 
           # Trigger the callback
           on_response(nil, nil)
