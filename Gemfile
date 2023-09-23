@@ -51,6 +51,7 @@ group :development do
   gem "standard"
   gem "rubocop-rspec"
   gem "rubocop-performance"
+  gem "rubocop-rails"
   gem "yard"
 end
 

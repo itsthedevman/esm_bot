@@ -255,6 +255,10 @@ GEM
     rubocop-performance (1.18.0)
       rubocop (>= 1.7.0, < 2.0)
       rubocop-ast (>= 0.4.0)
+    rubocop-rails (2.21.1)
+      activesupport (>= 4.2.0)
+      rack (>= 1.1)
+      rubocop (>= 1.33.0, < 2.0)
     rubocop-rspec (2.22.0)
       rubocop (~> 1.33)
       rubocop-capybara (~> 2.17)
@@ -384,6 +388,7 @@ DEPENDENCIES
   rspec
   rspec-wait
   rubocop-performance
+  rubocop-rails
   rubocop-rspec
   ruby-prof
   semantic
