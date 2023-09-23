@@ -1,86 +1,64 @@
 # frozen_string_literal: true
 
 describe ESM::Command::My::Preferences, category: "command" do
-  let!(:command) { ESM::Command::My::Preferences.new }
-
-  it "should be valid" do
-    expect(command).not_to be_nil
-  end
-
-  it "should have 3 argument" do
-    expect(command.arguments.size).to eq(3)
-  end
-
-  it "should have a description" do
-    expect(command.description).not_to be_blank
-  end
-
-  it "should have examples" do
-    expect(command.example).not_to be_blank
-  end
+  include_context "command"
+  include_examples "validate_command"
 
   describe "#execute" do
-    let!(:community) { ESM::Test.community }
-    let!(:server) { ESM::Test.server }
-    let!(:user) { ESM::Test.user }
     let!(:types) { ESM::Command::My::Preferences::TYPES.dup[1..] }
     let(:type) { types.sample }
     let(:preference) { ESM::UserNotificationPreference.where(server_id: server.id, user_id: user.id).first }
 
-    it "should set permissions (Allow/All)" do
-      command_statement = command.statement(server_id: server.server_id, state: "allow")
-      event = CommandEvent.create(command_statement, user: user, channel_type: :dm)
+    context "when the action is allow and type is omitted" do
+      it "sets all permission for the server to allowed" do
+        execute!(channel_type: :dm, arguments: {server_id: server.server_id, action: "allow"})
 
-      expect { command.execute(event) }.not_to raise_error
+        message = ESM::Test.messages.first.content
+        expect(message).not_to be_nil
+        expect(message.description).to match(/your preferences for `.+` have been updated/i)
 
-      message = ESM::Test.messages.first.second
-      expect(message).not_to be_nil
-      expect(message.description).to match(/your preferences for `.+` have been updated/i)
+        types.each do |type|
+          expect(preference.send(type.underscore)).to be(true)
+        end
+      end
+    end
 
-      types.each do |type|
+    context "when the action is allow and the type is provided" do
+      it "sets the permission type for the server to allowed" do
+        execute!(channel_type: :dm, arguments: {server_id: server.server_id, action: "allow", type: type})
+
+        message = ESM::Test.messages.first.content
+        expect(message).not_to be_nil
+        expect(message.description).to match(/your preferences for `.+` have been updated/i)
+
         expect(preference.send(type.underscore)).to be(true)
       end
     end
 
-    it "should set permissions (Allow/Single)" do
-      command_statement = command.statement(server_id: server.server_id, type: type, state: "allow")
-      event = CommandEvent.create(command_statement, user: user, channel_type: :dm)
+    context "when the action is deny and the type is omitted" do
+      it "sets all permissions for the server to deny" do
+        execute!(channel_type: :dm, arguments: {server_id: server.server_id, action: "deny"})
 
-      expect { command.execute(event) }.not_to raise_error
+        message = ESM::Test.messages.first.content
+        expect(message).not_to be_nil
+        expect(message.description).to match(/your preferences for `.+` have been updated/i)
 
-      message = ESM::Test.messages.first.second
-      expect(message).not_to be_nil
-      expect(message.description).to match(/your preferences for `.+` have been updated/i)
-
-      expect(preference.send(type.underscore)).to be(true)
-    end
-
-    it "should set permissions (Deny/All)" do
-      command_statement = command.statement(server_id: server.server_id, state: "deny")
-      event = CommandEvent.create(command_statement, user: user, channel_type: :dm)
-
-      expect { command.execute(event) }.not_to raise_error
-
-      message = ESM::Test.messages.first.second
-      expect(message).not_to be_nil
-      expect(message.description).to match(/your preferences for `.+` have been updated/i)
-
-      types.each do |type|
-        expect(preference.send(type.underscore)).to be(false)
+        types.each do |type|
+          expect(preference.send(type.underscore)).to be(false)
+        end
       end
     end
 
-    it "should set permissions (Deny/Single)" do
-      command_statement = command.statement(server_id: server.server_id, type: type, state: "deny")
-      event = CommandEvent.create(command_statement, user: user, channel_type: :dm)
+    context "when the action is deny and the type is provided" do
+      it "sets the permission type for the server to denied" do
+        execute!(channel_type: :dm, arguments: {server_id: server.server_id, action: "deny", type: type})
 
-      expect { command.execute(event) }.not_to raise_error
+        message = ESM::Test.messages.first.content
+        expect(message).not_to be_nil
+        expect(message.description).to match(/your preferences for `.+` have been updated/i)
 
-      message = ESM::Test.messages.first.second
-      expect(message).not_to be_nil
-      expect(message.description).to match(/your preferences for `.+` have been updated/i)
-
-      expect(preference.send(type.underscore)).to be(false)
+        expect(preference.send(type.underscore)).to be(false)
+      end
     end
   end
 end
