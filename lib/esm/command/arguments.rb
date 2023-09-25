@@ -35,11 +35,23 @@ module ESM
 
         embed =
           ESM::Embed.build do |e|
-            e.title = "**Invalid #{"argument".pluralize(invalid_arguments.size)}**"
-            e.description = invalid_arguments.format(&:help_documentation)
+            command_usage = command_instance.usage(with_args: false, with_slash: false)
+            help_usage = ESM::Command.get(:help).usage(with_args: true, overrides: {with: command_usage})
+            help_documentation = invalid_arguments.format(join_with: "\n\n", &:help_documentation)
 
-            help_command = ESM::Command.get(:help)
-            e.footer = "For more information, use `#{help_command.usage(overrides: {category: command_instance.usage(with_args: false)})}`"
+            e.title = "**Invalid #{"argument".pluralize(invalid_arguments.size)} for `/#{command_usage}`**"
+            e.description = <<~STRING
+              Please read the following and correct any errors before trying again.
+
+              #{help_documentation}
+            STRING
+
+            e.add_field(
+              name: I18n.t("commands.help.command.examples"),
+              value: command_instance.example
+            )
+
+            e.footer = "For more information, use `#{help_usage}`"
           end
 
         raise ESM::Exception::CheckFailure, embed

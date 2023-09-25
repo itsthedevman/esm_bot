@@ -37,6 +37,8 @@ module ESM
               value =
                 if overrides.key?(name)
                   overrides[name]
+                elsif overrides.key?(template.display_name)
+                  overrides[template.display_name]
                 else
                   data[:value]
                 end
@@ -45,7 +47,7 @@ module ESM
               value_is_blank = value.blank?
               next if value_is_blank && template.optional?
 
-              command_statement << (value_is_blank ? "#{name}:<#{name}>" : "#{name}:#{value}")
+              command_statement << (value_is_blank ? "#{template}:<#{template}>" : "#{template}:#{value}")
             end
           end
 
