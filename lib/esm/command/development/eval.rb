@@ -9,7 +9,7 @@ module ESM
         # Arguments (required first, then order matters)
         #
 
-        argument :code, preserve: true, description: "Code to execute"
+        argument :code, required: true, preserve: true, description: "Code to execute"
 
         #
         # Configuration

@@ -10,7 +10,7 @@ module ESM
             arguments: arguments,
             current_community: current_community&.attributes,
             current_channel: current_channel.inspect,
-            current_user: current_user.inspect,
+            current_user: current_user.attributes,
             current_cooldown: current_cooldown&.attributes,
             target_community: target_community&.attributes,
             target_server: target_server&.attributes,
@@ -35,7 +35,7 @@ module ESM
         end
 
         def inspect
-          "<#{self.class.name} #{ESM::JSON.pretty_generate(to_h)}>"
+          "<#{self.class.name}, arguments: #{arguments}>"
         end
       end
     end

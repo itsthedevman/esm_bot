@@ -12,6 +12,7 @@ until ESM.bot.ready?
 end
 puts " done"
 
+::ESM.bot.get_application_commands.each(&:delete)
 ESM::BotAttribute.create!(
   maintenance_mode_enabled: false,
   maintenance_message: "",
@@ -149,7 +150,7 @@ print "Creating users..."
   ESM::UserNotificationPreference.create!(user_id: user.id, server_id: server.id)
 end
 
-ESM::UserDefault.where(user_id: 1).update_all(server_id: server.id, community_id: community.id)
+ESM::UserDefault.where(user_id: 1).update(server_id: server.id, community_id: community.id)
 ESM::UserAlias.create!(user_id: 1, server_id: server.id, value: "s")
 ESM::UserAlias.create!(user_id: 1, community_id: community.id, value: "c")
 puts " done"

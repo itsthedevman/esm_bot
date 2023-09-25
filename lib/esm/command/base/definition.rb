@@ -42,14 +42,11 @@ module ESM
           # Defines an argument for this command
           #
           # @param name [Symbol] The name of the argument
-          # @param type [Symbol] The Discord argument type
+          # @param type [Symbol] The Discord argument type (defaults to string in Argument)
           # @param **opts [Hash] See ESM::Command::Argument#initialize
           #
-          def argument(name, type = :string, **opts)
-            arguments[name] = Argument.new(
-              name, type,
-              **opts.merge(command_class: self)
-            )
+          def argument(name, type = nil, **opts)
+            arguments[name] = Argument.new(name, type, opts.merge(command_class: self))
             self
           end
 
@@ -133,7 +130,7 @@ module ESM
           end
 
           #
-          # Adds the root namespace (/esm <command_name>) to this command
+          # Adds the root namespace (/<command_name>) to this command
           #
           alias_method :use_root_namespace, :command_namespace
 

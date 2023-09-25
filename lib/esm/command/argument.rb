@@ -99,11 +99,6 @@ module ESM
         }
       }.freeze
 
-      # @!visibility private
-      class ArgumentContext < Struct.new(:content, keyword_init: true)
-      end
-      private_constant :ArgumentContext
-
       attr_reader :name, :type, :discord_type,
         :display_name, :command_class, :command_name,
         :default_value, :modifier,
@@ -186,12 +181,12 @@ module ESM
       #     Regex/String will be tested against the provided value
       #     Proc will have the content provided as the argument and must return a truthy value to be considered "valid"
       #
-      def initialize(name, type, opts = {})
+      def initialize(name, type = nil, opts = {})
         template_name = (opts[:template] || name).to_sym
         opts = DEFAULTS[template_name].merge(opts) if DEFAULTS.key?(template_name)
 
         @name = name
-        @type = type.to_sym
+        @type = type ? type.to_sym : :string
         @discord_type = Discordrb::Interactions::OptionBuilder::TYPES[@type]
         @display_name = (opts[:display_name] || name).to_sym
         @command_class = opts[:command_class]
@@ -297,7 +292,7 @@ module ESM
       end
 
       def help_documentation
-        output = ["**`#{self}`**", description]
+        output = ["**`#{self}:`**", description]
         output << "#{description_extra}." if description_extra.presence
         output << "**Note:** #{optional_text}" if optional_text?
         output.join("\n")
@@ -313,7 +308,8 @@ module ESM
           optional_text: optional_text,
           default_value: default_value,
           modifier: modifier,
-          checked_against: checked_against
+          checked_against: checked_against,
+          preserve_case: preserve_case?
         }
       end
 
@@ -332,17 +328,22 @@ module ESM
       end
 
       def check_for_valid_content!(command, content)
-        validator, validate_if =
+        validate_if, validator =
           if checked_against.is_a?(Hash)
-            [checked_against[:validator], checked_against[:if]]
+            [checked_against[:if], checked_against[:validator]]
           else
-            [checked_against, nil]
+            [nil, checked_against]
           end
 
-        return unless validator
+        if validate_if.nil?
+          validate_if = lambda do |argument, content|
+            argument.required? || content.present?
+          end
+        end
 
-        validate_if = ->(argument, content) { !(argument.optional? && content.blank?) } if validate_if.nil?
         return unless command.instance_exec(self, content, &validate_if)
+
+        validator = /\s+/ if validator.nil? # needs to be \S+
 
         success =
           case validator
