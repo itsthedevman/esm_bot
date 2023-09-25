@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 RSpec.shared_context("command") do
   let!(:community) { ESM::Test.community }
   let!(:user) { ESM::Test.user(*(respond_to?(:user_args) ? user_args : [])) }
@@ -55,7 +57,7 @@ RSpec.shared_context("command") do
       options =
         arguments.map do |key, value|
           argument = command.arguments.template(key)
-          raise ArgumentError, "Unable to find argument template for #{key}" if argument.nil?
+          raise ArgumentError, "Invalid argument \"#{key}\" given for #{command.class}" if argument.nil?
 
           {name: argument.display_name.to_s, value: value, type: argument.discord_type}
         end
