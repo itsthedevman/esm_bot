@@ -12,13 +12,22 @@ until ESM.bot.ready?
 end
 puts " done"
 
+print "Checking commands for invalid configurations..."
+ESM::Command.all.each(&:check_for_valid_configuration!)
+puts " done"
+
+print "Deleting all global commands..."
 ::ESM.bot.get_application_commands.each(&:delete)
+puts " done"
+
+print "Configuring bot..."
 ESM::BotAttribute.create!(
   maintenance_mode_enabled: false,
   maintenance_message: "",
   status_type: "PLAYING",
   status_message: "Extension V2 development"
 )
+puts " done"
 
 print "Creating communities..."
 ::ESM.bot.get_application_commands(server_id: "452568470765305866").each(&:delete)
@@ -156,3 +165,9 @@ ESM::UserAlias.create!(user_id: 1, community_id: community.id, value: "c")
 puts " done"
 
 Redis.new.set("server_key", server.token.to_json)
+
+print "Registering commands..."
+ESM::Community.all.pluck(:guild_id).each do |community_discord_id|
+  ESM::Command.register_commands(community_discord_id)
+end
+puts " done"
