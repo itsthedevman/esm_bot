@@ -16,8 +16,7 @@ module ESM
     TYPES = %i[admin player].freeze
 
     class << self
-      attr_reader :all, :v1, :by_type,
-        :by_namespace_for_server, :by_namespace_for_global, :by_namespace_for_all
+      attr_reader :all, :by_type, :by_namespace
 
       delegate :application_command, :register_application_command, to: "::ESM.bot"
     end
@@ -60,22 +59,13 @@ module ESM
 
     def self.load
       @all = []
-      @v1 = [] # V1
       @by_type = []
-      @by_namespace_for_server = {}
-      @by_namespace_for_global = {}
-      @by_namespace_for_all = {}
+      @by_namespace = {}
 
       commands_needing_cached = []
       ApplicationCommand.subclasses.each do |command_class|
         # Background commands do not have types
         next if command_class.type.nil?
-
-        # V1 - Skip because the V2 command is the one we want to cache
-        if command_class.name.downcase.end_with?("v1")
-          @v1 << command_class
-          next
-        end
 
         @all << command_class
 
@@ -103,7 +93,6 @@ module ESM
       # Lock it!
       @all.freeze
       @by_type = @all.group_by(&:type).freeze
-      @by_namespace_for_all = by_namespace_for_global.deep_merge(by_namespace_for_server)
 
       # Run some jobs for command
       RebuildCommandCacheJob.perform_async(commands_needing_cached)
@@ -180,7 +169,7 @@ module ESM
     # when a command event occurs
     #
     def self.setup_event_hooks!
-      by_namespace_for_all.each do |name, segments_or_command|
+      by_namespace.each do |name, segments_or_command|
         # It's a command and it's at the root level
         if all.include?(segments_or_command)
           application_command(name, &segments_or_command.method(:event_hook))
@@ -211,24 +200,11 @@ module ESM
     # Registers admin and development commands as "server commands" for the community
     # These are only present on the Discord and are not global
     #
-    # @param community_discord_id [String, Integer] The community's guild ID
+    # @param community_discord_id [String, Integer, NilClass] The community's guild ID to register the command to the
+    #   the community. Otherwise, it'll register it globally
     #
-    def self.register_server_commands(community_discord_id)
-      by_namespace_for_server.each do |name, segments_or_command|
-        register_command(name, segments_or_command, community_discord_id)
-      end
-
-      nil
-    end
-
-    #
-    # Registers player commands as global since they can be used in DMs.
-    # A guild ID can be provided to bind these to the community instead since global commands take time to become available (Discord reasons...)
-    #
-    # @param community_discord_id [String, Integer, nil] Optional. The community's guild ID
-    #
-    def self.register_global_commands(community_discord_id = nil)
-      by_namespace_for_global.each do |name, segments_or_command|
+    def self.register_commands(community_discord_id = nil)
+      by_namespace.each do |name, segments_or_command|
         register_command(name, segments_or_command, community_discord_id)
       end
 
@@ -267,14 +243,7 @@ module ESM
       namespace = command_class.namespace
       segments = namespace[:segments]
       command_name = namespace[:command_name]
-
-      # Only player commands are registered as global. Otherwise, it's a server registered command
-      current_segment =
-        if command_class.type == :player
-          @by_namespace_for_global
-        else
-          @by_namespace_for_server
-        end
+      current_segment = @by_namespace
 
       # Discord treats the first segment after the slash as the "command name"
       # Commands may use this as the root namespace (/help, /register)
