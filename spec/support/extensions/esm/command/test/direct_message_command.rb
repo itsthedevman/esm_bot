@@ -3,10 +3,9 @@
 module ESM
   module Command
     module Test
-      class TargetCommand < ApplicationCommand
+      class DirectMessageCommand < TestCommand
         command_type :player
-
-        argument :target
+        limit_to :dm
 
         def on_execute
         end

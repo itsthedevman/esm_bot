@@ -3,7 +3,7 @@
 module ESM
   module Command
     module Test
-      class ServerErrorCommand < ApplicationCommand
+      class ServerErrorCommand < TestCommand
         command_type :player
 
         argument :server_id

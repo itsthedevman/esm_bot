@@ -3,7 +3,7 @@
 module ESM
   module Command
     module Test
-      class SkipCooldownCommand < ApplicationCommand
+      class SkipCooldownCommand < TestCommand
         command_type :player
 
         def on_execute

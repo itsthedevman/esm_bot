@@ -3,15 +3,15 @@
 module ESM
   module Command
     module Test
-      class CommunityCommand < ApplicationCommand
+      class PlayerCommand < TestCommand
         command_type :player
 
-        argument :community_id
-
         def on_execute
+          "on_execute"
         end
 
         def on_response(_, _)
+          "on_response"
         end
       end
     end

@@ -3,8 +3,7 @@
 module ESM
   module Command
     module Test
-      class ArgumentPreserveCase < ApplicationCommand
-        argument :input, preserve_case: true
+      class ArgumentAlias < TestCommand
       end
     end
   end

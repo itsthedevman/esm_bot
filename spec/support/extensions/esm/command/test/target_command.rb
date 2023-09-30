@@ -3,8 +3,10 @@
 module ESM
   module Command
     module Test
-      class CooldownCommand < ApplicationCommand
-        change_attribute :cooldown_time, default: 10.seconds
+      class TargetCommand < TestCommand
+        command_type :player
+
+        argument :target
 
         def on_execute
         end

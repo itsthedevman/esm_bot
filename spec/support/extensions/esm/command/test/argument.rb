@@ -3,8 +3,7 @@
 module ESM
   module Command
     module Test
-      class ArgumentDefault < ApplicationCommand
-        argument :input, default: "default success!"
+      class Argument < TestCommand
       end
     end
   end

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 ENV["ESM_ENV"] = "test"
 ENV["RAILS_ENV"] = "test"
 
@@ -29,28 +31,40 @@ require "timecop"
 build_result = `cargo check; echo $?`.chomp
 raise "Failed to build extension_server" if build_result != "0"
 
-EXTENSION_SERVER = IO.popen("POSTGRES_DATABASE=esm_test RUST_LOG=#{LOG_LEVEL} bin/extension_server")
+EXTENSION_SERVER = IO.popen(
+  "POSTGRES_DATABASE=esm_test RUST_LOG=#{LOG_LEVEL} bin/extension_server"
+)
 
 # Load the spec related files
 require_relative "./spec_helper_methods"
 
+# Files that have to be loaded before ESM
+Dir["#{__dir__}/support/pre_load/**/*.rb"]
+  .sort
+  .each { |extension| require extension }
+
 # Load the rest of our support files
 ESM.loader.tap do |loader|
   loader.push_dir(ESM.root.join("spec", "support"))
+  loader.collapse(ESM.root.join("spec", "support", "additions"))
 
-  loader.collapse(ESM.root.join("spec", "support", "model"))
-  loader.ignore(ESM.root.join("spec", "support", "esm"))
+  # Handled by FactoryBot
+  loader.ignore(ESM.root.join("spec", "support", "factories"))
+
+  # Loaded below
+  loader.ignore(ESM.root.join("spec", "support", "spec_*"))
+  loader.ignore(ESM.root.join("spec", "support", "extensions"))
 end
 
 ESM.load!
 
 # Spec related files
-Dir["#{__dir__}/spec_*/**/*.rb"]
+Dir[ESM.root.join("spec", "support", "spec_*", "**", "*.rb")]
   .sort
   .each { |extension| require extension }
 
 # ESM overrides and other support files
-Dir["#{__dir__}/support/esm/**/*.rb"]
+Dir[ESM.root.join("spec", "support", "extensions", "**", "*.rb")]
   .sort
   .each { |extension| require extension }
 

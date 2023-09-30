@@ -3,9 +3,8 @@
 module ESM
   module Command
     module Test
-      class DirectMessageCommand < ApplicationCommand
-        command_type :player
-        limit_to :dm
+      class CooldownCommand < TestCommand
+        change_attribute :cooldown_time, default: 10.seconds
 
         def on_execute
         end

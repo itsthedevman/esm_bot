@@ -3,20 +3,18 @@
 module ESM
   module Command
     module Test
-      class ServerSuccessCommand < ApplicationCommand
+      class SkipServerCheckCommand < TestCommand
         command_type :player
-        requires :registration
+
+        skip_action :connected_server
 
         argument :server_id
-        argument :nullable, regex: /.*/, default: nil
 
         def on_execute
-          send_to_arma(type: :echo, data: {type: :empty})
-          self
+          "Hello"
         end
 
         def on_response(_, _)
-          reply("Yaay")
         end
       end
     end

@@ -3,22 +3,20 @@
 module ESM
   module Command
     module Test
-      class ServerCommand < ApplicationCommand
+      class ServerSuccessCommandV1 < TestCommand
         command_type :player
         requires :registration
 
         argument :server_id
+        argument :nullable, regex: /.*/, default: nil
 
         def on_execute
+          deliver!
+          self
         end
 
         def on_response(_, _)
-        end
-
-        def on_accept
-        end
-
-        def on_decline
+          reply("Yaay")
         end
       end
     end

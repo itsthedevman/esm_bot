@@ -3,17 +3,22 @@
 module ESM
   module Command
     module Test
-      class CommunityAndServerCommand < ApplicationCommand
+      class ServerCommand < TestCommand
         command_type :player
         requires :registration
 
-        argument :community_id
         argument :server_id
 
         def on_execute
         end
 
         def on_response(_, _)
+        end
+
+        def on_accept
+        end
+
+        def on_decline
         end
       end
     end
