@@ -20,6 +20,7 @@ RSpec.configure do |config|
   end
 
   config.before :suite do
+    FactoryBot.definition_file_paths = [ESM.root.join("spec", "support", "factories")]
     FactoryBot.find_definitions
     DatabaseCleaner.strategy = :deletion
   end
