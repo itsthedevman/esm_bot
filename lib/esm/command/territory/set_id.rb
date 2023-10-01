@@ -9,13 +9,13 @@ module ESM
         # Arguments (required first, then order matters)
         #
 
-        # See Argument::DEFAULTS[:territory_id]
+        # See Argument::TEMPLATES[:territory_id]
         argument :old_territory_id, display_name: :from, template: :territory_id
 
-        # See Argument::DEFAULTS[:territory_id]
+        # See Argument::TEMPLATES[:territory_id]
         argument :new_territory_id, display_name: :to, template: :territory_id
 
-        # See Argument::DEFAULTS[:server_id]
+        # See Argument::TEMPLATES[:server_id]
         argument :server_id, display_name: :on
 
         #

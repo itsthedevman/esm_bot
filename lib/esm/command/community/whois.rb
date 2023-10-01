@@ -9,7 +9,7 @@ module ESM
         # Arguments (required first, then order matters)
         #
 
-        # See Argument::DEFAULTS[:target]
+        # See Argument::TEMPLATES[:target]
         argument :target, display_name: :whom
 
         #

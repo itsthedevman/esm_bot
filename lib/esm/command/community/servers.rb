@@ -9,7 +9,7 @@ module ESM
         # Arguments (required first, then order matters)
         #
 
-        # See Argument::DEFAULTS[:community_id]
+        # See Argument::TEMPLATES[:community_id]
         argument :community_id, display_name: :for
 
         #

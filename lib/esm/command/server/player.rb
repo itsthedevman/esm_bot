@@ -9,23 +9,21 @@ module ESM
         # Arguments (required first, then order matters)
         #
 
-        # See Argument::DEFAULTS[:target]
+        # See Argument::TEMPLATES[:target]
         argument :target, display_name: :whom
 
         # Required: Needed by command
         argument :action, required: true, checked_against: %w[money m respect r locker l heal h kill k]
 
-        # See Argument::DEFAULTS[:server_id]
+        # See Argument::TEMPLATES[:server_id]
         argument :server_id, display_name: :on
 
         # Optional: Not required by heal or kill
         argument(
           :amount,
           type: :integer,
-          checked_against: {
-            if: ->(_a, _c) { %w[money m respect r locker l].include?(arguments.action) },
-            validator: ->(content) { !content.nil? }
-          },
+          checked_against: ->(content) { !content.nil? },
+          checked_against_if: ->(_a, _c) { %w[money m respect r locker l].include?(arguments.action) },
           modifier: lambda do |content|
             return content unless %w[heal h kill k].include?(arguments.action)
 

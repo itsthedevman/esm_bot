@@ -12,7 +12,7 @@ module ESM
         # Required: Needed by command
         argument :amount, checked_against: /(?!-\d+$)\d+|half|all|stats/
 
-        # See Argument::DEFAULTS[:server_id]
+        # See Argument::TEMPLATES[:server_id]
         argument :server_id, display_name: :on
 
         #

@@ -9,13 +9,13 @@ module ESM
         # Arguments (required first, then order matters)
         #
 
-        # See Argument::DEFAULTS[:target]
+        # See Argument::TEMPLATES[:target]
         argument :target, display_name: :whom
 
-        # See Argument::DEFAULTS[:territory_id]
+        # See Argument::TEMPLATES[:territory_id]
         argument :territory_id, display_name: :in
 
-        # See Argument::DEFAULTS[:server_id]
+        # See Argument::TEMPLATES[:server_id]
         argument :server_id, display_name: :on
 
         #

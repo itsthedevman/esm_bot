@@ -9,14 +9,14 @@ module ESM
         # Arguments (required first, then order matters)
         #
 
-        # See Argument::DEFAULTS[:server_id]
+        # See Argument::TEMPLATES[:server_id]
         argument :server_id, display_name: :on
 
-        # See Argument::DEFAULTS[:target]
+        # See Argument::TEMPLATES[:target]
         # Optional: This command works for players or territories
         argument :target, display_name: :whom, required: false
 
-        # See Argument::DEFAULTS[:territory_id]
+        # See Argument::TEMPLATES[:territory_id]
         # Optional: This command works for players or territories
         argument :territory_id, display_name: :territory, required: false
 

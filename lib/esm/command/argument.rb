@@ -3,7 +3,23 @@
 module ESM
   module Command
     class Argument
-      DEFAULTS = {
+      #
+      # Global default values for all argument
+      # You may overwrite these in your argument definition
+      #
+      DEFAULT_TEMPLATE = {
+        checked_against: /\S+/,
+        checked_against_if: lambda do |argument, content|
+          argument.required? || content.present?
+        end
+      }.freeze
+
+      #
+      # Global templates for any argument to use
+      # These can be used by defining an argument with the same name,
+      # or by providing the `:template` option during argument definition
+      #
+      TEMPLATES = {
         # Required: Majority of the time, this is needed.
         target: {
           checked_against: ESM::Regex::TARGET,
@@ -103,7 +119,7 @@ module ESM
         :display_name, :command_class, :command_name,
         :default_value, :modifier,
         :description, :description_extra, :optional_text,
-        :options, :checked_against
+        :options, :checked_against, :checked_against_if
 
       #
       # A configurable representation of a command argument
@@ -177,13 +193,22 @@ module ESM
       #   @option opts [Integer] :max_value
       #     If type is integer/number, this is the maximum value that can be selected
       #
-      #   @option opts [nil, Regex, String, Proc] :checked_against
-      #     Regex/String will be tested against the provided value
-      #     Proc will have the content provided as the argument and must return a truthy value to be considered "valid"
+      #   @option opts [Regex, String, Proc, Array] :checked_against
+      #     Used to perform validation against the content provided to the argument
+      #     Regex/String  - Content must `match?`
+      #     Proc          - Content is passed in and can return a truthy value to consider the content as valid
+      #     Array         - Content must be one of the values
+      #
+      #   @option opts [Proc] :checked_against_if
+      #     Used to determine if the argument should be validated against :checked_against.
+      #     Can return a truthy value to continue to validation. Falsey values will cause validation to be skipped
       #
       def initialize(name, type = nil, opts = {})
         template_name = (opts[:template] || name).to_sym
-        opts = DEFAULTS[template_name].merge(opts) if DEFAULTS.key?(template_name)
+
+        # Precedence:
+        #   opts -> template -> default template
+        opts = DEFAULT_TEMPLATE.merge(TEMPLATES[template_name] || {}).merge(opts)
 
         @name = name
         @type = type ? type.to_sym : :string
@@ -197,6 +222,7 @@ module ESM
         @preserve_case = !!opts[:preserve_case]
         @modifier = opts[:modifier]
         @checked_against = opts[:checked_against]
+        @checked_against_if = opts[:checked_against_if]
 
         @options = {required: @required}
         @options[:min_value] = opts[:min_value] if opts[:min_value]
@@ -209,15 +235,7 @@ module ESM
 
         @description = load_locale_or_provided(opts[:description], "description")
         @description_extra = load_locale_or_provided(opts[:description_extra], "description_extra").presence
-
-        @optional_text =
-          if (text = opts[:optional_text].presence)
-            load_locale_or_provided(text, "optional_text")
-          elsif optional?
-            text = "This argument is optional#{default_value? ? "" : "."}"
-            text += " and it defaults to `#{default_value}`." if default_value?
-            text
-          end
+        @optional_text = load_optional_text(opts[:optional_text])
 
         check_for_valid_configuration!
       end
@@ -226,9 +244,9 @@ module ESM
         raise ArgumentError, "Invalid command argument" unless command.is_a?(ApplicationCommand)
 
         sanitized_content =
-          if input.is_a?(String)
+          if input.is_a?(String) && input.present?
             preserve_case? ? input.strip : input.downcase.strip
-          elsif input.nil? && default_value?
+          elsif input.blank? && default_value?
             default_value
           else
             input
@@ -264,7 +282,7 @@ module ESM
       end
 
       def modifier?
-        modifier&.respond_to?(:call)
+        !!modifier&.respond_to?(:call)
       end
 
       def default_value?
@@ -316,6 +334,8 @@ module ESM
       private
 
       def load_locale_or_provided(path, suffix)
+        return "" if path == "" # Allows skipping this process. Validation will still fire
+
         locale_path = path.presence || "commands.#{command_name}.arguments.#{name}.#{suffix}"
         localized = I18n.translate(locale_path, default: "")
 
@@ -327,32 +347,30 @@ module ESM
         end
       end
 
-      def check_for_valid_content!(command, content)
-        validate_if, validator =
-          if checked_against.is_a?(Hash)
-            [checked_against[:if], checked_against[:validator]]
-          else
-            [nil, checked_against]
-          end
+      def load_optional_text(text_or_path)
+        return "" if required?
 
-        if validate_if.nil?
-          validate_if = lambda do |argument, content|
-            argument.required? || content.present?
-          end
+        if (text = load_locale_or_provided(text_or_path, "optional_text"))
+          return text if text.present?
         end
 
-        return unless command.instance_exec(self, content, &validate_if)
+        text = "This argument is optional#{default_value? ? "" : "."}"
+        text += " and it defaults to `#{default_value}`." if default_value?
+        text
+      end
 
-        validator = /\s+/ if validator.nil? # needs to be \S+
+      def check_for_valid_content!(command, content)
+        return if checked_against_if.nil? || checked_against.nil?
+        return unless command.instance_exec(self, content, &checked_against_if)
 
         success =
-          case validator
+          case checked_against
           when Regexp, String
-            content.to_s.match?(validator)
+            content.to_s.match?(checked_against)
           when Proc
-            command.instance_exec(content, &validator)
+            command.instance_exec(content, &checked_against)
           when Array
-            validator.include?(content)
+            checked_against.include?(content)
           end
 
         return if success

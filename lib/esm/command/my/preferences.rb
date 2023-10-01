@@ -24,14 +24,14 @@ module ESM
         # Arguments (required first, then order matters)
         #
 
-        # See Argument::DEFAULTS[:server_id]
+        # See Argument::TEMPLATES[:server_id]
         argument :server_id, display_name: :for
 
         # Optional: Omit to show current configuration
         argument :action, choices: {allow: "Allow", deny: "Block"}
 
         # Optional: Defaults to "all"
-        argument :type, default: "all", choices: TYPES.each_with_object({}) { |t, h| h[t] = t.titleize.humanize }
+        argument :type, default: "all", choices: TYPES.index_with { |t| t.titleize.humanize }
 
         #
         # Configuration
@@ -65,7 +65,7 @@ module ESM
             end
 
           # Converts the array of types to { custom: true }, or { "base-raid": false, "flag-stolen": false, "flag-restored": false, etc... }
-          query = types.map { |type| [type, allowed?] }.to_h
+          query = types.index_with { |type| allowed? }
 
           # Update the preference
           preference.update(query)

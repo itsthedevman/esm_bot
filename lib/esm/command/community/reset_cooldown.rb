@@ -9,14 +9,14 @@ module ESM
         # Arguments (required first, then order matters)
         #
 
-        # See Argument::DEFAULTS[:target]
+        # See Argument::TEMPLATES[:target]
         # Optional:
         argument :target, required: false, display_name: :for
 
-        # See Argument::DEFAULTS[:command]
+        # See Argument::TEMPLATES[:command]
         argument :command, required: false
 
-        # See Argument::DEFAULTS[:server_id]
+        # See Argument::TEMPLATES[:server_id]
         argument :server_id, required: false, display_name: :on
 
         #

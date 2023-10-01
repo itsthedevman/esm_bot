@@ -5,3 +5,10 @@ en:
     _preserve: "two"
     _display_as: "three"
     _default: "default"
+  commands:
+    argument_descriptions:
+      arguments:
+        with_locale:
+          description: "An argument description"
+          description_extra: "An argument description extra"
+          optional_text: "An argument optional text"
