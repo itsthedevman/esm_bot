@@ -223,7 +223,7 @@ module ESM
         description: I18n.t("exceptions.deliver_failure", channel_name: delivery_channel.name, message: message)
       )
 
-      community = ESM::Community.find_by_guild_id(delivery_channel.server.id)
+      community = ESM::Community.find_by(guild_id: delivery_channel.server.id)
       community.log_event(:error, embed)
 
       nil
@@ -345,7 +345,7 @@ module ESM
       end
 
       # Event will be nil if it times out
-      timeout = expires_at - ::Time.now
+      timeout = expires_at - ::Time.zone.now
       event =
         if ESM.env.test?
           ESM::Test.wait_for_response(timeout: timeout)

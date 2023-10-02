@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Timer
   attr_reader :started_at, :stopped_at
 

@@ -15,8 +15,8 @@ module ESM
     ###########################
     # Class methods
     ###########################
-    def self.build(type = nil, **attributes, &block)
-      ESM::Embed.new(type, **attributes, &block)
+    def self.build(type = nil, **, &block)
+      ESM::Embed.new(type, **, &block)
     end
 
     ###########################

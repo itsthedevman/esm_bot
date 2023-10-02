@@ -164,7 +164,7 @@ module ESM
                 body
               end
 
-            puts "#{styled_header}#{styled_body}"
+            puts "#{styled_header}#{styled_body}" # rubocop:disable Rails/Output
           end
 
           "#{header}#{body}"

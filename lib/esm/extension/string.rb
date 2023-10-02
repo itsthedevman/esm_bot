@@ -12,13 +12,8 @@ class String
     ESM::JSON.parse(self, as_ostruct: true)
   end
 
-  def to_struct
-    to_h.to_struct
-  end
+  delegate :to_struct, :to_istruct, to: :to_h
 
-  def to_istruct
-    to_h.to_istruct
-  end
 
   def to_h
     ESM::JSON.parse(self)

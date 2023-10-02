@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module ESM
   module Event
     class Xm8NotificationV1

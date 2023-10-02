@@ -64,11 +64,11 @@ module ESM
       # In normal workflow, this method will be passed the following arguments:
       # @option [String] :user The mention for the user that ran the command
       # @option [String] :server_id The ID of the server the command was ran on
-      def translate(**args)
+      def translate(**)
         I18n.t(
           "exceptions.extension.#{@error_code}",
           default: I18n.t("exceptions.extension.default", error_code: @error_code),
-          **args
+          **
         )
       end
     end

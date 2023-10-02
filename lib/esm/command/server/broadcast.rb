@@ -107,7 +107,7 @@ module ESM
               current_community.servers
             else
               # Find the server, but check existence and if the server belongs to this community
-              server = ESM::Server.find_by_server_id(arguments.broadcast_to)
+              server = ESM::Server.find_by(server_id: arguments.broadcast_to)
 
               raise_invalid_server_id! if server.nil?
               raise_no_server_access! if server.community_id != current_community.id

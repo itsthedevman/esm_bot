@@ -5,7 +5,7 @@ SPEC_TIMEOUT_SECONDS = 3
 LOG_LEVEL = :error
 
 RSpec.configure do |config|
-  require_relative "./spec_helper_pre_init"
+  require_relative "spec_helper_pre_init"
 
   config.include FactoryBot::Syntax::Methods
 

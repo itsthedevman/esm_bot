@@ -2,7 +2,7 @@
 
 namespace :community do
   desc "Sets a server as default for a community if they only have one server"
-  task :assign_default_server do
+  task assign_default_server: :environment do
     community_table = ESM::Community.arel_table
     server_table = ESM::Server.arel_table
 

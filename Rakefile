@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "bundler/setup"
 # require "bundler/gem_tasks"
 require "standalone_migrations"
@@ -38,7 +40,7 @@ Rake.add_rakelib("tasks/migrations")
 
 task default: [:test, "standard:fix"]
 
-# Some db tasks require your app code to be loaded; they'll expect to find it here
+# rubocop:disable Rails/RakeEnvironment
 task :environment do
   ESM.console!
   ESM.load!
@@ -52,3 +54,5 @@ task :bot do
     sleep 1
   end
 end
+
+# rubocop:enable Rails/RakeEnvironment

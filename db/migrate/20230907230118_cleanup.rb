@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Cleanup < ActiveRecord::Migration[7.0]
   def change
     remove_column(:users, :discord_discriminator, if_exists: true)

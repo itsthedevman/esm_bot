@@ -94,13 +94,13 @@ module ESM
       return halt(422) unless ESM.bot.channel_permission?(:send_messages, channel)
 
       if params[:community_id]
-        community = ESM::Community.find_by_id(params[:community_id])
+        community = ESM::Community.find_by(id: params[:community_id])
         return halt(404) if community.nil?
         return halt(422) unless channel.server.id.to_s == community.guild_id
       end
 
       if params[:user_id]
-        user = ESM::User.find_by_id(params[:user_id])
+        user = ESM::User.find_by(id: params[:user_id])
         return halt(404) if user.nil?
         return halt(422) unless user.channel_permission?(:read_messages, channel)
       end
@@ -146,12 +146,12 @@ module ESM
     get("/community/:id/channels") do
       ESM.logger.info("#{self.class}##{__method__}") { params }
 
-      community = ESM::Community.find_by_id(params[:id])
+      community = ESM::Community.find_by(id: params[:id])
       return halt(404) if community.nil?
 
       server = community.discord_server
 
-      user = ESM::User.find_by_id(params[:user_id])
+      user = ESM::User.find_by(id: params[:user_id])
 
       # Get the channels the bot (and user if applicable) has access to
       channels = server.channels.filter_map do |channel|
@@ -198,10 +198,10 @@ module ESM
     get("/community/:id/is_modifiable_by/:user_id") do
       ESM.logger.info("#{self.class}##{__method__}") { params }
 
-      community = ESM::Community.find_by_id(params[:id])
+      community = ESM::Community.find_by(id: params[:id])
       return halt(404) if community.nil?
 
-      user = ESM::User.find_by_id(params[:user_id])
+      user = ESM::User.find_by(id: params[:user_id])
       return halt(404) if user.nil?
 
       result = community.modifiable_by?(user.discord_user.on(community.discord_server))
@@ -216,7 +216,7 @@ module ESM
     get("/community/:id/roles") do
       ESM.logger.info("#{self.class}##{__method__}") { params }
 
-      community = ESM::Community.find_by_id(params[:id])
+      community = ESM::Community.find_by(id: params[:id])
       return halt(404) if community.nil?
 
       server_roles = community.discord_server.roles
@@ -244,7 +244,7 @@ module ESM
     get("/community/:id/users") do
       ESM.logger.info("#{self.class}##{__method__}") { params }
 
-      community = ESM::Community.find_by_id(params[:id])
+      community = ESM::Community.find_by(id: params[:id])
       return halt(404) if community.nil?
 
       users = community.discord_server.users
@@ -262,7 +262,7 @@ module ESM
     get("/user/:id/communities") do
       ESM.logger.info("#{self.class}##{__method__}") { params }
 
-      user = ESM::User.find_by_id(params[:id])
+      user = ESM::User.find_by(id: params[:id])
       return halt(404) if user.nil?
 
       communities = ESM::Community.select(:id, :guild_id, :dashboard_access_role_ids, :community_name, :player_mode_enabled).where(guild_id: params[:guild_ids])

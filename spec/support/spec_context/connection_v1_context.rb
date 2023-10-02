@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 RSpec.shared_context("connection_v1") do
   let!(:community) { ESM::Test.community }
   let!(:server) { ESM::Test.server }

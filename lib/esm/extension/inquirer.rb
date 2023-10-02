@@ -71,8 +71,8 @@ class Inquirer
   end
 
   def to_h
-    @predicates.each_with_object({}) do |predicate, hash|
-      hash[predicate] = public_send("#{predicate}?")
+    @predicates.index_with do |predicate|
+      public_send("#{predicate}?")
     end
   end
 

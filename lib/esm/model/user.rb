@@ -50,12 +50,22 @@ module ESM
 
       if ESM::Regex::DISCORD_TAG_ONLY.match(input)
         # Remove the extra stuff from a mention
-        find_by_discord_id(input.gsub(/[<@!&>]/, ""))
+        find_by(discord_id: input.gsub(/[<@!&>]/, ""))
       elsif ESM::Regex::STEAM_UID_ONLY.match(input)
-        find_by_steam_uid(input)
+        find_by(steam_uid: input)
       else
-        find_by_discord_id(input)
+        find_by(discord_id: input)
       end
+    end
+
+    def self.find_by(where_clause = {})
+      if where_clause.size == 1
+        key, value = where_clause.first
+
+        return order(key).where(key => value.to_s).first
+      end
+
+      super(**where_clause)
     end
 
     def self.find_by_steam_uid(uid)
@@ -125,7 +135,7 @@ module ESM
     def can_modify?(guild_id)
       return true if developer? && !Rails.env.development?
 
-      community = Community.find_by_guild_id(guild_id)
+      community = Community.find_by(guild_id: guild_id)
       return false if community.nil?
 
       server = community.discord_server

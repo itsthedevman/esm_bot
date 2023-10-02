@@ -36,7 +36,7 @@ module ESM
 
     # A refresh can happen every 15 minutes
     def needs_refresh?
-      ((Time.now - updated_at) / 1.minute) >= 15
+      ((Time.zone.now - updated_at) / 1.minute) >= 15
     end
   end
 end

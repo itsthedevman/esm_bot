@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+# rubocop:disable Rails/Output
+
 require_relative "../lib/esm"
 require_relative "../spec/support/esm/test"
 
@@ -171,3 +173,5 @@ ESM::Community.all.pluck(:guild_id).each do |community_discord_id|
   ESM::Command.register_commands(community_discord_id)
 end
 puts " done"
+
+# rubocop:enable Rails/Output

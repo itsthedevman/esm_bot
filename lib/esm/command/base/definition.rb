@@ -91,13 +91,13 @@ module ESM
           #
           # @param *keys [Symbol] The requirements. Valid options: :registration, :dev
           #
-          def requires(*keys)
-            requirements.set(*keys)
+          def requires(*)
+            requirements.set(*)
             self
           end
 
-          def does_not_require(*keys)
-            requirements.unset(*keys)
+          def does_not_require(*)
+            requirements.unset(*)
             self
           end
 
@@ -106,8 +106,8 @@ module ESM
           #
           # @param *actions [Array<Symbol>] The name of the actions to skip
           #
-          def skip_action(*actions)
-            skipped_actions.set(*actions)
+          def skip_action(*)
+            skipped_actions.set(*)
             self
           end
 

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 def create_request(**params)
   user = ESM::Test.user.discord_user
   command = ESM::Command::Test::BaseV1.new

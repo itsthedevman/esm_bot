@@ -2,7 +2,7 @@
 
 describe ESM::Event::ServerCreate do
   let!(:event) { ESM::Event::ServerCreate.new(ESM.bot.server(ESM::Community::ESM::ID)) }
-  let(:community) { ESM::Community.find_by_guild_id(ESM::Community::ESM::ID) }
+  let(:community) { ESM::Community.find_by(guild_id: ESM::Community::ESM::ID) }
 
   it "should be valid" do
     expect(event).not_to be_nil

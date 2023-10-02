@@ -81,7 +81,7 @@ module ESM
           add_general_field(e)
           add_currency_field(e)
           add_scoreboard_field(e)
-          add_territories_field(e) if !territories.blank?
+          add_territories_field(e) if territories.present?
         end
       end
 

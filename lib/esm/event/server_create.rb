@@ -27,12 +27,12 @@ module ESM
 
       def find_or_initialize_community
         # Attempt to find the community by it's guild id
-        community = ESM::Community.find_by_guild_id(@server.id)
+        community = ESM::Community.find_by(guild_id: @server.id)
         community.nil? ? ESM::Community.create!(guild_id: @server.id) : community
       end
 
       def find_or_initialize_user
-        user = ESM::User.find_by_discord_id(@owner.id)
+        user = ESM::User.find_by(discord_id: @owner.id)
         @new_user = user.nil?
         @new_user ? ESM::User.create!(discord_id: @owner.id, discord_username: @owner.name) : user
       end

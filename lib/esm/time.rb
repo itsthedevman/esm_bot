@@ -32,7 +32,7 @@ module ESM
     end
 
     def self.now
-      ::Time.now
+      ::Time.zone.now
     end
   end
 end

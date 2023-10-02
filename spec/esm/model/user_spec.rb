@@ -57,12 +57,12 @@ describe ESM::User do
 
   describe ".find_by_discord_id" do
     it "has no steam uid" do
-      queried_user = ESM::User.find_by_discord_id(unregistered_user.discord_id)
+      queried_user = ESM::User.find_by(discord_id: unregistered_user.discord_id)
       expect(queried_user).to eq(unregistered_user)
     end
 
     it "handles parsing an int" do
-      queried_user = ESM::User.find_by_discord_id(unregistered_user.discord_id.to_i)
+      queried_user = ESM::User.find_by(discord_id: unregistered_user.discord_id.to_i)
       expect(queried_user).to eq(unregistered_user)
     end
   end

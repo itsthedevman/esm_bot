@@ -16,7 +16,7 @@ describe ESM::Command::Community::ResetCooldown, category: "command" do
         community_id: community.id,
         server_id: server.id,
         command_name: "me",
-        expires_at: Time.now + 5.minutes,
+        expires_at: Time.zone.now + 5.minutes,
         cooldown_type: "minutes",
         cooldown_quantity: 5
       )
@@ -29,7 +29,7 @@ describe ESM::Command::Community::ResetCooldown, category: "command" do
         community_id: community.id,
         server_id: second_server.id,
         command_name: "me",
-        expires_at: Time.now + 5.minutes,
+        expires_at: Time.zone.now + 5.minutes,
         cooldown_type: "minutes",
         cooldown_quantity: 5
       )

@@ -42,7 +42,7 @@ module ESM
 
     # Removes a connection from the connections
     def self.remove_connection(connection)
-      connection.server.update(disconnected_at: ::Time.now) if !ESM.env.test?
+      connection.server.update(disconnected_at: ::Time.zone.now) if !ESM.env.test?
       @server_ids.delete(connection.server.server_id)
       @connections.delete(connection.server.server_id)
     end
@@ -227,7 +227,7 @@ module ESM
     # @private
     # Websocket event, executes when the A3 server replies to a pong? IDK yet, untested.
     def on_pong(message)
-      puts "[WS on_pong] #{message}"
+      Rails.logger.debug "[WS on_pong] #{message}"
     end
 
     def on_error(event)

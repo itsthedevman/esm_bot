@@ -71,7 +71,7 @@ module ESM
         # @return [ESM::Community, nil] The community the command was executed from. Nil if sent from Direct Message
         #
         def current_community
-          @current_community ||= ESM::Community.find_by_guild_id(event&.server&.id)
+          @current_community ||= ESM::Community.find_by(guild_id: event&.server&.id)
         end
 
         #
@@ -98,7 +98,7 @@ module ESM
         # @return [ESM::Server, nil] The server that the command was executed for
         #
         def target_server
-          @target_server ||= ESM::Server.find_by_server_id(arguments.server_id) if arguments.server_id
+          @target_server ||= ESM::Server.find_by(server_id: arguments.server_id) if arguments.server_id
         end
 
         #
@@ -108,7 +108,7 @@ module ESM
         #
         def target_community
           @target_community ||= begin
-            return ESM::Community.find_by_community_id(arguments.community_id) if arguments.community_id
+            return ESM::Community.find_by(community_id: arguments.community_id) if arguments.community_id
 
             target_server&.community
           end
@@ -250,8 +250,8 @@ module ESM
         #
         # Makes calls to I18n.t shorter
         #
-        def t(translation_name, **args)
-          I18n.t("commands.#{name}.#{translation_name}", **args)
+        def t(translation_name, **)
+          I18n.t("commands.#{name}.#{translation_name}", **)
         end
 
         #
@@ -291,8 +291,8 @@ module ESM
           raise exception_class || ESM::Exception::CheckFailure, reason
         end
 
-        def skip_action(*actions)
-          skipped_actions.set(*actions)
+        def skip_action(*)
+          skipped_actions.set(*)
         end
 
         #

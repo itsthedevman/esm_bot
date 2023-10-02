@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 RSpec.shared_examples("validate_command") do
   it "has a valid description text" do
     expect(command.description).not_to be_blank

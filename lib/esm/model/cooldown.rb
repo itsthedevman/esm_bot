@@ -22,7 +22,7 @@ module ESM
 
     def user
       return ESM::User.where(id: user_id).first if user_id.present?
-      return ESM::User.find_by_steam_uid(steam_uid) if steam_uid.present?
+      return ESM::User.find_by(steam_uid: steam_uid) if steam_uid.present?
 
       nil
     end
@@ -40,7 +40,7 @@ module ESM
     end
 
     def reset!
-      update!(expires_at: 5.second.ago, cooldown_amount: 0)
+      update!(expires_at: 5.seconds.ago, cooldown_amount: 0)
     end
 
     def update_expiry!(executed_at, cooldown_time)

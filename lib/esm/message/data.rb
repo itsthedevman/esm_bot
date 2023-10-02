@@ -4,12 +4,8 @@ module ESM
   class Message
     class Data
       DATA_TYPES =
-        YAML.safe_load(
-          File.read(File.expand_path("./config/message/data_types.yml"))
-        ).merge(
-          YAML.safe_load(
-            File.read(File.expand_path("./config/message/metadata_types.yml"))
-          )
+        YAML.safe_load_file(File.expand_path("./config/message/data_types.yml")).merge(
+          YAML.safe_load_file(File.expand_path("./config/message/metadata_types.yml"))
         ).deep_symbolize_keys.freeze
 
       RUBY_TYPE_LOOKUP = {

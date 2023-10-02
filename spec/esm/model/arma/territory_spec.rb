@@ -178,7 +178,7 @@ describe ESM::Exile::Territory do
 
     it "should be yellow" do
       territory_example.flag_stolen = false
-      last_paid_at = ::Date.today - (settings.territory_lifetime - 3).days
+      last_paid_at = ::Time.zone.today - (settings.territory_lifetime - 3).days
       territory_example.last_paid_at = last_paid_at.to_time.strftime(TerritoryGenerator::TIME_FORMAT)
 
       expect(territory.status_color).to eq(ESM::Color::Toast::YELLOW)
@@ -192,7 +192,7 @@ describe ESM::Exile::Territory do
 
     it "should be red (Payment due)" do
       territory_example.flag_stolen = false
-      last_paid_at = ::Date.today - (settings.territory_lifetime - 1).days
+      last_paid_at = ::Time.zone.today - (settings.territory_lifetime - 1).days
       territory_example.last_paid_at = last_paid_at.to_time.strftime(TerritoryGenerator::TIME_FORMAT)
 
       expect(territory.status_color).to eq(ESM::Color::Toast::RED)
@@ -208,14 +208,14 @@ describe ESM::Exile::Territory do
     end
 
     it "should return (Needs payment)" do
-      last_paid_at = ::Date.today - (settings.territory_lifetime - 3).days
+      last_paid_at = ::Time.zone.today - (settings.territory_lifetime - 3).days
       territory_example.last_paid_at = last_paid_at.to_time.strftime(TerritoryGenerator::TIME_FORMAT)
 
       expect(territory.days_left_until_payment_due).to eq(3)
     end
 
     it "should return (Payment ASAP)" do
-      last_paid_at = ::Date.today - (settings.territory_lifetime - 1).days
+      last_paid_at = ::Time.zone.today - (settings.territory_lifetime - 1).days
       territory_example.last_paid_at = last_paid_at.to_time.strftime(TerritoryGenerator::TIME_FORMAT)
 
       expect(territory.days_left_until_payment_due).to eq(1)

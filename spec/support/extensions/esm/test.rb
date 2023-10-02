@@ -39,12 +39,12 @@ module ESM
       #
       # @note The type of community controls what user type is selected
       # @see #reset!
-      def community(*args, type: @community_type)
-        @community ||= FactoryBot.create(type, :player_mode_disabled, *args)
+      def community(*, type: @community_type)
+        @community ||= FactoryBot.create(type, :player_mode_disabled, *)
       end
 
-      def second_community(*args)
-        @second_community ||= FactoryBot.create(@second_community_type, :player_mode_disabled, *args)
+      def second_community(*)
+        @second_community ||= FactoryBot.create(@second_community_type, :player_mode_disabled, *)
       end
 
       # Attempt to simulate random users for tests
