@@ -44,14 +44,14 @@ module ESM
               Please read the following and correct any errors before trying again.
 
               #{help_documentation}
+
+              For more information, use `#{help_usage}`
             STRING
 
             e.add_field(
               name: I18n.t("commands.help.command.examples"),
               value: command_instance.example
             )
-
-            e.footer = "For more information, use `#{help_usage}`"
           end
 
         raise ESM::Exception::CheckFailure, embed
