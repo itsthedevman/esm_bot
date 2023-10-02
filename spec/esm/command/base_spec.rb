@@ -3,17 +3,13 @@
 describe ESM::Command::Base do
   include_context "connection"
 
-  let!(:community) { ESM::Test.community }
-  let!(:server) { ESM::Test.server }
-  let!(:user) { ESM::Test.user }
-
   describe "Properties" do
     include_context "command" do
       let!(:command_class) { ESM::Command::Test::BaseV1 }
     end
 
     it "has a valid name" do
-      expect(command.name).to eq("base")
+      expect(command.name).to eq("base_v1")
     end
 
     it "has a valid category" do
@@ -51,12 +47,12 @@ describe ESM::Command::Base do
     end
 
     it "has requires" do
-      expect(command.requires).not_to be_nil
-      expect(command.requires).to contain_exactly(:registration)
+      expect(command.requirements).not_to be_nil
+      expect(command.requirements).to contain_exactly(:registration)
     end
 
     it "has proper usage" do
-      expect(command.usage).to match(/.+base <\?community_id> <\?server_id> <target> <_integer> <_preserve> <sa_yalpsid> <\?_default>/i)
+      expect(command.usage).to eq("/test base_v1 target:<target>")
     end
   end
 
@@ -88,11 +84,15 @@ describe ESM::Command::Base do
 
     it "creates" do
       discord_id = user.discord_id
-      user.destroy
+      user.destroy!
 
-      execute!
+      expect { execute! }.to raise_error(ESM::Exception::CheckFailure) do |error|
+        embed = error.data
 
-      new_current_user = ESM::User.find_by_discord_id(discord_id)
+        expect(embed.description).to match("I'll need you to link your Steam account")
+      end
+
+      new_current_user = ESM::User.find_by(discord_id: discord_id)
       expect(new_current_user).not_to be(nil)
       expect(command.current_user.discord_id).to eq(new_current_user.discord_id)
     end
@@ -186,7 +186,7 @@ describe ESM::Command::Base do
 
       execute!(target: discord_id)
 
-      new_target_user = ESM::User.find_by_discord_id(discord_id)
+      new_target_user = ESM::User.find_by(discord_id: discord_id)
       expect(new_target_user).not_to be(nil)
       expect(command.target_user.discord_id).to eq(new_target_user.discord_id)
     end

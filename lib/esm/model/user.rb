@@ -68,15 +68,6 @@ module ESM
       super(**where_clause)
     end
 
-    def self.find_by_steam_uid(uid)
-      order(:steam_uid).where(steam_uid: uid).first
-    end
-
-    def self.find_by_discord_id(id)
-      id = id.to_s if !id.is_a?(String)
-      order(:discord_id).where(discord_id: id).first
-    end
-
     #########################
     # Instance Methods
     #########################

@@ -62,7 +62,21 @@ module ESM
         # @return [ESM::User]
         #
         def current_user
-          @current_user ||= ESM::User.where(discord_id: event&.user&.id).first_or_initialize
+          return @current_user if defined?(@current_user) && !@current_user.nil?
+          return if event&.user.nil?
+
+          discord_user = event.user
+          user = ESM::User.where(discord_id: discord_user.id).first_or_initialize
+          user.update(
+            discord_username: discord_user.username,
+            discord_avatar: discord_user.avatar_url
+          )
+
+          # Save some cycles
+          discord_user.instance_variable_set(:@esm_user, user)
+
+          # Return back the modified discord user
+          @current_user = user
         end
 
         #
