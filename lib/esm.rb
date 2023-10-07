@@ -53,6 +53,9 @@ Dotenv.overload
 Dotenv.overload(".env.test") if ENV["ESM_ENV"] == "test"
 Dotenv.overload(".env.prod") if ENV["ESM_ENV"] == "production"
 
+# Default timezone to UTC
+Time.zone_default = Time.find_zone!("UTC")
+
 #################################
 # Logging methods!
 #################################
