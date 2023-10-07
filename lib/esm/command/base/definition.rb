@@ -66,6 +66,11 @@ module ESM
           # @param channel_type [Symbol, String] Valid options: :text, :pm
           #
           def limit_to(channel_type)
+            if CHANNEL_TYPES.exclude?(channel_type)
+              raise ArgumentError,
+                "Invalid channel type for #{self.class.name}.limit_to(:#{channel_type}). Expected one of: #{CHANNEL_TYPES}"
+            end
+
             self.limited_to = channel_type.to_sym
             self
           end
