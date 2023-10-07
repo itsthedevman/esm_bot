@@ -4,7 +4,6 @@ module ESM
   module Event
     class ServerInitialization
       DATA_ATTRIBUTES = %i[
-        command_prefix
         community_id
         extdb_path
         gambling_modifier
@@ -127,7 +126,6 @@ module ESM
         ).symbolize_keys
 
         data = data.merge(
-          command_prefix: @community.command_prefix,
           community_id: @community.community_id,
           extdb_path: settings.extdb_path || "",
           logging_channel_id: @community.logging_channel_id,

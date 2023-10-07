@@ -1,6 +1,6 @@
 en:
   exceptions:
-    system: "An error occurred while processing your request.\nWill you please join my [Discord](https://esmbot.com/join) and post the following error code in the `#get-help-here` channel so my developer can fix it for you? \nThank you!\n```%{error_code}```"
+    system: "An error occurred while processing your request.\nWill you please join my [Discord](https://esmbot.com/join) and post the following error code in the `#get-help-here` channel so my developer can fix it for you?\nThank you!\n```%{error_code}```"
     invalid_discord_log: "**[`ESM_fnc_logToDiscord`]**\n**Uh oh, I ran into an issue parsing your discord log message from `%{server}`**\nPlease fix any issues in your JSON and confirm its validity using https://jsonlint.com\nPlease read the API documentation on my website (https://www.esmbot.com/wiki/api) for the correct format.\nThis is the message I attempted to parse: ```%{message}```"
     invalid_channel_access: "**[`ESM_fnc_sendToChannel`]**\nYour Discord Server does not have a channel with ID `%{channel_id}`. Please provide `ESM_fnc_sendToChannel` a channel ID that belongs to your Discord Server."
     malformed_message: "**[`ESM_fnc_sendToChannel`]**\nThe provided message is malformed and unable to be delivered.\nPlease read the API documentation on my website (https://www.esmbot.com/wiki/api) for the correct format.\nThis is the message I attempted to send: ```%{message}```"

@@ -10,7 +10,6 @@ FactoryBot.define do
     # attribute :log_xm8_event, :boolean, default: true
     # attribute :player_mode_enabled, :boolean, default: true
     # attribute :territory_admin_ids, :json, default: []
-    # attribute :command_prefix, :string, default: nil
     # attribute :created_at, :datetime
     # attribute :updated_at, :datetime
     # attribute :deleted_at, :datetime

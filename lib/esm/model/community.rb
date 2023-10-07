@@ -5,7 +5,6 @@ module ESM
     ALPHABET = ("a".."z").to_a.freeze
 
     before_create :generate_community_id
-    before_create :set_command_prefix
     after_create :create_command_configurations
     after_create :create_notifications
 
@@ -19,7 +18,6 @@ module ESM
     attribute :log_error_event, :boolean, default: true
     attribute :player_mode_enabled, :boolean, default: true
     attribute :territory_admin_ids, :json, default: []
-    attribute :command_prefix, :string, default: nil
     attribute :welcome_message_enabled, :boolean, default: true
     attribute :welcome_message, :string, default: ""
     attribute :created_at, :datetime
@@ -113,10 +111,6 @@ module ESM
     end
 
     private
-
-    def set_command_prefix
-      self.command_prefix = ::ESM.config.prefix
-    end
 
     def generate_community_id
       return if community_id.present?

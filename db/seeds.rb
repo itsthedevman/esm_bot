@@ -38,7 +38,6 @@ community = ESM::Community.create!(
   community_name: "ESM Test Server 1",
   guild_id: "452568470765305866",
   logging_channel_id: "901965726305382400",
-  command_prefix: "~",
   player_mode_enabled: false
 )
 
@@ -46,8 +45,7 @@ community = ESM::Community.create!(
 ESM::Community.create!(
   community_id: "esm2",
   community_name: "ESM Test Server 2",
-  guild_id: "901967248653189180",
-  command_prefix: "pls "
+  guild_id: "901967248653189180"
 )
 
 ::ESM.bot.get_application_commands(server_id: "421111581267591168").each(&:delete)
