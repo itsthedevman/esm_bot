@@ -127,7 +127,7 @@ describe ESM::Command::Territory::Add, category: "command" do
     end
 
     # Change "requires_connection" to true if this command requires the client to be connected
-    describe "#on_execute/#on_response", requires_connection: true do
+    describe "#on_execute/#on_response", :requires_connection do
       include_context "connection"
 
       let(:territory) do

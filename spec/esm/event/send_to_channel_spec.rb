@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-describe ESM::Event::SendToChannel, v2: true, requires_connection: true do
+describe ESM::Event::SendToChannel, :requires_connection, v2: true do
   include_context "connection"
 
   after do

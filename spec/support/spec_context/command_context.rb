@@ -17,6 +17,9 @@ RSpec.shared_context("command") do
   # @param channel [Discordrb::Channel, nil] The channel to execute the command in
   # @param arguments [Hash] Any arguments the command is expecting as key: value pairs
   # @param prompt_response [String, nil] Optional. The value to set as the user's "response" to ESM prompting them
+  # @param handle_error [TrueClass, FalseClass] Controls if errors should be handled by the command or bubbled up
+  #   If this is true, the command's `.event_hook` method will be called. Any errors will be handled
+  #   if this is false (default), the command's `#execute` method will be called. Any errors will raise in the specs
   #
   def execute!(**opts)
     channel_type = opts.delete(:channel_type) || :text
@@ -24,6 +27,7 @@ RSpec.shared_context("command") do
     command = opts.delete(:command) || self.command
     arguments = opts.delete(:arguments) || {}
     prompt_response = opts.delete(:prompt_response)
+    handle_error = opts.delete(:handle_error)
 
     channel =
       if (channel = opts.delete(:channel))
@@ -68,7 +72,15 @@ RSpec.shared_context("command") do
     respond_to_prompt(prompt_response) if prompt_response
 
     event = Discordrb::Events::ApplicationCommandEvent.new(data.deep_stringify_keys, ESM.bot)
-    command.execute(ESM::Event::ApplicationCommand.new(event))
+
+    if handle_error
+      # In normal operation, #event_hook will receive the ApplicationCommandEvent above
+      # SpecApplicationCommandEvent overwrites `#defer` and `#edit_response` to avoid
+      # sending those calls to Discord proper
+      command.class.event_hook(SpecApplicationCommandEvent.new(event))
+    else
+      command.execute(ESM::Event::ApplicationCommand.new(event))
+    end
   end
 
   def wait_for_completion!(event = :on_execute)

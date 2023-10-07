@@ -25,7 +25,7 @@ describe ESM::Connection::Server, v2: true do
   end
 
   # fire(message, to:, forget: false)
-  describe "#fire", requires_connection: true do
+  describe "#fire", :requires_connection do
     before do
       ESM::Test.block_outbound_messages = true
     end

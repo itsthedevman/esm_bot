@@ -31,37 +31,15 @@ RSpec.configure do |config|
   end
 
   config.around do |example|
-    ESM::Test.reset!
-
-    if example.metadata[:requires_connection]
-      begin
-        ESM::ExileTerritory.delete_all
-      rescue ActiveRecord::ConnectionNotEstablished
-        raise "Unable to connect to the Exile MySQL server. Please ensure it is running before trying again"
-      end
-    end
-
     trace!(
       example_group: example.example_group&.description,
       example: example.description
     )
 
+    ESM::Test.reset!
+
     # Run the test!
     DatabaseCleaner.cleaning { example.run }
-
-    # Ensure every message is either replied to or timed out
-    connection_server = ESM::Connection::Server.instance
-    if example.metadata[:requires_connection]
-      wait_for {
-        connection_server.message_overseer.size
-      }.to(eq(0), connection_server.message_overseer.mailbox.to_s)
-    end
-
-    # Pause the server in case it was started in the test
-    ESM::Connection::Server.pause
-
-    connection_server&.disconnect_all!
-    connection_server&.message_overseer&.remove_all!
 
     ESM::Websocket.remove_all_connections!
   end
@@ -82,6 +60,67 @@ RSpec.configure do |config|
 
   config.after(:context, :error_testing) do
     enable_log_printing
+  end
+
+  config.before(:each, :requires_connection) do
+    ESM::ExileTerritory.delete_all
+
+    ESM::Test.callbacks.run_callback(:before_connection, on_instance: self)
+    ESM::Connection::Server.resume
+
+    wait_for { connection_server&.tcp_server_alive? }.to be(true)
+    wait_for { server.reload.connected? }.to be(true),
+      "esm_arma never connected. From the esm_arma repo, please run `bin/bot_testing`"
+
+    ESM::Test.outbound_server_messages.clear
+
+    users = []
+    users << user if respond_to?(:user)
+    users << second_user if respond_to?(:second_user)
+    next if users.blank?
+
+    users.each do |user|
+      # Creates a user on the server with the same steam_uid
+      allow(user).to receive(:connect) { |**attrs| spawn_test_user(user, on: server, **attrs) }
+    end
+  rescue ActiveRecord::ConnectionNotEstablished
+    raise "Unable to connect to the Exile MySQL server. Please ensure it is running before trying again"
+  end
+
+  config.after(:each, :requires_connection) do
+    users = []
+    users << user if respond_to?(:user)
+    users << second_user if respond_to?(:second_user)
+
+    users = users.format(join_with: "\n") do |user|
+      next if user.steam_uid.blank?
+
+      "ESM_TestUser_#{user.steam_uid} call _deleteFunction;" if user.connected
+    end
+
+    if users.present?
+      sqf =
+        <<~SQF
+          private _deleteFunction = {
+            if (isNil "_this") exitWith {};
+
+            deleteVehicle _this;
+          };
+          #{users}
+        SQF
+
+      execute_sqf!(sqf)
+    end
+
+    if (connection_server = ESM::Connection::Server.instance)
+      # Ensure every message is either replied to or timed out
+      wait_for { connection_server.message_overseer.size }.to eq(0), connection_server.message_overseer.mailbox.to_s
+
+      # Pause the server in case it was started in the test
+      connection_server.pause
+      connection_server.disconnect_all!
+      connection_server.message_overseer.remove_all!
+    end
   end
 end
 

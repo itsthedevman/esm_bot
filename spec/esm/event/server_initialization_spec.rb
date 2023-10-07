@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-describe ESM::Event::ServerInitialization, v2: true, requires_connection: true do
+describe ESM::Event::ServerInitialization, :requires_connection, v2: true do
   include_context "connection"
 
   let(:user) { ESM::Test.user(:with_role) }

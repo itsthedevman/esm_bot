@@ -12,7 +12,7 @@ describe ESM::Command::Server::Reward, category: "command", v2: true do
     expect(command.registration_required?).to be(true)
   end
 
-  describe "Command workflows", requires_connection: true do
+  describe "Command workflows", :requires_connection do
     include_context "connection"
 
     it "Executes - Player poptabs only" do

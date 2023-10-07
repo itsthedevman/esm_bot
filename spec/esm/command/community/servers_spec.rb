@@ -45,7 +45,7 @@ describe ESM::Command::Community::Servers, category: "command" do
       expect(embed.fields.third.value).to eq("```#{server.server_port}```")
     end
 
-    it "returns one online server", requires_connection: true do
+    it "returns one online server", :requires_connection do
       execute!(arguments: {community_id: community.community_id})
       wait_for_completion!
 
