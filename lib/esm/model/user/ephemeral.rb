@@ -7,9 +7,9 @@ module ESM
 
       delegate :mention, :distinct, :username, to: :@discord_user
 
-      def initialize(steam_uid)
-        @steam_uid = steam_uid
-        @discord_user = DiscordUser.new(steam_uid)
+      def initialize(id)
+        @steam_uid = id
+        @discord_user = DiscordUser.new(id)
       end
 
       def registered?
@@ -24,11 +24,15 @@ module ESM
         @steam_data ||= ESM::SteamAccount.new(steam_uid)
       end
 
+      def valid?
+        false
+      end
+
       class DiscordUser
         attr_reader :steam_uid
 
-        def initialize(steam_uid)
-          @steam_uid = steam_uid
+        def initialize(id)
+          @steam_uid = id
         end
 
         alias_method :id, :steam_uid
