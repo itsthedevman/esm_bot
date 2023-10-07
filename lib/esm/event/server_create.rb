@@ -46,7 +46,11 @@ module ESM
           ESM::Embed.build do |e|
             e.title = "**Hello #{@owner.name}, thank you for inviting me to your community!**"
 
-            change_mode_usage = ESM::Command.get(:mode).usage(overwrites: {for: @community.community_id})
+            change_mode_usage = ESM::Command.get(:mode).usage(
+              with_args: true,
+              overrides: {for: @community.community_id}
+            )
+
             e.description = [
               "If this is your first time inviting me, please read my [Getting Started](https://www.esmbot.com/wiki) guide. It goes over how to use my commands and any extra setup that may need done. You can also use the `/help` command if you need detailed information on how to use a command.\nIf you encounter a bug, please join my developer's [Discord Server](https://www.esmbot.com/join) and let him know in the support channel :smile:",
               "",
