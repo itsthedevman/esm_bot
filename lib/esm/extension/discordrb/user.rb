@@ -8,8 +8,8 @@ module Discordrb
 
     def esm_user
       @esm_user ||= lambda do
-        user = ESM::User.where(discord_id: id.to_s).first_or_initialize
-        user.update(discord_username: username, discord_discriminator: discriminator)
+        user = ESM::User.where(discord_id: id.to_s).first_or_create
+        user.sync_discord_attributes!(self)
         user
       end.call
     end

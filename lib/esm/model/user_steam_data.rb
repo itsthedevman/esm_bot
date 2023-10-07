@@ -32,6 +32,8 @@ module ESM
         number_of_vac_bans: player_data.number_of_vac_bans,
         days_since_last_ban: player_data.days_since_last_ban
       )
+
+      self
     end
 
     # A refresh can happen every 15 minutes

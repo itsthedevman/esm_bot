@@ -2,6 +2,8 @@
 
 module ESM
   class User < ApplicationRecord
+    attr_writer :discord_user
+
     after_create :create_user_steam_data
     after_create :create_id_defaults
 
@@ -32,7 +34,7 @@ module ESM
     validates :discord_id, uniqueness: true, presence: true
     validates :steam_uid, uniqueness: true
 
-    delegate :on, to: :discord_user
+    delegate :on, to: :discord_user, allow_nil: true
 
     #########################
     # Public Methods
@@ -40,7 +42,7 @@ module ESM
 
     # Parses and finds a user based off of SteamUID, Discord ID, or Discord Mention
     def self.parse(input)
-      return nil if input.nil?
+      return if input.nil?
 
       # In case of frozen strings
       input = input.dup if input.frozen?
@@ -48,17 +50,28 @@ module ESM
       # Discordrb stores the Discord ID as an Integer.
       input = input.to_s if !input.is_a?(String)
 
-      if ESM::Regex::DISCORD_TAG_ONLY.match(input)
+      if ESM::Regex::DISCORD_TAG_ONLY.match?(input)
         # Remove the extra stuff from a mention
         find_by(discord_id: input.gsub(/[<@!&>]/, ""))
-      elsif ESM::Regex::STEAM_UID_ONLY.match(input)
+      elsif input.steam_uid?
         find_by(steam_uid: input)
       else
         find_by(discord_id: input)
       end
     end
 
+    def self.from_discord(discord_user)
+      user = order(:discord_id)
+        .where(discord_id: discord_user.id)
+        .first_or_initialize
+
+      user.update!(discord_username: discord_user.username, discord_avatar: discord_user.avatar_url)
+      user.discord_user = discord_user
+      user
+    end
+
     def self.find_by(where_clause = {})
+      # Improves performance of find_by_x style queries
       if where_clause.size == 1
         key, value = where_clause.first
 
@@ -73,11 +86,7 @@ module ESM
     #########################
 
     def steam_data
-      @steam_data ||= lambda do
-        # If the data is stale, it will automatically refresh
-        user_steam_data.refresh
-        user_steam_data
-      end.call
+      @steam_data ||= user_steam_data&.refresh
     end
 
     def registered?
@@ -93,9 +102,9 @@ module ESM
     end
 
     def discord_user
-      @discord_user ||= begin
-        return if discord_id.nil?
+      return if discord_id.nil?
 
+      @discord_user ||= lambda do
         discord_user = ESM.bot.user(discord_id)
         return if discord_user.nil?
 
@@ -104,7 +113,7 @@ module ESM
         current_attributes = [discord_username, discord_avatar]
 
         if current_attributes != incoming_attributes
-          update(
+          update!(
             discord_username: discord_user.username,
             discord_avatar: discord_user.avatar_url
           )
@@ -112,18 +121,20 @@ module ESM
 
         # Save some data for later consumption
         discord_user.esm_user = self
-
         discord_user
-      end
+      end.call
     end
 
     def discord_servers
+      return if discord_id.nil?
+
       @discord_servers ||= ESM.bot.servers.values.select do |server|
         server.users.any? { |user| user.id.to_s == discord_id }
       end
     end
 
     def can_modify?(guild_id)
+      return false if discord_id.nil?
       return true if developer? && !Rails.env.development?
 
       community = Community.find_by(guild_id: guild_id)
@@ -133,11 +144,11 @@ module ESM
       return false if server.nil?
 
       # Check if they're the owner or admin
-      community.modifiable_by?(discord_user.on(server))
+      community.modifiable_by?(on(server))
     end
 
     def channel_permission?(permission, channel)
-      discord_user&.on(channel.server)&.permission?(permission, channel) || false
+      !!on(channel.server)&.permission?(permission, channel)
     end
   end
 end
