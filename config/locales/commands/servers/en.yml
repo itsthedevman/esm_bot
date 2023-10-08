@@ -8,3 +8,5 @@ en:
         ```Returns all registered servers for `esm`.
       offline: "❌ Offline"
       offline_for: "❌ Offline for %{time}"
+      errors:
+        no_servers: "I was unable to find any registered servers for `%{community_id}`.\nIf you are the owner, you can them via the Admin Dashboard"

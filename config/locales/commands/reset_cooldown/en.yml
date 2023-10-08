@@ -64,3 +64,5 @@ en:
           all_commands: 'all commands on '
           one_server: "`%{server_id}`."
           all_servers: every server your community has registered with me.
+      errors:
+        invalid_command: "I'm sorry %{user}, `%{command_name}` is not one of my commands."

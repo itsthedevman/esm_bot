@@ -32,7 +32,7 @@ RSpec.shared_context("command") do
     channel =
       if (channel = opts.delete(:channel))
         channel
-      elsif channel_type == :text
+      elsif ESM::Command::Base::TEXT_CHANNEL_TYPES.include?(channel_type)
         ESM::Test.data[user.guild_type][:channels].sample
       else
         user.discord_user.pm.id

@@ -10,3 +10,5 @@ en:
       arguments:
         uuid:
           description: The request's UUID that provided in the original request
+      errors:
+        invalid_request_id: "I'm sorry %{user}, I was unable to find a request with that ID"

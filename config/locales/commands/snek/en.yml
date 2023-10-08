@@ -7,3 +7,5 @@ en:
         /pictures snek
         ```Returns a random snake image
       waiting: Slithering...
+      errors:
+        snek_not_found: "Hey %{user}, all of the sneks slithered away. Please wait a few moments before trying again"

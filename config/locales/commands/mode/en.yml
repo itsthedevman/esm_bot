@@ -12,3 +12,6 @@ en:
         If "player mode" is disabled (in "server mode"), I will attempt to switch to "player mode". If you have server still registered with me, you will need to delete them via my [Dashboard](https://www.esmbot.com/server_dashboard) first.
       enabled: "✅ Player mode has been enabled for **%{community_name}**. All of my player commands may now be used on its Discord server"
       disabled: "✅ Player mode has been disabled for **%{community_name}**. You may now manage your community and servers via my [Dashboard](https://www.esmbot.com/server_dashboard)"
+      errors:
+        servers_exist: "I'm sorry %{user}, in order to enable player mode you must remove any servers you've registered via my [Dashboard](https://www.esmbot.com/portal)"
+        no_permissions: "I'm sorry %{user}, only the owner of this community has access to this command"

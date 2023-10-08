@@ -11,3 +11,5 @@ en:
       arguments:
         query:
           description: This be a target (Discord Mention, Discord ID, or Steam UID) or a search term.
+      errors:
+        no_logs: "Hey %{user}, I was unable to find any logs that match your query."

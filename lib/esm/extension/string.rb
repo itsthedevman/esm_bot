@@ -14,7 +14,6 @@ class String
 
   delegate :to_struct, :to_istruct, to: :to_h
 
-
   def to_h
     ESM::JSON.parse(self)
   end

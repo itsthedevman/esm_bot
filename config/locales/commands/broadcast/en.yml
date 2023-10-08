@@ -33,3 +33,6 @@ en:
       broadcast_embed:
         title: Broadcast message from %{community_name} regarding `%{server_ids}`
         footer: You may opt out of these messages by using `preferences`
+      errors:
+        no_server_access: "%{user}, you do not access to that server. You may only run this command for servers that belong to `%{community_id}`"
+        message_length: "I'm sorry %{user}, the provided message is too long. It needs to be less than 2000 characters long."

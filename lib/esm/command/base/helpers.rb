@@ -62,21 +62,11 @@ module ESM
         # @return [ESM::User]
         #
         def current_user
-          return @current_user if defined?(@current_user) && !@current_user.nil?
-          return if event&.user.nil?
+          @current_user ||= lambda do
+            return if event&.user.nil?
 
-          discord_user = event.user
-          user = ESM::User.where(discord_id: discord_user.id).first_or_initialize
-          user.update(
-            discord_username: discord_user.username,
-            discord_avatar: discord_user.avatar_url
-          )
-
-          # Save some cycles
-          discord_user.instance_variable_set(:@esm_user, user)
-
-          # Return back the modified discord user
-          @current_user = user
+            ESM::User.from_discord(event.user)
+          end.call
         end
 
         #
@@ -112,7 +102,11 @@ module ESM
         # @return [ESM::Server, nil] The server that the command was executed for
         #
         def target_server
-          @target_server ||= ESM::Server.find_by(server_id: arguments.server_id) if arguments.server_id
+          @target_server ||= lambda do
+            return unless arguments.server_id
+
+            ESM::Server.find_by(server_id: arguments.server_id)
+          end.call
         end
 
         #
@@ -121,57 +115,46 @@ module ESM
         # @return [ESM::Community, nil] The community that the command was executed for
         #
         def target_community
-          @target_community ||= begin
+          @target_community ||= lambda do
             return ESM::Community.find_by(community_id: arguments.community_id) if arguments.community_id
 
             target_server&.community
-          end
+          end.call
         end
 
         #
         # The ESM representation of a Discord user that is the target of this command
+        # This method is expected to only execute the code once.
+        # This avoids sending invalid IDs to Discord over and over again
         #
-        # @return [ESM::User, nil] The user that the command was executed against
+        # @return [ESM::User, ESM::User::Ephemeral, nil] The user that the command was executed against
         #
         def target_user
-          @target_user ||= begin
-            return unless arguments.target&.match?(ESM::Regex::TARGET)
+          @target_user ||= lambda do
+            return if arguments.target.nil?
 
             # This could be a steam_uid, discord id, or mention
-            target = arguments.target
+            # Automatically remove the mention characters
+            target = arguments.target.gsub(/[<@!&>]/, "").strip
 
-            # Attempt to parse first
+            # Attempt to find the target within ESM
             user = ESM::User.parse(target)
 
-            # No user was found. Don't create a user from a steam UID
-            #   target is a steam_uid WITHOUT a db user. -> Exit early. Use a placeholder user
-            if user.nil? && target.steam_uid?
-              @target_user = ESM::User::Ephemeral.new(target)
-              return
+            # This validates that the user exists and we get a discord user back
+            if (_discord_user = user&.discord_user)
+              return user
             end
 
-            # Past this point:
-            #   target is a steam_uid WITH a db user -> Continue
-            #   target is a discord ID or discord mention WITH a db user -> Continue
-            #   target is a discord ID or discord mention WITHOUT a db user -> Continue, we'll create a user
+            # We didn't find a user and a steam uid can't be used to find a Discord user
+            # Ephemeral user represents a user that doesn't have a ESM::User
+            return ESM::User::Ephemeral.new(target) if target.steam_uid?
 
-            # Remove the tag bits if applicable
-            target.gsub!(/[<@!&>]/, "") if ESM::Regex::DISCORD_TAG_ONLY.match(target)
+            # target is a discord ID and user is nil
+            discord_user = ESM.bot.user(target) if target.match?(ESM::Regex::DISCORD_ID_ONLY)
+            return ESM::User::Ephemeral.new(target) if discord_user.nil?
 
-            # Get the discord user from the ID or the previous db entry
-            discord_user = user.nil? ? ESM.bot.user(target) : user.discord_user
-
-            # Nothing we can do if we don't have a discord user
-            return if discord_user.nil?
-
-            # Create the user if its nil
-            user = ESM::User.new(discord_id: target) if user.nil?
-            user.update!(discord_username: discord_user.username, discord_avatar: discord_user.avatar_url)
-
-            # Save some cycles
-            user.instance_variable_set(:@discord_user, discord_user)
-            @target_user = user
-          end
+            ESM::User.from_discord(discord_user)
+          end.call
         end
 
         #
@@ -232,6 +215,30 @@ module ESM
         end
 
         #
+        # Returns if the current channel is a text channel
+        # @note Discordrb has helpers for this, but they're buggy?
+        #
+        # @return [<Type>] <description>
+        #
+        def text_channel?
+          return false if current_channel.nil?
+
+          current_channel.type == Discordrb::Channel::TYPES[:text]
+        end
+
+        #
+        # Returns if the current channel is a direct message with the user
+        # @note Discordrb has helpers for this, but they're buggy?
+        #
+        # @return [TrueClass, FalseClass]
+        #
+        def dm_channel?
+          return false if current_channel.nil?
+
+          current_channel.type == Discordrb::Channel::TYPES[:dm]
+        end
+
+        #
         # Is the command limited to developers only?
         #
         # @return [Boolean]
@@ -286,12 +293,13 @@ module ESM
         #
         def raise_error!(error_name = nil, **args, &block)
           exception_class = args.delete(:exception_class)
+          path_prefix = args.delete(:path_prefix) || "commands.#{name}.errors"
 
           reason =
             if block
               yield
             else
-              ESM::Embed.build(:error, description: I18n.t("commands.#{name}.errors.#{error_name}", **args))
+              ESM::Embed.build(:error, description: I18n.t("#{path_prefix}.#{error_name}", **args))
             end
 
           # Logging
@@ -471,7 +479,7 @@ module ESM
         end
 
         def current_cooldown_query
-          query = ESM::Cooldown.where(command_name: name)
+          query = ESM::Cooldown.where(command_name: command_name)
 
           # If the command requires a steam_uid, use it to track the cooldown.
           query =

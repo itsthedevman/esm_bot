@@ -7,3 +7,5 @@ en:
         /pictures meow
         ```Returns a random cat image
       waiting: pispispispispispispispis
+      errors:
+        meow_not_found: "Hey %{user}, all of the cats were hiding. Please wait a few moments before trying again"

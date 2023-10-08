@@ -18,3 +18,6 @@ en:
         ```
         /server admin find territory:jquee on:esm_namalsk
         ```Return the territory information for `jquee`
+      errors:
+        no_target: "Hey %{user}, you must provide either a territory ID, Discord ID, steam uid, or @user discord mention."
+        no_response: "I'm sorry %{user}, I didn't find any information related to your request."

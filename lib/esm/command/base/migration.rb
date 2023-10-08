@@ -44,34 +44,6 @@ module ESM
           on_response(nil, nil)
         end
 
-        # Raises an exception of the given class or ESM::Exception::CheckFailure.
-        # If a block is given, the return of that block will be message to raise
-        # Otherwise, it will build an error embed
-        #
-        # @deprecated
-        # @see #raise_error!
-        def check_failed!(name = nil, **args, &block)
-          message =
-            if block
-              yield
-            elsif name.present?
-              ESM::Embed.build(:error, description: I18n.t("command_errors.#{name}", **args.except(:exception_class)))
-            end
-
-          # Logging
-          # This is triggered by system commands as well
-          if event
-            warn!(
-              author: "#{current_user.distinct} (#{current_user.discord_id})",
-              channel: "#{Discordrb::Channel::TYPE_NAMES[current_channel.type]} (#{current_channel.id})",
-              reason: message.is_a?(Embed) ? message.description : message,
-              command: to_h
-            )
-          end
-
-          raise args[:exception_class] || ESM::Exception::CheckFailure, message
-        end
-
         # V1: Send a request to the DLL
         #
         # @param command_name [String, nil] V1: The name of the command to send to the DLL. Default: self.name.

@@ -9,3 +9,5 @@ en:
       current_territory_stats: __Current Territory Stats__
       next_territory_stats: __Next Territory Stats__
       territory_members: __Territory Members__
+      errors:
+        no_territories: "Hey %{user}, I was unable to find any territories for you on `%{server_id}`"

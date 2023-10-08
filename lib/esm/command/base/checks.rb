@@ -4,15 +4,19 @@ module ESM
   module Command
     class Base
       module Checks
+        def check_failed!(error_name = nil, **args, &block)
+          raise_error!(error_name, **args.merge(path_prefix: "command_errors"), &block)
+        end
+
         def check_for_text_only!
-          check_failed!(:text_only, user: current_user.mention) if text_only? && !current_channel.text?
+          check_failed!(:text_only, user: current_user.mention) if text_only? && !text_channel?
         end
 
         def check_for_dm_only!
           # DM commands are allowed in player mode
           return if current_community&.player_mode_enabled?
 
-          check_failed!(:dm_only, user: current_user.mention) if dm_only? && !current_channel.pm?
+          check_failed!(:dm_only, user: current_user.mention) if dm_only? && !dm_channel?
         end
 
         def check_for_owner!
@@ -168,10 +172,12 @@ module ESM
           return if arguments.target.nil?
           return if !target_user.nil?
 
-          # Allows bypassing the nil check if the target argument is a steam_uid
-          return if target_user.nil? && arguments.target.steam_uid?
-
           check_failed!(:target_user_nil, user: current_user.mention)
+        end
+
+        def check_for_valid_target_user!
+          return if arguments.target.nil?
+          return if target_user.nil?
         end
 
         # Order matters!

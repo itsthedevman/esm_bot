@@ -42,3 +42,5 @@ en:
         longest_losing_streak: Longest Losing Streak
         longest_current_streak: Longest Current Streak
         user_with: "%{user} with %{value}"
+      errors:
+        bad_amount: "I'm sorry %{user}, but you simply cannot gamble nothing."
