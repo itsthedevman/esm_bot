@@ -99,7 +99,7 @@ module ESM
         private
 
         def check_for_no_logs!
-          check_failed!(:no_logs, user: current_user.mention) if @response.second.blank?
+          raise_error!(:no_logs, user: current_user.mention) if @response.second.blank?
         end
 
         def parse_logs

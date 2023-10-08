@@ -66,7 +66,7 @@ module ESM
           reward = target_server.server_reward
           return if reward.reward_items.present? || reward.locker_poptabs.positive? || reward.player_poptabs.positive? || reward.respect.positive?
 
-          check_failed!(:no_reward_items, user: current_user.mention)
+          raise_error!(:no_reward_items, user: current_user.mention)
         end
       end
     end

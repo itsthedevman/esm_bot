@@ -34,7 +34,7 @@ module ESM
           return if link.present?
 
           remove_waiting_message
-          check_failed!(:doggo_not_found, user: current_user.mention)
+          raise_error!(:doggo_not_found, user: current_user.mention)
         end
 
         def link

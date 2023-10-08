@@ -34,7 +34,7 @@ module ESM
           return if link.present?
 
           remove_waiting_message
-          check_failed!(:snek_not_found, user: current_user.mention)
+          raise_error!(:snek_not_found, user: current_user.mention)
         end
 
         def link

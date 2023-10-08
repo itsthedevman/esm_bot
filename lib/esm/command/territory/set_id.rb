@@ -51,13 +51,13 @@ module ESM
         def check_for_minimum_characters!
           return if arguments.new_territory_id.nil?
 
-          check_failed!(:minimum_characters, user: current_user.mention) if arguments.new_territory_id.size < 3
+          raise_error!(:minimum_characters, user: current_user.mention) if arguments.new_territory_id.size < 3
         end
 
         def check_for_maximum_characters!
           return if arguments.new_territory_id.nil?
 
-          check_failed!(:maximum_characters, user: current_user.mention) if arguments.new_territory_id.size > 20
+          raise_error!(:maximum_characters, user: current_user.mention) if arguments.new_territory_id.size > 20
         end
 
         def check_for_failure!
@@ -68,12 +68,12 @@ module ESM
 
           # DLL Reason. This is a weird one since I can't localize the message
           if @response.reason
-            check_failed! do
+            raise_error! do
               ESM::Embed.build(:error, description: "I'm sorry #{current_user.mention}, #{@response.reason}")
             end
           end
 
-          check_failed!(:access_denied, user: current_user.mention)
+          raise_error!(:access_denied, user: current_user.mention)
         end
 
         def success_message

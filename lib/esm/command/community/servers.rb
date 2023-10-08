@@ -38,7 +38,7 @@ module ESM
         def check_for_no_servers!(servers)
           return if servers.present?
 
-          check_failed!(:no_servers, community_id: arguments.community_id)
+          raise_error!(:no_servers, community_id: arguments.community_id)
         end
 
         def build_server_embed

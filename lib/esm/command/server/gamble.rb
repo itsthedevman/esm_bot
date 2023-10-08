@@ -51,7 +51,7 @@ module ESM
         def check_for_bad_amount!
           return if %w[half all].include?(arguments.amount)
 
-          check_failed!(:bad_amount, user: current_user.mention) if arguments.amount.to_i <= 0
+          raise_error!(:bad_amount, user: current_user.mention) if arguments.amount.to_i <= 0
         end
 
         def gamble_stat

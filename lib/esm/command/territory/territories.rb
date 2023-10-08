@@ -41,7 +41,7 @@ module ESM
         private
 
         def check_for_no_territories!
-          check_failed!(:no_territories, user: current_user.mention, server_id: target_server.server_id) if @response.blank?
+          raise_error!(:no_territories, user: current_user.mention, server_id: target_server.server_id) if @response.blank?
         end
 
         def territory_embed(territory)
