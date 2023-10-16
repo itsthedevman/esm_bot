@@ -10,7 +10,6 @@ FactoryBot.define do
         {
           id: user_id,
           name: discord_user.username,
-          discriminator: discord_user.discriminator,
           steam_uid: ESM::Test.steam_uid
         }
       end
@@ -46,7 +45,6 @@ FactoryBot.define do
           {
             id: user_id,
             name: discord_user.username,
-            discriminator: discord_user.discriminator,
             steam_uid: ESM::Test.steam_uid
           }
         end
@@ -66,8 +64,8 @@ FactoryBot.define do
 
           user_data.merge(
             name: discord_user.username,
-            discriminator: discord_user.discriminator,
-            role_id: user_data[:role_id]
+            role_id: user_data[:role_id],
+            steam_uid: ESM::Test.steam_uid
           )
         end
       end
@@ -75,6 +73,7 @@ FactoryBot.define do
       discord_id { user[:id] }
       discord_username { user[:name] }
       role_id { user[:role_id] }
+      steam_uid { user[:steam_uid] }
     end
 
     trait :owner do
@@ -88,13 +87,14 @@ FactoryBot.define do
           {
             id: owner_id,
             name: discord_user.username,
-            discriminator: discord_user.discriminator
+            steam_uid: ESM::Test.steam_uid
           }
         end
       end
 
       discord_id { user[:id] }
       discord_username { user[:name] }
+      steam_uid { user[:steam_uid] }
     end
   end
 end
