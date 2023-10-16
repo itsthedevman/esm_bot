@@ -3,7 +3,7 @@
 module ESM
   module Command
     module Test
-      class RequestCommand < TestCommand
+      class RequestCommand < ApplicationCommand
         command_type :player
 
         argument :target

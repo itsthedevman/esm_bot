@@ -3,7 +3,7 @@
 module ESM
   module Command
     module Test
-      class CommunityCommand < TestCommand
+      class CommunityCommand < ApplicationCommand
         command_type :player
 
         argument :community_id

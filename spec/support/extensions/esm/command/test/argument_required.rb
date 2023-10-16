@@ -3,7 +3,7 @@
 module ESM
   module Command
     module Test
-      class ArgumentRequired < TestCommand
+      class ArgumentRequired < ApplicationCommand
         argument :input, required: true, description: "This is a required argument"
 
         use_root_namespace

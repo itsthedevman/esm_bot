@@ -3,7 +3,7 @@
 module ESM
   module Command
     module Test
-      class TextChannelCommand < TestCommand
+      class TextChannelCommand < ApplicationCommand
         limit_to :text
 
         def on_execute

@@ -3,7 +3,7 @@
 module ESM
   module Command
     module Test
-      class ArgumentDescriptions < TestCommand
+      class ArgumentDescriptions < ApplicationCommand
         argument :with_locale
         argument :required, description: "This argument is required"
         argument :optional, description: "This argument is optional", default: nil

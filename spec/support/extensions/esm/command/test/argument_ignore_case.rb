@@ -3,7 +3,7 @@
 module ESM
   module Command
     module Test
-      class ArgumentIgnoreCase < TestCommand
+      class ArgumentIgnoreCase < ApplicationCommand
         argument :input
       end
     end

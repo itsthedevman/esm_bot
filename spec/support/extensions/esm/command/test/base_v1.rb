@@ -3,7 +3,7 @@
 module ESM
   module Command
     module Test
-      class BaseV1 < TestCommand
+      class BaseV1 < ApplicationCommand
         ARGUMENT_COUNT = 7
 
         command_type :player

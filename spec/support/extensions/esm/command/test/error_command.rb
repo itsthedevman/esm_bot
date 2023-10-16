@@ -4,7 +4,7 @@
 module ESM
   module Command
     module Test
-      class ErrorCommand < TestCommand
+      class ErrorCommand < ApplicationCommand
         command_type :player
 
         def on_execute

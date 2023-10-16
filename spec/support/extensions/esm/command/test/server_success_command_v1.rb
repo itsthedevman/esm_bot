@@ -3,7 +3,7 @@
 module ESM
   module Command
     module Test
-      class ServerSuccessCommandV1 < TestCommand
+      class ServerSuccessCommandV1 < ApplicationCommand
         command_type :player
         requires :registration
 
