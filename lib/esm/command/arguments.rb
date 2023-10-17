@@ -5,28 +5,26 @@ module ESM
     class Arguments < Hash
       attr_reader :templates, :command_instance
 
-      def initialize(command = nil, **templates)
+      def initialize(command = nil, templates: {}, values: {})
         @command_instance = command
         @templates = templates.symbolize_keys
 
         # Map the display name to the name itself
         @display_name_mapping = templates.values.each_with_object({}) { |a, hash| hash[a.display_name] = a.name }
 
-        prepare
+        prepare(values)
       end
 
-      def validate!(**inbound_arguments)
-        inbound_arguments = inbound_arguments.symbolize_keys
-
-        # Check the inbound arguments against the templates
+      def validate!
         # This collects all of the invalid arguments together and sends one message instead of breaking at the first invalid argument
         invalid_arguments =
           templates.filter_map do |(name, template)|
             # Apply pre-defined transformations and then validate the content
-            self[name] = template.transform_and_validate!(inbound_arguments[template.display_name], command_instance)
+            self[name] = template.transform_and_validate!(self[name], command_instance)
 
             nil
           rescue ESM::Exception::InvalidArgument => e
+            self[name] = nil
             e.data
           end
 
@@ -95,14 +93,14 @@ module ESM
 
       private
 
-      def prepare
+      def prepare(values)
         return if templates.empty?
 
         templates.values.each do |argument|
           name = argument.name
 
-          # self[server_id] = nil
-          self[name] = nil
+          # self[server_id] = value from discord
+          self[name] = values[argument.display_name]
 
           # self.server_id
           define_method(name) { self[name] }

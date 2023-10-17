@@ -22,7 +22,7 @@ module ESM
             # Shows "Exile Server Manager is thinking...". This is so much better than "typing"
             event.defer(ephemeral: false)
 
-            command = new
+            command = new(**event.options.symbolize_keys)
             command.execute(ESM::Event::ApplicationCommand.new(event))
           rescue => e
             # This occurs if event.defer fails due to Discord dropping the interaction before the bot had a chance to process it
@@ -37,7 +37,7 @@ module ESM
                 if error
                   "Well, this is awkward..."
                 else
-                  "Completed in #{command.timers.from_discord.time_elapsed.round(2)} seconds"
+                  "Completed in #{command.timers.from_discord.time_elapsed.round} seconds"
                 end
 
               event.edit_response(content: content)
@@ -73,7 +73,7 @@ module ESM
           check_for_permissions!
 
           # Now ensure the user hasn't smoked too much lead
-          arguments.validate!(**event.options.symbolize_keys)
+          arguments.validate!
 
           # Adding a comment to make this look better is always a weird idea
           info!(to_h)
@@ -142,7 +142,7 @@ module ESM
         end
 
         def handle_error(error)
-          return if error.is_a?(ESM::Exception::CheckFailureNoMessage)
+          return self if error.is_a?(ESM::Exception::CheckFailureNoMessage)
 
           message =
             case error
@@ -159,6 +159,8 @@ module ESM
             end
 
           reply(message)
+
+          self
         end
       end
     end

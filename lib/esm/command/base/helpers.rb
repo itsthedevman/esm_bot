@@ -177,12 +177,12 @@ module ESM
         # @return [ESM::CommandConfiguration, nil]
         #
         def community_permissions
-          @community_permissions ||= begin
+          @community_permissions ||= lambda do
             community = target_community || current_community
             return unless community
 
-            community.command_configurations.where(command_name: name).first
-          end
+            community.command_configurations.where(command_name: command_name).first
+          end.call
         end
 
         #
@@ -276,15 +276,6 @@ module ESM
         end
 
         #
-        # Returns the commands argument values
-        #
-        # @return [ESM::Command::ArgumentContainer] The commands arguments
-        #
-        def args
-          @arguments
-        end
-
-        #
         # Builds a message and raises a CheckFailure with that reason.
         #
         # @param error_name [String, Symbol, nil] The name of the error message located in the locales for "commands.<command_name>.errors". If nil, a block must be provided
@@ -292,25 +283,25 @@ module ESM
         # @param block [Proc] If provided, the block must return the error message to be used. This can be a string or an ESM::Embed.
         #
         def raise_error!(error_name = nil, **args, &block)
-          exception_class = args.delete(:exception_class)
+          exception_class = args.delete(:exception_class) || ESM::Exception::CheckFailure
           path_prefix = args.delete(:path_prefix) || "commands.#{name}.errors"
 
           reason =
             if block
               yield
-            else
+            elsif error_name
               ESM::Embed.build(:error, description: I18n.t("#{path_prefix}.#{error_name}", **args))
             end
 
-          # Logging
           warn!(
+            exception_class: exception_class,
             author: "#{current_user.distinct} (#{current_user.discord_id})",
             channel: "#{Discordrb::Channel::TYPE_NAMES[current_channel.type]} (#{current_channel.id})",
             reason: reason.is_a?(Embed) ? reason.description : reason,
             command: to_h
           )
 
-          raise exception_class || ESM::Exception::CheckFailure, reason
+          raise exception_class, reason
         end
 
         def skip_action(*)

@@ -283,14 +283,16 @@ module ESM
         attr_reader :response # v1
         attr_reader :name, :category, :cooldown_time, :permissions, :timers, :event
 
-        attr_writer :current_community # Used in commands/general/help.rb
+        attr_writer :current_community, :current_user, :current_channel
 
-        def initialize
+        def initialize(**arguments)
           command_class = self.class
           @name = command_class.command_name
           @category = command_class.category
           @attributes = attributes.to_istruct
-          @arguments = ESM::Command::Arguments.new(self, **command_class.arguments)
+
+          # Does not perform validation, but these values are loaded
+          @arguments = ESM::Command::Arguments.new(self, templates: command_class.arguments, values: arguments)
 
           # Mainly for specs, but does give performance analytics (which is a nice bonus)
           @timers = Timers.new(name)
