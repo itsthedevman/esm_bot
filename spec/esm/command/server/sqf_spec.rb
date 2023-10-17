@@ -172,7 +172,7 @@ describe ESM::Command::Server::Sqf, category: "command" do
 
         result_embed = message.content
         expect(result_embed.description).to eq(
-          command.t("responses.server_with_result", server_id: server.server_id, result: "true", user: user.mention)
+          previous_command.t("responses.server_with_result", server_id: server.server_id, result: "true", user: user.mention)
         )
       end
 
@@ -185,7 +185,7 @@ describe ESM::Command::Server::Sqf, category: "command" do
 
         result_embed = message.content
         expect(result_embed.description).to eq(
-          command.t("responses.server", server_id: server.server_id, user: user.mention)
+          previous_command.t("responses.server", server_id: server.server_id, user: user.mention)
         )
       end
 
@@ -205,7 +205,7 @@ describe ESM::Command::Server::Sqf, category: "command" do
 
         result_embed = message.content
         expect(result_embed.description).to eq(
-          command.t("responses.player", server_id: server.server_id, user: user.mention, target_uid: user.steam_uid)
+          previous_command.t("responses.player", server_id: server.server_id, user: user.mention, target_uid: user.steam_uid)
         )
       end
 
@@ -230,7 +230,7 @@ describe ESM::Command::Server::Sqf, category: "command" do
 
         result_embed = message.content
         expect(result_embed.description).to eq(
-          command.t("responses.player", server_id: server.server_id, user: user.mention, target_uid: steam_uid)
+          previous_command.t("responses.player", server_id: server.server_id, user: user.mention, target_uid: steam_uid)
         )
       end
 

@@ -9,7 +9,7 @@ describe ESM::Command::Server::Broadcast, category: "command" do
 
     let!(:second_server) { create(:server, community_id: community.id) }
     let!(:second_wsc) { WebsocketClient.new(second_server) }
-    let(:response) { command.response }
+    let(:response) { previous_command.response }
 
     before do
       # Create cooldowns for the users. This is how broadcast knows who to send messages to.

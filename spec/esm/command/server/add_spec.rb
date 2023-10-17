@@ -70,7 +70,7 @@ describe ESM::Command::Territory::Add, category: "command" do
           expect(ESM::Test.messages.size).to eq(2)
 
           # Process the request
-          request = command.request
+          request = previous_command.request
           expect(request).not_to be_nil
 
           # Respond to the request
@@ -148,7 +148,7 @@ describe ESM::Command::Territory::Add, category: "command" do
         wait_for { ESM::Test.messages.size }.to eq(2)
 
         # Process the request
-        request = command.request
+        request = previous_command.request
         expect(request).not_to be_nil
 
         # Respond to the request
@@ -218,7 +218,7 @@ describe ESM::Command::Territory::Add, category: "command" do
         # 3: Target's add notification
         # 4: Requestor's confirmation
         # 5: Discord log
-        expect(command.request&.respond(true)).to be_truthy
+        expect(previous_command.request&.respond(true)).to be_truthy
         wait_for { ESM::Test.messages.size }.to eq(5)
 
         expect(
@@ -271,7 +271,7 @@ describe ESM::Command::Territory::Add, category: "command" do
           # 2: Request notice
           # 3: Discord log
           # 4: Failure notification
-          expect(command.request&.respond(true)).to be_truthy
+          expect(previous_command.request&.respond(true)).to be_truthy
           wait_for { ESM::Test.messages.size }.to eq(4)
 
           expect(
@@ -295,7 +295,7 @@ describe ESM::Command::Territory::Add, category: "command" do
           # 2: Request notice
           # 3: Discord log
           # 4: Failure notification
-          expect(command.request&.respond(true)).to be_truthy
+          expect(previous_command.request&.respond(true)).to be_truthy
           wait_for { ESM::Test.messages.size }.to eq(4)
 
           expect(
@@ -336,7 +336,7 @@ describe ESM::Command::Territory::Add, category: "command" do
           # 1: Request
           # 2: Request notice
           # 3: Player only Discord message
-          expect(command.request&.respond(true)).to be_truthy
+          expect(previous_command.request&.respond(true)).to be_truthy
           wait_for { ESM::Test.messages.size }.to eq(3)
 
           expect(
@@ -356,7 +356,7 @@ describe ESM::Command::Territory::Add, category: "command" do
           # 1: Request
           # 2: Request notice
           # 3: Player only Discord message
-          expect(command.request&.respond(true)).to be_truthy
+          expect(previous_command.request&.respond(true)).to be_truthy
           wait_for { ESM::Test.messages.size }.to eq(3)
 
           expect(

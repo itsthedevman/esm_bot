@@ -199,7 +199,7 @@ describe ESM::Command::Server::Player, category: "command" do
             }
           )
 
-          expect(command.arguments.amount).to be_nil
+          expect(previous_command.arguments.amount).to be_nil
         end
       end
 
@@ -250,7 +250,7 @@ describe ESM::Command::Server::Player, category: "command" do
             }
           )
 
-          expect(command.arguments.amount).to be_nil
+          expect(previous_command.arguments.amount).to be_nil
         end
       end
 

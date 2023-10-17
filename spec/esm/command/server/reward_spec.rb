@@ -18,7 +18,7 @@ describe ESM::Command::Server::Reward, category: "command" do
         expect(embed).not_to be_nil
 
         # Process the request
-        request = command.request
+        request = previous_command.request
         expect(request).not_to be_nil
 
         # So we can track the response

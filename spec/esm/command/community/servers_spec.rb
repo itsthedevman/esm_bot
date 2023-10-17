@@ -22,7 +22,7 @@ describe ESM::Command::Community::Servers, category: "command" do
       execute!(arguments: {community_id: community.community_id})
 
       server.server_name = nil
-      command.current_cooldown.reset!
+      previous_command.current_cooldown.reset!
       execute!(arguments: {community_id: community.community_id})
 
       wait_for_completion!

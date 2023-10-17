@@ -8,7 +8,7 @@ describe ESM::Command::Arguments do
 
     specify do
       execute!(arguments: {input: "Hello!"})
-      expect(command.arguments.input).to eq("Hello!")
+      expect(previous_command.arguments.input).to eq("Hello!")
     end
   end
 
@@ -17,7 +17,7 @@ describe ESM::Command::Arguments do
 
     specify do
       execute!(arguments: {input: "World!"})
-      expect(command.arguments.input).to eq("world!")
+      expect(previous_command.arguments.input).to eq("world!")
     end
   end
 
@@ -43,7 +43,7 @@ describe ESM::Command::Arguments do
     specify do
       # input argument provided, no default
       execute!(arguments: {input: "success_from_input!"})
-      expect(command.arguments.input).to eq("success_from_input!")
+      expect(previous_command.arguments.input).to eq("success_from_input!")
     end
   end
 
@@ -52,7 +52,7 @@ describe ESM::Command::Arguments do
 
     specify do
       execute! # input argument not provided, use default
-      expect(command.arguments.input).to eq("default success!")
+      expect(previous_command.arguments.input).to eq("default success!")
     end
   end
 end

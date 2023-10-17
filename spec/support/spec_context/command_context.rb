@@ -1,9 +1,12 @@
 # frozen_string_literal: true
 
 RSpec.shared_context("command") do
+  attr_reader :previous_command
+
   let!(:community) { ESM::Test.community }
   let!(:user) { ESM::Test.user(*(respond_to?(:user_args) ? user_args : [])) }
-  let(:command) { (respond_to?(:command_class) ? command_class : described_class).new }
+  let(:command_class) { described_class } # This can be overwritten
+  let(:command) { @previous_command || command_class.new }
   let(:server) { ESM::Test.server }
   let(:second_user) { ESM::Test.user }
 
@@ -24,7 +27,7 @@ RSpec.shared_context("command") do
   def execute!(**opts)
     channel_type = opts.delete(:channel_type) || :text
     send_as = opts.delete(:user) || user
-    command = opts.delete(:command) || self.command
+    command_class = opts.delete(:command_class) || self.command_class
     arguments = opts.delete(:arguments) || {}
     prompt_response = opts.delete(:prompt_response)
     handle_error = opts.delete(:handle_error)
@@ -73,14 +76,18 @@ RSpec.shared_context("command") do
 
     event = Discordrb::Events::ApplicationCommandEvent.new(data.deep_stringify_keys, ESM.bot)
 
+    # In normal operation, #event_hook will receive the ApplicationCommandEvent above
+    # SpecApplicationCommandEvent overwrites `#defer` and `#edit_response` to avoid
+    # sending those calls to Discord proper
     if handle_error
-      # In normal operation, #event_hook will receive the ApplicationCommandEvent above
-      # SpecApplicationCommandEvent overwrites `#defer` and `#edit_response` to avoid
-      # sending those calls to Discord proper
-      command.class.event_hook(SpecApplicationCommandEvent.new(event))
-    else
-      command.execute(ESM::Event::ApplicationCommand.new(event))
+      # Allows commands to access this command after it has been used
+      @previous_command = command_class.event_hook(SpecApplicationCommandEvent.new(event))
+      return
     end
+
+    # Assign before calling execute since execute can raise
+    @previous_command = command_class.new(**event.options.symbolize_keys)
+    @previous_command.execute(ESM::Event::ApplicationCommand.new(event))
   end
 
   def wait_for_completion!(event = :on_execute)

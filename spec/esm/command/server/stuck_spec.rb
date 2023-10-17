@@ -20,7 +20,7 @@ describe ESM::Command::Server::Stuck, category: "command" do
         expect(embed).not_to be_nil
 
         # Process the request
-        request = command.request
+        request = previous_command.request
         expect(request).not_to be_nil
 
         # Reset so we can track the response
@@ -52,7 +52,7 @@ describe ESM::Command::Server::Stuck, category: "command" do
         expect(embed).not_to be_nil
 
         # Process the request
-        request = command.request
+        request = previous_command.request
         expect(request).not_to be_nil
 
         # Reset so we can track the response
