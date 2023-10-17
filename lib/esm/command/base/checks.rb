@@ -64,8 +64,7 @@ module ESM
         end
 
         def check_for_cooldown!
-          return if ESM.env.test? && ESM::Test.skip_cooldown
-          return if !on_cooldown?
+          return unless on_cooldown?
 
           if current_cooldown.cooldown_type == "times"
             check_failed!(
@@ -183,10 +182,10 @@ module ESM
         # Order matters!
         def check_for_player_mode!
           # This only affects text channels
-          return if !current_channel.text?
+          return unless current_channel.text?
 
           # This only affects player_mode
-          return if !current_community.player_mode_enabled?
+          return unless current_community.player_mode_enabled?
 
           # Allow commands with DM only
           return if dm_only?

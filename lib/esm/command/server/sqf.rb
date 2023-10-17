@@ -42,7 +42,7 @@ module ESM
           check_for_registered_target_user! if target_user.is_a?(ESM::User)
 
           execute_on =
-            case args.target
+            case arguments.target
             when "all", "everyone"
               "all"
             when ->(_type) { target_user }
@@ -52,7 +52,7 @@ module ESM
             end
 
           send_to_arma(
-            data: {execute_on: execute_on, code: args.code_to_execute}
+            data: {execute_on: execute_on, code: arguments.code_to_execute}
           )
         end
 

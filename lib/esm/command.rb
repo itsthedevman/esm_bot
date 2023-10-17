@@ -122,7 +122,6 @@ module ESM
             raise TypeError, "Invalid type \"#{cooldown_default.class}\" detected for command #{command.name}'s default cooldown"
           end
 
-          # Written this way because the defaults can be `false` and `false || true` will always be `true`
           enabled =
             if (define = command.attributes.enabled)
               define.default
@@ -144,7 +143,6 @@ module ESM
               command.type == :admin
             end
 
-          # Except this one, but it just looks nice this way
           allowlisted_role_ids =
             if (define = command.attributes.allowlisted_role_ids)
               define.default
@@ -153,7 +151,7 @@ module ESM
             end
 
           {
-            command_name: command.name,
+            command_name: command.command_name,
             enabled: enabled,
             cooldown_quantity: cooldown_quantity,
             cooldown_type: cooldown_type,
