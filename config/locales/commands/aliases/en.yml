@@ -1,0 +1,8 @@
+en:
+  commands:
+    aliases:
+      description: Lists your custom aliases
+      example: |-
+        ```
+        /my aliases
+        ```Returns a list of your custom aliases

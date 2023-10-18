@@ -5,7 +5,7 @@ FactoryBot.define do
     # attribute :user_id, :integer
     # attribute :community_id, :integer
     # attribute :server_id, :integer
-    # attribute :value, :string
+    value { Faker::String.random[..15] }
 
     # belongs_to :user
     # belongs_to :community

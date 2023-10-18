@@ -13,13 +13,25 @@ module ESM
 
     validates :value, uniqueness: {scope: [:user_id, :server_id]}
     validates :value, uniqueness: {scope: [:user_id, :community_id]}
+    validates :value, length: {minimum: 1, maximum: 64}
 
     def self.find_server_alias(value)
-      where(value: value).where.not(server_id: nil).first
+      eager_load(:server).where(value: value).where.not(server_id: nil).first
     end
 
     def self.find_community_alias(value)
-      where(value: value).where.not(community_id: nil).first
+      eager_load(:community).where(value: value).where.not(community_id: nil).first
+    end
+
+    def self.by_type
+      eager_load(:community, :server)
+        .each_with_object({community: [], server: []}) do |id_alias, hash|
+          if id_alias.server
+            hash[:server] << id_alias
+          elsif id_alias.community
+            hash[:community] << id_alias
+          end
+        end
     end
   end
 end
