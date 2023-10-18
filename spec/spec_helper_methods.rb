@@ -144,3 +144,15 @@ end
 def before_connection(&block)
   ESM::Test.callbacks.add_callback(:before_connection, &block)
 end
+
+def messages
+  ESM::Test.messages.contents
+end
+
+def earliest_message
+  ESM::Test.messages.earliest
+end
+
+def latest_message
+  ESM::Test.messages.latest
+end
