@@ -38,6 +38,20 @@ module ESM
           end
         end
       end
+
+      def contents
+        @contents = nil if @contents.size != size
+
+        @contents ||= map(&:content)
+      end
+
+      def earliest
+        first&.content
+      end
+
+      def latest
+        last&.content
+      end
     end
   end
 end
