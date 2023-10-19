@@ -28,6 +28,13 @@ module ESM
         false
       end
 
+      def attributes
+        {
+          id: id,
+          ephemeral: true
+        }
+      end
+
       class DiscordUser
         attr_reader :steam_uid
 

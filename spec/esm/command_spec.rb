@@ -13,49 +13,8 @@ describe ESM::Command do
       expect(commands.by_type[:admin]).not_to be_empty
     end
 
-    it "organized by namespace for server" do
-      expect(commands.by_namespace_for_server).to match(
-        a_hash_including(
-          territory: a_hash_including(
-            admin: a_hash_including(:list, :restore)
-          ),
-          server: a_hash_including(
-            admin: a_hash_including(
-              :execute_code, :reset_player, :modify_player,
-              :search_logs, :find, :broadcast
-            )
-          ),
-          community: a_hash_including(
-            admin: a_hash_including(
-              :find_player, :reset_cooldown, :change_mode
-            )
-          )
-        )
-      )
-    end
-
-    it "organized by namespace for global" do
-      expect(commands.by_namespace_for_global).to match(
-        a_hash_including(
-          territory: a_hash_including(
-            :upgrade, :list, :set_id, :remove_player, :promote_player,
-            :pay, :demote_player, :add_player
-          ),
-          server: a_hash_including(
-            :uptime, :stuck, :details, :reward, :my_player, :gamble
-          ),
-          request: a_hash_including(:list, :decline, :accept),
-          pictures: a_hash_including(:snek, :meow, :doggo, :birb),
-          my: a_hash_including(:steam_uid, :preferences),
-          register: be < ESM::ApplicationCommand,
-          help: be < ESM::ApplicationCommand,
-          community: a_hash_including(:servers, :id)
-        )
-      )
-    end
-
-    it "organized by namespace for all" do
-      expect(commands.by_namespace_for_all).to match(
+    it "organized by namespace" do
+      expect(commands.by_namespace).to match(
         a_hash_including(
           territory: a_hash_including(
             :upgrade, :list, :set_id, :remove_player, :promote_player,

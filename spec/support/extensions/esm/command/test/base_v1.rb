@@ -25,7 +25,7 @@ module ESM
         end
 
         def on_response(_, _)
-          raise ESM::Exception::CheckFailure, ESM::Embed.build(:error, description: "This failed a check") if @attributes.FLAG_RAISE_ERROR
+          raise ESM::Exception::CheckFailure, ESM::Embed.build(:error, description: "This failed a check") if @raise_error
 
           "server"
         end

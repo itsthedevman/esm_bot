@@ -15,7 +15,6 @@ describe ESM::Command::Community::Mode, category: "command" do
 
       it "disables player mode" do
         execution_args = {
-          send_as: user,
           channel_type: :dm,
           arguments: {community_id: community.community_id}
         }
@@ -40,7 +39,6 @@ describe ESM::Command::Community::Mode, category: "command" do
 
       it "enables player mode" do
         execution_args = {
-          send_as: user,
           channel_type: :dm,
           arguments: {community_id: community.community_id}
         }
@@ -65,7 +63,6 @@ describe ESM::Command::Community::Mode, category: "command" do
 
         it "raises an exception" do
           execution_args = {
-            send_as: user,
             channel_type: :dm,
             arguments: {community_id: community.community_id}
           }
@@ -83,7 +80,7 @@ describe ESM::Command::Community::Mode, category: "command" do
         non_owner = ESM::Test.user
 
         execution_args = {
-          send_as: non_owner,
+          user: non_owner,
           channel_type: :dm,
           arguments: {community_id: community.community_id}
         }

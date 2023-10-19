@@ -14,4 +14,3 @@ en:
       disabled: "✅ Player mode has been disabled for **%{community_name}**. You may now manage your community and servers via my [Dashboard](https://www.esmbot.com/server_dashboard)"
       errors:
         servers_exist: "I'm sorry %{user}, in order to enable player mode you must remove any servers you've registered via my [Dashboard](https://www.esmbot.com/portal)"
-        no_permissions: "I'm sorry %{user}, only the owner of this community has access to this command"

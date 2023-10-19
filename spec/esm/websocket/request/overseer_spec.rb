@@ -15,6 +15,10 @@ describe ESM::Websocket::Request::Overseer do
   end
 
   describe "Timeout Thread" do
+    include_context "command" do
+      let!(:command_class) { ESM::Command::Test::PlayerCommand }
+    end
+
     let!(:server_connection) { ESM::Websocket.connections[server.server_id] }
     let!(:iterations) { Faker::Number.between(from: 1, to: 10) }
 
@@ -31,11 +35,9 @@ describe ESM::Websocket::Request::Overseer do
     end
 
     it "should remove the timed out request" do
-      command = ESM::Command::Test::PlayerCommand.new
-      event = CommandEvent.create(command.statement, user: user)
-      command.event = event
+      execute!
 
-      server_connection.requests << ESM::Websocket::Request.new(user: user.discord_user, command: command, channel: nil, parameters: nil, timeout: 0)
+      server_connection.requests << ESM::Websocket::Request.new(user: user.discord_user, command: previous_command, channel: nil, parameters: nil, timeout: 0)
 
       expect(server_connection.requests.size).to eq(iterations + 1)
       sleep(1)

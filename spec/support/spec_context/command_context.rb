@@ -15,7 +15,7 @@ RSpec.shared_context("command") do
   # The majority of the time, this method will be used along with the input arguments for the command
   #
   # @param channel_type [Symbol] Controls what type of channel messages are triggered in. Options: :text, :pm
-  # @param send_as [ESM::User] The user to send the message as. Defaults to the `user` let binding
+  # @param user [ESM::User] The user to send the message as. Defaults to the `user` let binding
   # @param command_override [ESM::Command] The command to execute. Defaults to the `command` let binding
   # @param channel [Discordrb::Channel, nil] The channel to execute the command in
   # @param arguments [Hash] Any arguments the command is expecting as key: value pairs
@@ -91,7 +91,7 @@ RSpec.shared_context("command") do
   end
 
   def wait_for_completion!(event = :on_execute)
-    wait_for { command.timers.public_send(event.to_sym).finished? }.to be(true)
+    wait_for { previous_command.timers.public_send(event.to_sym).finished? }.to be(true)
   end
 
   def respond_to_prompt(response)

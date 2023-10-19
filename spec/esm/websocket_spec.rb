@@ -85,34 +85,18 @@ describe ESM::Websocket do
   end
 
   describe "#on_message" do
-    let!(:user) { create(:user) }
+    include_context "command" do
+      let!(:command_class) { ESM::Command::Test::BaseV1 }
+      let!(:community) {}
+    end
+
     let!(:ws_connection) { ESM::Websocket.connections[esm_malden.server_id] }
     let!(:channel) { ESM.bot.channel(ESM::Community::ESM::SPAM_CHANNEL) }
     let!(:discord_user) { user.discord_user }
 
-    let!(:command) do
-      command = ESM::Command::Test::BaseV1.new
-
-      command_statement = command.statement(
-        community_id: esm_community.community_id,
-        server_id: esm_malden.server_id,
-        target: user.discord_id,
-        _integer: "1",
-        _preserve: "PRESERVE",
-        _display_as: "display_name",
-        _default: "default"
-      )
-
-      event = CommandEvent.create(command_statement, user: user)
-
-      # Execute the command to set up all of the required variables
-      expect { command.execute(event) }.not_to raise_error
-      command
-    end
-
     let(:request) do
       request = ESM::Websocket::Request.new(
-        command: command,
+        command: previous_command,
         user: user,
         channel: channel,
         parameters: [],
@@ -121,6 +105,21 @@ describe ESM::Websocket do
 
       ws_connection.requests << request
       request
+    end
+
+    before do
+      execute!(
+        channel: channel,
+        arguments: {
+          community_id: esm_community.community_id,
+          server_id: esm_malden.server_id,
+          target: user.discord_id,
+          _integer: "1",
+          _preserve: "PRESERVE",
+          _display_as: "display_name",
+          _default: "default"
+        }
+      )
     end
 
     # Ignored commands do not remove the request.
@@ -170,13 +169,5 @@ describe ESM::Websocket do
       expect(error_message.description).to eq("#{discord_user.mention}, #{message.parameters.first.error}")
       expect(error_message.color).to eq("#C62551")
     end
-  end
-
-  describe "#on_open" do
-    it "should send connect message"
-  end
-
-  describe "#on_close" do
-    it "should send disconnect message"
   end
 end
