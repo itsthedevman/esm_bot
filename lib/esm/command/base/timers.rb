@@ -3,40 +3,26 @@
 module ESM
   module Command
     class Base
-      class Timers
+      class Timers < Hash
         def initialize(command_name)
           @command_name = command_name
-
-          @timers = {
-            on_execute: Timer.new,
-            on_response: Timer.new,
-            from_discord: Timer.new,
-            from_server: Timer.new,
-            from_request: Timer.new
-          }
-
-          @timers.keys.each do |key|
-            self.class.define_method(key) { @timers[key] }
-          end
+          super
         end
 
         def reset_all!
-          @timers.values.each(&:reset!)
+          values.each(&:reset!)
         end
 
         def stop_all!
-          @timers.values.each(&:stop!)
+          values.each(&:stop!)
         end
 
         def to_h
-          @timers.transform_values(&:to_h)
+          transform_values(&:to_h)
         end
 
         def time!(timer_name, &block)
-          timer = public_send(timer_name)
-          if timer.nil?
-            raise "Invalid timer name: #{timer_name}. Expected one of #{@timers.keys.to_sentence(last_word_connector: ", or ")}"
-          end
+          timer = create_timer(timer_name)
 
           timer.start!
           yield
@@ -49,6 +35,19 @@ module ESM
           )
 
           nil
+        end
+
+        private
+
+        def create_timer(name)
+          name = name.to_sym
+
+          timer = Timer.new
+
+          self[name] = timer
+          self.class.define_method(name) { self[name] }
+
+          timer
         end
       end
     end
