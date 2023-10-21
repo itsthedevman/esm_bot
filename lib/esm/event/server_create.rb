@@ -7,39 +7,19 @@ module ESM
         @server = server
         @owner = server.owner
 
-        @community = find_or_initialize_community
-        @user = find_or_initialize_user
+        @community = ESM::Community.from_discord(@server)
+        @user = ESM::User.from_discord(@owner)
       end
 
       def run!
-        thread = Thread.new do
-          # Update their guild name
-          update_community_name
+        # Update their guild name
+        update_community_name
 
-          # Send the welcome message
-          send_welcome
-        end
-
-        thread.join if ESM.env.test?
+        # Send the welcome message
+        send_welcome
       end
 
       private
-
-      def find_or_initialize_community
-        # Attempt to find the community by it's guild id
-        community = ESM::Community.find_by(guild_id: @server.id)
-        community.nil? ? ESM::Community.create!(guild_id: @server.id) : community
-      end
-
-      def find_or_initialize_user
-        user = ESM::User.find_by(discord_id: @owner.id)
-        @new_user = user.nil?
-        @new_user ? ESM::User.create!(discord_id: @owner.id, discord_username: @owner.name) : user
-      end
-
-      def update_community_name
-        @community.update(community_name: @server.name)
-      end
 
       def send_welcome
         embed =

@@ -66,6 +66,14 @@ module ESM
       find_by(community_id: community_id[1])
     end
 
+    def self.from_discord(discord_server)
+      return if discord_server.nil?
+
+      community = order(:guild_id).where(guild_id: discord_server.id).first_or_initialize
+      community.update!(community_name: discord_server.name)
+      community
+    end
+
     def logging_channel
       ::ESM.bot.channel(logging_channel_id)
     rescue

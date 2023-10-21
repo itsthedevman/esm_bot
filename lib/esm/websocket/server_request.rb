@@ -58,7 +58,7 @@ module ESM
 
         # Execute the command
         begin
-          @request.command.execute(@message.parameters)
+          @request.command.from_server(@message.parameters)
         rescue ESM::Exception::CheckFailure => e
           # This catches any errors from the command.
           @request.command.reply(e.data)

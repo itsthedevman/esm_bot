@@ -86,8 +86,15 @@ RSpec.shared_context("command") do
     end
 
     # Assign before calling execute since execute can raise
-    @previous_command = command_class.new(**event.options.symbolize_keys)
-    @previous_command.execute(ESM::Event::ApplicationCommand.new(event))
+    @previous_command = command_class.new(
+      user: event.user,
+      server: event.server,
+      channel: event.channel,
+      arguments: event.options,
+      response_callback: ->(**data) { data }
+    )
+
+    @previous_command.from_discord!
   end
 
   def wait_for_completion!(event = :on_execute)

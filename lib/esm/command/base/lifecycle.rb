@@ -18,12 +18,20 @@ module ESM
           #
           def event_hook(event)
             error = false
+            event = ESM::Event::ApplicationCommand.new(event)
 
             # Shows "Exile Server Manager is thinking...". This is so much better than "typing"
             event.defer(ephemeral: false)
 
-            command = new(**event.options.symbolize_keys)
-            command.execute(ESM::Event::ApplicationCommand.new(event))
+            command = new(
+              user: event.user,
+              server: event.server,
+              channel: event.channel,
+              arguments: event.options,
+              response_callback: event.method(:respond)
+            )
+
+            command.from_discord!
           rescue => e
             # This occurs if event.defer fails due to Discord dropping the interaction before the bot had a chance to process it
             return if command.nil?
@@ -45,48 +53,37 @@ module ESM
           end
         end
 
-        def execute(event)
-          @event = event
-
-          if event.is_a?(ESM::Event::ApplicationCommand)
-            timers.time!(:from_discord) do
-              from_discord
-            end
-          else
-            # V1
-            timers.time!(:from_server) do
-              from_server
-            end
-          end
-
-          self
-        end
-
         #
         # Called internally by #execute, this method handles when a command has been executed on Discord.
         #
-        def from_discord
+        def from_discord!
           # Check for these BEFORE validating the arguments so even if an argument was invalid, it doesn't matter since these take priority
-          check_for_text_only!
-          check_for_dm_only!
-          check_for_player_mode!
-          check_for_permissions!
+          timers.time!(:access_checks) do
+            check_for_dev_only!
+            check_for_registered!
+            check_for_text_only!
+            check_for_dm_only!
+            check_for_player_mode!
+            check_for_permissions!
+          end
 
           # Now ensure the user hasn't smoked too much lead
-          arguments.validate!
+          timers.time!(:argument_validation) do
+            arguments.validate!
+          end
 
           # Adding a comment to make this look better is always a weird idea
           info!(to_h)
 
           # Finish up the checks
-          check_for_dev_only!
-          check_for_registered!
-          check_for_nil_target_server! unless skipped_actions.nil_target_server?
-          check_for_nil_target_community! unless skipped_actions.nil_target_community?
-          check_for_nil_target_user! unless skipped_actions.nil_target_user?
-          check_for_different_community! unless skipped_actions.different_community?
-          check_for_cooldown! unless skipped_actions.cooldown?
-          check_for_connected_server! unless skipped_actions.connected_server?
+          timers.time!(:before_execute) do
+            check_for_nil_target_community! unless skipped_actions.nil_target_community?
+            check_for_nil_target_server! unless skipped_actions.nil_target_server?
+            check_for_nil_target_user! unless skipped_actions.nil_target_user?
+            check_for_connected_server! unless skipped_actions.connected_server?
+            check_for_cooldown! unless skipped_actions.cooldown?
+            check_for_different_community! unless skipped_actions.different_community?
+          end
 
           # Now execute the command
           result = nil
@@ -96,11 +93,13 @@ module ESM
             result = on_execute
           end
 
-          # Update the cooldown after the command has ran just in case there are issues
-          create_or_update_cooldown unless skipped_actions.cooldown?
+          timers.time!(:after_execute) do
+            # Update the cooldown after the command has ran just in case there are issues
+            create_or_update_cooldown unless skipped_actions.cooldown?
 
-          # This just tracks how many times a command is used
-          ESM::CommandCount.increment_execution_counter(name)
+            # This just tracks how many times a command is used
+            ESM::CommandCount.increment_execution_counter(name)
+          end
 
           result
         end

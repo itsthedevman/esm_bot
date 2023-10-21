@@ -61,6 +61,8 @@ module ESM
     end
 
     def self.from_discord(discord_user)
+      return if discord_user.nil?
+
       user = order(:discord_id)
         .where(discord_id: discord_user.id)
         .first_or_initialize

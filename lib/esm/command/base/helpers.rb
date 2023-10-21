@@ -57,43 +57,12 @@ module ESM
         end
 
         #
-        # The ESM representation of the user who executed the command
-        #
-        # @return [ESM::User]
-        #
-        def current_user
-          @current_user ||= lambda do
-            return if event&.user.nil?
-
-            ESM::User.from_discord(event.user)
-          end.call
-        end
-
-        #
-        # The ESM representation of the Discord server the command was executed on
-        #
-        # @return [ESM::Community, nil] The community the command was executed from. Nil if sent from Direct Message
-        #
-        def current_community
-          @current_community ||= ESM::Community.find_by(guild_id: event&.server&.id)
-        end
-
-        #
         # The cooldown for this command
         #
         # @return [ESM::Cooldown]
         #
         def current_cooldown
           @current_cooldown ||= current_cooldown_query.first
-        end
-
-        #
-        # The Discord channel this command was executed in
-        #
-        # @return [Discordrb::Channel]
-        #
-        def current_channel
-          @current_channel ||= event&.channel
         end
 
         #
@@ -391,7 +360,7 @@ module ESM
             data[:content] = message
           end
 
-          event.respond(**data)
+          response_callback.call(**data)
         end
 
         def edit_message(message, content)

@@ -283,18 +283,21 @@ module ESM
         attr_reader :response # v1
         attr_reader :name, :category, :cooldown_time, :permissions, :timers, :event
 
-        attr_writer :current_community, :current_user, :current_channel
+        attr_accessor :current_community, :current_user, :current_channel
 
-        def initialize(**arguments)
+        def initialize(user: nil, server: nil, channel: nil, arguments: {}, response_callback: nil)
           command_class = self.class
+
           @name = command_class.command_name
           @category = command_class.category
           @attributes = attributes.to_istruct
 
-          # Does not perform validation, but these values are loaded
+          @current_user = ESM::User.from_discord(user)
+          @current_community = ESM::Community.from_discord(server)
+          @current_channel = channel
           @arguments = ESM::Command::Arguments.new(self, templates: command_class.arguments, values: arguments)
+          @response_callback = response_callback
 
-          # Mainly for specs, but does give performance analytics (which is a nice bonus)
           @timers = Timers.new(name)
         end
       end

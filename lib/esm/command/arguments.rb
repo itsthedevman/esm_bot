@@ -12,7 +12,7 @@ module ESM
         # Map the display name to the name itself
         @display_name_mapping = templates.values.each_with_object({}) { |a, hash| hash[a.display_name] = a.name }
 
-        prepare(values)
+        prepare(values.symbolize_keys)
       end
 
       def validate!
