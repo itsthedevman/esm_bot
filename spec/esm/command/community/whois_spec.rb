@@ -14,7 +14,7 @@ describe ESM::Command::Community::Whois, category: "command" do
       it "returns information about the user" do
         execute!(arguments: {target: user.mention})
 
-        response = ESM::Test.messages.first.content
+        response = latest_message
         expect(response).not_to be_nil
         expect(response.fields).not_to be_empty
       end
@@ -24,7 +24,7 @@ describe ESM::Command::Community::Whois, category: "command" do
       it "returns information about the registered user" do
         execute!(arguments: {target: user.steam_uid})
 
-        response = ESM::Test.messages.first.content
+        response = latest_message
         expect(response).not_to be_nil
         expect(response.fields).not_to be_empty
       end
@@ -34,7 +34,7 @@ describe ESM::Command::Community::Whois, category: "command" do
       it "should run (discord id)" do
         execute!(arguments: {target: user.discord_id})
 
-        response = ESM::Test.messages.first.content
+        response = latest_message
         expect(response).not_to be_nil
         expect(response.fields).not_to be_empty
       end
@@ -48,7 +48,7 @@ describe ESM::Command::Community::Whois, category: "command" do
       it "returns information about the discord user" do
         execute!(arguments: {target: user.mention})
 
-        response = ESM::Test.messages.first.content
+        response = latest_message
         expect(response).not_to be_nil
         expect(response.fields).not_to be_empty
       end
@@ -58,7 +58,7 @@ describe ESM::Command::Community::Whois, category: "command" do
       it "returns information about the steam user" do
         execute!(arguments: {target: ESM::Test.steam_uid})
 
-        response = ESM::Test.messages.first.content
+        response = latest_message
         expect(response).not_to be_nil
         expect(response.fields).not_to be_empty
       end

@@ -19,6 +19,7 @@ FactoryBot.define do
     discord_username { user[:name] }
     steam_uid { user[:steam_uid] }
     guild_type { :primary }
+    user_steam_data
 
     trait :unregistered do
       steam_uid { nil }

@@ -18,7 +18,7 @@ module ESM
     belongs_to :user
 
     def refresh
-      return if user.steam_uid.blank?
+      return self if user.steam_uid.blank?
 
       player_data = ESM::SteamAccount.new(user.steam_uid)
       update(
