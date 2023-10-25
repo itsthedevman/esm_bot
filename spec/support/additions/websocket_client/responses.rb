@@ -137,7 +137,7 @@ class WebsocketClient
       return send_response(parameters: []) if @flags.RETURN_NO_TERRITORIES
 
       territories = []
-      Faker::Number.between(from: 100, to: 400).times do
+      Faker::Number.between(from: 75, to: 100).times do
         territories << {
           id: (rand < 0.5) ? SecureRandom.uuid[0..4] : Faker::Lorem.sentence[0..20],
           territory_name: Faker::Lorem.sentence,

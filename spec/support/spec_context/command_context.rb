@@ -85,7 +85,7 @@ RSpec.shared_context("command") do
       return
     end
 
-    # Assign before calling execute since execute can raise
+    event = ESM::Event::ApplicationCommand.new(event)
     @previous_command = command_class.new(
       user: event.user,
       server: event.server,

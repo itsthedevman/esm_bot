@@ -14,7 +14,7 @@ module ESM
 
         # Optional: Has a default value
         argument :order_by,
-          default: :territory_name,
+          default: "territory_name",
           choices: {
             id: "ID",
             territory_name: "Territory name",
@@ -67,7 +67,7 @@ module ESM
           tables = []
 
           # Sorted here on purpose. Makes it so I can test this functionality
-          @territories.sort_by!(&arguments.order_by)
+          @territories.sort_by!(&arguments.order_by.to_sym)
 
           # Two challenges for this code.
           # 1: The width of each row had to be less than 67 (10 characters per line reserved for spacing/separating)

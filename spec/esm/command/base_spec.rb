@@ -275,13 +275,13 @@ describe ESM::Command::Base do
     end
   end
 
-  describe "#execute" do
+  describe "#from_discord!" do
     include_context "command" do
       let!(:command_class) { ESM::Command::Test::ServerSuccessCommand }
     end
 
     it "is defined" do
-      expect(command.respond_to?(:execute)).to be(true)
+      expect(command.respond_to?(:from_discord!)).to be(true)
     end
 
     it "executes" do
