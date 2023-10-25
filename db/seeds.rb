@@ -3,7 +3,7 @@
 # rubocop:disable Rails/Output
 
 require_relative "../lib/esm"
-require_relative "../spec/support/esm/test"
+require_relative "../spec/support/additions/esm/test"
 
 puts "Waiting for ESM to start..."
 ESM.console!

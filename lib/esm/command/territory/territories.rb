@@ -18,7 +18,7 @@ module ESM
 
         change_attribute :allowed_in_text_channels, default: false
 
-        command_namespace :territory, command_name: :list
+        command_namespace :server, :my, command_name: :territories
         command_type :player
 
         #################################

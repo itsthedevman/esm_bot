@@ -16,7 +16,7 @@ module ESM
         # Configuration
         #
 
-        command_namespace :server, command_name: :my_player
+        command_namespace :server, :my, command_name: :player
         command_type :player
 
         #################################
