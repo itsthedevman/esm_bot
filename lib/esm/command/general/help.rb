@@ -119,7 +119,7 @@ module ESM
           command = ESM::Command[arguments.category].new
           embed =
             ESM::Embed.build do |e|
-              e.title = I18n.t("commands.help.command.title", name: command.usage(with_args: false))
+              e.title = I18n.t("commands.help.command.title", name: command.usage)
               description = ["*This command used to be `!#{command.command_name}`*", command.description, ""]
 
               # Adds a note about being limited to DM or Text
@@ -143,10 +143,10 @@ module ESM
               end
 
               # Examples
-              if command.example.present?
+              if command.examples.present?
                 e.add_field(
                   name: I18n.t("commands.help.command.examples"),
-                  value: command.example
+                  value: command.examples
                 )
               end
             end

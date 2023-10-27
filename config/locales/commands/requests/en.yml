@@ -1,8 +1,7 @@
+---
 en:
   commands:
     requests:
       description: Lists your pending command requests
-      example: |-
-        ```
-        /request list
-        ```Returns a list of your pending requests
+      examples:
+        - description: Returns a list of your pending requests

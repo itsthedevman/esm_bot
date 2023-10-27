@@ -33,7 +33,7 @@ module ESM
         next true if command.command_name == command_name
 
         # Slash command usage check
-        usage = command.usage(with_slash: false, with_args: false)
+        usage = command.usage(with_slash: false)
         next true if usage == command_name
 
         # Slash command "subgroup" (the last part of the slash usage)
@@ -79,13 +79,13 @@ module ESM
         # To be written to the DB in bulk
         command = command_class.new
         commands_needing_cached << {
-          command_name: command.name,
+          command_name: command.command_name,
           command_type: command.type,
           command_category: command.category,
           command_description: command.description,
-          command_example: command.example,
-          command_usage: command.arguments.map(&:to_s).join(" "),
-          command_arguments: command.arguments.to_s,
+          command_examples: command.examples(raw: true),
+          command_usage: command.usage,
+          command_arguments: command.arguments,
           command_defines: command.attributes.to_h
         }
       end

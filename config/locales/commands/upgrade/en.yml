@@ -1,3 +1,4 @@
+---
 en:
   commands:
     upgrade:
@@ -5,10 +6,11 @@ en:
       description_extra: |-
         This command is only available for the territory owner or moderators
         To see costs, please use the `/territory list` command
-      example: |-
-        ```
-        /territory upgrade territory:awesome on:esm_malden
-        ```Upgrades territory `awesome` to the next level on `esm_malden`
+      examples:
+        - description: Upgrades territory `awesome` to the next level on `esm_malden`
+          arguments:
+            territory: awesome
+            "on": esm_malden
       success_message: |-
         Hey %{user}, you successfully upgraded territory `%{territory_id}` for **%{cost}**.
         Your territory has reached level **%{level}** and now has a radius of **%{range}** meters.

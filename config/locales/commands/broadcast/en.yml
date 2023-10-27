@@ -1,21 +1,21 @@
+---
 en:
   commands:
     broadcast:
       description: Sends the provided message to all servers or the provided server ID in your community
-      description_extra: |-
-        Registered players on these servers will receive the message via Direct Message if they have `custom` notification allowed for the server.
-      example: |-
-        ```
-        /server admin broadcast message:This is an emergency announcement to:esm_malden
-        ```Broadcasts `This is an emergency announcement` to every registered player on `esm_malden`.
-
-        ```
-        /server admin broadcast message:Admin event going on right meow. More information on our Discord! to:all
-        ```Broadcasts `Admin event going on right meow. More information on our Discord!` to registered player on every server for this community.
-
-        ```
-        /server admin broadcast message:Testing
-        ```Provides a preview of the message without sending it.
+      description_extra: Registered players on these servers will receive the message via Direct Message if they have `custom` notification allowed for the server.
+      examples:
+        - description: Broadcasts `This is an emergency announcement` to every registered player on `esm_malden`.
+          arguments:
+            message: This is an emergency announcement
+            to: esm_malden
+        - description: Broadcasts `Admin event going on right meow. More information on our Discord!` to registered player on every server for this community.
+          arguments:
+            message: Admin event going on right meow. More information on our Discord!
+            to: all
+        - description: Omitting `to` will provide a preview of the message without sending it.
+          arguments:
+            message: Testing
       arguments:
         broadcast_to:
           description: Where the broadcast should go
@@ -35,4 +35,4 @@ en:
         footer: You may opt out of these messages by using `preferences`
       errors:
         no_server_access: "%{user}, you do not access to that server. You may only run this command for servers that belong to `%{community_id}`"
-        message_length: "I'm sorry %{user}, the provided message is too long. It needs to be less than 2000 characters long."
+        message_length: I'm sorry %{user}, the provided message is too long. It needs to be less than 2000 characters long.

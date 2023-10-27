@@ -28,8 +28,24 @@ describe ESM::Command::Base do
       expect(command.type).to eq(:player)
     end
 
-    it "has an example" do
-      expect(command.example).to eq("A test example")
+    it "has examples (hash)" do
+      expect(command.examples(raw: true)).to eq(
+        [{description: "A test example"}, {description: "An example with args", arguments: {target: "foo"}}]
+      )
+    end
+
+    it "has examples (string)" do
+      expect(command.examples).to eq(
+        <<~STRING
+          ```
+          /test base_v1
+          ```A test example
+
+          ```
+          /test base_v1 target:foo
+          ```An example with args
+        STRING
+      )
     end
 
     it "has defines" do
@@ -52,7 +68,8 @@ describe ESM::Command::Base do
     end
 
     it "has proper usage" do
-      expect(command.usage).to eq("/test base_v1 target:<target>")
+      expect(command.usage).to eq("/test base_v1")
+      expect(command.usage(use_placeholders: true)).to eq("/test base_v1 target:<target>")
     end
   end
 

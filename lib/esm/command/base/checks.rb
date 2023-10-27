@@ -39,20 +39,20 @@ module ESM
               check_failed!(
                 :command_not_enabled,
                 user: current_user.mention,
-                command_name: usage(with_args: false)
+                command_name: usage
               )
             end
           end
 
           if !command_allowed?
-            check_failed!(:not_allowlisted, user: current_user.mention, command_name: usage(with_args: false))
+            check_failed!(:not_allowlisted, user: current_user.mention, command_name: usage)
           end
 
           if !command_allowed_in_channel?
             check_failed!(
               :not_allowed_in_text_channels,
               user: current_user.mention,
-              command_name: usage(with_args: false)
+              command_name: usage
             )
           end
         end
@@ -70,7 +70,7 @@ module ESM
             check_failed!(
               :on_cooldown_useage,
               user: current_user.mention,
-              command_name: usage(with_args: false)
+              command_name: usage
             )
 
             return
@@ -80,7 +80,7 @@ module ESM
             :on_cooldown_time_left,
             user: current_user.mention,
             time_left: current_cooldown.to_s,
-            command_name: usage(with_args: false)
+            command_name: usage
           )
         end
 
@@ -200,7 +200,7 @@ module ESM
           check_failed!(
             :player_mode_command_not_available,
             user: current_user.mention,
-            command_name: usage(with_args: false)
+            command_name: usage
           )
         end
 

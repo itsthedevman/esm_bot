@@ -1,23 +1,25 @@
+---
 en:
   commands:
     info:
       description: Displays information about the provided player or territory
-      example: |-
-        ```
-        /server admin find whom:@discord_mention on:esm_malden
-        ```Using their mention, return their player stats on `esm_malden`
-
-        ```
-        /server admin find whom:76561234567890123 on:esm_tanoa
-        ```Using their steam uid, return their player stats on `esm_tanoa`
-
-        ```
-        /server admin find whom:137456789012345678 on:esm_altis
-        ```Using their Discord ID, return their player stats on `esm_altis`
-
-        ```
-        /server admin find territory:jquee on:esm_namalsk
-        ```Return the territory information for `jquee`
+      examples:
+        - description: Using their mention, return their player stats on `esm_malden`
+          arguments:
+            whom: "@discord_mention"
+            "on": esm_malden
+        - description: Using their steam uid, return their player stats on `esm_tanoa`
+          arguments:
+            whom: "76561234567890123"
+            "on": esm_tanoa
+        - description: Using their Discord ID, return their player stats on `esm_altis`
+          arguments:
+            whom: "137456789012345678"
+            "on": esm_altis
+        - description: Return the territory information for `jquee`
+          arguments:
+            territory: jquee
+            "on": esm_namalsk
       errors:
-        no_target: "Hey %{user}, you must provide either a territory ID, Discord ID, steam uid, or @user discord mention."
-        no_response: "I'm sorry %{user}, I didn't find any information related to your request."
+        no_target: Hey %{user}, you must provide either a territory ID, Discord ID, steam uid, or @user discord mention.
+        no_response: I'm sorry %{user}, I didn't find any information related to your request.

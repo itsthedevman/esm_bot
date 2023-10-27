@@ -1,27 +1,27 @@
+---
 en:
   commands:
     gamble:
       description: Feeling lucky? Gamble poptabs on a server for a chance to win
-      example: |-
-        ```
-        /server gamble amount:50 on:esm_malden
-        ```Gambles 50 poptabs from the locker on server `esm_malden`
-
-        ```
-        /server gamble amount:half on:esm_altis
-        ```Gambles half of the poptabs in the locker on server `esm_altis`
-
-        ```
-        /server gamble amount:all on:esm_tanoa
-        ```Gambles all of the poptabs in the locker on server `esm_tanoa`
-
-        ```
-        /server gamble amount:stats on:esm_namalsk
-        /server gamble on:esm_namalsk
-        ```Displays gambling statistics for server `esm_namalsk`
+      examples:
+        - description: Gambles 50 poptabs from the locker on server `esm_malden`
+          arguments:
+            amount: "50"
+            "on": esm_malden
+        - description: Gambles half of the poptabs in the locker on server `esm_altis`
+          arguments:
+            amount: half
+            "on": esm_altis
+        - description: Gambles all of the poptabs in the locker on server `esm_tanoa`
+          arguments:
+            amount: all
+            "on": esm_tanoa
+        - description: Displays gambling statistics for server `esm_namalsk`
+          arguments:
+            "on": esm_namalsk
       arguments:
         amount:
-          description: "The amount of poptabs to gamble. Poptabs are withdrawn from your locker."
+          description: The amount of poptabs to gamble. Poptabs are withdrawn from your locker.
           description_extra: |-
             The following options can be provided instead of a number:
             - `all`: Gambles all of your poptabs in your locker.
@@ -43,4 +43,4 @@ en:
         longest_current_streak: Longest Current Streak
         user_with: "%{user} with %{value}"
       errors:
-        bad_amount: "I'm sorry %{user}, but you simply cannot gamble nothing."
+        bad_amount: I'm sorry %{user}, but you simply cannot gamble nothing.

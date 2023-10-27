@@ -1,3 +1,4 @@
+---
 en:
   commands:
     help:
@@ -5,26 +6,20 @@ en:
         category:
           description: The categories can be found by just using `/help`
       description: A helpful command. An unhelpful description
-      example: |-
-        ```
-        /help
-        ```Displays information about getting started with Exile Server Manager
-
-        ```
-        /help with:player commands
-        ```Displays all player commands
-
-        ```
-        /help with:admin commands
-        ```Displays all admin commands
-
-        ```
-        /help with:commands
-        ```Displays all commands
-
-        ```
-        /help with:/territory set_id
-        ```Displays detailed information about the `/territory set_id` command
+      examples:
+        - description: Displays information about getting started with Exile Server Manager
+        - description: Displays all player commands
+          arguments:
+            with: player commands
+        - description: Displays all admin commands
+          arguments:
+            with: admin commands
+        - description: Displays all commands
+          arguments:
+            with: commands
+        - description: Displays detailed information about the `/territory set_id` command
+          arguments:
+            with: "/territory set_id"
       categories:
         name: Categories
         value: |-
@@ -36,7 +31,7 @@ en:
           /help with:<command_name>
           ```Get information about the provided command
       getting_started:
-        title: "Well, hello there %{user}!"
+        title: Well, hello there %{user}!
         description: |-
           It looks like you found my help command! One of %{command_count_player} player commands that I respond to, %{command_count_total} in total.
           _Oh, where are my manners?_ My name is **Exile Server Manager**, or ESM for short. I am a command bot that allows you to interact with any Arma 3 server that is registered with me!

@@ -7,9 +7,8 @@ module ESM
         extend ActiveSupport::Concern
 
         class_methods do
-          def usage(opts = {})
-            opts[:with_args] ||= false
-            new.usage(**opts)
+          def usage(...)
+            new.usage(...)
           end
         end
 
@@ -20,12 +19,16 @@ module ESM
         # @param overrides [Hash] Argument names and values to set.
         #   These will override the default arguments. Ignored if with_args is false
         #
+        # @param use_placeholders [true/false] Controls if a placeholder is used as the arguments value
+        #   If true, and the argument is blank, the argument's name will be used as a placeholder
+        #   If false, and the argument is blank, the argument is omitted from the result
+        #
         # @param with_args [true/false] Should the arguments be included in result?
         # @param with_slash [true/false] Should the result start with a slash?
         #
         # @return [String]
         #
-        def usage(overrides: {}, with_args: true, with_slash: true)
+        def usage(overrides: {}, use_placeholders: false, with_args: true, with_slash: true)
           command_statement = namespace[:segments].dup
           command_statement << namespace[:command_name]
 
@@ -46,6 +49,7 @@ module ESM
               # Perf
               value_is_blank = value.blank?
               next if value_is_blank && template.optional?
+              next if value_is_blank && !use_placeholders
 
               command_statement << (value_is_blank ? "#{template}:<#{template}>" : "#{template}:#{value}")
             end
@@ -55,6 +59,12 @@ module ESM
           command_statement.prepend("/") if with_slash
           command_statement
         end
+
+        # Command has two arguments: a1, and a2
+        # /command a1:<placeholder> a2:<placeholder>
+        # /command a1:a1_value
+        # /command
+        # command
 
         #
         # The cooldown for this command

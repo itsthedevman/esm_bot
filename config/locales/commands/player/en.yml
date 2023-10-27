@@ -1,24 +1,31 @@
+---
 en:
   commands:
     player:
       description: Modifies a player on a server, regardless of them being online or not.
-      example: |-
-        ```
-        server admin modify_player whom:@discord_mention on:esm_malden action:money amount:1500
-        ```Gives @discord_mention's player on `esm_malden` 1500 poptabs
-
-        ```
-        server admin modify_player whom:@discord_mention on:esm_altis action:locker amount:-50
-        ```Removes 50 poptabs from @discord_mention's locker on `esm_altis`
-
-        ```
-        server admin modify_player whom:76561234567890123 on:esm_namalsk action:k
-        ```RIP @discord_mention. Kills @discord_mention's player on `esm_namalsk`
+      examples:
+        - description: Gives @discord_mention's player on `esm_malden` 1500 poptabs
+          arguments:
+            whom: "@discord_mention"
+            "on": esm_malden
+            action: money
+            amount: "1500"
+        - description: Removes 50 poptabs from @discord_mention's locker on `esm_altis`
+          arguments:
+            whom: "@discord_mention"
+            "on": esm_altis
+            action: locker
+            amount: "-50"
+        - description: RIP @discord_mention. Kills @discord_mention's player on `esm_namalsk`
+          arguments:
+            whom: "76561234567890123"
+            "on": esm_namalsk
+            action: k
       arguments:
         action:
           description: "Valid actions: `money`/`m`, `respect`/`r`, `locker`/`l`, `heal`/`h`, `kill`/`k`"
         amount:
-          description: "Actions `m`, `r`, and `l` require this argument. `h` and `k` do not"
+          description: Actions `m`, `r`, and `l` require this argument. `h` and `k` do not
           description_extra: |-
             For actions `money`, `respect`, and `locker`:
               - This argument is required and must be a positive or negative number

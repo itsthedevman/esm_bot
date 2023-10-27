@@ -33,9 +33,10 @@ module ESM
 
         embed =
           ESM::Embed.build do |e|
-            command_usage = command_instance.usage(with_args: false, with_slash: false)
-            help_usage = ESM::Command.get(:help).usage(with_args: true, overrides: {with: command_usage})
             help_documentation = invalid_arguments.format(join_with: "\n\n", &:help_documentation)
+
+            command_usage = command_instance.usage(with_args: true, use_placeholders: true, with_slash: false)
+            help_usage = ESM::Command.get(:help).usage(with_args: true, overrides: {with: command_usage})
 
             e.title = "**Invalid #{"argument".pluralize(invalid_arguments.size)} for `/#{command_usage}`**"
             e.description = <<~STRING
@@ -48,7 +49,7 @@ module ESM
 
             e.add_field(
               name: I18n.t("commands.help.command.examples"),
-              value: command_instance.example
+              value: command_instance.examples
             )
           end
 

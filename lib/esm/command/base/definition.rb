@@ -29,7 +29,7 @@ module ESM
           class_attribute :command_name
           class_attribute :description
           class_attribute :description_extra
-          class_attribute :example
+          class_attribute :examples_raw
           class_attribute :limited_to
           class_attribute :namespace
           class_attribute :requirements
@@ -160,7 +160,7 @@ module ESM
               arguments: arguments,
               description: description,
               description_extra: description_extra,
-              example: example
+              examples: examples
             }
           end
 
@@ -171,6 +171,23 @@ module ESM
           #
           def to_json(...)
             to_h.to_json(...)
+          end
+
+          #
+          # Returns the command's examples as a string, by default
+          #
+          # @param raw [TrueClass, FalseClass] True for the raw hash, false for a string. Default: false
+          #
+          def examples(raw: false)
+            return examples_raw if raw
+
+            examples_raw.format(join_with: "\n") do |example|
+              <<~STRING
+                ```
+                #{usage(with_args: true, overrides: example[:arguments] || {})}
+                ```#{example[:description]}
+              STRING
+            end
           end
 
           # @!visibility private
@@ -202,10 +219,10 @@ module ESM
 
             self.description = I18n.t("commands.#{command_name}.description", default: "")
             self.description_extra = I18n.t("commands.#{command_name}.description_extra", default: nil)
-            self.example = I18n.t("commands.#{command_name}.example", default: "")
+            self.examples_raw = I18n.t("commands.#{command_name}.examples", default: [])
+
             self.limited_to = nil
             self.type = :player
-
             self.requirements = Inquirer.new(:dev, :registration)
 
             # Require registration by default
@@ -284,6 +301,8 @@ module ESM
         attr_reader :name, :category, :cooldown_time, :permissions, :timers, :event
 
         attr_accessor :current_community, :current_user, :current_channel
+
+        delegate :examples, to: "self.class"
 
         def initialize(user: nil, server: nil, channel: nil, arguments: {}, response_callback: nil)
           command_class = self.class
