@@ -31,30 +31,41 @@ ESM::BotAttribute.create!(
 )
 puts " done"
 
-print "Creating communities..."
-::ESM.bot.get_application_commands(server_id: "452568470765305866").each(&:delete)
-community = ESM::Community.create!(
-  community_id: "esm",
-  community_name: "ESM Test Server 1",
-  guild_id: "452568470765305866",
-  logging_channel_id: "901965726305382400",
-  player_mode_enabled: false
-)
+puts "Creating communities..."
+communities = [
+  {
+    community_id: "esm",
+    community_name: "ESM Test Server 1",
+    guild_id: "452568470765305866",
+    logging_channel_id: "901965726305382400",
+    player_mode_enabled: false
+  },
+  {
+    community_id: "esm2",
+    community_name: "ESM Test Server 2",
+    guild_id: "901967248653189180"
+  },
+  {
+    community_id: "zdt",
+    community_name: "ZDT",
+    guild_id: "421111581267591168",
+    player_mode_enabled: false
+  }
+].map do |community|
+  print "  Deleting commands for #{community[:community_id]}..."
+  ::ESM.bot.get_application_commands(server_id: "452568470765305866").each(&:delete)
+  puts " done"
 
-::ESM.bot.get_application_commands(server_id: "901967248653189180").each(&:delete)
-ESM::Community.create!(
-  community_id: "esm2",
-  community_name: "ESM Test Server 2",
-  guild_id: "901967248653189180"
-)
+  print "  Creating community for #{community[:community_id]}..."
 
-::ESM.bot.get_application_commands(server_id: "421111581267591168").each(&:delete)
-community2 = ESM::Community.create!(
-  community_id: "zdt",
-  community_name: "ZDT",
-  guild_id: "421111581267591168",
-  player_mode_enabled: false
-)
+  community = ESM::Community.create!(community)
+  puts " done"
+
+  community
+end
+
+community = communities.first
+community2 = communities.third
 puts " done"
 
 print "Creating servers..."

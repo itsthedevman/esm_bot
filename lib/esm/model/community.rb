@@ -5,9 +5,11 @@ module ESM
     ALPHABET = ("a".."z").to_a.freeze
 
     before_create :generate_community_id
+    before_create :generate_public_id
     after_create :create_command_configurations
     after_create :create_notifications
 
+    attribute :public_id, :uuid
     attribute :community_id, :string
     attribute :community_name, :text
     attribute :guild_id, :string
@@ -22,7 +24,6 @@ module ESM
     attribute :welcome_message, :string, default: ""
     attribute :created_at, :datetime
     attribute :updated_at, :datetime
-    attribute :deleted_at, :datetime
 
     has_many :command_configurations, dependent: :destroy
     has_many :cooldowns, dependent: :destroy
@@ -139,6 +140,12 @@ module ESM
       # Yup. Add to the community_ids so our spell checker works
       self.class.community_ids << new_id
       self.community_id = new_id
+    end
+
+    def generate_public_id
+      return if public_id.present?
+
+      self.public_id = SecureRandom.uuid
     end
 
     def create_command_configurations

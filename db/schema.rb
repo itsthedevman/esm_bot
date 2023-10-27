@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2023_09_07_230118) do
+ActiveRecord::Schema[7.0].define(version: 2023_10_25_220103) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
   enable_extension "plpgsql"
@@ -73,6 +73,7 @@ ActiveRecord::Schema[7.0].define(version: 2023_09_07_230118) do
   end
 
   create_table "communities", force: :cascade do |t|
+    t.uuid "public_id", null: false
     t.string "community_id", null: false
     t.text "community_name"
     t.string "guild_id", null: false
@@ -82,22 +83,23 @@ ActiveRecord::Schema[7.0].define(version: 2023_09_07_230118) do
     t.boolean "log_discord_log_event", default: true
     t.boolean "player_mode_enabled", default: true
     t.json "territory_admin_ids", default: []
+    t.json "dashboard_access_role_ids", default: []
     t.string "command_prefix"
     t.boolean "welcome_message_enabled", default: true
     t.text "welcome_message", default: ""
-    t.datetime "created_at", precision: nil, null: false
-    t.datetime "updated_at", precision: nil, null: false
-    t.datetime "deleted_at", precision: nil
-    t.json "dashboard_access_role_ids", default: []
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
     t.index ["community_id"], name: "index_communities_on_community_id", unique: true
-    t.index ["deleted_at"], name: "index_communities_on_deleted_at"
     t.index ["guild_id"], name: "index_communities_on_guild_id", unique: true
+    t.index ["public_id"], name: "index_communities_on_public_id", unique: true
   end
 
   create_table "community_defaults", force: :cascade do |t|
     t.bigint "community_id"
     t.bigint "server_id"
     t.string "channel_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
     t.index ["community_id", "channel_id"], name: "index_community_defaults_on_community_id_and_channel_id"
     t.index ["community_id"], name: "index_community_defaults_on_community_id"
     t.index ["server_id"], name: "index_community_defaults_on_server_id"
@@ -245,7 +247,7 @@ ActiveRecord::Schema[7.0].define(version: 2023_09_07_230118) do
   end
 
   create_table "servers", force: :cascade do |t|
-    t.uuid "uuid", null: false
+    t.uuid "public_id", null: false
     t.string "server_id", null: false
     t.integer "community_id", null: false
     t.text "server_key"
@@ -258,9 +260,9 @@ ActiveRecord::Schema[7.0].define(version: 2023_09_07_230118) do
     t.datetime "disconnected_at", precision: nil
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.index ["public_id"], name: "index_servers_on_public_id", unique: true
     t.index ["server_id"], name: "index_servers_on_server_id", unique: true
     t.index ["server_key"], name: "index_servers_on_server_key", unique: true
-    t.index ["uuid"], name: "index_servers_on_uuid", unique: true
   end
 
   create_table "territories", force: :cascade do |t|
@@ -294,6 +296,8 @@ ActiveRecord::Schema[7.0].define(version: 2023_09_07_230118) do
     t.bigint "community_id"
     t.bigint "server_id"
     t.string "value", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
     t.index ["community_id"], name: "index_user_aliases_on_community_id"
     t.index ["server_id"], name: "index_user_aliases_on_server_id"
     t.index ["user_id", "community_id", "value"], name: "index_user_aliases_on_user_id_and_community_id_and_value", unique: true
@@ -306,6 +310,8 @@ ActiveRecord::Schema[7.0].define(version: 2023_09_07_230118) do
     t.bigint "user_id"
     t.bigint "community_id"
     t.bigint "server_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
     t.index ["community_id"], name: "index_user_defaults_on_community_id"
     t.index ["server_id"], name: "index_user_defaults_on_server_id"
     t.index ["user_id"], name: "index_user_defaults_on_user_id"
@@ -390,8 +396,8 @@ ActiveRecord::Schema[7.0].define(version: 2023_09_07_230118) do
   end
 
   add_foreign_key "command_configurations", "communities", on_delete: :cascade
-  add_foreign_key "community_defaults", "communities"
-  add_foreign_key "community_defaults", "servers"
+  add_foreign_key "community_defaults", "communities", on_delete: :cascade
+  add_foreign_key "community_defaults", "servers", on_delete: :cascade
   add_foreign_key "cooldowns", "communities", on_delete: :cascade
   add_foreign_key "cooldowns", "servers", on_delete: :cascade
   add_foreign_key "cooldowns", "users", on_delete: :nullify
@@ -404,12 +410,12 @@ ActiveRecord::Schema[7.0].define(version: 2023_09_07_230118) do
   add_foreign_key "server_settings", "servers", on_delete: :cascade
   add_foreign_key "servers", "communities", on_delete: :cascade
   add_foreign_key "territories", "servers", on_delete: :cascade
-  add_foreign_key "user_aliases", "communities"
-  add_foreign_key "user_aliases", "servers"
-  add_foreign_key "user_aliases", "users"
-  add_foreign_key "user_defaults", "communities"
-  add_foreign_key "user_defaults", "servers"
-  add_foreign_key "user_defaults", "users"
+  add_foreign_key "user_aliases", "communities", on_delete: :cascade
+  add_foreign_key "user_aliases", "servers", on_delete: :cascade
+  add_foreign_key "user_aliases", "users", on_delete: :cascade
+  add_foreign_key "user_defaults", "communities", on_delete: :cascade
+  add_foreign_key "user_defaults", "servers", on_delete: :cascade
+  add_foreign_key "user_defaults", "users", on_delete: :cascade
   add_foreign_key "user_gamble_stats", "servers", on_delete: :cascade
   add_foreign_key "user_gamble_stats", "users", on_delete: :cascade
   add_foreign_key "user_notification_preferences", "servers", on_delete: :cascade

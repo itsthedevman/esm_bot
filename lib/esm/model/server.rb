@@ -2,12 +2,12 @@
 
 module ESM
   class Server < ApplicationRecord
-    before_create :generate_uuid
+    before_create :generate_public_id
     before_create :generate_key
     after_create :create_server_setting
     after_create :create_default_reward
 
-    attribute :uuid, :uuid
+    attribute :public_id, :uuid
     attribute :server_id, :string
     attribute :community_id, :integer
     attribute :server_name, :text
@@ -40,7 +40,7 @@ module ESM
     end
 
     def token
-      @token ||= {access: uuid, secret: server_key}
+      @token ||= {access: public_id, secret: server_key}
     end
 
     # V1
@@ -145,10 +145,10 @@ module ESM
 
     private
 
-    def generate_uuid
-      return if uuid.present?
+    def generate_public_id
+      return if public_id.present?
 
-      self.uuid = SecureRandom.uuid
+      self.public_id = SecureRandom.uuid
     end
 
     # Idk how to store random bytes in redis (Dang you NULL!)
