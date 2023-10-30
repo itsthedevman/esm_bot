@@ -44,28 +44,30 @@ communities = [
     community_id: "esm2",
     community_name: "ESM Test Server 2",
     guild_id: "901967248653189180"
-  },
-  {
-    community_id: "zdt",
-    community_name: "ZDT",
-    guild_id: "421111581267591168",
-    player_mode_enabled: false
   }
+  # {
+  #   community_id: "zdt",
+  #   community_name: "ZDT",
+  #   guild_id: "421111581267591168",
+  #   player_mode_enabled: false
+  # }
 ].map do |community|
-  print "  Deleting commands for #{community[:community_id]}..."
-  ::ESM.bot.get_application_commands(server_id: "452568470765305866").each(&:delete)
+  print "  Creating community for #{community[:community_id]}..."
+  community = ESM::Community.create!(community)
   puts " done"
 
-  print "  Creating community for #{community[:community_id]}..."
+  print "  Deleting commands for #{community.community_id}..."
+  ::ESM.bot.get_application_commands(server_id: community.guild_id).each(&:delete)
+  puts " done"
 
-  community = ESM::Community.create!(community)
+  print "  Registering commands for #{community.community_id}..."
+  ESM::Command.register_commands(community.guild_id)
   puts " done"
 
   community
 end
 
 community = communities.first
-community2 = communities.third
 puts " done"
 
 print "Creating servers..."
@@ -140,24 +142,6 @@ server.server_rewards.create!(
   locker_poptabs: 0,
   respect: 0
 )
-
-ESM::Server.create!(
-  community_id: community2.id,
-  server_id: "zdt_namalsk",
-  server_name: "ZDT Namalsk",
-  server_key: "zdt_namalsk_key",
-  server_ip: "127.0.0.1",
-  server_port: "2302"
-)
-
-ESM::Server.create!(
-  community_id: community2.id,
-  server_id: "zdt_tanoa",
-  server_name: "ZDT Tanoa",
-  server_key: "zdt_tanoa_key",
-  server_ip: "127.0.0.1",
-  server_port: "2302"
-)
 puts " done"
 
 print "Creating users..."
@@ -176,11 +160,5 @@ ESM::UserAlias.create!(user_id: 1, community_id: community.id, value: "c")
 puts " done"
 
 Redis.new.set("server_key", server.token.to_json)
-
-print "Registering commands..."
-ESM::Community.all.pluck(:guild_id).each do |community_discord_id|
-  ESM::Command.register_commands(community_discord_id)
-end
-puts " done"
 
 # rubocop:enable Rails/Output

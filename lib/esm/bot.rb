@@ -53,7 +53,6 @@ module ESM
       # Binds the Discord Events
       bind_events!
 
-      # Call Discordrb::Commands::Commandbot.run
       super
     end
 
