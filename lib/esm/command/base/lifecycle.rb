@@ -17,12 +17,13 @@ module ESM
           # @!visibility private
           #
           def event_hook(event)
+            info!({class: command_name, event: event.class, command_id: event.command_id})
             error = false
-            event = ESM::Event::ApplicationCommand.new(event)
 
             # Shows "Exile Server Manager is thinking...". This is so much better than "typing"
             event.defer(ephemeral: false)
 
+            event = ESM::Event::ApplicationCommand.new(event)
             command = new(
               user: event.user,
               server: event.server,
@@ -33,6 +34,7 @@ module ESM
 
             command.from_discord!
           rescue => e
+            error!(e)
             # This occurs if event.defer fails due to Discord dropping the interaction before the bot had a chance to process it
             return if command.nil?
 
@@ -45,7 +47,7 @@ module ESM
                 if error
                   "Well, this is awkward..."
                 else
-                  "Completed in #{command.timers.from_discord.time_elapsed.round} seconds"
+                  "Completed in #{command.timers.total.round} seconds"
                 end
 
               event.edit_response(content: content)

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2023_10_25_220103) do
+ActiveRecord::Schema[7.0].define(version: 2023_10_27_175108) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
   enable_extension "plpgsql"
@@ -35,19 +35,6 @@ ActiveRecord::Schema[7.0].define(version: 2023_10_25_220103) do
     t.integer "user_count", default: 0
   end
 
-  create_table "command_caches", force: :cascade do |t|
-    t.string "command_name"
-    t.string "command_type"
-    t.string "command_category"
-    t.text "command_description"
-    t.text "command_example"
-    t.text "command_usage"
-    t.text "command_arguments"
-    t.json "command_aliases"
-    t.json "command_defines"
-    t.index ["command_name"], name: "index_command_caches_on_command_name"
-  end
-
   create_table "command_configurations", force: :cascade do |t|
     t.integer "community_id", null: false
     t.string "command_name", null: false
@@ -70,6 +57,22 @@ ActiveRecord::Schema[7.0].define(version: 2023_10_25_220103) do
     t.string "command_name", null: false
     t.integer "execution_count", default: 0, null: false
     t.index ["command_name"], name: "index_command_counts_on_command_name"
+  end
+
+  create_table "command_details", force: :cascade do |t|
+    t.string "command_name"
+    t.string "command_type"
+    t.string "command_category"
+    t.string "command_limited_to"
+    t.text "command_description"
+    t.text "command_usage"
+    t.json "command_examples"
+    t.json "command_arguments"
+    t.json "command_attributes"
+    t.json "command_requirements"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["command_name"], name: "index_command_details_on_command_name"
   end
 
   create_table "communities", force: :cascade do |t|

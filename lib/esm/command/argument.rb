@@ -40,7 +40,8 @@ module ESM
           checked_against: ESM::Regex::TERRITORY_ID,
           description_extra: "commands.arguments.territory_id.description_extra",
           description: "commands.arguments.territory_id.description",
-          required: true
+          required: true,
+          placeholder: "territory"
         },
 
         # Optional: UserDefault/CommunityDefault can be used. It will be validated so it is "semi-required"
@@ -49,6 +50,7 @@ module ESM
           description_extra: "commands.arguments.community_id.description_extra",
           description: "commands.arguments.community_id.description",
           optional_text: "commands.arguments.community_id.optional_text",
+          placeholder: "community",
           modifier: lambda do |content|
             if content.present?
               # User alias
@@ -76,6 +78,7 @@ module ESM
           description_extra: "commands.arguments.server_id.description_extra",
           description: "commands.arguments.server_id.description",
           optional_text: "commands.arguments.server_id.optional_text",
+          placeholder: "server",
           modifier: lambda do |content|
             if content.present?
               # User provided - Starts with a community ID
@@ -117,7 +120,7 @@ module ESM
 
       attr_reader :name, :type, :discord_type,
         :display_name, :command_class, :command_name,
-        :default_value, :modifier,
+        :default_value, :modifier, :placeholder,
         :description, :description_extra, :optional_text,
         :options, :checked_against, :checked_against_if
 
@@ -203,6 +206,8 @@ module ESM
       #     Used to determine if the argument should be validated against :checked_against.
       #     Can return a truthy value to continue to validation. Falsey values will cause validation to be skipped
       #
+      #   @option opts [String, Symbol] :placeholder
+      #     Used when the command usage is displayed and use_placeholders are true. Defaults to the display name
       def initialize(name, type = nil, opts = {})
         template_name = (opts[:template] || name).to_sym
 
@@ -223,6 +228,7 @@ module ESM
         @modifier = opts[:modifier]
         @checked_against = opts[:checked_against]
         @checked_against_if = opts[:checked_against_if]
+        @placeholder = opts[:placeholder].presence || display_name
 
         @options = {required: @required}
         @options[:min_value] = opts[:min_value] if opts[:min_value]

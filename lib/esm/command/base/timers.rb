@@ -37,6 +37,10 @@ module ESM
           nil
         end
 
+        def total
+          values.sum(&:time_elapsed)
+        end
+
         private
 
         def create_timer(name)

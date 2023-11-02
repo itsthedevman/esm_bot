@@ -77,17 +77,7 @@ module ESM
         next unless TYPES.include?(command_class.type)
 
         # To be written to the DB in bulk
-        command = command_class.new
-        commands_needing_cached << {
-          command_name: command.command_name,
-          command_type: command.type,
-          command_category: command.category,
-          command_description: command.description,
-          command_examples: command.examples(raw: true),
-          command_usage: command.usage,
-          command_arguments: command.arguments,
-          command_defines: command.attributes.to_h
-        }
+        commands_needing_cached << command_class.to_details
       end
 
       # Lock it!

@@ -3,7 +3,7 @@
 module ESM
   module Command
     class Arguments < Hash
-      attr_reader :templates, :command_instance
+      attr_reader :templates, :command_instance, :display_name_mapping
 
       def initialize(command = nil, templates: {}, values: {})
         @command_instance = command

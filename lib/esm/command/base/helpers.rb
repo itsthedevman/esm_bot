@@ -51,7 +51,7 @@ module ESM
               next if value_is_blank && template.optional?
               next if value_is_blank && !use_placeholders
 
-              command_statement << (value_is_blank ? "#{template}:<#{template}>" : "#{template}:#{value}")
+              command_statement << (value_is_blank ? "#{template}:<#{template.placeholder}>" : "#{template}:#{value}")
             end
           end
 

@@ -149,7 +149,7 @@ module ESM
           #
           def to_h
             {
-              command_name: command_name,
+              name: command_name,
               type: type,
               category: category,
               namespace: namespace,
@@ -160,8 +160,28 @@ module ESM
               arguments: arguments,
               description: description,
               description_extra: description_extra,
-              examples: examples
+              examples: examples_raw
             }
+          end
+
+          def to_details
+            details = to_h.except(:skipped_actions, :namespace)
+
+            details[:usage] = usage
+
+            details[:arguments] = details[:arguments].each_with_object({}) do |(name, argument), hash|
+              hash[argument.display_name] = argument
+            end
+
+            details[:description] = details[:description].then do |description|
+              if (description_extra = details.delete(:description_extra).presence)
+                description += "\n#{description_extra}"
+              end
+
+              description
+            end
+
+            details.transform_keys { |k| "command_#{k}" }
           end
 
           #
