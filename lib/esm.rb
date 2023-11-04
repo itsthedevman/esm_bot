@@ -96,6 +96,7 @@ end
 
 module ESM
   REDIS_OPTS = {
+    host: ENV.fetch("REDIS_HOST", "localhost"),
     reconnect_attempts: 10
   }.freeze
 
