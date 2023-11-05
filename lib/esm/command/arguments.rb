@@ -35,16 +35,23 @@ module ESM
           ESM::Embed.build do |e|
             help_documentation = invalid_arguments.format(join_with: "\n\n", &:help_documentation)
 
-            command_usage = command_instance.usage(with_args: true, use_placeholders: true, with_slash: false)
-            help_usage = ESM::Command.get(:help).usage(with_args: true, overrides: {with: command_usage})
+            help_usage = ESM::Command.get(:help).usage(
+              with_args: true,
+              overrides: {with: command_instance.usage(with_slash: false)}
+            )
 
-            e.title = "**Invalid #{"argument".pluralize(invalid_arguments.size)} for `/#{command_usage}`**"
+            argument_word = "argument".pluralize(invalid_arguments.size)
+
+            e.title = "**Invalid #{argument_word}**"
             e.description = <<~STRING
-              Please read the following and correct any errors before trying again.
+              ```#{command_instance.usage(with_args: true, use_placeholders: true)}```
+              **Please read the following and correct any errors before trying again.**
 
+              **Missing #{argument_word}**
               #{help_documentation}
 
-              For more information, use `#{help_usage}`
+              For more information, send me:
+              ```#{help_usage}```
             STRING
 
             e.add_field(
