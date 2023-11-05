@@ -13,7 +13,6 @@ module ESM
       include Definition
       include Helpers
       include Lifecycle
-      include Metadata
       include Migration
       include Permissions
     end
