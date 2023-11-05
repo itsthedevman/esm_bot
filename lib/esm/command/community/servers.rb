@@ -24,12 +24,13 @@ module ESM
 
         def on_execute
           servers = ESM::Server.where(community_id: target_community.id, server_visibility: :public)
+            .sort_by { |s| s.server_name.downcase }
+            .sort { |s| s.connected? ? 0 : 1 }
+
           check_for_no_servers!(servers)
 
           servers.each do |server|
-            @server = server
-
-            reply(build_server_embed)
+            reply(build_server_embed(server))
           end
         end
 
@@ -41,32 +42,32 @@ module ESM
           raise_error!(:no_servers, community_id: arguments.community_id)
         end
 
-        def build_server_embed
+        def build_server_embed(server)
           ESM::Embed.build do |e|
-            e.title = @server.server_name.presence || ""
-            e.color = @server.connected? ? :green : :red
+            e.title = server.server_name.presence || ""
+            e.color = server.connected? ? :green : :red
 
             # Server_id, ip, port
-            add_server_connection_info(e)
+            add_server_connection_info(e, server)
 
-            if @server.connected?
-              e.add_field(name: I18n.t("commands.server.online_for"), value: "```#{@server.uptime}```")
-              e.add_field(name: I18n.t("commands.server.restart_in"), value: "```#{@server.time_left_before_restart}```")
+            if server.connected?
+              e.add_field(name: I18n.t("commands.server.online_for"), value: "```#{server.uptime}```")
+              e.add_field(name: I18n.t("commands.server.restart_in"), value: "```#{server.time_left_before_restart}```")
             else
               e.description =
-                if @server.disconnected_at.nil?
+                if server.disconnected_at.nil?
                   I18n.t("commands.servers.offline")
                 else
-                  I18n.t("commands.servers.offline_for", time: @server.time_since_last_connection)
+                  I18n.t("commands.servers.offline_for", time: server.time_since_last_connection)
                 end
             end
           end
         end
 
-        def add_server_connection_info(e)
-          e.add_field(name: I18n.t(:server_id), value: "```#{@server.server_id}```", inline: true)
-          e.add_field(name: I18n.t(:ip), value: "```#{@server.server_ip}```", inline: true)
-          e.add_field(name: I18n.t(:port), value: "```#{@server.server_port}```", inline: true)
+        def add_server_connection_info(e, server)
+          e.add_field(name: I18n.t(:server_id), value: "```#{server.server_id}```", inline: true)
+          e.add_field(name: I18n.t(:ip), value: "```#{server.server_ip}```", inline: true)
+          e.add_field(name: I18n.t(:port), value: "```#{server.server_port}```", inline: true)
         end
       end
     end
