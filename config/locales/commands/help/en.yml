@@ -1,4 +1,3 @@
----
 en:
   commands:
     help:
@@ -7,19 +6,19 @@ en:
           description: The categories can be found by just using `/help`
       description: A helpful command. An unhelpful description
       examples:
-        - description: Displays information about getting started with Exile Server Manager
-        - description: Displays all player commands
-          arguments:
-            with: player commands
-        - description: Displays all admin commands
-          arguments:
-            with: admin commands
-        - description: Displays all commands
-          arguments:
-            with: commands
-        - description: Displays detailed information about the `/territory set_id` command
-          arguments:
-            with: "/territory set_id"
+      - description: Displays information about getting started with Exile Server Manager
+      - description: Displays all player commands
+        arguments:
+          with: player commands
+      - description: Displays all admin commands
+        arguments:
+          with: admin commands
+      - description: Displays all commands
+        arguments:
+          with: commands
+      - description: Displays detailed information about the `/territory set_id` command
+        arguments:
+          with: "/territory set_id"
       categories:
         name: Categories
         value: |-
@@ -70,7 +69,7 @@ en:
         title: "`%{name}` Documentation"
         note: "**Note:**"
         limited_to: This command is available only in a %{channel_type} channel with me.
-        allowlist_enabled: This command may be available only to certain roles.
+        allowlist_enabled: This command may be only available to certain roles.
         usage: "**__Usage__**"
         arguments: "**__Arguments__**"
         examples: "**__Examples__**"

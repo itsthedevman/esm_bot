@@ -34,7 +34,6 @@ module ESM
 
             command.from_discord!
           rescue => e
-            error!(e)
             # This occurs if event.defer fails due to Discord dropping the interaction before the bot had a chance to process it
             return if command.nil?
 
