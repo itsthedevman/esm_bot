@@ -7,57 +7,56 @@ module ESM
         extend ActiveSupport::Concern
 
         class_methods do
-          def usage(...)
-            new.usage(...)
+          #
+          # Returns the command's execution string, with or without arguments.
+          #   /command subcommand argument_1:value argument_2: value
+          #
+          # @param overrides [Hash] Argument names and values to set.
+          #   These will override the default arguments. Ignored if with_args is false
+          #
+          # @param use_placeholders [true/false] Controls if a placeholder is used as the arguments value
+          #   If true, and the argument is blank, the argument's name will be used as a placeholder
+          #   If false, and the argument is blank, the argument is omitted from the result
+          #
+          # @param with_args [true/false] Should the arguments be included in result?
+          # @param with_slash [true/false] Should the result start with a slash?
+          #
+          # @return [String]
+          #
+          def usage(overrides: {}, use_placeholders: true, with_args: true, with_slash: true)
+            command_statement = namespace[:segments].dup
+            command_statement << namespace[:command_name]
+
+            if with_args && arguments.size > 0
+              arguments.each do |(name, template)|
+                # Better support for falsey values
+                value =
+                  if overrides.key?(name)
+                    overrides[name]
+                  elsif overrides.key?(template.display_name)
+                    overrides[template.display_name]
+                  end
+
+                # Perf
+                value_is_blank = value.blank?
+                next if value_is_blank && template.optional?
+                next if value_is_blank && !use_placeholders
+
+                command_statement << (value_is_blank ? "#{template}:<#{template.placeholder}>" : "#{template}:#{value}")
+              end
+            end
+
+            command_statement = command_statement.join(" ")
+            command_statement.prepend("/") if with_slash
+            command_statement
           end
         end
 
-        #
-        # Returns the command's execution string, with or without arguments.
-        #   /command subcommand argument_1:value argument_2: value
-        #
-        # @param overrides [Hash] Argument names and values to set.
-        #   These will override the default arguments. Ignored if with_args is false
-        #
-        # @param use_placeholders [true/false] Controls if a placeholder is used as the arguments value
-        #   If true, and the argument is blank, the argument's name will be used as a placeholder
-        #   If false, and the argument is blank, the argument is omitted from the result
-        #
-        # @param with_args [true/false] Should the arguments be included in result?
-        # @param with_slash [true/false] Should the result start with a slash?
-        #
-        # @return [String]
-        #
-        def usage(overrides: {}, use_placeholders: false, with_args: true, with_slash: true)
-          command_statement = namespace[:segments].dup
-          command_statement << namespace[:command_name]
+        def usage(**args)
+          args[:use_placeholders] ||= false
+          args[:overrides] = arguments.merge(args[:overrides] || {})
 
-          if with_args && arguments.size > 0
-            arguments.with_templates.each do |(name, data)|
-              template = data[:template]
-
-              # Better support for falsey values
-              value =
-                if overrides.key?(name)
-                  overrides[name]
-                elsif overrides.key?(template.display_name)
-                  overrides[template.display_name]
-                else
-                  data[:value]
-                end
-
-              # Perf
-              value_is_blank = value.blank?
-              next if value_is_blank && template.optional?
-              next if value_is_blank && !use_placeholders
-
-              command_statement << (value_is_blank ? "#{template}:<#{template.placeholder}>" : "#{template}:#{value}")
-            end
-          end
-
-          command_statement = command_statement.join(" ")
-          command_statement.prepend("/") if with_slash
-          command_statement
+          self.class.usage(**args)
         end
 
         # Command has two arguments: a1, and a2
@@ -252,6 +251,40 @@ module ESM
         #
         def t(translation_name, **)
           I18n.t("commands.#{name}.#{translation_name}", **)
+        end
+
+        def to_h
+          {
+            name: name,
+            arguments: arguments,
+            current_community: current_community&.attributes,
+            current_channel: current_channel&.attributes,
+            current_user: current_user&.attributes,
+            current_cooldown: current_cooldown&.attributes,
+            target_community: target_community&.attributes,
+            target_server: target_server&.attributes&.except("server_key"),
+            target_user: target_user&.attributes,
+            target_uid: target_uid,
+            same_user: same_user?,
+            dm_only: dm_only?,
+            text_only: text_only?,
+            dev_only: dev_only?,
+            registration_required: registration_required?,
+            on_cooldown: on_cooldown?,
+            permissions: {
+              config: community_permissions&.attributes,
+              allowlist_enabled: command_allowlist_enabled?,
+              enabled: command_enabled?,
+              allowed: command_allowed_in_channel?,
+              allowlisted: command_allowed?,
+              notify_when_disabled: notify_when_command_disabled?,
+              cooldown_time: cooldown_time
+            }
+          }
+        end
+
+        def inspect
+          "<#{self.class.name}, arguments: #{arguments}>"
         end
 
         #
