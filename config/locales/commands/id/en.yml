@@ -9,4 +9,4 @@ en:
         description: "**%{community_name}'s** community ID is **`%{community_id}`**"
         field:
           name: Want to list all registered servers for this community?
-          value: "**`/community servers for:%{community_id}`**"
+          value: "```%{command}```"
