@@ -53,7 +53,7 @@ module ESM
 
           # Send a preview of the embed
           reply(broadcast_embed(server_ids: @server_id_sentence))
-          reply("`------------------------------------------------------------------`")
+          reply("`---------------------------------`")
 
           embed =
             ESM::Embed.build do |e|

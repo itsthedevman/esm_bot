@@ -46,7 +46,7 @@ module ESM
                 if error
                   "Well, this is awkward..."
                 else
-                  "Completed in #{command.timers.total.round} seconds"
+                  "Completed in #{command.timers.total.round(2)} seconds"
                 end
 
               event.edit_response(content: content)
