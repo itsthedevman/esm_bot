@@ -24,7 +24,7 @@ en:
         description: "The ID for the territory that you want to run this command on"
         description_extra: |-
           Territory IDs are often 3-6 characters long, or a custom one set using the `/territory set_id` command.
-          Want to see all of your territories? Try using the `/territory list` command
+          Want to see all of your territories? Try using the `/server my territories` command
       command:
         description: A slash command (e.g. `/server reward` with or without the `/`)
   "yes": "Yes"
