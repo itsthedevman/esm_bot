@@ -25,11 +25,11 @@ module ESM
               aliases = current_user.id_aliases.by_type
 
               if (id_aliases = aliases[:community]) && id_aliases.size > 0
-                description += "**Communities**\n```#{build_table("Community", id_aliases)}```\n"
+                description += "**Community Aliases**\n#{build_table("Community", id_aliases)}"
               end
 
               if (id_aliases = aliases[:server]) && id_aliases.size > 0
-                description += "**Servers**\n```#{build_table("Server", id_aliases)}```\n"
+                description += "**Server Aliases**\n#{build_table("Server", id_aliases)}"
               end
 
               description = "You do not have any aliases, yet. " if description.blank?
@@ -44,12 +44,7 @@ module ESM
         private
 
         def build_table(type, id_aliases)
-          table = Terminal::Table.new(
-            headings: ["Alias", "#{type} ID", "#{type} name"],
-            style: {border: :unicode_round}
-          )
-
-          id_aliases.each do |id_alias|
+          id_aliases.format(join_with: "\n") do |id_alias|
             if id_alias.server_id
               server = id_alias.server
               id = server.server_id
@@ -60,10 +55,11 @@ module ESM
               name = community.community_name
             end
 
-            table << [id_alias.value, id, name.truncate(20)]
+            <<~STRING
+              **[#{id}] #{name}**
+              ```#{id_alias.value}```
+            STRING
           end
-
-          table.to_s
         end
       end
     end
