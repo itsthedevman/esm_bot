@@ -2,7 +2,7 @@
 
 module ESM
   module Command
-    module Territory
+    module Server
       class Territories < ApplicationCommand
         #################################
         #
