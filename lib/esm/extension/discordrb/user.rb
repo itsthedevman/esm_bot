@@ -18,9 +18,10 @@ module Discordrb
       {
         id: id.to_s,
         username: username,
-        discriminator: discriminator,
         avatar_url: avatar_url
       }
     end
+
+    alias_method :attributes, :to_h
   end
 end
