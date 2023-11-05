@@ -17,7 +17,7 @@ module ESM
           # @!visibility private
           #
           def event_hook(event)
-            info!({class: command_name, event: event.class, command_id: event.command_id})
+            info!({class: command_name})
             error = false
 
             # Shows "Exile Server Manager is thinking...". This is so much better than "typing"
@@ -34,11 +34,11 @@ module ESM
 
             command.from_discord!
           rescue => e
-            # This occurs if event.defer fails due to Discord dropping the interaction before the bot had a chance to process it
-            return if command.nil?
-
             error = true
-            command.handle_error(e)
+            error!(message: error.message, backtrace: error.backtrace) unless command
+
+            # command can be nil if event.defer fails due to Discord dropping the interaction before the bot had a chance to process it
+            command&.handle_error(e)
           ensure
             # Ugh - can't guard here
             if !command.nil?
