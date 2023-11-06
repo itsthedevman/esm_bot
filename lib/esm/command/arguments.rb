@@ -50,7 +50,7 @@ module ESM
               **Missing #{argument_word}**
               #{help_documentation}
 
-              For more information, send me:
+              For more information, use the following command:
               ```#{help_usage}```
             STRING
 
@@ -73,10 +73,7 @@ module ESM
 
       def with_templates
         each_with_object({}) do |(name, value), hash|
-          hash[name] = {
-            value: value,
-            template: templates[name]
-          }
+          hash[name] = [templates[name], value]
         end
       end
 

@@ -75,7 +75,7 @@ class Inquirer
 
   def to_h
     @predicates.index_with do |predicate|
-      public_send("#{predicate}?")
+      instance_variable_get("@#{predicate}")
     end
   end
 

@@ -38,7 +38,7 @@ module ESM
         def on_execute
           check_for_owned_server! if arguments.server_id
           check_for_valid_command!
-          check_for_registered_target_user! if target_user
+          check_for_registered_target_user! # Don't allow User::Ephemeral
 
           # Send the confirmation request
           reply(confirmation_embed)

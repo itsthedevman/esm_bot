@@ -17,10 +17,11 @@ module ESM
           # @!visibility private
           #
           def event_hook(event)
-            info!({class: command_name})
+            info!({command_class: to_s})
             error = false
 
             # Shows "Exile Server Manager is thinking...". This is so much better than "typing"
+            # Not ephemeral because it keeps a history that the command was sent
             event.defer(ephemeral: false)
 
             event = ESM::Event::ApplicationCommand.new(event)
