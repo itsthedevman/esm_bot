@@ -10,12 +10,12 @@ module ESM
         #
 
         # Required: Needed by command
-        argument :code_to_execute, display_name: :execute, required: true, preserve: true, checked_against: /\s+/
+        argument :code_to_execute, display_name: :execute, required: true, preserve: true
 
         # See Argument::TEMPLATES[:server_id]
         argument :server_id, display_name: :on
 
-        # Optional: Needed by command
+        # Optional: Has default
         argument :target,
           required: false,
           checked_against: /#{ESM::Regex::TARGET.source}|server|all|everyone/i,

@@ -3,6 +3,7 @@
 #
 # A base class that allows for creating classes that can be asked questions.
 # Very similar to ActiveSupport::StringInquirer and ArrayInquirer, except stricter
+# See initializer
 #
 class Inquirer
   #
@@ -17,12 +18,14 @@ class Inquirer
   #   environment.predicate_does_not_exist? #=> undefined method predicate_does_not_exists? for Inquirer
   #
   # @example Implementing ArrayInquirer
-  #   environment = Inquirer.new(:apples, :oranges, :bananas)
-  #   environment.set(:oranges, :bananas)
+  #   fruits = Inquirer.new(:apples, :oranges, :bananas)
+  #   fruits.set(:oranges, :bananas)
   #
-  #   environment.apples? #=> false
-  #   environment.oranges? #=> true
-  #   environment.bananas? #=> true
+  #   fruits.apples? #=> false
+  #   fruits.oranges? #=> true
+  #   fruits.bananas? #=> true
+  #   fruits.grapes? #=> undefined method grapes? for Inquirer
+
   def initialize(*predicates)
     @predicates = predicates.map(&:to_sym)
     @predicates.each do |action|

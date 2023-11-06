@@ -34,11 +34,15 @@ module ESM
 
             command.from_discord!
           rescue => e
-            error = true
-            error!(message: error.message, backtrace: error.backtrace) unless command
+            error = !e.is_a?(ESM::Exception::Error)
 
-            # command can be nil if event.defer fails due to Discord dropping the interaction before the bot had a chance to process it
-            command&.handle_error(e)
+            # Discord can drop the interaction if the bot doesn't reply in 3 seconds.
+            # `event.defer` handles this but it can raise exceptions. If this happens, `command` will be nil
+            if command
+              command.handle_error(e)
+            else
+              error!(message: error.message, backtrace: error.backtrace)
+            end
           ensure
             # Ugh - can't guard here
             if !command.nil?
