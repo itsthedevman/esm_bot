@@ -184,6 +184,10 @@ module ESM
       end
     end
 
+    def cache
+      @cache ||= ActiveSupport::Cache::RedisCacheStore.new(namespace: "esm_bot", redis: redis)
+    end
+
     def env
       @env ||= Inquirer.new(:production, :staging, :test, :development).set(ENV["ESM_ENV"].presence || :development)
     end
