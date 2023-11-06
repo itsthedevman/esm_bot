@@ -37,14 +37,14 @@ module ESM
 
             help_usage = ESM::Command.get(:help).usage(
               with_args: true,
-              overrides: {with: command_instance.usage(with_slash: false)}
+              arguments: {with: command_instance.usage(with_slash: false, with_args: false)}
             )
 
             argument_word = "argument".pluralize(invalid_arguments.size)
 
             e.title = "**Invalid #{argument_word}**"
             e.description = <<~STRING
-              ```#{command_instance.usage(with_args: true, use_placeholders: true)}```
+              ```#{command_instance.usage(with_args: true, use_placeholders: true, arguments: self)}```
               **Please read the following and correct any errors before trying again.**
 
               **Missing #{argument_word}**

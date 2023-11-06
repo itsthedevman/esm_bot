@@ -38,7 +38,7 @@ module ESM
                 name: I18n.t("commands.id.embed.field.name"),
                 value: I18n.t(
                   "commands.id.embed.field.value",
-                  command: servers_command.usage(with_args: true, overrides: {for: current_community.community_id})
+                  command: servers_command.usage(with_args: true, arguments: {for: current_community.community_id})
                 )
               )
             end

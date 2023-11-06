@@ -204,7 +204,7 @@ module ESM
             examples_raw.format(join_with: "\n") do |example|
               <<~STRING
                 ```
-                #{usage(with_args: true, overrides: example[:arguments] || {})}
+                #{usage(with_args: true, arguments: example[:arguments] || {})}
                 ```#{example[:description]}
               STRING
             end

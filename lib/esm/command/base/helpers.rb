@@ -20,27 +20,30 @@ module ESM
           #
           # @param with_args [true/false] Should the arguments be included in result?
           # @param with_slash [true/false] Should the result start with a slash?
+          # @param skip_defaults [true/false] Skip displaying arguments that are using their default value?
           #
           # @return [String]
           #
-          def usage(overrides: {}, use_placeholders: true, with_args: true, with_slash: true)
+          def usage(arguments: {}, use_placeholders: true, with_args: true, with_slash: true, skip_defaults: true)
             command_statement = namespace[:segments].dup
             command_statement << namespace[:command_name]
 
-            if with_args && arguments.size > 0
-              arguments.each do |(name, template)|
+            if with_args && self.arguments.size > 0
+              self.arguments.each do |(name, template)|
                 # Better support for falsey values
                 value =
-                  if overrides.key?(name)
-                    overrides[name]
-                  elsif overrides.key?(template.display_name)
-                    overrides[template.display_name]
+                  if arguments.key?(name)
+                    arguments[name]
+                  elsif arguments.key?(template.display_name)
+                    arguments[template.display_name]
                   end
 
                 # Perf
                 value_is_blank = value.blank?
+
                 next if value_is_blank && template.optional?
                 next if value_is_blank && !use_placeholders
+                next if skip_defaults && template.default_value? && template.default_value == value
 
                 command_statement << (value_is_blank ? "#{template}:<#{template.placeholder}>" : "#{template}:#{value}")
               end
@@ -52,9 +55,12 @@ module ESM
           end
         end
 
+        #
+        # See class method .usage above
+        #
         def usage(**args)
           args[:use_placeholders] ||= false
-          args[:overrides] = arguments.merge(args[:overrides] || {})
+          args[:arguments] = arguments.merge(args[:arguments] || {})
 
           self.class.usage(**args)
         end
@@ -271,6 +277,7 @@ module ESM
             dev_only: dev_only?,
             registration_required: registration_required?,
             on_cooldown: on_cooldown?,
+            skipped_actions: skipped_actions,
             permissions: {
               config: community_permissions&.attributes,
               allowlist_enabled: command_allowlist_enabled?,

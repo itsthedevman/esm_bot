@@ -28,7 +28,7 @@ module ESM
 
             change_mode_usage = ESM::Command.get(:mode).usage(
               with_args: true,
-              overrides: {for: @community.community_id}
+              arguments: {for: @community.community_id}
             )
 
             e.description = [
