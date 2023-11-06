@@ -8,7 +8,7 @@ module ESM
       # You may overwrite these in your argument definition
       #
       DEFAULT_TEMPLATE = {
-        checked_against: /\S+/,
+        checked_against: :present?,
         checked_against_if: lambda do |argument, content|
           argument.required? || content.present?
         end
@@ -377,6 +377,8 @@ module ESM
             command.instance_exec(content, &checked_against)
           when Array
             checked_against.include?(content)
+          when Symbol
+            content.public_send(checked_against)
           end
 
         return if success
