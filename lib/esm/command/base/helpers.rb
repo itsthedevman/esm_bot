@@ -259,6 +259,10 @@ module ESM
           I18n.t("commands.#{name}.#{translation_name}", **)
         end
 
+        def argument?(argument_name)
+          arguments.key?(argument_name) || arguments.display_name_mapping.key?(argument_name)
+        end
+
         def to_h
           {
             name: name,
