@@ -52,12 +52,6 @@ module ESM
       @connections.each { |_server_id, connection| remove_connection(connection) }
     end
 
-    # Checks to see if there are any corrections and provides them for the server id
-    def self.correct(server_id)
-      checker = DidYouMean::SpellChecker.new(dictionary: @server_ids)
-      checker.correct(server_id)
-    end
-
     def self.connected?(server_id)
       connection(server_id).present?
     end

@@ -39,6 +39,16 @@ module ESM
       includes(:community).order(:server_id).where("server_id ilike ?", id).first
     end
 
+    def self.server_ids
+      ESM.cache.fetch("server_ids", expires_in: ESM.config.cache.server_ids) { pluck(:server_id) }
+    end
+
+    # Checks to see if there are any corrections and provides them for the server id
+    def self.correct_id(server_id)
+      checker = DidYouMean::SpellChecker.new(dictionary: server_ids)
+      checker.correct(server_id)
+    end
+
     def token
       @token ||= {access: public_id, secret: server_key}
     end

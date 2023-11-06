@@ -67,23 +67,6 @@ describe ESM::Websocket do
     end
   end
 
-  describe "#correct" do
-    it "should provide no corrections" do
-      server = ESM::Server.all.sample(1).first
-      correction = ESM::Websocket.correct(server.server_id)
-
-      expect(correction).to be_blank
-    end
-
-    it "should provide a correction" do
-      server = ESM::Server.all.sample(1).first
-      correction = ESM::Websocket.correct(server.server_id[0..-3])
-
-      expect(correction).not_to be_blank
-      expect(correction.first).to eq(server.server_id)
-    end
-  end
-
   describe "#on_message" do
     include_context "command" do
       let!(:command_class) { ESM::Command::Test::BaseV1 }
