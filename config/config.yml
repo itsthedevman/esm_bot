@@ -25,12 +25,15 @@ default: &default
     # ESM::Bot::DeliveryOverseer
     bot_delivery_overseer:
       check_every: 0.5
+  cache:
+    server_ids: 60
 
 development:
   !!merge <<: *default
 
 test:
   !!merge <<: *default
+
   loops:
     # ESM::Request::Overseer
     request_overseer:
@@ -51,13 +54,15 @@ test:
     bot_delivery_overseer:
       check_every: 0.01
 
-  # ESM::Request::Overseer
-  request_overseer:
-    check_every: 0.5
+    # ESM::Request::Overseer
+    request_overseer:
+      check_every: 0.5
 
-  # ESM::Websocket::Request::Overseer
-  websocket_request_overseer:
-    check_every: 0.5
+    # ESM::Websocket::Request::Overseer
+    websocket_request_overseer:
+      check_every: 0.5
+  cache:
+    server_ids: 0
 
 production:
   !!merge <<: *default
