@@ -2,7 +2,7 @@
 
 module ESM
   module Command
-    module Request
+    module My
       class Requests < ApplicationCommand
         #################################
         #
@@ -11,7 +11,6 @@ module ESM
 
         change_attribute :allowed_in_text_channels, default: false
 
-        command_namespace :request, command_name: :list
         command_type :player
 
         #################################

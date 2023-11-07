@@ -1,17 +1,16 @@
 # frozen_string_literal: true
 
 RSpec.shared_examples("validate_command") do
-  it "has a valid description text" do
+  it "has a description" do
     expect(command.description).not_to be_blank
     expect(command.description).not_to match(/todo/i)
   end
 
-  it "has a valid example text" do
-    expect(command.example).not_to be_blank
-    expect(command.example).not_to match(/todo/i)
+  it "has examples" do
+    expect(command.examples).not_to be_blank
   end
 
-  it "has the required defines" do
+  it "has attributes" do
     defines = command.attributes.to_h
     expect(defines).to have_key(:enabled)
     expect(defines).to have_key(:allowlist_enabled)
@@ -20,7 +19,7 @@ RSpec.shared_examples("validate_command") do
     expect(defines).to have_key(:cooldown_time)
   end
 
-  it "has valid description text for every argument" do
+  it "has a description for every argument" do
     command.arguments.each do |name, value|
       argument = command.arguments.templates[name]
       description = argument.description

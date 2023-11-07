@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-describe ESM::Command::Request::Requests, category: "command" do
+describe ESM::Command::My::Requests, category: "command" do
   include_context "command"
   include_examples "validate_command"
 
