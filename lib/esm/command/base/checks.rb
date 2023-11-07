@@ -90,7 +90,7 @@ module ESM
         end
 
         def check_for_connected_server!
-          return if arguments.server_id.nil?
+          return unless argument?(:server_id)
 
           # Return if the server is not connected
           return if target_server.connected?
@@ -99,33 +99,36 @@ module ESM
         end
 
         def check_for_nil_target_server!
-          return if arguments.server_id.nil?
+          return unless argument?(:server_id)
           return if !target_server.nil?
 
           check_failed! do
             provided_server_id = arguments.server_id
 
-            # Attempt to correct them
-            # TODO: V1
-            corrections = ESM::Websocket.correct(provided_server_id)
-
             ESM::Embed.build do |e|
               e.description =
-                if corrections.blank?
-                  I18n.t(
-                    "command_errors.invalid_server_id",
-                    user: current_user.mention,
-                    provided_server_id: provided_server_id
-                  )
+                if provided_server_id.blank?
+                  I18n.t("command_errors.invalid_server_id_blank", user: current_user.mention)
                 else
-                  corrections = corrections.format(join_with: ", ") { |correction| "`#{correction}`" }
+                  # Attempt to correct them
+                  corrections = ESM::Server.correct_id(provided_server_id)
 
-                  I18n.t(
-                    "command_errors.invalid_server_id_with_correction",
-                    user: current_user.mention,
-                    provided_server_id: provided_server_id,
-                    correction: corrections
-                  )
+                  if corrections.blank?
+                    I18n.t(
+                      "command_errors.invalid_server_id",
+                      user: current_user.mention,
+                      provided_server_id: provided_server_id
+                    )
+                  else
+                    corrections = corrections.format(join_with: ", ") { |correction| "`#{correction}`" }
+
+                    I18n.t(
+                      "command_errors.invalid_server_id_with_correction",
+                      user: current_user.mention,
+                      provided_server_id: provided_server_id,
+                      correction: corrections
+                    )
+                  end
                 end
 
               e.color = :red
@@ -134,7 +137,7 @@ module ESM
         end
 
         def check_for_nil_target_community!
-          return if arguments.community_id.nil?
+          return unless argument?(:community_id)
           return if !target_community.nil?
 
           check_failed! do
@@ -168,15 +171,10 @@ module ESM
         end
 
         def check_for_nil_target_user!
-          return if arguments.target.nil?
+          return unless argument?(:target)
           return if !target_user.nil?
 
           check_failed!(:target_user_nil, user: current_user.mention)
-        end
-
-        def check_for_valid_target_user!
-          return if arguments.target.nil?
-          return if target_user.nil?
         end
 
         # Order matters!
@@ -244,7 +242,7 @@ module ESM
         end
 
         # Checks if the target_user is registered
-        # This will always raise if the target_user is an instance of User::Ephemeral.
+        # This will always raise if the target_user is an instance of User::Ephemeral. (They aren't registered)
         #
         # @raise ESM::Exception::CheckFailure
         def check_for_registered_target_user!
