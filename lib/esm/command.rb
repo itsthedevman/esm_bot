@@ -28,12 +28,12 @@ module ESM
       command_name = command_name[1..] if command_name.start_with?("/")
 
       # Find by name or by its usage
-      all.find do |command|
+      all.find do |command_class|
         # OG command name check
-        next true if command.command_name == command_name
+        next true if command_class.command_name == command_name
 
         # Slash command usage check
-        usage = command.usage(with_slash: false)
+        usage = command_class.usage(with_slash: false, with_args: false)
         next true if usage == command_name
 
         # Slash command "subgroup" (the last part of the slash usage)
