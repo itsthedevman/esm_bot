@@ -9,7 +9,7 @@ module ESM
         # Arguments (required first, then order matters)
         #
 
-        argument :code, required: true, preserve: true, description: "Code to execute"
+        argument :code, required: true, preserve_case: true, description: "Code to execute"
 
         #
         # Configuration
@@ -31,12 +31,13 @@ module ESM
 
         #################################
 
+        # lmao, the amount of rubocop disables in this one method
         def on_execute
           code = arguments.code
-          return binding.pry if code == "bd" && ESM.env.development? # standard:disable Lint/Debugger
+          return binding.pry if code == "bd" && ESM.env.development? # rubocop:disable Lint/Debugger
 
           response = eval arguments.code # rubocop:disable Security/Eval
-          reply("Input:\n```ruby\n#{arguments.code}\n```\nOutput:\n```ruby\n#{response}\n```")
+          reply("Input:\n```ruby\n#{arguments.code}\n```\nOutput:\n```ruby\n#{response.ai(plain: true, index: false)}\n```") # rubocop:disable Rails/Output
         rescue => e
           reply("An error occurred: ```#{e.message}```Backtrace: ```#{e.backtrace[0..2].join("\n")}```")
         end

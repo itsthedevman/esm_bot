@@ -3,6 +3,7 @@
 timer = Timer.start!
 
 require "active_record_query_trace"
+require "awesome_print"
 
 # Allows seeing the backtrace for queries
 # Only use lines that pertain to ESM
