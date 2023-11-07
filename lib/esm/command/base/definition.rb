@@ -277,7 +277,7 @@ module ESM
           # @!visibility private
           def register_arguments(builder)
             # Required arguments must be first (Discord requirement)
-            sorted_arguments = arguments.values.sort_by { |argument| argument.required? ? 0 : 1 }
+            sorted_arguments = arguments.values.sort_by { |argument| argument.required_by_discord? ? 0 : 1 }
 
             sorted_arguments.each do |argument|
               if !builder.respond_to?(argument.type)

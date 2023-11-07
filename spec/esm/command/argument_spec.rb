@@ -65,6 +65,8 @@ describe ESM::Command::Argument do
   context "when :required is not provided" do
     it "defaults to false" do
       expect(argument.required?).to be(false)
+      expect(argument.required_by_bot?).to be(false)
+      expect(argument.required_by_discord?).to be(false)
     end
   end
 
@@ -74,6 +76,8 @@ describe ESM::Command::Argument do
     it "is optional" do
       expect(argument.optional?).to be(true)
       expect(argument.required?).to be(false)
+      expect(argument.required_by_bot?).to be(false)
+      expect(argument.required_by_discord?).to be(false)
     end
 
     it "defaults optional text" do
@@ -86,11 +90,24 @@ describe ESM::Command::Argument do
 
     it "is required" do
       expect(argument.required?).to be(true)
+      expect(argument.required_by_bot?).to be(true)
+      expect(argument.required_by_discord?).to be(true)
       expect(argument.optional?).to be(false)
     end
 
     it "defaults optional_text to an empty string" do
       expect(argument.optional_text).to be_blank
+    end
+  end
+
+  context "when :required is a Hash" do
+    subject(:argument) { new_argument(required: {discord: false, bot: true}) }
+
+    it "is expected to be required by the bot but not discord" do
+      expect(argument.required?).to be(true)
+      expect(argument.required_by_bot?).to be(true)
+      expect(argument.required_by_discord?).to be(false)
+      expect(argument.optional?).to be(false)
     end
   end
 

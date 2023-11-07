@@ -44,8 +44,10 @@ module ESM
           placeholder: "territory"
         },
 
-        # Optional: UserDefault/CommunityDefault can be used. It will be validated so it is "semi-required"
+        # Optional in Discord: UserDefault/CommunityDefault can be used. It will be validated so it is "semi-required"
+        # Required: In the bot
         community_id: {
+          required: {discord: false, bot: true},
           checked_against: ESM::Regex::COMMUNITY_ID,
           description_extra: "commands.arguments.community_id.description_extra",
           description: "commands.arguments.community_id.description",
@@ -72,9 +74,12 @@ module ESM
           end
         },
 
-        # Optional: UserDefault/CommunityDefault can be used. It will be validated so it is "semi-required"
+        # Optional in Discord: UserDefault/CommunityDefault can be used. It will be validated so it is "semi-required"
+        # Required: In the bot
         server_id: {
+          required: {discord: false, bot: true},
           checked_against: ESM::Regex::SERVER_ID,
+          checked_against_if: true,
           description_extra: "commands.arguments.server_id.description_extra",
           description: "commands.arguments.server_id.description",
           optional_text: "commands.arguments.server_id.optional_text",
@@ -138,10 +143,12 @@ module ESM
       # @param opts [Hash]
       #     Options to configure the argument
       #
-      #   @option opts [Symbol] :required
-      #     Controls if the argument should be required by Discord.
-      #     Optional.
-      #     Default: false
+      #   @option opts [TrueClass, FalseClass, Hash] :required
+      #     Controls if the argument should be required by Discord and by the Bot
+      #     Fine grain control can be achieved by providing a Hash.
+      #     For example, not require an argument on Discord but require it on the bot side
+      #       required: {discord: false, bot: true}
+      #     Optional. Default: false
       #
       #   @option opts [Symbol, String, nil] :template
       #     The name of a default entry in which `opts` are merged into.
@@ -222,15 +229,23 @@ module ESM
         @command_class = opts[:command_class]
         @command_name = command_class.command_name.to_sym
 
-        @required = !!opts[:required]
         @default_value = opts[:default]
         @preserve_case = !!opts[:preserve_case]
         @modifier = opts[:modifier]
         @checked_against = opts[:checked_against]
         @checked_against_if = opts[:checked_against_if]
-        @placeholder = opts[:placeholder].presence || display_name
+        @placeholder = opts[:placeholder].presence || name
 
-        @options = {required: @required}
+        if opts[:required].is_a?(Hash)
+          @required_by_discord = !!opts.dig(:required, :discord)
+          @required_by_bot = !!opts.dig(:required, :bot)
+        else
+          required = !!opts[:required]
+          @required_by_discord = required
+          @required_by_bot = required
+        end
+
+        @options = {required: @required_by_discord}
         @options[:min_value] = opts[:min_value] if opts[:min_value]
         @options[:max_value] = opts[:max_value] if opts[:max_value]
 
@@ -295,12 +310,20 @@ module ESM
         !!@default_value
       end
 
+      def required_by_bot?
+        @required_by_bot
+      end
+
+      def required_by_discord?
+        @required_by_discord
+      end
+
       def required?
-        @required
+        required_by_bot? || required_by_discord?
       end
 
       def optional?
-        !required?
+        !required_by_bot? && !required_by_discord?
       end
 
       def optional_text?
@@ -354,7 +377,7 @@ module ESM
       end
 
       def load_optional_text(text_or_path)
-        return "" if required?
+        return "" unless optional?
 
         if (text = load_locale_or_provided(text_or_path, "optional_text"))
           return text if text.present?
@@ -367,21 +390,8 @@ module ESM
 
       def check_for_valid_content!(command, content)
         return if checked_against_if.nil? || checked_against.nil?
-        return unless command.instance_exec(self, content, &checked_against_if)
-
-        success =
-          case checked_against
-          when Regexp, String
-            content.to_s.match?(checked_against)
-          when Proc
-            command.instance_exec(content, &checked_against)
-          when Array
-            checked_against.include?(content)
-          when Symbol
-            content.public_send(checked_against)
-          end
-
-        return if success
+        return unless successful_checked_against_if?(command, content)
+        return if successful_checked_against?(command, content)
 
         raise ESM::Exception::InvalidArgument, self
       end
@@ -412,6 +422,28 @@ module ESM
 
         if description.length < 1
           raise ArgumentError, "#{command_class}:argument.#{name} - description must be at least 1 character long"
+        end
+      end
+
+      def successful_checked_against_if?(command, content)
+        case checked_against_if
+        when Proc
+          !!command.instance_exec(self, content, &checked_against_if)
+        when TrueClass, FalseClass
+          checked_against_if
+        end
+      end
+
+      def successful_checked_against?(command, content)
+        case checked_against
+        when Regexp, String
+          content.to_s.match?(checked_against)
+        when Proc
+          !!command.instance_exec(content, &checked_against)
+        when Array
+          checked_against.include?(content)
+        when Symbol
+          !!content.public_send(checked_against)
         end
       end
     end
