@@ -96,6 +96,13 @@ module ESM
         # Some errors from the dll already have a mention in them...
         error = "#{@request.user.mention}, #{error}" if !error.start_with?("<")
 
+        # Some errors have commands hardcoded...
+        territories_command = ESM::Command.get(:territories)
+        error = error.gsub(
+          /!territories (#{Regex::SERVER_ID.source})/,
+          territories_command.usage(arguments: {server_id: "\\1"}) # \1 will be replaced with the server_id by gsub
+        )
+
         # Send the error message
         embed = ESM::Embed.build(:error, description: error)
         @request.command.reply(embed)
