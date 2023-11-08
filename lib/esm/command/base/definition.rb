@@ -285,7 +285,7 @@ module ESM
               end
 
               info!(
-                command: usage,
+                command: usage(with_args: false),
                 argument: {name: argument.name, type: argument.type}
               )
 
@@ -297,7 +297,7 @@ module ESM
               )
             end
 
-            info!(command: usage, status: :registered)
+            info!(command: usage(with_args: false), status: :registered)
           end
 
           # @!visibility private
