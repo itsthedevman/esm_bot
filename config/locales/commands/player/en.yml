@@ -1,31 +1,30 @@
----
 en:
   commands:
     player:
       description: Modifies a player on a server, regardless of them being online or not.
       examples:
-        - description: Gives @discord_mention's player on `esm_malden` 1500 poptabs
-          arguments:
-            whom: "@discord_mention"
-            "on": esm_malden
-            action: money
-            amount: "1500"
-        - description: Removes 50 poptabs from @discord_mention's locker on `esm_altis`
-          arguments:
-            whom: "@discord_mention"
-            "on": esm_altis
-            action: locker
-            amount: "-50"
-        - description: RIP @discord_mention. Kills @discord_mention's player on `esm_namalsk`
-          arguments:
-            whom: "76561234567890123"
-            "on": esm_namalsk
-            action: k
+      - description: Gives @discord_mention's player on `esm_malden` 1500 poptabs
+        arguments:
+          whom: "@discord_mention"
+          "on": esm_malden
+          action: Change player poptabs
+          amount: "1500"
+      - description: Removes 50 poptabs from @discord_mention's locker on `esm_altis`
+        arguments:
+          whom: "@discord_mention"
+          "on": esm_altis
+          action: Change locker poptabs
+          amount: "-50"
+      - description: RIP @discord_mention. Kills @discord_mention's player on `esm_namalsk`
+        arguments:
+          whom: "76561234567890123"
+          "on": esm_namalsk
+          action: Kill player
       arguments:
         action:
-          description: "Valid actions: `money`/`m`, `respect`/`r`, `locker`/`l`, `heal`/`h`, `kill`/`k`"
+          description: "What action do you want to take?"
         amount:
-          description: Actions `m`, `r`, and `l` require this argument. `h` and `k` do not
+          description: The amount to adjust. This is optional for healing or killing a player
           description_extra: |-
             For actions `money`, `respect`, and `locker`:
               - This argument is required and must be a positive or negative number

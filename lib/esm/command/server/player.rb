@@ -13,7 +13,13 @@ module ESM
         argument :target, display_name: :whom
 
         # Required: Needed by command
-        argument :action, required: true, checked_against: %w[money m respect r locker l heal h kill k]
+        argument :action, required: true, choices: {
+          money: "Change player poptabs",
+          locker: "Change locker poptabs",
+          respect: "Change player respect",
+          heal: "Heal player",
+          kill: "Kill player"
+        }
 
         # See Argument::TEMPLATES[:server_id]
         argument :server_id, display_name: :on
@@ -23,9 +29,9 @@ module ESM
           :amount,
           type: :integer,
           checked_against: ->(content) { !content.nil? },
-          checked_against_if: ->(_a, _c) { %w[money m respect r locker l].include?(arguments.action) },
+          checked_against_if: ->(_a, _c) { %w[money respect locker].include?(arguments.action) },
           modifier: lambda do |content|
-            return content unless %w[heal h kill k].include?(arguments.action)
+            return content unless %w[heal kill].include?(arguments.action)
 
             # The actions `heal` and `kill` don't require this argument.
             nil
@@ -52,7 +58,7 @@ module ESM
             function_name: "modifyPlayer",
             discord_tag: current_user.mention,
             target_uid: target_uid,
-            type: expanded_action,
+            type: arguments.action,
             value: arguments.amount
           )
         end
@@ -60,7 +66,7 @@ module ESM
         def on_response(_, _)
           embed = ESM::Notification.build_random(
             community_id: target_community.id,
-            type: expanded_action,
+            type: arguments.action,
             category: "player",
             serverid: target_server.server_id,
             servername: target_server.server_name,
@@ -76,27 +82,6 @@ module ESM
           )
 
           reply(embed)
-        end
-
-        private
-
-        def expanded_action
-          @expanded_action ||= lambda do
-            case arguments.action
-            when "m"
-              "money"
-            when "r"
-              "respect"
-            when "l"
-              "locker"
-            when "h"
-              "heal"
-            when "k"
-              "kill"
-            else
-              arguments.action
-            end
-          end.call
         end
       end
     end
