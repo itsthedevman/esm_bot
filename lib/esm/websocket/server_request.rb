@@ -51,17 +51,17 @@ module ESM
 
         # Logging
         command = @request.command
-        info!(command: command.to_h, response: @message) if command&.event
+        info!(command: command.to_h, response: @message) if command
 
         # We have an error from the DLL
         check_for_command_error!
 
         # Execute the command
         begin
-          @request.command.from_server(@message.parameters)
+          command.from_server(@message.parameters)
         rescue ESM::Exception::CheckFailure => e
           # This catches any errors from the command.
-          @request.command.reply(e.data)
+          command.reply(e.data)
         end
 
       # This catches the check_for_command_error

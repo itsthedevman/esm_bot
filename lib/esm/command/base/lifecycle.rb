@@ -36,7 +36,7 @@ module ESM
 
             self
           rescue => e
-            event.handle_error(e)
+            event.on_error(e)
 
             self
           end
