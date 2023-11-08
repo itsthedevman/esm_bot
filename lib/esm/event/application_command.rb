@@ -9,7 +9,7 @@ module ESM
       def initialize(...)
         super(...)
 
-        @hint_key = "hint_counter"
+        @tip_key = "tip_counter"
       end
 
       #
@@ -24,10 +24,10 @@ module ESM
       def on_completion(command)
         time_to_complete = "Completed in #{command.timers.humanized_total}"
 
-        if send_hint?
-          ESM.cache.delete(@hint_key) # Reset the counter
+        if send_tip?
+          ESM.cache.delete(@tip_key) # Reset the counter
 
-          edit_response(content: time_to_complete + "\n:information_source: #{ESM.config.hints.sample}")
+          edit_response(content: time_to_complete + "\n:information_source: Did you know?\n*#{ESM.config.tips.sample}*")
         else
           edit_response(content: time_to_complete)
         end
@@ -60,8 +60,8 @@ module ESM
 
       private
 
-      def send_hint?
-        counter = ESM.cache.increment(@hint_key)
+      def send_tip?
+        counter = ESM.cache.increment(@tip_key)
         counter > (1 + (1 + rand + rand).round)
       end
     end

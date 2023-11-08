@@ -1,6 +1,7 @@
 default: &default
   token: <%= ENV["DISCORD_TOKEN"] %>
   steam_api_key: <%= ENV["STEAM_TOKEN"] %>
+  # This MUST be multiline. If this is formatted to be a single line, REVERT IT PLS!
   dev_user_allowlist:
     <% JSON.parse(ENV["DEV_ALLOWLIST"]).each do |discord_id| %>
       - "<%= discord_id %>"
@@ -27,8 +28,15 @@ default: &default
       check_every: 0.5
   cache:
     server_ids: 60
-  hints:
-    - This is a hint
+  tips:
+    - You can set a default for server and/or community from the player dashboard. Once set, you can omit the server/community argument on most commands to use your defaults.
+    - You can create aliases for servers and/or communities from the player dashboard. Once created, you can use the alias instead of a server/community ID
+    - Player mode allows you to use ESM on your own Discord without hosting servers
+    - Exile Server Manager was created in 2018 by one person and is still developed by that same person to this day
+    - You can route your XM8 notifications to different channels on your Discord. These can be configured from the player dashboard or server dashboard
+    - "ESM's tech stack includes Ruby, Ruby on Rails, Redis, and Postgres. The server mod is written in SQF/C# and will be replaced with a Rust one soon:tm:"
+    - "The \"slash\" part of a slash command can be omitted when used in other commands. For example:```/help with:my aliases"
+
 
 development:
   !!merge <<: *default
