@@ -50,7 +50,7 @@ en:
           command:
             name: "**Want to see examples or more information about a command?**"
             value: |-
-              Just send me ```/help with:<command_name>``` and replacing `<command_name>` with the name of the command.
+              Just send me ```/help with:<command_name>```Replacing `<command_name>` with the name of the command.
 
               For example:
               ```/help with:/community servers``` _(Note: The slash for the command you are searching for may be omitted)_
@@ -70,7 +70,7 @@ en:
             _**Note:** Communities have the ability to disable or limit access to commands for their servers, regardless of where the command is used_
 
             More information about a particular command can be found by using:
-            ```/help with:<command_name>``` and replacing `<command_name>` with the name of the command.
+            ```/help with:<command_name>```Replacing `<command_name>` with the name of the command.
 
             For example:
             ```/help with:/community servers``` _(Note: The slash for the command you are searching for may be omitted)_
@@ -80,7 +80,7 @@ en:
             These commands are locked by default and may only be used by a community's admins and any allowed roles.
 
             More information about a particular command can be found by using:
-            ```/help with:<command_name>``` and replacing `<command_name>` with the name of the command.
+            ```/help with:<command_name>```Replacing `<command_name>` with the name of the command.
 
             For example:
             ```/help with:/community admin find_player``` _(Note: The slash for the command you are searching for may be omitted)_
