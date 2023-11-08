@@ -324,7 +324,7 @@ module ESM
 
         delegate :examples, to: "self.class"
 
-        def initialize(user: nil, server: nil, channel: nil, arguments: {}, response_callback: nil)
+        def initialize(user: nil, server: nil, channel: nil, arguments: {})
           command_class = self.class
 
           @name = command_class.command_name
@@ -335,7 +335,6 @@ module ESM
           @current_community = ESM::Community.from_discord(server)
           @current_channel = channel
           @arguments = ESM::Command::Arguments.new(self, templates: command_class.arguments, values: arguments)
-          @response_callback = response_callback
 
           @timers = Timers.new(name)
 

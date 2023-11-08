@@ -283,7 +283,7 @@ module ESM
         # Bubble up to #on_inbound
         raise e if command.nil?
 
-        command.handle_error(e)
+        raise "Replace!! command.handle_error(e)"
       end
 
       def on_disconnect(request)

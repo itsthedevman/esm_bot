@@ -4,6 +4,8 @@ module ESM
   module Command
     class Base
       class Timers < Hash
+        include ActionView::Helpers::NumberHelper
+
         def initialize(command_name)
           @command_name = command_name
           super
@@ -37,8 +39,22 @@ module ESM
           nil
         end
 
-        def total
-          values.sum(&:time_elapsed)
+        def humanized_total
+          time_elapsed = values.sum(&:time_elapsed)
+
+          # Milliseconds
+          if (milliseconds = (time_elapsed * 1_000).round) && milliseconds <= 1_000
+            return "#{number_with_delimiter(milliseconds)} #{"millisecond".pluralize(milliseconds)}"
+          end
+
+          # Microseconds
+          if (microseconds = (time_elapsed * 1_000_000).round) && microseconds <= 1_000_000
+            return "#{number_with_delimiter(microseconds)} #{"microsecond".pluralize(microseconds)}"
+          end
+
+          # Seconds and above
+          start_time = values.map(&:started_at).min
+          ESM::Time.distance_of_time_in_words(start_time + time_elapsed.seconds, from_time: start_time)
         end
 
         private

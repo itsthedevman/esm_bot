@@ -18,44 +18,27 @@ module ESM
           #
           def event_hook(event)
             info!({command_class: to_s})
-            error = false
 
-            # Shows "Exile Server Manager is thinking...". This is so much better than "typing"
-            # Not ephemeral because it keeps a history that the command was sent
-            event.defer(ephemeral: false)
+            event.respond(content: "Processing your request...")
 
             event = ESM::Event::ApplicationCommand.new(event)
+
             command = new(
               user: event.user,
               server: event.server,
               channel: event.channel,
-              arguments: event.options,
-              response_callback: event.method(:respond)
+              arguments: event.options
             )
 
             command.from_discord!
+
+            event.on_completion(command)
+
+            self
           rescue => e
-            error = !e.is_a?(ESM::Exception::Error)
+            event.handle_error(e)
 
-            # Discord can drop the interaction if the bot doesn't reply in 3 seconds.
-            # `event.defer` handles this but it can raise exceptions. If this happens, `command` will be nil
-            if command
-              command.handle_error(e)
-            else
-              error!(message: error.message, backtrace: error.backtrace)
-            end
-          ensure
-            # Ugh - can't guard here
-            if !command.nil?
-              content =
-                if error
-                  "Well, this is awkward..."
-                else
-                  "Completed in #{command.timers.total.round(2)} seconds"
-                end
-
-              event.edit_response(content: content)
-            end
+            self
           end
         end
 
@@ -144,28 +127,6 @@ module ESM
         end
 
         def request_declined
-        end
-
-        def handle_error(error)
-          return self if error.is_a?(ESM::Exception::CheckFailureNoMessage)
-
-          message =
-            case error
-            when ESM::Exception::CheckFailure
-              error.data
-            when StandardError
-              uuid = SecureRandom.uuid.split("-")[0..1].join("")
-              error!(uuid: uuid, message: error.message, backtrace: error.backtrace)
-
-              ESM::Embed.build(
-                :error,
-                description: I18n.t("exceptions.system", error_code: uuid)
-              )
-            end
-
-          reply(message)
-
-          self
         end
       end
     end

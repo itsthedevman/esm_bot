@@ -27,6 +27,8 @@ default: &default
       check_every: 0.5
   cache:
     server_ids: 60
+  hints:
+    - This is a hint
 
 development:
   !!merge <<: *default

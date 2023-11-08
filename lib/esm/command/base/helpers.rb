@@ -399,24 +399,6 @@ module ESM
           pending_delivery.wait_for_delivery
         end
 
-        #
-        # Replies to a Discordrb::ApplicationCommandEvent using the #respond method
-        # Makes it easier to send messages or embeds without needing to handle them
-        #
-        # @param message [String, ESM::Embed] The message or embed to send
-        # @param **flags [Hash] Any other options to send into #respond
-        #
-        def respond(message, **flags)
-          data = flags.deep_dup
-          if message.is_a?(ESM::Embed)
-            data[:embeds] = [message.for_discord_embed]
-          else
-            data[:content] = message
-          end
-
-          response_callback.call(**data)
-        end
-
         def edit_message(message, content)
           if content.is_a?(ESM::Embed)
             embed = Discordrb::Webhooks::Embed.new

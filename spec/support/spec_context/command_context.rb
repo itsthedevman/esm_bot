@@ -90,8 +90,7 @@ RSpec.shared_context("command") do
       user: event.user,
       server: event.server,
       channel: event.channel,
-      arguments: event.options,
-      response_callback: ->(**data) { data }
+      arguments: event.options
     )
 
     @previous_command.from_discord!
