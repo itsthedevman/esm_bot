@@ -64,13 +64,13 @@ module ESM
             end
 
             # content == nil, attempt to find and use a default
-            if current_user.id_defaults.community_id
-              # User default
-              current_user.id_defaults.community.community_id
-            elsif current_channel.text?
-              # Community autofill
-              current_community.community_id
-            end
+            user_defaults = current_user.id_defaults
+            return user_defaults.community.community_id if user_defaults.community_id
+
+            # Community autofill
+            return current_community.community_id if current_channel.text?
+
+            nil
           end
         },
 
@@ -104,21 +104,19 @@ module ESM
 
             # content == nil, attempt to find and use a default
             if current_channel.text?
-              # Community Defaults
-
-              # Channel default
               channel_default = current_community.id_defaults.for_channel(current_channel)
               return channel_default.server.server_id if channel_default&.server_id
 
-              # Global default
               global_default = current_community.id_defaults.global
               return global_default.server.server_id if global_default&.server_id
-            elsif current_user.id_defaults.server_id
-              # User Default
-              current_user.id_defaults.server.server_id
             end
 
-            # this is nil by this point
+            if current_user.id_defaults.server_id
+              user_defaults = current_user.id_defaults
+              return user_defaults.server.server_id if user_defaults.server_id
+            end
+
+            nil
           end
         }
       }.freeze
