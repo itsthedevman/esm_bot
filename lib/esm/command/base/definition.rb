@@ -167,7 +167,7 @@ module ESM
           def to_details
             details = to_h.except(:skipped_actions, :namespace)
 
-            details[:usage] = usage
+            details[:usage] = usage(with_args: false)
 
             details[:arguments] = details[:arguments].each_with_object({}) do |(name, argument), hash|
               hash[argument.display_name] = argument

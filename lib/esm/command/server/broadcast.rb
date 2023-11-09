@@ -15,7 +15,7 @@ module ESM
         # Optional: Omitting defaults to "preview"
         argument(
           :broadcast_to,
-          display_as: :to,
+          display_name: :to,
           checked_against: ESM::Regex::BROADCAST,
           modifier: lambda do |content|
             return if content.blank?

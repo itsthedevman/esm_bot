@@ -6,29 +6,29 @@ en:
       - description: Gives @discord_mention's player on `esm_malden` 1500 poptabs
         arguments:
           whom: "@discord_mention"
-          "on": esm_malden
           action: Change player poptabs
+          "on": esm_malden
           amount: "1500"
       - description: Removes 50 poptabs from @discord_mention's locker on `esm_altis`
         arguments:
           whom: "@discord_mention"
-          "on": esm_altis
           action: Change locker poptabs
+          "on": esm_altis
           amount: "-50"
       - description: RIP @discord_mention. Kills @discord_mention's player on `esm_namalsk`
         arguments:
           whom: "76561234567890123"
-          "on": esm_namalsk
           action: Kill player
+          "on": esm_namalsk
       arguments:
         action:
           description: "What action do you want to take?"
         amount:
           description: The amount to adjust. This is optional for healing or killing a player
           description_extra: |-
-            For actions `money`, `respect`, and `locker`:
+            For actions `Change player poptabs`, `Change player respect`, and `Change player locker`:
               - This argument is required and must be a positive or negative number
               - Positive numbers will add the given amount of that type
               - Negative numbers will remove the given amount of that type
-            For types `heal` and `kill`:
+            For types `Heal player` and `Kill player`:
               - This argument is ignored

@@ -1,19 +1,18 @@
----
 en:
   commands:
     add:
       description: Adds the target user as a builder in the provided territory
       examples:
-        - description: Adds @discord_mention to `jqjoe` on `esm_malden`
-          arguments:
-            whom: "@discord_mention"
-            to: jqjoe
-            "on": esm_malden
-        - description: If you are a territory admin, you may replace `@your_username` with a tag of yourself to add yourself to this territory.
-          arguments:
-            target: "@your_username"
-            to: some_territory
-            "on": esm_malden
+      - description: Adds @discord_mention to `jqjoe` on `esm_malden`
+        arguments:
+          whom: "@discord_mention"
+          to: jqjoe
+          "on": esm_malden
+      - description: If you are a territory admin, you may replace `@your_username` with a tag of yourself to add yourself to this territory.
+        arguments:
+          whom: "@your_username"
+          to: some_territory
+          "on": esm_malden
       request_description: |-
         Hi %{target_user}!
         %{current_user} wants to add you to their territory `%{territory_id}` on `%{server_id}`

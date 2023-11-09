@@ -5,13 +5,13 @@ en:
       examples:
       - description: Executes `isServer` on `esm_malden` and returns `true` back.
         arguments:
-          "on": esm_malden
           execute: isServer
+          "on": esm_malden
       - description: Executes `player setDamage 1` on @discord_mention's player in game. If the player is not in game, an error will be returned.
         arguments:
+          execute: player setDamage 1
           "on": esm_tanoa
           target: "@discord_mention"
-          execute: player setDamage 1
       arguments:
         target:
           description: The target to execute the codes on.
