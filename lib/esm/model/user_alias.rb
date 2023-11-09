@@ -2,15 +2,19 @@
 
 module ESM
   class UserAlias < ApplicationRecord
+    before_validation(on: :create) { self.uuid ||= SecureRandom.uuid }
+
+    attribute :uuid, :uuid
     attribute :user_id, :integer
     attribute :community_id, :integer
     attribute :server_id, :integer
     attribute :value, :string
 
     belongs_to :user
-    belongs_to :community
-    belongs_to :server
+    belongs_to :community, optional: true
+    belongs_to :server, optional: true
 
+    validates :uuid, uniqueness: true, presence: true
     validates :value, uniqueness: {scope: [:user_id, :server_id]}
     validates :value, uniqueness: {scope: [:user_id, :community_id]}
     validates :value, length: {minimum: 1, maximum: 64}
