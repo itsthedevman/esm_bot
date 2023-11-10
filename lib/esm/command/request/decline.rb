@@ -16,7 +16,9 @@ module ESM
         # Configuration
         #
 
+        change_attribute :enabled, modifiable: false
         change_attribute :allowed_in_text_channels, default: false
+        change_attribute :allowlist_enabled, modifiable: false
 
         command_type :player
 

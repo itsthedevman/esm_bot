@@ -7,7 +7,7 @@ module ESM
       module Definition
         extend ActiveSupport::Concern
 
-        class Define < Struct.new(:modifiable, :default)
+        class Attribute < Struct.new(:modifiable, :default)
           attr_predicate :modifiable
 
           def initialize(modifiable: true, default: nil)
@@ -82,7 +82,7 @@ module ESM
           # Changes an attribute on the command. These are used mainly for permissions
           #
           # @param attribute [Symbol, String] The name of the attribute
-          # @param **opts [Hash] Configuration options. See ESM::Command::Define
+          # @param **opts [Hash] Configuration options. See ESM::Command::Attribute
           #
           def change_attribute(attribute, **opts)
             if !attributes.key?(attribute)
@@ -222,11 +222,11 @@ module ESM
             self.arguments = {}
 
             self.attributes = {
-              enabled: Define.new(default: true),
-              allowlist_enabled: Define.new(default: false),
-              allowlisted_role_ids: Define.new(default: []),
-              allowed_in_text_channels: Define.new(default: true),
-              cooldown_time: Define.new(default: 2.seconds)
+              enabled: Attribute.new(default: true),
+              allowlist_enabled: Attribute.new(default: false),
+              allowlisted_role_ids: Attribute.new(default: []),
+              allowed_in_text_channels: Attribute.new(default: true),
+              cooldown_time: Attribute.new(default: 2.seconds)
             }
 
             # ESM::Command::Territory::SetId => set_id
