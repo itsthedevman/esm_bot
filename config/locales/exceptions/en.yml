@@ -51,6 +51,7 @@ en:
     server_not_initialized: "Hey %{user}, `%{server_id}` is in the process of connection. Please wait a few minutes before trying again."
     invalid_server_id: "Hey %{user}, I was unable to find a server with an ID of `%{provided_server_id}`."
     invalid_server_id_with_correction: "Hey %{user}, I was unable to find a server with an ID of `%{provided_server_id}`.\nDid you mean: %{correction}?"
+    invalid_server_id_blank: "Come on %{user}, you gotta give me something for the server ID"
     invalid_community_id: "Hey %{user}, I was unable to find a community with an ID of `%{provided_community_id}`."
     invalid_community_id_with_correction: "Hey %{user}, I was unable to find a community with an ID of `%{provided_community_id}`.\nDid you mean: %{correction}?"
     target_user_nil: "Hey %{user}, I was unable to find the requested user. Please double check you have given me a valid Discord ID, steam uid, or @user discord mention"

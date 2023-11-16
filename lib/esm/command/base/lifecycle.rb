@@ -17,11 +17,11 @@ module ESM
           # @!visibility private
           #
           def event_hook(event)
+            event = ESM::Event::ApplicationCommand.new(event)
+
             info!({command_class: to_s})
 
             event.respond(content: "Processing your request...")
-
-            event = ESM::Event::ApplicationCommand.new(event)
 
             command = new(
               user: event.user,
