@@ -25,7 +25,7 @@ impl Client {
 
         match client
             .query(
-                "SELECT server_key FROM servers WHERE uuid = $1",
+                "SELECT server_key FROM servers WHERE public_id = $1",
                 &[&server_uuid],
             )
             .await
