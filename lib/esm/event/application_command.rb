@@ -46,16 +46,12 @@ module ESM
 
             ESM::Embed.build(
               :error,
-              title: "Well, this is awkward...",
               description: I18n.t("exceptions.system", error_code: uuid)
             )
           end
 
-        if message.is_a?(ESM::Embed)
-          edit_response(embeds: [message.for_discord_embed])
-        else
-          edit_response(content: message)
-        end
+        ESM.bot.deliver(message, to: channel)
+        edit_response(content: "Well, this is awkward...")
       end
 
       private
