@@ -119,6 +119,8 @@ module ESM
             self
           end
 
+          alias_method :skip_actions, :skip_action
+
           #
           # Sets the command's namespace
           # When registered with Discord, each namespace is converted to: /<segments...> <command_name>
