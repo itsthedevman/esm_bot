@@ -79,7 +79,6 @@ module ESM
         server_id: {
           required: {discord: false, bot: true},
           checked_against: ESM::Regex::SERVER_ID,
-          checked_against_if: true,
           description_extra: "commands.arguments.server_id.description_extra",
           description: "commands.arguments.server_id.description",
           optional_text: "commands.arguments.server_id.optional_text",
@@ -354,7 +353,11 @@ module ESM
           default_value: default_value,
           modifier: modifier,
           checked_against: checked_against,
-          preserve_case: preserve_case?
+          preserve_case: preserve_case?,
+          requirements: {
+            discord: @required_by_discord,
+            bot: @required_by_bot
+          }
         }
       end
 
