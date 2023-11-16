@@ -28,8 +28,8 @@ describe ESM::Command::Arguments do
       expect { execute! }.to raise_error(ESM::Exception::CheckFailure) do |error|
         embed = error.data
 
-        expect(embed.title).to eq("**Invalid argument for `/#{command_class.command_name}`**")
-        expect(embed.description).to eq("Please read the following and correct any errors before trying again.\n\n**`input:`**\nDefaulted testing description\n\nFor more information, use `/help with:argument_required`\n")
+        expect(embed.title).to eq("**Invalid argument**")
+        expect(embed.description).to eq("```/argument_required input:<input>```\n**Please read the following and correct any errors before trying again.**\n\n**Missing argument**\n**`input:`**\nDefaulted testing description\n\nFor more information, use the following command:\n```/help with:argument_required```\n")
 
         argument_field = embed.fields.first
         expect(argument_field.name).to eq("**__Examples__**")

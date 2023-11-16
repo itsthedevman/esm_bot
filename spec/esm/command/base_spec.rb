@@ -38,11 +38,11 @@ describe ESM::Command::Base do
       expect(command.examples).to eq(
         <<~STRING
           ```
-          /test base_v1
+          /test base_v1 community_id:<community> server_id:<server> target:<target>
           ```A test example
 
           ```
-          /test base_v1 target:foo
+          /test base_v1 community_id:<community> server_id:<server> target:foo
           ```An example with args
         STRING
       )
@@ -69,7 +69,7 @@ describe ESM::Command::Base do
 
     it "has proper usage" do
       expect(command.usage).to eq("/test base_v1")
-      expect(command.usage(use_placeholders: true)).to eq("/test base_v1 target:<target>")
+      expect(command.usage(use_placeholders: true)).to eq("/test base_v1 community_id:<community> server_id:<server> target:<target>")
     end
   end
 

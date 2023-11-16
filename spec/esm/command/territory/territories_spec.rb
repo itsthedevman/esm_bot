@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-describe ESM::Command::Territory::Territories, category: "command" do
+describe ESM::Command::Server::Territories, category: "command" do
   include_context "command"
   include_examples "validate_command"
 

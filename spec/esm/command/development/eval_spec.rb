@@ -24,7 +24,7 @@ describe ESM::Command::Development::Eval, category: "command" do
         execute!(arguments: {code: "'test'"})
 
         response = ESM::Test.messages.first.content
-        expect(response).to eq("Input:\n```ruby\n'test'\n```\nOutput:\n```ruby\ntest\n```")
+        expect(response).to eq("Input:\n```ruby\n'test'\n```\nOutput:\n```ruby\n\"test\"\n```")
       end
     end
 
