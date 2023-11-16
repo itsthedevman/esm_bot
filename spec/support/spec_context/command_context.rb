@@ -66,6 +66,18 @@ RSpec.shared_context("command") do
           argument = command.arguments.template(key)
           raise ArgumentError, "Invalid argument \"#{key}\" given for #{command.class}" if argument.nil?
 
+          value =
+            case value
+            when ESM::Server
+              value.server_id
+            when ESM::Community
+              value.community_id
+            when ESM::User
+              value.mention
+            else
+              value
+            end
+
           {name: argument.display_name.to_s, value: value, type: argument.discord_type}
         end
 
