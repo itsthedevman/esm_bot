@@ -25,11 +25,6 @@ RSpec.configure do |config|
     DatabaseCleaner.strategy = :deletion
   end
 
-  config.after :suite do
-    `kill -9 $(pgrep -f esm_extension_server) > /dev/null 2>&1 && kill -9 $(pgrep -f esm_bot) > /dev/null 2>&1`
-    EXTENSION_SERVER.close
-  end
-
   config.around do |example|
     trace!(
       example_group: example.example_group&.description,
@@ -63,6 +58,10 @@ RSpec.configure do |config|
   end
 
   config.before(:each, :requires_connection) do
+    if connection_server.nil? || !connection_server&.tcp_server_alive?
+      raise "Unable to connect to the connection server. Is it running?"
+    end
+
     ESM::ExileTerritory.delete_all
 
     ESM::Test.callbacks.run_callback(:before_connection, on_instance: self)
@@ -130,4 +129,3 @@ ESM.console!
 ESM.run!
 ESM::Test.wait_until { ESM::Database.connected? }
 ESM::Test.wait_until { ESM.bot.ready? }
-ESM::Test.wait_until { ESM::Connection::Server.instance&.tcp_server_alive? }

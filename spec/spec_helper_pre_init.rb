@@ -23,18 +23,6 @@ require "rspec/expectations"
 require "rspec/wait"
 require "timecop"
 
-###########
-# Reload the extension server before starting ESM
-`kill -9 $(pgrep -f esm_bot)`
-`kill -9 $(pgrep -f extension_server)`
-
-build_result = `cargo check; echo $?`.chomp
-raise "Failed to build extension_server" if build_result != "0"
-
-EXTENSION_SERVER = IO.popen(
-  "POSTGRES_DATABASE=esm_test RUST_LOG=#{LOG_LEVEL} bin/extension_server"
-)
-
 # Load the spec related files
 require_relative "spec_helper_methods"
 

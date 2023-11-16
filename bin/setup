@@ -19,6 +19,3 @@ bundle exec rake db:create
 bundle exec rake db:migrate
 bundle exec rake db:migrate RAILS_ENV=test
 bundle exec ruby db/seeds.rb
-
-cargo update --package esm_message
-cargo build --release
