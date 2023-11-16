@@ -30,8 +30,10 @@ module ESM
 
         limit_to :text
 
-        # Skip checking for the server since this is not dependent on the server being online.
-        skip_action :connected_server
+        # connected_server: command is not dependent on the server being online.
+        # nil_target_server: server_id is not required
+        # nil_target_user: target is not required
+        skip_actions :connected_server, :nil_target_server, :nil_target_user
 
         #################################
 
