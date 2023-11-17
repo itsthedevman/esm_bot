@@ -31,6 +31,8 @@ module ESM
 
         limit_to :text
 
+        skip_action :nil_target_user
+
         #################################
 
         def on_execute
