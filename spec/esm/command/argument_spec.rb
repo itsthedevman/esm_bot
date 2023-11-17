@@ -351,6 +351,11 @@ describe ESM::Command::Argument do
       expect(choices).to be_kind_of(Hash)
       expect(choices).to include("Display 1" => "value_1", "Display 2" => "value_2")
     end
+
+    it "converts the display name back to the unique value" do
+      expect(transform_and_validate!("Display 1")).to eq("value_1")
+      expect(transform_and_validate!("Display 2")).to eq("value_2")
+    end
   end
 
   context "when :min_value is provided" do

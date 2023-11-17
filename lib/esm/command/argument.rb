@@ -262,7 +262,9 @@ module ESM
         raise ArgumentError, "Invalid command argument" unless command.is_a?(ApplicationCommand)
 
         sanitized_content =
-          if input.is_a?(String) && input.present?
+          if @options.key?(:choices)
+            @options.dig(:choices, input) # Convert the value Discord gives us back to the unique value
+          elsif input.is_a?(String) && input.present?
             preserve_case? ? input.strip : input.downcase.strip
           elsif input.blank? && default_value?
             default_value
