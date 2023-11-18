@@ -371,6 +371,14 @@ module ESM
       end
     end
 
+    def log_error(error_hash)
+      error!(error_hash)
+      return if ESM.config.error_logging_channel_id.blank?
+
+      error_message = JSON.pretty_generate(error_hash).tr("`", "\\\\`")
+      ESM.bot.deliver("```#{error_message}```", to: ESM.config.error_logging_channel_id)
+    end
+
     private
 
     def format_invalid_response(expected)

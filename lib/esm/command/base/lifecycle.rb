@@ -18,27 +18,7 @@ module ESM
           #
           def event_hook(event)
             event = ESM::Event::ApplicationCommand.new(event)
-
-            info!({command_class: to_s})
-
-            event.respond(content: "Processing your request...")
-
-            command = new(
-              user: event.user,
-              server: event.server,
-              channel: event.channel,
-              arguments: event.options
-            )
-
-            command.from_discord!
-
-            event.on_completion(command)
-
-            self
-          rescue => e
-            event.on_error(e)
-
-            self
+            event.on_execution(self)
           end
         end
 
