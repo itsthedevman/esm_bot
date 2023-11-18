@@ -281,7 +281,7 @@ module ESM
             dev_only: dev_only?,
             registration_required: registration_required?,
             on_cooldown: on_cooldown?,
-            skipped_actions: skipped_actions,
+            skipped_actions: skipped_actions.to_h,
             permissions: {
               config: community_permissions&.attributes,
               allowlist_enabled: command_allowlist_enabled?,

@@ -292,7 +292,7 @@ module ESM
         server = ESM::Server.find_by(uuid: server_uuid)
         server.metadata.clear!
 
-        info!(uuid: server.uuid, name: server.server_name, server_id: server.server_id)
+        info!(uuid: server.public_id, name: server.server_name, server_id: server.server_id)
       end
     end
   end

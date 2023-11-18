@@ -12,9 +12,6 @@ module ESM
       end
 
       def run!
-        # Update their guild name
-        update_community_name
-
         # Send the welcome message
         send_welcome
       end
