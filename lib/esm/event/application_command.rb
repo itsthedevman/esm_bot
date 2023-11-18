@@ -32,11 +32,7 @@ module ESM
       def on_execution(command_class)
         @command = command_class.new(user: user, server: server, channel: channel, arguments: options)
 
-        embed = @embed_template.tap do |e|
-          e.description = "Processing your request..."
-        end
-
-        respond(embeds: [embed.for_discord_embed])
+        respond(content: "Processing your request...")
 
         @command.from_discord!
 
@@ -46,14 +42,10 @@ module ESM
       end
 
       def on_completion
-        embed = @embed_template.tap do |e|
-          e.description = ":stopwatch: Completed in #{@command.timers.humanized_total}"
+        content = ":stopwatch: Completed in #{@command.timers.humanized_total}: #{usage}"
+        content = add_tip(content)
 
-          add_tip(e)
-          add_usage(e)
-        end
-
-        edit_response(embeds: [embed.for_discord_embed])
+        edit_response(content: content)
 
         @command
       end
@@ -62,6 +54,15 @@ module ESM
 
       def on_error(error)
         return delete_response if error.is_a?(Exception::CheckFailureNoMessage)
+
+        content =
+          if error.is_a?(Exception::CheckFailure)
+            ":warning: I was unable to complete your request :warning:\n#{usage}"
+          else
+            ":grimacing: Well, this is awkward... :grimacing:\n#{usage}"
+          end
+
+        edit_response(content: content)
 
         message =
           case error
@@ -77,22 +78,6 @@ module ESM
 
         ESM.bot.deliver(message, to: channel)
 
-        embed = @embed_template.tap do |e|
-          e.color = Color::RED
-
-          if error.is_a?(Exception::CheckFailure)
-            e.title = ":warning: I was unable to complete your request :warning:"
-            e.description = ""
-          else
-            e.title = ":grimacing: Well, this is awkward... :grimacing:"
-            e.description = ":bangbang: An error occurred :bangbang:"
-          end
-
-          add_usage(e)
-        end
-
-        edit_response(embeds: [embed.for_discord_embed])
-
         @command
       end
 
@@ -107,14 +92,14 @@ module ESM
         end.call
       end
 
-      def add_tip(e)
-        return unless send_tip?
-
-        e.add_field(name: ":information_source: Did you know?", value: "*#{@tip}*")
+      def usage
+        "||`#{@command.usage}`||"
       end
 
-      def add_usage(e)
-        e.description += "\n\n*Click below to view full command:* ||```#{@command.usage}```||"
+      def add_tip(content)
+        return content unless send_tip?
+
+        content + "\n:information_source: **Did you know?** *#{@tip}*"
       end
     end
   end
