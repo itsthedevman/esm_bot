@@ -147,7 +147,7 @@ module ESM
               when "TRACE"
                 header.colorize(:cyan)
               when "INFO"
-                header.colorize(:light_green)
+                header.colorize(:light_blue)
               when "DEBUG"
                 header.colorize(:magenta)
               when "WARN"
