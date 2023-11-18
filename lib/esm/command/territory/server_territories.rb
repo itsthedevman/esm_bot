@@ -20,6 +20,7 @@ module ESM
             territory_name: "Territory name",
             owner_uid: "Owner UID"
           },
+          checked_against_if: true,
           checked_against: ["id", "territory_name", "owner_uid"]
 
         #

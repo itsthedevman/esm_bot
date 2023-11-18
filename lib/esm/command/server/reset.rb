@@ -27,6 +27,8 @@ module ESM
 
         limit_to :text
 
+        skip_action :nil_target_user
+
         #################################
 
         def on_execute
@@ -44,7 +46,11 @@ module ESM
           )
 
           # Remind them to check their PMs
-          embed = ESM::Embed.build(:success, description: I18n.t("commands.request.check_pm", user: current_user.mention))
+          embed = ESM::Embed.build(
+            :success,
+            description: I18n.t("commands.request.check_pm", user: current_user.mention)
+          )
+
           reply(embed)
         end
 

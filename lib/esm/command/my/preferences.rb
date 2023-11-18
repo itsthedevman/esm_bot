@@ -68,7 +68,7 @@ module ESM
           query = types.index_with { |type| allowed? }
 
           # Update the preference
-          preference.update(query)
+          preference.update!(query)
 
           reply(
             ESM::Embed.build(
@@ -81,7 +81,10 @@ module ESM
         private
 
         def preference
-          @preference ||= ESM::UserNotificationPreference.where(user_id: current_user.id, server_id: target_server.id).first_or_create
+          @preference ||= ESM::UserNotificationPreference.where(
+            user_id: current_user.id,
+            server_id: target_server.id
+          ).first_or_create
         end
 
         def allowed?

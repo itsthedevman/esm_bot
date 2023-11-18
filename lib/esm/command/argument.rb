@@ -261,13 +261,12 @@ module ESM
       def transform_and_validate!(input, command)
         raise ArgumentError, "Invalid command argument" unless command.is_a?(ApplicationCommand)
 
+        input_present = input.present?
+        input = default_value if !input_present && default_value?
+
         sanitized_content =
-          if @options.key?(:choices)
-            @options.dig(:choices, input) # Convert the value Discord gives us back to the unique value
-          elsif input.is_a?(String) && input.present?
+          if input.is_a?(String) && input_present
             preserve_case? ? input.strip : input.downcase.strip
-          elsif input.blank? && default_value?
-            default_value
           else
             input
           end
@@ -356,9 +355,9 @@ module ESM
           modifier: modifier,
           checked_against: checked_against,
           preserve_case: preserve_case?,
-          requirements: {
-            discord: @required_by_discord,
-            bot: @required_by_bot
+          discord: @options,
+          bot: {
+            required: @required_by_bot
           }
         }
       end
