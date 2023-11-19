@@ -9,7 +9,7 @@ describe ESM::Command::My::SteamUid, category: "command" do
       execute!
 
       embed = ESM::Test.messages.first.content
-      expect(embed.description).to eq("Hey #{user.mention}, your Steam UID is `#{user.steam_uid}`.")
+      expect(embed.description).to eq("Hey #{user.mention}, your Steam UID is: ```#{user.steam_uid}```")
     end
   end
 end

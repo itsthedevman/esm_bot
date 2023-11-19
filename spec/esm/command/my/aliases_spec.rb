@@ -36,11 +36,9 @@ describe ESM::Command::My::Aliases, category: "command" do
         latest_message.tap do |embed|
           expect(embed.title).to eq("My aliases")
           expect(embed.description).to include(
-            "```╭─────────────",
             user_alias.value,
             server.server_id,
-            server.server_name.truncate(20),
-            "─────────────╯```",
+            server.server_name,
             "Aliases can be managed"
           )
           expect(embed.description).not_to include("Communities")
@@ -57,11 +55,9 @@ describe ESM::Command::My::Aliases, category: "command" do
         latest_message.tap do |embed|
           expect(embed.title).to eq("My aliases")
           expect(embed.description).to include(
-            "```╭─────────────",
             user_alias.value,
             community.community_id,
-            community.community_name.truncate(20),
-            "─────────────╯```",
+            community.community_name,
             "Aliases can be managed"
           )
           expect(embed.description).not_to include("Servers")
@@ -79,18 +75,14 @@ describe ESM::Command::My::Aliases, category: "command" do
         latest_message.tap do |embed|
           expect(embed.title).to eq("My aliases")
           expect(embed.description).to include(
-            "```╭─────────────",
-            "Communities",
+            "Community Aliases",
             community_alias.value,
             community.community_id,
             community.community_name.truncate(20),
-            "─────────────╯```",
-            "```╭─────────────",
-            "Servers",
+            "Server Aliases",
             server_alias.value,
             server.server_id,
             server.server_name.truncate(20),
-            "─────────────╯```",
             "Aliases can be managed"
           )
         end

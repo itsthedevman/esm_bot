@@ -50,10 +50,8 @@ class WebsocketClient
     def response_me
       territories = {}
 
-      if rand < 0.5
-        Faker::Number.within(range: 1..3).times do
-          territories[Faker::FunnyName.two_word_name] = Faker::Crypto.md5[0, 3]
-        end
+      Faker::Number.within(range: 1..3).times do
+        territories[Faker::FunnyName.two_word_name] = Faker::Crypto.md5[0, 3]
       end
 
       send_response(

@@ -90,11 +90,11 @@ describe ESM::Command::General::Help, category: "command" do
 
     context "when the category is a slash command" do
       it "returns the command's information" do
-        execute!(arguments: {category: "/server my_player"})
+        execute!(arguments: {category: "/server my player"})
 
         embed = ESM::Test.messages.first.content
         expect(embed).not_to be_nil
-        expect(embed.title).to match(/my_player/i)
+        expect(embed.title).to match(/my player/i)
       end
     end
 

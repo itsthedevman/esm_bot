@@ -15,7 +15,14 @@ describe ESM::Command::Territory::ServerTerritories, category: "command" do
       context "when no order was provided" do
         it "orders the results by id" do
           execute!(arguments: {server_id: server.server_id})
+
+          request = connection.requests.first
+          expect(request).not_to be_nil
+          wait_for { connection.requests }.to be_blank
           wait_for { ESM::Test.messages.size }.to be > 3
+
+          expect(previous_command.arguments.order_by).to eq("territory_name")
+          expect(response).to eq(request.response.sort_by(&:territory_name))
         end
       end
 
@@ -28,6 +35,7 @@ describe ESM::Command::Territory::ServerTerritories, category: "command" do
           wait_for { connection.requests }.to be_blank
           wait_for { ESM::Test.messages.size }.to be > 3
 
+          expect(previous_command.arguments.order_by).to eq("territory_name")
           expect(response).to eq(request.response.sort_by(&:territory_name))
         end
       end
@@ -41,6 +49,7 @@ describe ESM::Command::Territory::ServerTerritories, category: "command" do
           wait_for { connection.requests }.to be_blank
           wait_for { ESM::Test.messages.size }.to be > 3
 
+          expect(previous_command.arguments.order_by).to eq("owner_uid")
           expect(response).to eq(request.response.sort_by(&:owner_uid))
         end
       end
