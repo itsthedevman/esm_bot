@@ -2,6 +2,9 @@
 
 class PublicIds < ActiveRecord::Migration[6.1]
   def change
+    enable_extension "hstore" unless extension_enabled?("hstore")
+    enable_extension "uuid-ossp" unless extension_enabled?("uuid-ossp")
+
     rename_column :servers, :uuid, :public_id
 
     remove_foreign_key "command_configurations", "communities"
@@ -41,6 +44,8 @@ class PublicIds < ActiveRecord::Migration[6.1]
     data = exec_query("SELECT * FROM communities_old;")
     communities = data.map do |community|
       community["public_id"] = SecureRandom.uuid
+      community["territory_admin_ids"] = community["territory_admin_ids"].to_a
+      community["dashboard_access_role_ids"] = community["dashboard_access_role_ids"].to_a
       community.except("deleted_at")
     end
 
