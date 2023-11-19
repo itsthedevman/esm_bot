@@ -38,7 +38,7 @@ class PublicIds < ActiveRecord::Migration[6.1]
 
     # Migrate the old data over to the new table
     ESM::Community.reset_column_information
-    data = query("SELECT * FROM communities_old;")
+    data = exec_query("SELECT * FROM communities_old;")
     communities = data.map do |community|
       community["public_id"] = SecureRandom.uuid
       community.except("deleted_at")
