@@ -52,11 +52,11 @@ module ESM
 
       if ESM::Regex::DISCORD_TAG_ONLY.match?(input)
         # Remove the extra stuff from a mention
-        find_by(discord_id: input.gsub(/[<@!&>]/, ""))
+        find_by_discord_id(input.gsub(/[<@!&>]/, ""))
       elsif input.steam_uid?
-        find_by(steam_uid: input)
+        find_by_steam_uid(input)
       else
-        find_by(discord_id: input)
+        find_by_discord_id(input)
       end
     end
 
@@ -72,15 +72,13 @@ module ESM
       user
     end
 
-    def self.find_by(where_clause = {})
-      # Improves performance of find_by_x style queries
-      if where_clause.size == 1
-        key, value = where_clause.first
+    def self.find_by_steam_uid(uid)
+      order(:steam_uid).where(steam_uid: uid).first
+    end
 
-        return order(key).where(key => value.to_s).first
-      end
-
-      super(**where_clause)
+    def self.find_by_discord_id(id)
+      id = id.to_s unless id.is_a?(String)
+      order(:discord_id).where(discord_id: id).first
     end
 
     #########################
@@ -139,7 +137,7 @@ module ESM
       return false if discord_id.nil?
       return true if developer? && !Rails.env.development?
 
-      community = Community.find_by(guild_id: guild_id)
+      community = Community.find_by_guild_id(guild_id)
       return false if community.nil?
 
       server = community.discord_server

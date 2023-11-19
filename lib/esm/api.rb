@@ -94,7 +94,7 @@ module ESM
       return halt(422) unless ESM.bot.channel_permission?(:send_messages, channel)
 
       if params[:community_id]
-        community = ESM::Community.find_by_id(params[:community_id])
+        community = ESM::Community.find_by(id: params[:community_id])
         return halt(404) if community.nil?
         return halt(422) unless channel.server.id.to_s == community.guild_id
       end
@@ -146,7 +146,7 @@ module ESM
     get("/community/:id/channels") do
       ESM.logger.info("#{self.class}##{__method__}") { params }
 
-      community = ESM::Community.find_by_id(params[:id])
+      community = ESM::Community.find_by(id: params[:id])
       return halt(404) if community.nil?
 
       server = community.discord_server
@@ -216,7 +216,7 @@ module ESM
     get("/community/:id/roles") do
       ESM.logger.info("#{self.class}##{__method__}") { params }
 
-      community = ESM::Community.find_by_id(params[:id])
+      community = ESM::Community.find_by(id: params[:id])
       return halt(404) if community.nil?
 
       server_roles = community.discord_server.roles

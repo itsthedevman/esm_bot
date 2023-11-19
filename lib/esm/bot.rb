@@ -222,7 +222,7 @@ module ESM
         description: I18n.t("exceptions.deliver_failure", channel_name: delivery_channel.name, message: message)
       )
 
-      community = ESM::Community.find_by(guild_id: delivery_channel.server.id)
+      community = ESM::Community.find_by_guild_id(delivery_channel.server.id)
       community.log_event(:error, embed)
 
       nil

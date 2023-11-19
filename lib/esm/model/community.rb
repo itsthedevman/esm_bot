@@ -64,7 +64,7 @@ module ESM
       community_id = id.match(/([^\s]+)_[^\s]+/i)
       return if community_id.nil?
 
-      find_by(community_id: community_id[1])
+      find_by_community_id(community_id[1])
     end
 
     def self.from_discord(discord_server)
@@ -134,7 +134,7 @@ module ESM
 
         # Our only saviors
         break if count > 10_000
-        break if self.class.find_by(community_id: new_id).nil?
+        break if self.class.find_by_community_id(new_id).nil?
       end
 
       # Yup. Add to the community_ids so our spell checker works

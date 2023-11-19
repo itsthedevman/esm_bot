@@ -109,7 +109,7 @@ describe ESM::Command::Base do
         expect(embed.description).to match("I'll need you to link your Steam account")
       end
 
-      new_current_user = ESM::User.find_by(discord_id: discord_id)
+      new_current_user = ESM::User.find_by_discord_id(discord_id)
       expect(new_current_user).not_to be(nil)
       expect(previous_command.current_user.discord_id).to eq(new_current_user.discord_id)
     end
@@ -204,7 +204,7 @@ describe ESM::Command::Base do
 
       execute!(arguments: {target: discord_id})
 
-      new_target_user = ESM::User.find_by(discord_id: discord_id)
+      new_target_user = ESM::User.find_by_discord_id(discord_id)
       expect(new_target_user).not_to be(nil)
       expect(previous_command.target_user.discord_id).to eq(new_target_user.discord_id)
     end

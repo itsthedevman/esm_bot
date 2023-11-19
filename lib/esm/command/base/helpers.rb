@@ -65,12 +65,6 @@ module ESM
           self.class.usage(**args)
         end
 
-        # Command has two arguments: a1, and a2
-        # /command a1:<placeholder> a2:<placeholder>
-        # /command a1:a1_value
-        # /command
-        # command
-
         #
         # The cooldown for this command
         #
@@ -89,7 +83,7 @@ module ESM
           @target_server ||= lambda do
             return unless arguments.server_id
 
-            ESM::Server.find_by(server_id: arguments.server_id)
+            ESM::Server.find_by_server_id(arguments.server_id)
           end.call
         end
 
@@ -100,7 +94,7 @@ module ESM
         #
         def target_community
           @target_community ||= lambda do
-            return ESM::Community.find_by(community_id: arguments.community_id) if arguments.community_id
+            return ESM::Community.find_by_community_id(arguments.community_id) if arguments.community_id
 
             target_server&.community
           end.call
