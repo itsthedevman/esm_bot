@@ -6,6 +6,8 @@ default: &default
     <% JSON.parse(ENV["DEV_ALLOWLIST"]).each do |discord_id| %>
     - "<%= discord_id %>"
     <% end %>
+  ports:
+    connection_server: 3003
   loops:
     # ESM::Request::Overseer
     request_overseer:
@@ -26,6 +28,14 @@ default: &default
     # ESM::Bot::DeliveryOverseer
     bot_delivery_overseer:
       check_every: 0.5
+
+    # ESM::Connection::Server
+    connection_server:
+      check_every: 0.01
+
+    # ESM::Connection::Client
+    connection_client:
+      check_every: 0.01
   cache:
     server_ids: 60
   tips:

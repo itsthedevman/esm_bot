@@ -14,6 +14,7 @@ module ESM
 
         def run!
           @instance = new
+          @instance.start
         end
 
         def stop!
@@ -28,67 +29,50 @@ module ESM
       # Instance methods
       ################################
 
-      attr_reader :server, :message_overseer
-
       def initialize
-        @mutex = Mutex.new
-        @redis = Redis.new(ESM::REDIS_OPTS)
-        @message_overseer = ESM::Connection::MessageOverseer.new
-        @state = :resumed
+        @ledger = Ledger.new
+        @connections = Concurrent::Map.new
+        @thread_pool = Concurrent::ThreadPoolExecutor.new(
+          min_threads: 10,
+          max_threads: 50,
+          max_queue: 1000
+        )
+      end
 
-        @redis.del("bot_outbound")
-        @redis.del("bot_inbound")
+      def start
+        @server = TCPServer.new("0.0.0.0", ESM.config.ports.connection_server)
 
-        self.tcp_server_alive = false
-        self.server_ping_received = false
-
-        health_check
-        delegate_inbound_messages
-        process_inbound_messages
+        check_every = ESM.config.loops.connection_server.check_every
+        @task = Concurrent::TimerTask.execute(execution_interval: check_every) { on_connect }
 
         info!(status: "Started")
       end
 
       def stop
-        # Kill the processing threads
-        [
-          @thread_delegate_inbound_messages,
-          @thread_process_inbound_messages,
-          @thread_health_check
-        ].each { |id| Thread.kill(id) }
-
-        @message_overseer.remove_all!(with_error: true)
         disconnect_all!
-
-        # Close the connection to redis
-        @redis.close
-        @redis_process_inbound_messages.close
-        @redis_delegate_inbound_messages.close
-
         true
       end
 
       def resume
-        return if @state == :resumed
+        return if @state == :started
 
-        __send_internal({type: :server_request, content: {type: :resume}})
-        @state = :resumed
+        # __send_internal({type: :server_request, content: {type: :resume}})
+        binding.pry
+
+        @state = :started
       end
 
       def pause
         return if @state == :paused
 
-        __send_internal({type: :server_request, content: {type: :pause}})
+        # __send_internal({type: :server_request, content: {type: :pause}})
+        binding.pry
 
         @state = :paused
       end
 
       def disconnect_all!
-        __send_internal({type: :server_request, content: {type: :disconnect}})
-      end
-
-      def tcp_server_alive?
-        @mutex.synchronize { @tcp_server_alive }
+        # __send_internal({type: :server_request, content: {type: :disconnect}})
       end
 
       #
@@ -101,7 +85,6 @@ module ESM
       # @return [ESM::Message] If forget is false, this will be the incoming message containing the response. Otherwise, it will be the outgoing message
       #
       def fire(message, to:, forget: true)
-        raise ESM::Exception::ServerNotConnected if !tcp_server_alive?
         raise ESM::Exception::CheckFailureNoMessage if !message.is_a?(ESM::Message)
 
         info!(
@@ -109,97 +92,25 @@ module ESM
           server: to,
           message: message.to_h
         )
-
-        # Watch the message to see if it's been acknowledged or responded to.
-        message.synchronous unless forget
-
-        @message_overseer.watch(message)
-
-        ESM::Test.outbound_server_messages.store(message, to) if ESM.env.test?
-
-        unless ESM.env.test? && ESM::Test.block_outbound_messages
-          __send_internal({type: :send_to_client, content: {server_uuid: to, message: message.to_h(for_arma: true)}})
-        end
-
-        return message if forget
-
-        message.wait_for_response
       end
 
       private
 
-      def __send_internal(request)
-        @redis.rpush("bot_outbound", request.to_json)
-      end
+      def on_connect
+        client = Client.new(@server.accept, @ledger)
 
-      def delegate_inbound_messages
-        @redis_delegate_inbound_messages = Redis.new(ESM::REDIS_OPTS)
+        @thread_pool.post do
+          client.request_identification!
+          client.perform_handshake!
+          client.request_initialization!
 
-        @thread_delegate_inbound_messages =
-          Thread.new do
-            loop do
-              @redis_delegate_inbound_messages.blmove("server_outbound", "bot_inbound", "LEFT", "RIGHT")
-            end
-          end
-      end
-
-      def process_inbound_messages
-        @redis_process_inbound_messages = Redis.new(ESM::REDIS_OPTS)
-
-        @thread_process_inbound_messages =
-          Thread.new do
-            loop do
-              _name, json = @redis_process_inbound_messages.blpop("bot_inbound")
-              Thread.new { process_inbound_request(json) }
-            end
-          end
-      end
-
-      def health_check
-        @thread_health_check =
-          Thread.new do
-            self.server_ping_received = false
-
-            currently_alive = false
-            100.times do
-              break currently_alive = true if server_ping_received?
-
-              sleep(0.01)
-            end
-
-            # Only set the value if it differs
-            previously_alive = tcp_server_alive?
-            next if currently_alive == previously_alive
-
-            self.tcp_server_alive = currently_alive
-
-            if tcp_server_alive?
-              info!(server_status: "Connected")
-            else
-              error!(server_status: "Disconnected")
-            end
-          end
-      end
-
-      def server_ping_received?
-        @mutex.synchronize { @server_ping_received }
-      end
-
-      def server_ping_received=(value)
-        @mutex.synchronize { @server_ping_received = value }
-      end
-
-      def on_ping
-        self.server_ping_received = true
-
-        @thread_health_check.join
-        health_check
-
-        __send_internal({type: "pong"})
-      end
-
-      def tcp_server_alive=(value)
-        @mutex.synchronize { @tcp_server_alive = value }
+          @connections[client.id] = client
+        rescue Client::Error => e
+          binding.pry
+          client.close
+        rescue => e
+          binding.pry
+        end
       end
 
       def process_inbound_request(json)
@@ -242,57 +153,6 @@ module ESM
 
           fire(message, to: server_uuid, forget: true)
         end
-      end
-
-      def on_connect(server_uuid, message)
-        info!(server_uuid: server_uuid, incoming_message: message.to_h)
-
-        server = ESM::Server.find_by(uuid: server_uuid)
-        return error!(error: "Server does not exist", uuid: server_uuid) if server.nil?
-        return server.community.log_event(:error, message.errors.join("\n")) if message.errors?
-
-        ESM::Event::ServerInitialization.new(server, message).run!
-      end
-
-      def on_message(server_uuid, incoming_message)
-        # Retrieve the original message. If it's nil, the message originated from the client
-        outgoing_message = @message_overseer.retrieve(incoming_message.id)
-
-        info!(
-          outgoing_message: outgoing_message&.to_h,
-          incoming_message: incoming_message.to_h
-        )
-
-        # Handle any errors
-        if incoming_message.errors?
-          outgoing_message&.on_error(incoming_message)
-          return
-        end
-
-        # Currently, :send_to_channel is the only inbound event. If adding another, convert this code
-        if incoming_message.type == :event && incoming_message.data_type == :send_to_channel
-          server = ESM::Server.find_by(uuid: server_uuid)
-          ESM::Event::SendToChannel.new(server, incoming_message).run!
-          return
-        end
-
-        outgoing_message&.on_response(incoming_message)
-      rescue => e
-        command = outgoing_message&.command
-
-        # Bubble up to #on_inbound
-        raise e if command.nil?
-
-        raise "Replace!! command.handle_error(e)"
-      end
-
-      def on_disconnect(request)
-        server_uuid = request[:content]
-
-        server = ESM::Server.find_by(uuid: server_uuid)
-        server.metadata.clear!
-
-        info!(uuid: server.public_id, name: server.server_name, server_id: server.server_id)
       end
     end
   end

@@ -417,7 +417,7 @@ DEPENDENCIES
   capistrano-asdf
   capistrano-bundler
   colorize
-  connection_pool (~> 2.4, >= 2.4.1)
+  concurrent-ruby
   database_cleaner-active_record
   discordrb!
   dotenv

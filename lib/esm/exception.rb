@@ -43,14 +43,29 @@ module ESM
     # Generic exception for any checks
     class CheckFailure < DataError; end
 
-    # Raised when attempting to send a message the tcp_server when it's not online
-    class ServerNotConnected < Error; end
-
-    # Raised when a message times out during a sync operation. This should rarely be raised
-    class MessageSyncTimeout < Error; end
-
     # When the bot does not have access to send a message to a particular channel
     class ChannelAccessDenied < Error; end
+
+    # Check failure, but no message is sent
+    class CheckFailureNoMessage < Error
+      def initialize(_message)
+        super("")
+      end
+    end
+
+    # Raised when ESM can't find a channel passed into it's deliver method.
+    class ChannelNotFound < Error
+      def initialize(message, channel)
+        error_message = "Failed to send message!\nMessage: #{message}\nAttempted to send to channel: "
+        error_message += channel.to_s if channel.present?
+
+        super(error_message)
+      end
+    end
+
+    #############################################################
+    # Connection server and Arma errors
+    #############################################################
 
     # Handles an error code response from the extension
     class ExtensionError < Error
@@ -70,23 +85,6 @@ module ESM
           default: I18n.t("exceptions.extension.default", error_code: @error_code),
           **
         )
-      end
-    end
-
-    # Check failure, but no message is sent
-    class CheckFailureNoMessage < Error
-      def initialize(_message)
-        super("")
-      end
-    end
-
-    # Raised when ESM can't find a channel passed into it's deliver method.
-    class ChannelNotFound < Error
-      def initialize(message, channel)
-        error_message = "Failed to send message!\nMessage: #{message}\nAttempted to send to channel: "
-        error_message += channel.to_s if channel.present?
-
-        super(error_message)
       end
     end
   end
