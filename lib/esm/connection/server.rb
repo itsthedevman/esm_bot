@@ -106,10 +106,9 @@ module ESM
 
           @connections[client.id] = client
         rescue Client::Error => e
-          binding.pry
-          client.close
+          client.close(e)
         rescue => e
-          binding.pry
+          error!(error: e, remote_address: client.remote_address.getnameinfo, model: client.model)
         end
       end
 

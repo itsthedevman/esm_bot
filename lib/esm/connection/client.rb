@@ -3,9 +3,9 @@
 module ESM
   module Connection
     class Client
-      attr_reader :id
+      attr_reader :id, :model
 
-      delegate :close, to: :@socket
+      delegate :remote_address, to: :@socket
       delegate :server_id, to: :@model, allow_nil: true
 
       def initialize(tcp_client, ledger)
@@ -19,10 +19,20 @@ module ESM
         @task = Concurrent::TimerTask.execute(execution_interval: check_every) { on_message }
       end
 
+      def close
+        # TODO: Maybe post a message?
+        @socket.close
+      end
+
       def request_identification!
-        # How we getting the response?
-        # response = __send(type: :id)
-        binding.pry
+        response = __send(type: :identify)
+        raise response.reason if response.rejected?
+
+        model = ESM::Server.find_by_public_id(response.value)
+        raise "TODO: Invalid public_id" if model.nil?
+
+        @id = model.public_id
+        @model = model
       end
 
       def perform_handshake!
@@ -32,9 +42,23 @@ module ESM
       end
 
       def on_message
-        response = @socket.read
+        response = __receive
+        return if response.nil?
+
+        case response.type
+        when :identify
+          mailbox = @ledger.remove(response)
+          raise InvalidMessage if mailbox.nil?
+
+          # The Lake House, is that you?
+          mailbox.put(response)
+        else
+          raise "Invalid data received: #{response}"
+        end
+      rescue => e
         binding.pry
-        nil if response.blank?
+        # Send closing message? Or just close?
+        @socket.close
       end
 
       # def on_connect
@@ -90,6 +114,13 @@ module ESM
 
       private
 
+      def __receive
+        data = ESM::JSON.parse(@socket.read)
+        return if data.blank?
+
+        Response.new(**data)
+      end
+
       def __send(type:, content: nil)
         request = Request.new(type: type, content: content)
 
@@ -97,17 +128,17 @@ module ESM
         mailbox = @ledger.add(request)
 
         # Send the data to the client
-        @socket.puts(request.to_json)
+        @socket.write(request.to_json)
 
         # And here is where we receive it
         case (result = mailbox.take(10))
         when Response
-          result
+          Result.fulfilled(result.content)
         when StandardError
-          Response.rejected(result)
+          Result.rejected(result)
         else
           # Concurrent::MVar::TIMEOUT
-          Response.rejected(TimeoutError.new)
+          Result.rejected(TimeoutError.new)
         end
       ensure
         @ledger.remove(request)

@@ -3,40 +3,14 @@
 module ESM
   module Connection
     class Client
-      class Response
-        include Concurrent::Concern::Obligation
+      class Response < Data.define(:id, :type, :content)
+        TYPES = Request::TYPES
 
-        #
-        # Creates a new fulfilled response with the provided data
-        #
-        # @param content [Object] The data to set as the value for the response
-        #
-        # @return [self] The fulfilled response
-        #
-        def self.fulfilled(content)
-          response = new
-          response.send(:set_state, true, content, nil)
-          response
-        end
+        def initialize(**data)
+          type = TYPES[data[:t]]
+          raise ArgumentError, "Invalid type #{data[:i]}" if type.nil?
 
-        #
-        # Creates a new rejected response with the provided reason
-        #
-        # @param reason [Object] The reason why the request failed
-        #
-        # @return [self] The fulfilled response
-        #
-        def self.rejected(reason)
-          response = new
-          response.send(:set_state, false, nil, reason)
-          response
-        end
-
-        private
-
-        # Required by Obligation because it implements Deref
-        def synchronize(&block)
-          yield
+          super(id: data[:i]&.delete("-"), type: type, content: data[:c].pack("U*"))
         end
       end
     end

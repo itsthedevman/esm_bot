@@ -3,22 +3,18 @@
 module ESM
   module Connection
     class Server
-      class Ledger < Concurrent::Map
-        class Entry < ImmutableStruct.define(:request, :mailbox)
-          def initialize(mailbox: nil, **)
-            super(mailbox: Concurrent::MVar.new, **)
-          end
+      class Ledger
+        def initialize
+          @inner = {}
+          @mutex = Mutex.new
         end
 
         def add(request)
-          entry = Entry.new(request: request)
-          self[request.id] = entry
-
-          entry.mailbox
+          @mutex.synchronize { @inner[request.id] = Concurrent::MVar.new }
         end
 
         def remove(request)
-          delete(request.id)
+          @mutex.synchronize { @inner.delete(request.id) }
         end
       end
     end

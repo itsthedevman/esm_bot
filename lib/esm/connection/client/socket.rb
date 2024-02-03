@@ -4,9 +4,9 @@ module ESM
   module Connection
     class Client
       class Socket
-        READ_BYTES = 65_444
+        READ_BYTES = 65_444 - 20 - 8
 
-        delegate :close, :puts, :gets, to: :@socket
+        delegate_missing_to :@socket
 
         def initialize(socket)
           @socket = socket
@@ -15,10 +15,14 @@ module ESM
         def read
           return unless readable?
 
-          loop do
-            buffer = @socket.recv_nonblock(READ_BYTES)
-            binding.pry
-          end
+          data = @socket.recv_nonblock(READ_BYTES)
+          debug!(read: data)
+          data
+        end
+
+        def write(data)
+          debug!(write: data)
+          self.puts(data)
         end
 
         #

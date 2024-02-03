@@ -35,6 +35,10 @@ module ESM
 
     scope :by_server_id_fuzzy, ->(id) { where("server_id ilike ?", "%#{id}%") }
 
+    def self.find_by_public_id(id)
+      includes(:community).order(:public_id).where(public_id: id).first
+    end
+
     def self.find_by_server_id(id)
       includes(:community).order(:server_id).where("server_id ilike ?", id).first
     end
