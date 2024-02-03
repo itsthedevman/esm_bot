@@ -3,95 +3,7 @@
 module ESM
   class Message
     class Data
-      DATA_TYPES =
-        YAML.safe_load_file(File.expand_path("./config/message/data_types.yml")).merge(
-          YAML.safe_load_file(File.expand_path("./config/message/metadata_types.yml"))
-        ).deep_symbolize_keys.freeze
-
-      RUBY_TYPE_LOOKUP = {
-        Array => :array,
-        Date => :date,
-        DateTime => :date_time,
-        ESM::Arma::HashMap => :hash_map,
-        FalseClass => :boolean,
-        Float => :float,
-        Hash => :hash,
-        ImmutableStruct => :struct,
-        Integer => :integer,
-        Numeric => :float,
-        OpenStruct => :struct,
-        String => :string,
-        Struct => :struct,
-        Symbol => :string,
-        ::Time => :date_time,
-        TrueClass => :boolean
-      }.freeze
-
-      TYPES = {
-        any: {
-          into_ruby: lambda do |value|
-            # Check if it's JSON like
-            result = ESM::JSON.parse(value.to_s)
-            return value if result.nil?
-
-            # Check to see if its a hashmap
-            possible_hashmap = ESM::Arma::HashMap.from(result)
-            return result if possible_hashmap.nil?
-
-            result
-          end,
-          into_arma: ->(value) { value }
-        },
-        array: {
-          valid_classes: [Array],
-          into_ruby: ->(value) { value.to_a },
-          into_arma: ->(value) { value.map { |v| convert_into_arma(v) } }
-        },
-        boolean: {
-          valid_classes: [TrueClass, FalseClass],
-          into_ruby: ->(value) { value.to_s == "true" }
-        },
-        date: {
-          valid_classes: [Date],
-          into_ruby: ->(value) { ::Date.parse(value) },
-          into_arma: ->(value) { value.strftime("%F") }
-        },
-        date_time: {
-          valid_classes: [DateTime, ::Time],
-          into_ruby: ->(value) { ESM::Time.parse(value) },
-          into_arma: ->(value) { value.strftime("%FT%T%:z") } # yyyy-mm-ddT00:00:00ZONE
-        },
-        float: {
-          valid_classes: [Float],
-          into_ruby: ->(value) { value.to_d },
-          into_arma: ->(value) { value.to_s }  # Numbers have to be sent as Strings
-        },
-        hash: {
-          valid_classes: [Hash],
-          into_ruby: ->(value) { value.to_h },
-          into_arma: ->(value) { value.transform_values { |v| convert_into_arma(v) } }
-        },
-        hash_map: {
-          valid_classes: [ESM::Arma::HashMap],
-          into_ruby: ->(value) { ESM::Arma::HashMap.from(value) },
-          into_arma: ->(value) { value.to_h.transform_values { |v| convert_into_arma(v) } }
-        },
-        integer: {
-          valid_classes: [Integer],
-          into_ruby: ->(value) { value.to_i },
-          into_arma: ->(value) { value.to_s } # Numbers have to be sent as Strings
-        },
-        string: {
-          valid_classes: [String],
-          into_ruby: ->(value) { value.to_s },
-          into_arma: ->(value) { value.to_s } # Symbol uses this as well
-        },
-        struct: {
-          valid_classes: [ImmutableStruct, Struct, OpenStruct],
-          into_ruby: ->(value) { value.to_h.to_istruct },
-          into_arma: ->(value) { value.to_h.transform_values { |v| convert_into_arma(v) } }
-        }
-      }.freeze
+      include Types
 
       attr_reader :type, :content
 
@@ -150,9 +62,9 @@ module ESM
       # @see config/mapping.yml for more information
       def sanitize_inbound_content(inbound_content)
         inbound_content.deep_symbolize_keys!
-        types_mapping = DATA_TYPES[@type]
+        types_mapping = TYPES_MAPPING[@type]
 
-        # Catches if DATA_TYPES does not have type defined
+        # Catches if TYPES_MAPPING does not have type defined
         if types_mapping.nil?
           raise ESM::Exception::InvalidMessage, "Failed to find #{self.class.name} type \"#{@type}\" in \"config/message/*_types.yml\""
         end
