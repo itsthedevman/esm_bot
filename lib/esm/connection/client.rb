@@ -3,7 +3,9 @@
 module ESM
   module Connection
     class Client
-      attr_reader :id, :model
+      MAX_INVALID_MESSAGES =
+
+        attr_reader :id, :model
 
       delegate :remote_address, to: :@socket
       delegate :server_id, to: :@model, allow_nil: true
@@ -14,51 +16,68 @@ module ESM
 
         @id = nil
         @model = nil
+        @encryption = nil
+        @last_ping_received = nil
 
         check_every = ESM.config.loops.connection_client.check_every
         @task = Concurrent::TimerTask.execute(execution_interval: check_every) { on_message }
+        @thread_pool = Concurrent::ThreadPoolExecutor.new(
+          min_threads: 5,
+          max_threads: 20,
+          max_queue: 250
+        )
       end
 
       def close
+        info!(ip: remote_address, state: :closing, public_id: @id, server_id: @model.server_id)
+
         # TODO: Maybe post a message?
+        # TODO: Tell the server to forget our asses
         @socket.close
       end
 
-      def request_identification!
-        response = __send(type: :identify)
-        raise response.reason if response.rejected?
-
-        model = ESM::Server.find_by_public_id(response.value)
-        raise "TODO: Invalid public_id" if model.nil?
-
-        @id = model.public_id
-        @model = model
-      end
-
-      def perform_handshake!
-      end
-
-      def request_initialization!
+      def send_message(message, type: :message)
+        send_request(type: type, content: @encryption.encrypt(message))
       end
 
       def on_message
-        response = __receive
+        response = receive_request
         return if response.nil?
 
-        case response.type
-        when :identify
-          mailbox = @ledger.remove(response)
-          raise InvalidMessage if mailbox.nil?
-
-          # The Lake House, is that you?
-          mailbox.put(response)
-        else
-          raise "Invalid data received: #{response}"
+        @thread_pool.post do
+          case response.type
+          when :identification
+            on_identification(response)
+          when :handshake
+            forward_response_to_caller(response)
+          else
+            raise "Invalid data received: #{response}"
+          end
+        rescue ESM::Connection::Client::Error => e
+          send_request(type: :error, content: e.message)
+          close
+        rescue => e
+          error!(error: e)
+          close
         end
-      rescue => e
-        binding.pry
-        # Send closing message? Or just close?
-        @socket.close
+      end
+
+      # TODO: This instance will need to disconnect itself if it doesn't receive the identify request within 10 seconds
+      def on_identification(response)
+        public_id = response.content
+        info!(ip: remote_address, state: :unidentified, public_id: public_id)
+
+        model = ESM::Server.find_by_public_id(public_id)
+        raise NotAuthorized if model.nil?
+
+        @model = model
+        @id = model.public_id
+        @encryption = Encryption.new(model.token[:secret])
+
+        info!(ip: remote_address, state: :identified, public_id: @id, server_id: @model.server_id)
+
+        perform_handshake!
+        request_initialization!
       end
 
       # def on_connect
@@ -114,14 +133,15 @@ module ESM
 
       private
 
-      def __receive
+      def receive_request
         data = ESM::JSON.parse(@socket.read)
         return if data.blank?
 
+        debug!(read: data)
         Response.new(**data)
       end
 
-      def __send(type:, content: nil)
+      def send_request(type:, content: nil)
         request = Request.new(type: type, content: content)
 
         # This tracks the request and allows us to receive the response across multiple threads
@@ -141,7 +161,34 @@ module ESM
           Result.rejected(TimeoutError.new)
         end
       ensure
-        @ledger.remove(request)
+        @ledger.remove(request) if request
+      end
+
+      def forward_response_to_caller(response)
+        mailbox = @ledger.remove(response)
+        raise InvalidMessage if mailbox.nil?
+
+        mailbox.put(response)
+      end
+
+      def perform_handshake!
+        info!(ip: remote_address, state: :handshake, public_id: @id, server_id: @model.server_id)
+
+        starting_indices = @encryption.nonce_indices
+        @encryption.regenerate_nonce_indices
+
+        debug!(starting_indices: starting_indices, new_indices: @encryption.nonce_indices)
+
+        message = ESM::Message.event.set_data(:handshake, indices: @encryption.nonce_indices)
+        response = send_request(
+          type: :handshake,
+          content: @encryption.encrypt(message.to_s, nonce_indices: starting_indices)
+        )
+
+        binding.pry
+      end
+
+      def request_initialization!
       end
     end
   end

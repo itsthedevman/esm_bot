@@ -91,6 +91,12 @@ module ESM
 
         TYPES_MAPPING = {
           empty: {},
+          handshake: {
+            indices: {
+              type: :array,
+              subtype: :integer
+            }
+          },
           init: {
             extension_version: :string,
             price_per_object: :integer,

@@ -15,14 +15,14 @@ module ESM
         def read
           return unless readable?
 
-          data = @socket.recv_nonblock(READ_BYTES)
-          debug!(read: data)
-          data
+          @socket.recv_nonblock(READ_BYTES)
         end
 
         def write(data)
+          raise TypeError, "Expected String, got #{data.class}" unless data.is_a?(String)
+
           debug!(write: data)
-          self.puts(data)
+          @socket.send(data, 0)
         end
 
         #

@@ -32,11 +32,6 @@ module ESM
       def initialize
         @ledger = Ledger.new
         @connections = Concurrent::Map.new
-        @thread_pool = Concurrent::ThreadPoolExecutor.new(
-          min_threads: 10,
-          max_threads: 50,
-          max_queue: 1000
-        )
       end
 
       def start
@@ -99,17 +94,9 @@ module ESM
       def on_connect
         client = Client.new(@server.accept, @ledger)
 
-        @thread_pool.post do
-          client.request_identification!
-          client.perform_handshake!
-          client.request_initialization!
-
-          @connections[client.id] = client
-        rescue Client::Error => e
-          client.close(e)
-        rescue => e
-          error!(error: e, remote_address: client.remote_address.getnameinfo, model: client.model)
-        end
+        # Client now sends
+        #
+        @waiting_room << client
       end
 
       def process_inbound_request(json)

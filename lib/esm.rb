@@ -29,6 +29,7 @@
   "httparty",
   "i18n",
   "neatjson",
+  "openssl",
   "puma",
   "puma/events",
   "pry",

@@ -46,16 +46,16 @@ module ESM
       new
     end
 
-    def self.test
-      new.set_type(:test)
-    end
-
     def self.query
       new.set_type(:query)
     end
 
     def self.arma
       new.set_type(:arma)
+    end
+
+    def self.system
+      new.set_type(:system)
     end
 
     attr_reader :id, :type, :attributes, :errors
@@ -85,8 +85,6 @@ module ESM
       @metadata = Data.new
       @errors = []
       @attributes = OpenStruct.new
-      @delivered = false
-      @mutex = Mutex.new
     end
 
     def set_id(id)
@@ -137,7 +135,7 @@ module ESM
     end
 
     def add_attribute(key, value)
-      @attributes.send("#{key}=", value)
+      @attributes.send(:"#{key}=", value)
       self
     end
 
@@ -256,59 +254,6 @@ module ESM
     #
     def errors?
       errors.any?
-    end
-
-    #
-    # Used by MessageOverseer, this returns if the message has been delivered and is no longer needing to be watched
-    #
-    # @return [Boolean]
-    #
-    def delivered?
-      @mutex.synchronize { @delivered }
-    end
-
-    #
-    # Sets the delivered flag to true.
-    # @see #delivered?
-    #
-    # @return [true]
-    #
-    def delivered
-      @mutex.synchronize { @delivered = true }
-    end
-
-    #
-    # Set's the message as synchronous
-    # This sets the message's callbacks and forces `ESM::Connection::Server#send_message` to become blocking
-    #
-    def synchronous
-      add_callback(:on_response) do |incoming_message|
-        @mutex.synchronize { @incoming_message = incoming_message }
-      end
-
-      add_callback(:on_error) do |incoming_message|
-        @mutex.synchronize { @incoming_message = incoming_message }
-        @error = true
-      end
-    end
-
-    #
-    # Waits for a synchronous message to receive a response or timeout
-    #
-    # @return [ESM::Message] The incoming message containing the response or errors
-    #
-    def wait_for_response
-      # Waits 2 minutes. This is a backup in case message overseer doesn't time it out
-      counter = 0
-      while !delivered? || counter >= 240
-        sleep(0.01)
-        counter += 1
-      end
-
-      # This should never raise. It's for emergencies
-      raise ESM::Exception::MessageSyncTimeout if counter >= 240
-
-      @mutex.synchronize { @incoming_message }
     end
 
     def inspect

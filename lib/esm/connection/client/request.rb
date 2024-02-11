@@ -7,10 +7,11 @@ module ESM
         # These numbers MUST match the associated ServerRequestType enum value in esm_arma/src/esm/src/bot.rs
         TYPES = {
           0 => :noop,
-          1 => :identify,
-          2 => :initialize,
-          3 => :arma,
-          4 => :message
+          1 => :error,
+          2 => :identification,
+          3 => :handshake,
+          4 => :initialize,
+          5 => :message
         }.freeze
 
         delegate :to_json, to: :to_h

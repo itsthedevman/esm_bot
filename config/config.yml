@@ -35,7 +35,7 @@ default: &default
 
     # ESM::Connection::Client
     connection_client:
-      check_every: 0.01
+      check_every: 0.5
   cache:
     server_ids: 60
   tips:
