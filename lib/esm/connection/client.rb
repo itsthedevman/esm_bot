@@ -3,9 +3,7 @@
 module ESM
   module Connection
     class Client
-      MAX_INVALID_MESSAGES =
-
-        attr_reader :id, :model
+      attr_reader :id, :model
 
       delegate :remote_address, to: :@socket
       delegate :server_id, to: :@model, allow_nil: true
