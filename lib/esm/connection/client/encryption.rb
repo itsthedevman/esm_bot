@@ -6,19 +6,18 @@ module ESM
       class Encryption
         attr_reader :nonce_indices
 
-        CIPHER = "aes-256-gcm"
+        CIPHER = "aes-256-cbc"
 
-        NONCE_SIZE = 12
+        NONCE_SIZE = 16
 
         # First 32 bytes
         INDEX_LOW_BOUNDS = 0
         INDEX_HIGH_BOUNDS = 31
 
         def initialize(key)
-          @key = key
+          @key = key.bytes[0..31].pack("C*")
           @nonce_regenerated = false
-          @nonce_indices = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
-          raise "Nonce size differs from default" if @nonce_indices.size != NONCE_SIZE
+          @nonce_indices = (0...NONCE_SIZE).map { |i| i }
         end
 
         def regenerate_nonce_indices
@@ -26,8 +25,8 @@ module ESM
 
           @nonce_regenerated = true
 
-          indices = (INDEX_LOW_BOUNDS..INDEX_HIGH_BOUNDS).to_a
-          @nonce_indices = NONCE_SIZE.times.map { indices.sample }
+          indices = (INDEX_LOW_BOUNDS..INDEX_HIGH_BOUNDS).to_a.shuffle.shuffle
+          @nonce_indices = NONCE_SIZE.times.map { indices.pop }
 
           nil
         end
@@ -37,12 +36,12 @@ module ESM
           cipher.encrypt
           nonce = cipher.random_iv
 
-          cipher.key = @key[0..31]
+          cipher.key = @key
           cipher.iv = nonce
 
           nonce_bytes = nonce.bytes
           encrypted_data = cipher.update(data) + cipher.final
-          encrypted_bytes = Base64.encode64(encrypted_data).bytes
+          encrypted_bytes = Base64.strict_encode64(encrypted_data).bytes
 
           nonce_indices.each_with_index do |nonce_index, index|
             encrypted_bytes.insert(nonce_index, nonce_bytes[index])
@@ -69,10 +68,10 @@ module ESM
             packet << byte
           end
 
-          cipher.key = @key[0..31]
+          cipher.key = @key
           cipher.iv = nonce.pack("C*")
 
-          decoded_packet = Base64.decode64(packet.format(&:chr))
+          decoded_packet = Base64.strict_decode64(packet.format(&:chr))
           cipher.update(decoded_packet)
         end
       end
