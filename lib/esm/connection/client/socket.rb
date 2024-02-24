@@ -21,7 +21,6 @@ module ESM
         def write(data)
           raise TypeError, "Expected String, got #{data.class}" unless data.is_a?(String)
 
-          debug!(write: data)
           @socket.send(data, 0)
         end
 
