@@ -9,6 +9,10 @@ module ESM
           @mutex = Mutex.new
         end
 
+        def exists?(request)
+          @mutex.synchronize { @inner.key?(request.id) }
+        end
+
         def add(request)
           @mutex.synchronize { @inner[request.id] = Concurrent::MVar.new }
         end
