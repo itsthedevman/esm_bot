@@ -17,6 +17,8 @@ module ESM
         delegate :to_json, to: :to_h
 
         def initialize(type:, id: nil, content: nil)
+          id ||= SecureRandom.uuid.delete("-")
+          raise ArgumentError, "ID must be 32 bytes" if id.size != 32 # The size of a UUID without the dashes
           raise ArgumentError, "Invalid type #{type}" unless TYPES.value?(type.to_sym)
 
           content =
@@ -32,8 +34,6 @@ module ESM
             else
               raise ArgumentError, "Content must be a Symbol, Array, or must respond to #bytes"
             end
-
-          id ||= SecureRandom.uuid.delete("-")
 
           super(id: id, type: type, content: content)
         end

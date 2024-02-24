@@ -31,17 +31,15 @@ module ESM
       end
 
       def to_h
-        hash = {type: type}
+        data = {type: type}
 
         # This blocks the content key from being added to the hash
         #   which in turn keeps it from being included in the JSON that is sent to the server
         #   Bonus: Handles invalid data
-        if !@original_content.is_a?(Hash) || type == :empty
-          return hash
-        end
+        return data if type == :empty
 
-        hash[:content] = @original_content.transform_values { |v| convert_into_arma(v) }
-        hash
+        data[:content] = @original_content.transform_values { |v| convert_into_arma(v) }
+        data
       end
 
       private
@@ -114,7 +112,14 @@ module ESM
 
         # Subtype only supports Array (as of right now)
         subtype = attribute_hash[:subtype]
-        return result unless type == :array && subtype&.key?(:type)
+        return result unless type == :array && subtype
+
+        subtype =
+          if subtype.is_a?(Hash)
+            subtype
+          else
+            {type: subtype.to_sym}
+          end
 
         subtype[:attribute_name] = attribute_hash[:attribute_name]
         result.map { |v| convert_into_ruby(v, **subtype) }

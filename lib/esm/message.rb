@@ -58,9 +58,7 @@ module ESM
       new.set_type(:system)
     end
 
-    attr_reader :id, :type, :attributes, :errors
-
-    delegate :command, to: :attributes, allow_nil: true
+    attr_reader :id, :type, :errors
 
     # All callbacks are provided with two arguments:
     #   incoming_message [ESM::Message, nil]  The incoming message from the client, if applicable.
@@ -79,12 +77,11 @@ module ESM
     # They will automatically be sanitized according to their data type as configured in the mapping.
     # NOTE: Invalid data/metadata attributes will be dropped!
     def initialize
-      @id = SecureRandom.uuid
+      @id = SecureRandom.uuid.delete("-")
       @type = :event
       @data = Data.new
       @metadata = Metadata.new
       @errors = []
-      @attributes = OpenStruct.new
     end
 
     def set_id(id)
@@ -134,11 +131,6 @@ module ESM
       self
     end
 
-    def add_attribute(key, value)
-      @attributes.send(:"#{key}=", value)
-      self
-    end
-
     def data_type
       @data.type
     end
@@ -167,10 +159,10 @@ module ESM
     # Sets the user's ID, name, mention, and steam uid to the metadata for this message. Will also do the same for the target user if the command has one
     # This only applies to messages that have a command in their routing data
     #
-    def apply_command_metadata
+    def apply_command_metadata(command)
       metadata = Struct.new(:player, :target).new
 
-      current_user = attributes.command&.current_user
+      current_user = command.current_user
       if current_user
         metadata.player = {
           steam_uid: current_user.steam_uid,
@@ -180,7 +172,7 @@ module ESM
         }
       end
 
-      target_user = attributes.command&.target_user
+      target_user = command.target_user
       if target_user
         target = {steam_uid: target_user.steam_uid}
 
@@ -258,23 +250,6 @@ module ESM
 
     def inspect
       "#<ESM::Message #{JSON.pretty_generate(to_h)}>"
-    end
-
-    def on_response(incoming_message)
-      run_callback(:on_response, incoming_message)
-
-      # Runs after callbacks because of tests and such
-      delivered
-    end
-
-    def on_error(incoming_message)
-      if callback?(:on_error)
-        run_callback(:on_error, incoming_message)
-      else
-        default_on_error(incoming_message)
-      end
-
-      delivered
     end
 
     private

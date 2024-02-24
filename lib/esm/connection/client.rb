@@ -3,9 +3,12 @@
 module ESM
   module Connection
     class Client
-      attr_reader :id, :model
+      Metadata = ImmutableStruct.define(:vg_enabled, :vg_max_sizes)
 
-      delegate :remote_address, to: :@socket
+      attr_reader :id, :model
+      attr_accessor :initialized
+
+      delegate :local_address, to: :@socket
       delegate :server_id, to: :@model, allow_nil: true
 
       def initialize(tcp_client, ledger)
@@ -16,26 +19,36 @@ module ESM
         @model = nil
         @encryption = nil
         @last_ping_received = nil
+        @initialized = false
+        @metadata = set_metadata(vg_enabled: false, vg_max_sizes: 0)
 
         check_every = ESM.config.loops.connection_client.check_every
         @task = Concurrent::TimerTask.execute(execution_interval: check_every) { on_message }
         @thread_pool = Concurrent::ThreadPoolExecutor.new(
-          min_threads: 5,
+          min_threads: 2,
           max_threads: 20,
           max_queue: 250
         )
       end
 
       def close
-        info!(ip: remote_address, state: :closing, public_id: @id, server_id: @model.server_id)
+        info!(address: local_address.inspect, public_id: @id, server_id: @model.server_id, state: :disconnected)
 
         # TODO: Maybe post a message?
         # TODO: Tell the server to forget our asses
         @socket.close
       end
 
-      def send_message(message, type: :message, **)
+      def send_message(message = nil, type: :message, **)
+        info!(
+          address: local_address.inspect,
+          public_id: @id,
+          server_id: @model.server_id,
+          outbound: {type: type, message: message.to_h}
+        )
+
         response = send_request(
+          id: message ? message.id : nil,
           type: type,
           content: @encryption.encrypt(message.to_s, **)
         )
@@ -46,32 +59,44 @@ module ESM
         ESM::Message.from_string(decrypted_message)
       end
 
+      def set_metadata(**)
+        @metadata = Metadata.new(**)
+      end
+
       def on_message
-        response = receive_request
-        return if response.nil?
+        request = receive_request
+        return if request.nil?
 
         @thread_pool.post do
-          case response.type
+          case request.type
           when :identification
-            on_identification(response)
+            on_identification(request)
           when :handshake
-            forward_response_to_caller(response)
+            forward_response_to_caller(request)
+          when :message
+            if @ledger.exists?(request)
+              forward_response_to_caller(request)
+            else
+              on_request(request)
+            end
           else
             raise "Invalid data received: #{response}"
           end
-        rescue ESM::Connection::Client::Error => e
+        rescue Client::Error => e
           send_request(type: :error, content: e.message)
           close
         rescue => e
           error!(error: e)
           close
+        ensure
+          @ledger.remove(request)
         end
       end
 
       # TODO: This instance will need to disconnect itself if it doesn't receive the identify request within 10 seconds
       def on_identification(response)
         public_id = response.content
-        info!(ip: remote_address, state: :unidentified, public_id: public_id)
+        info!(address: local_address.inspect, public_id: public_id, server_id: nil, state: :unidentified)
 
         model = ESM::Server.find_by_public_id(public_id)
         raise NotAuthorized if model.nil?
@@ -80,62 +105,49 @@ module ESM
         @id = model.public_id
         @encryption = Encryption.new(model.token[:secret])
 
-        info!(ip: remote_address, state: :identified, public_id: @id, server_id: @model.server_id)
+        info!(address: local_address.inspect, public_id: @id, server_id: @model.server_id, state: :identified)
 
         perform_handshake!
         request_initialization!
+      rescue Client::RejectedMessage
+        close
       end
 
-      # def on_connect
-      #   info!(server_uuid: server_uuid, incoming_message: message.to_h)
+      def on_request(request)
+        decrypted_message = @encryption.decrypt(request.content.bytes)
+        message = ESM::Message.from_string(decrypted_message)
 
-      #   server = ESM::Server.find_by(uuid: server_uuid)
-      #   return error!(error: "Server does not exist", uuid: server_uuid) if server.nil?
-      #   return server.community.log_event(:error, message.errors.join("\n")) if message.errors?
+        binding.pry
+        # Handle any errors
+        if message.errors?
+          outgoing_message&.on_error(incoming_message)
+          return
+        end
 
-      #   ESM::Event::ServerInitialization.new(server, message).run!
-      # end
+        # Retrieve the original message. If it's nil, the message originated from the client
+        outgoing_message = @message_overseer.retrieve(incoming_message.id)
 
-      # def on_message
-      #   # Retrieve the original message. If it's nil, the message originated from the client
-      #   outgoing_message = @message_overseer.retrieve(incoming_message.id)
+        info!(
+          outgoing_message: outgoing_message&.to_h,
+          incoming_message: incoming_message.to_h
+        )
 
-      #   info!(
-      #     outgoing_message: outgoing_message&.to_h,
-      #     incoming_message: incoming_message.to_h
-      #   )
+        # Currently, :send_to_channel is the only inbound event. If adding another, convert this code
+        if incoming_message.type == :event && incoming_message.data_type == :send_to_channel
+          server = ESM::Server.find_by(uuid: server_uuid)
+          ESM::Event::SendToChannel.new(server, incoming_message).run!
+          return
+        end
 
-      #   # Handle any errors
-      #   if incoming_message.errors?
-      #     outgoing_message&.on_error(incoming_message)
-      #     return
-      #   end
+        outgoing_message&.on_response(incoming_message)
+      rescue => e
+        command = outgoing_message&.command
 
-      #   # Currently, :send_to_channel is the only inbound event. If adding another, convert this code
-      #   if incoming_message.type == :event && incoming_message.data_type == :send_to_channel
-      #     server = ESM::Server.find_by(uuid: server_uuid)
-      #     ESM::Event::SendToChannel.new(server, incoming_message).run!
-      #     return
-      #   end
+        # Bubble up to #on_inbound
+        raise e if command.nil?
 
-      #   outgoing_message&.on_response(incoming_message)
-      # rescue => e
-      #   command = outgoing_message&.command
-
-      #   # Bubble up to #on_inbound
-      #   raise e if command.nil?
-
-      #   raise "Replace!! command.handle_error(e)"
-      # end
-
-      # def on_disconnect
-      #   server_uuid = request[:content]
-
-      #   server = ESM::Server.find_by(uuid: server_uuid)
-      #   server.metadata.clear!
-
-      #   info!(uuid: server.public_id, name: server.server_name, server_id: server.server_id)
-      # end
+        raise "Replace!! command.handle_error(e)"
+      end
 
       private
 
@@ -143,12 +155,11 @@ module ESM
         data = ESM::JSON.parse(@socket.read)
         return if data.blank?
 
-        debug!(read: data)
         Response.new(**data)
       end
 
-      def send_request(type:, content: nil)
-        request = Request.new(type: type, content: content)
+      def send_request(type:, content: nil, id: nil)
+        request = Request.new(id: id, type: type, content: content)
 
         # This tracks the request and allows us to receive the response across multiple threads
         mailbox = @ledger.add(request)
@@ -166,8 +177,6 @@ module ESM
           # Concurrent::MVar::TIMEOUT
           Result.rejected(RequestTimeout.new)
         end
-      ensure
-        @ledger.remove(request) if request
       end
 
       def forward_response_to_caller(response)
@@ -178,7 +187,7 @@ module ESM
       end
 
       def perform_handshake!
-        info!(ip: remote_address, state: :handshake, public_id: @id, server_id: @model.server_id)
+        info!(address: local_address.inspect, public_id: @id, server_id: @model.server_id, state: :handshake)
 
         starting_indices = @encryption.nonce_indices
         @encryption.regenerate_nonce_indices
@@ -191,10 +200,10 @@ module ESM
       end
 
       def request_initialization!
-        info!(ip: remote_address, state: :initialization, public_id: @id, server_id: @model.server_id)
+        info!(address: local_address.inspect, public_id: @id, server_id: @model.server_id, state: :initialization)
 
-        message = ESM::Message.event.set_data(:handshake, indices: @encryption.nonce_indices)
-        send_message(message)
+        message = send_message(type: :initialize)
+        ESM::Event::ServerInitialization.new(self, message).run!
       end
     end
   end

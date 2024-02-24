@@ -35,14 +35,15 @@ module ESM
         territory_upgrade_tax
       ].freeze
 
-      DATA = Struct.new(*DATA_ATTRIBUTES)
+      Data = ImmutableStruct.define(*DATA_ATTRIBUTES)
 
       attr_reader :data
 
-      def initialize(server, message)
+      def initialize(tcp_client, message)
+        @tcp_client = tcp_client
+        @model = tcp_client.model
         @message = message
-        @server = server
-        @community = @server.community
+        @community = @model.community
         @discord_server = @community.discord_server
       end
 
@@ -54,7 +55,7 @@ module ESM
         build_setting_data
 
         # Send message to server
-        send_response
+        send_post_init
       end
 
       # Called when an admin updates some settings.
@@ -63,7 +64,7 @@ module ESM
         build_setting_data
 
         # Send message to server
-        send_response
+        send_post_init
       end
 
       private
@@ -76,7 +77,7 @@ module ESM
       end
 
       def update_server
-        @server.update!(
+        @model.update!(
           server_name: @message.data.server_name,
           server_start_time: @message.data.server_start_time.utc,
           server_version: Semantic::Version.new(@message.data.extension_version),
@@ -85,19 +86,19 @@ module ESM
       end
 
       def update_server_settings
-        @server.server_setting.update(
+        @model.server_setting.update(
           territory_price_per_object: @message.data.price_per_object,
           territory_lifetime: @message.data.territory_lifetime
         )
       end
 
       def store_territory_data
-        @server.territories.delete_all
+        @model.territories.delete_all
 
         territories =
           @message.data.territory_data.map do |data|
             {
-              server_id: @server.id,
+              server_id: @model.id,
               territory_level: data.level,
               territory_purchase_price: data.purchase_price,
               territory_radius: data.radius,
@@ -109,12 +110,14 @@ module ESM
       end
 
       def store_metadata
-        @server.metadata.vg_enabled = @message.data.vg_enabled
-        @server.metadata.vg_max_sizes = @message.data.vg_max_sizes
+        @tcp_client.set_metadata(
+          vg_enabled: @message.data.vg_enabled,
+          vg_max_sizes: @message.data.vg_max_sizes
+        )
       end
 
       def build_setting_data
-        settings = @server.server_setting
+        settings = @model.server_setting
 
         # Remove the database and v1 fields
         data = settings.attributes.without(
@@ -129,13 +132,13 @@ module ESM
           community_id: @community.community_id,
           extdb_path: settings.extdb_path || "",
           logging_channel_id: @community.logging_channel_id,
-          server_id: @server.server_id,
+          server_id: @model.server_id,
           territory_admin_uids: build_territory_admins,
           taxes_territory_payment: settings.territory_payment_tax / 100,
           taxes_territory_upgrade: settings.territory_upgrade_tax / 100
         )
 
-        @data = DATA.new(*DATA_ATTRIBUTES.map { |attribute| data[attribute] })
+        @data = Data.new(*DATA_ATTRIBUTES.map { |attribute| data[attribute] })
       end
 
       def build_territory_admins
@@ -154,19 +157,18 @@ module ESM
         ESM::User.where(discord_id: discord_ids + [@discord_server.owner.id.to_s]).where.not(steam_uid: nil).pluck(:steam_uid)
       end
 
-      def send_response
+      def send_post_init
         message = ESM::Message.event.set_data("post_init", @data)
-        message.add_callback(:on_response, on_instance: self) do |_incoming|
-          info!(server_id: @server.server_id, uptime: @server.uptime)
+        @tcp_client.send_message(message)
 
-          # Trigger a connect notification
-          @server.community.log_event(:reconnect, I18n.t("server_connected", server: @server.server_id, uptime: @server.uptime))
+        info!(server_id: @model.server_id, uptime: @model.uptime)
 
-          # Set the connection to be available for commands
-          @server.metadata.initialized = true
-        end
+        @model.community.log_event(
+          :reconnect,
+          I18n.t("server_connected", server: @model.server_id, uptime: @model.uptime)
+        )
 
-        @server.send_message(message)
+        @tcp_client.initialized = true
       end
     end
   end

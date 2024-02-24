@@ -68,8 +68,7 @@ module ESM
 
     def send_message(message = nil, opts = {})
       message = ESM::Message.from_hash(message) if message.is_a?(Hash)
-
-      ESM::Connection::Server.instance.fire(message, to: uuid, **opts)
+      connection.send_message(message)
     end
 
     #
@@ -87,6 +86,10 @@ module ESM
 
     def v2?
       version?("2.0.0")
+    end
+
+    def connection
+
     end
 
     def connected?
@@ -132,14 +135,6 @@ module ESM
 
     def most_poptabs_lost
       user_gamble_stats.order(total_poptabs_loss: :desc).first
-    end
-
-    # vg_enabled
-    # vg_max_sizes
-    # version
-    # initialized
-    def metadata
-      @metadata ||= ESM::Server::Metadata.new(uuid)
     end
 
     # Sends a message to the client with a unique ID then logs the ID to the community's logging channel
