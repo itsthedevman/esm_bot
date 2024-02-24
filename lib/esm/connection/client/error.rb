@@ -5,7 +5,7 @@ module ESM
     class Client
       Error = ESM::Exception::Error
 
-      class TimeoutError < Error
+      class RequestTimeout < Error
         def initialize = super("Request timed out")
       end
 
@@ -15,6 +15,10 @@ module ESM
 
       class InvalidAccessKey < Error
         def initialize = super("Invalid access key")
+      end
+
+      class RejectedMessage < Error
+        def initialize(reason = "") = super("Message was rejected. #{reason}")
       end
     end
   end

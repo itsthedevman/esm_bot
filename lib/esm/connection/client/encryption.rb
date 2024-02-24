@@ -26,41 +26,39 @@ module ESM
           @nonce_regenerated = true
 
           indices = (INDEX_LOW_BOUNDS..INDEX_HIGH_BOUNDS).to_a.shuffle.shuffle
-          @nonce_indices = NONCE_SIZE.times.map { indices.pop }
+          @nonce_indices = NONCE_SIZE.times.map { indices.pop }.sort
 
           nil
         end
 
         def encrypt(data, nonce_indices: @nonce_indices)
-          cipher = OpenSSL::Cipher.new(CIPHER)
-          cipher.encrypt
+          cipher = OpenSSL::Cipher.new(CIPHER).encrypt
           nonce = cipher.random_iv
 
           cipher.key = @key
           cipher.iv = nonce
 
           nonce_bytes = nonce.bytes
-          encrypted_data = cipher.update(data) + cipher.final
-          encrypted_bytes = Base64.strict_encode64(encrypted_data).bytes
+          encrypted_data = (cipher.update(data) + cipher.final).bytes
 
           nonce_indices.each_with_index do |nonce_index, index|
-            encrypted_bytes.insert(nonce_index, nonce_bytes[index])
+            encrypted_data.insert(nonce_index, nonce_bytes[index])
           end
 
           # If the nonce index is greater than the size of the encrypted_bytes,
           # ruby will add `nil` until it gets to the index
-          encrypted_bytes.compact
+          Base64.strict_encode64(encrypted_data.compact.pack("C*")).bytes
         end
 
         def decrypt(bytes, nonce_indices: @nonce_indices)
-          cipher = OpenSSL::Cipher.new(CIPHER)
-          cipher.decrypt
+          cipher = OpenSSL::Cipher.new(CIPHER).decrypt
+          encoded_packet = Base64.strict_decode64(bytes.pack("U*")).bytes
 
           nonce = []
           packet = []
 
-          bytes.each_with_index do |byte, index|
-            if (nonce_index = nonce_indices[nonce.size]) && (nonce_index == index)
+          encoded_packet.each_with_index do |byte, index|
+            if nonce_indices[nonce.size] == index
               nonce << byte
               next
             end
@@ -71,8 +69,7 @@ module ESM
           cipher.key = @key
           cipher.iv = nonce.pack("C*")
 
-          decoded_packet = Base64.strict_decode64(packet.format(&:chr))
-          cipher.update(decoded_packet)
+          cipher.update(packet.pack("C*")) + cipher.final
         end
       end
     end

@@ -82,7 +82,7 @@ module ESM
       @id = SecureRandom.uuid
       @type = :event
       @data = Data.new
-      @metadata = Data.new
+      @metadata = Metadata.new
       @errors = []
       @attributes = OpenStruct.new
     end
@@ -147,8 +147,8 @@ module ESM
       @data.content
     end
 
-    def data_attributes(for_arma: false)
-      @data.to_h(for_arma: for_arma)
+    def data_attributes
+      @data.to_h
     end
 
     def metadata_type
@@ -159,8 +159,8 @@ module ESM
       @metadata.content
     end
 
-    def metadata_attributes(for_arma: false)
-      @metadata.to_h(for_arma: for_arma)
+    def metadata_attributes
+      @metadata.to_h
     end
 
     #
@@ -228,12 +228,12 @@ module ESM
     #     errors: Any errors associated to this message
     #   }
     #
-    def to_h(...)
+    def to_h
       {
         id: id,
         type: type,
-        data: data_attributes(...),
-        metadata: metadata_attributes(...),
+        data: data_attributes,
+        metadata: metadata_attributes,
         errors: errors.map(&:to_h)
       }
     end

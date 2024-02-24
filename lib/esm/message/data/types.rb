@@ -39,51 +39,54 @@ module ESM
             into_arma: ->(value) { value }
           },
           array: {
-            valid_classes: [Array],
+            allowed_classes: [Array],
             into_ruby: ->(value) { value.to_a },
             into_arma: ->(value) { value.map { |v| convert_into_arma(v) } }
           },
           boolean: {
-            valid_classes: [TrueClass, FalseClass],
+            allowed_classes: [TrueClass, FalseClass],
             into_ruby: ->(value) { value.to_s == "true" }
           },
           date: {
-            valid_classes: [Date],
+            allowed_classes: [Date],
             into_ruby: ->(value) { ::Date.parse(value) },
             into_arma: ->(value) { value.strftime("%F") }
           },
           date_time: {
-            valid_classes: [DateTime, ::Time],
+            allowed_classes: [DateTime, ::Time],
             into_ruby: ->(value) { ESM::Time.parse(value) },
             into_arma: ->(value) { value.strftime("%FT%T%:z") } # yyyy-mm-ddT00:00:00ZONE
           },
           float: {
-            valid_classes: [Float],
-            into_ruby: ->(value) { value.to_d },
-            into_arma: ->(value) { value.to_s }  # Numbers have to be sent as Strings
+            allowed_classes: [Float],
+            into_ruby: ->(value) { value.to_d }
           },
           hash: {
-            valid_classes: [Hash],
+            allowed_classes: [Hash],
             into_ruby: ->(value) { value.to_h },
             into_arma: ->(value) { value.transform_values { |v| convert_into_arma(v) } }
           },
           hash_map: {
-            valid_classes: [ESM::Arma::HashMap],
+            allowed_classes: [ESM::Arma::HashMap],
             into_ruby: ->(value) { ESM::Arma::HashMap.from(value) },
             into_arma: ->(value) { value.to_h.transform_values { |v| convert_into_arma(v) } }
           },
           integer: {
-            valid_classes: [Integer],
+            allowed_classes: [Integer],
+            into_ruby: ->(value) { value.to_i }
+          },
+          scalar: { # Arma numbers have to be sent as Strings
+            allowed_classes: [Integer],
             into_ruby: ->(value) { value.to_i },
-            into_arma: ->(value) { value.to_s } # Numbers have to be sent as Strings
+            into_arma: ->(value) { value.to_s }
           },
           string: {
-            valid_classes: [String],
+            allowed_classes: [String],
             into_ruby: ->(value) { value.to_s },
             into_arma: ->(value) { value.to_s } # Symbol uses this as well
           },
           struct: {
-            valid_classes: [ImmutableStruct, Struct, OpenStruct],
+            allowed_classes: [ImmutableStruct, Struct, OpenStruct],
             into_ruby: ->(value) { value.to_h.to_istruct },
             into_arma: ->(value) { value.to_h.transform_values { |v| convert_into_arma(v) } }
           }
@@ -99,29 +102,29 @@ module ESM
           },
           init: {
             extension_version: :string,
-            price_per_object: :integer,
+            price_per_object: :scalar,
             server_name: :string,
             server_start_time: :date_time,
             territory_data: {
               type: :array,
               subtype: :hash_map
             },
-            territory_lifetime: :integer,
+            territory_lifetime: :scalar,
             vg_enabled: :boolean,
             vg_max_sizes: {
               type: :array,
-              subtype: :integer
+              subtype: :scalar
             }
           },
           post_init: {
             community_id: :string,
             extdb_path: :string,
-            gambling_modifier: :integer,
-            gambling_payout_base: :integer,
-            gambling_payout_randomizer_max: :float,
-            gambling_payout_randomizer_mid: :float,
-            gambling_payout_randomizer_min: :float,
-            gambling_win_percentage: :integer,
+            gambling_modifier: :scalar,
+            gambling_payout_base: :scalar,
+            gambling_payout_randomizer_max: :scalar,
+            gambling_payout_randomizer_mid: :scalar,
+            gambling_payout_randomizer_min: :scalar,
+            gambling_win_percentage: :scalar,
             logging_add_player_to_territory: :boolean,
             logging_channel_id: :string,
             logging_demote_player: :boolean,
@@ -134,14 +137,14 @@ module ESM
             logging_reward_player: :boolean,
             logging_transfer_poptabs: :boolean,
             logging_upgrade_territory: :boolean,
-            max_payment_count: :integer,
+            max_payment_count: :scalar,
             server_id: :string,
             territory_admin_uids: {
               type: :array,
               subtype: :string
             },
-            taxes_territory_payment: :integer,
-            taxes_territory_upgrade: :integer
+            taxes_territory_payment: :scalar,
+            taxes_territory_upgrade: :scalar
           },
           query: {
             arguments: :hash,
@@ -159,15 +162,15 @@ module ESM
               optional: true
             },
             locker_poptabs: {
-              type: :integer,
+              type: :scalar,
               optional: true
             },
             player_poptabs: {
-              type: :integer,
+              type: :scalar,
               optional: true
             },
             respect: {
-              type: :integer,
+              type: :scalar,
               optional: true
             },
             vehicles: {

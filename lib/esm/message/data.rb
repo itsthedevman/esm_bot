@@ -30,15 +30,13 @@ module ESM
         @content = content.to_istruct
       end
 
-      def to_h(for_arma: false)
+      def to_h
         hash = {type: type}
 
         # This blocks the content key from being added to the hash
         #   which in turn keeps it from being included in the JSON that is sent to the server
         #   Bonus: Handles invalid data
-        if !@original_content.is_a?(Hash) ||
-            (for_arma && type == :empty) ||
-            (for_arma && @original_content.blank?)
+        if !@original_content.is_a?(Hash) || type == :empty
           return hash
         end
 
@@ -69,7 +67,14 @@ module ESM
           raise ESM::Exception::InvalidMessage, "Failed to find #{self.class.name} type \"#{@type}\" in \"config/message/*_types.yml\""
         end
 
-        types_mapping.each_with_object({}) do |(attribute_name, attribute_hash), output|
+        types_mapping.each_with_object({}) do |(attribute_name, attribute_type), output|
+          attribute_hash =
+            if attribute_type.is_a?(Hash)
+              attribute_type
+            else
+              {type: attribute_type.to_sym}
+            end
+
           # Check for missing required attributes
           if attribute_hash[:optional].blank? && !inbound_content.key?(attribute_name)
             raise ESM::Exception::InvalidMessage,
@@ -97,10 +102,10 @@ module ESM
         type_data = retrieve_type_data(type)
 
         optional = attribute_hash[:optional] || false
-        valid_classes = type_data[:valid_classes] || []
+        allowed_classes = type_data[:allowed_classes] || []
 
         # Check if converting is needed
-        if (optional && inbound_value.nil?) || valid_classes.any? { |c| inbound_value.is_a?(c) }
+        if (optional && inbound_value.nil?) || allowed_classes.any? { |c| inbound_value.is_a?(c) }
           return inbound_value
         end
 

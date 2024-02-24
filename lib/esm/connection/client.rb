@@ -34,8 +34,16 @@ module ESM
         @socket.close
       end
 
-      def send_message(message, type: :message)
-        send_request(type: type, content: @encryption.encrypt(message))
+      def send_message(message, type: :message, **)
+        response = send_request(
+          type: type,
+          content: @encryption.encrypt(message.to_s, **)
+        )
+
+        raise RejectedMessage, response.reason if response.rejected?
+
+        decrypted_message = @encryption.decrypt(response.value.bytes)
+        ESM::Message.from_string(decrypted_message)
       end
 
       def on_message
@@ -156,7 +164,7 @@ module ESM
           Result.rejected(result)
         else
           # Concurrent::MVar::TIMEOUT
-          Result.rejected(TimeoutError.new)
+          Result.rejected(RequestTimeout.new)
         end
       ensure
         @ledger.remove(request) if request
@@ -175,18 +183,18 @@ module ESM
         starting_indices = @encryption.nonce_indices
         @encryption.regenerate_nonce_indices
 
-        debug!(starting_indices: starting_indices, new_indices: @encryption.nonce_indices)
-
         message = ESM::Message.event.set_data(:handshake, indices: @encryption.nonce_indices)
-        response = send_request(
-          type: :handshake,
-          content: @encryption.encrypt(message.to_s, nonce_indices: starting_indices)
-        )
 
-        binding.pry
+        # The response is not needed here
+        # However, the message must be responded to in order to confirm the handshake was a success
+        send_message(message, type: :handshake, nonce_indices: starting_indices)
       end
 
       def request_initialization!
+        info!(ip: remote_address, state: :initialization, public_id: @id, server_id: @model.server_id)
+
+        message = ESM::Message.event.set_data(:handshake, indices: @encryption.nonce_indices)
+        send_message(message)
       end
     end
   end
