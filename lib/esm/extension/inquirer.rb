@@ -18,20 +18,20 @@ class Inquirer
   #   environment.predicate_does_not_exist? #=> undefined method predicate_does_not_exists? for Inquirer
   #
   # @example Implementing ArrayInquirer
-  #   fruits = Inquirer.new(:apples, :oranges, :bananas)
-  #   fruits.set(:oranges, :bananas)
+  #   fruits = Inquirer.new(:apples, :oranges, :bananas, default: [:oranges, :bananas])
   #
   #   fruits.apples? #=> false
   #   fruits.oranges? #=> true
   #   fruits.bananas? #=> true
   #   fruits.grapes? #=> undefined method grapes? for Inquirer
-
-  def initialize(*predicates)
+  def initialize(*predicates, default: nil)
     @predicates = predicates.map(&:to_sym)
-    @predicates.each do |action|
-      self.class.define_method("#{action}?") do
-        !!instance_variable_get("@#{action}")
-      end
+    self.class.attr_predicate(*@predicates)
+
+    if default
+      default = [default] unless default.is_a?(Array)
+
+      set(*default)
     end
   end
 
@@ -50,7 +50,7 @@ class Inquirer
     end
 
     predicates.each do |predicate|
-      instance_variable_set("@#{predicate}", true)
+      instance_variable_set(:"@#{predicate}", true)
     end
 
     self
@@ -67,7 +67,7 @@ class Inquirer
     predicates.map(&:to_sym).each do |predicate|
       next if @predicates.exclude?(predicate)
 
-      instance_variable_set("@#{predicate}", false)
+      instance_variable_set(:"@#{predicate}", false)
     end
 
     self
@@ -75,7 +75,7 @@ class Inquirer
 
   def to_h
     @predicates.index_with do |predicate|
-      instance_variable_get("@#{predicate}")
+      instance_variable_get(:"@#{predicate}")
     end
   end
 
