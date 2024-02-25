@@ -39,16 +39,31 @@ class Inquirer
   # Sets the provided predicates to true
   #
   # @param *predicates [Array<Symbol>] Which predicates to set to true
+  # @param unset [TrueClass, FalseClass, Array, Symbol] Which predicates to unset
+  #     FalseClass: Do nothing.
+  #     TrueClass: Un-sets all other predicates. Default
+  #     Array: Un-set the provided predicates
+  #     Symbol: Un-set the provided predicate
   #
   # @return [Self]
   #
-  def set(*predicates)
+  def set(*predicates, unset: true)
     predicates = predicates.map(&:to_sym)
 
-    if (invalid_predicates = predicates - @predicates) && invalid_predicates.any?
+    if (invalid_predicates = predicates - @predicates) && invalid_predicates.size > 0
       raise ArgumentError, "#{invalid_predicates} are not allowed as predicates for #{self.class.name}. Valid options: #{@predicates}"
     end
 
+    # Unset
+    case unset
+    when true
+      unset(*@predicates)
+    when Array, Symbol
+      unset = [unset] unless unset.is_a?(Array)
+      unset(*unset)
+    end
+
+    # Set
     predicates.each do |predicate|
       instance_variable_set(:"@#{predicate}", true)
     end

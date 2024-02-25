@@ -39,19 +39,93 @@ describe Inquirer do
     end
   end
 
-  context "when the predicate is set after initialization" do
-    subject(:inquirer) { described_class.new(:foo, :bar, :baz) }
+  describe "#set" do
+    context "when predicates are provided" do
+      subject(:inquirer) { described_class.new(:foo, :bar, :baz) }
 
-    it "sets all provided predicates to true" do
-      expect(inquirer.foo?).to be(false)
-      expect(inquirer.bar?).to be(false)
-      expect(inquirer.baz?).to be(false)
+      it "sets all provided predicates to true" do
+        expect(inquirer.foo?).to be(false)
+        expect(inquirer.bar?).to be(false)
+        expect(inquirer.baz?).to be(false)
 
-      inquirer.set(:foo, :baz)
+        inquirer.set(:foo, :baz)
 
-      expect(inquirer.foo?).to be(true)
-      expect(inquirer.bar?).to be(false)
-      expect(inquirer.baz?).to be(true)
+        expect(inquirer.foo?).to be(true)
+        expect(inquirer.bar?).to be(false)
+        expect(inquirer.baz?).to be(true)
+      end
+    end
+
+    context "when a Symbol is provided for :unset" do
+      subject(:inquirer) { described_class.new(:foo, :bar, :baz) }
+
+      it "un-sets the predicate" do
+        inquirer.set(:foo)
+
+        expect(inquirer.foo?).to be(true)
+        expect(inquirer.bar?).to be(false)
+        expect(inquirer.baz?).to be(false)
+
+        inquirer.set(:bar, :baz, unset: :foo)
+
+        expect(inquirer.foo?).to be(false)
+        expect(inquirer.bar?).to be(true)
+        expect(inquirer.baz?).to be(true)
+      end
+    end
+
+    context "when true is provided for :unset (default functionality)" do
+      subject(:inquirer) { described_class.new(:foo, :bar, :baz) }
+
+      it "un-sets all other predicates" do
+        inquirer.set(:foo, :baz)
+
+        expect(inquirer.foo?).to be(true)
+        expect(inquirer.bar?).to be(false)
+        expect(inquirer.baz?).to be(true)
+
+        inquirer.set(:bar)
+
+        expect(inquirer.foo?).to be(false)
+        expect(inquirer.bar?).to be(true)
+        expect(inquirer.baz?).to be(false)
+      end
+    end
+
+    context "when false is provided for :unset" do
+      subject(:inquirer) { described_class.new(:foo, :bar, :baz) }
+
+      it "does not modify the other predicates" do
+        inquirer.set(:foo, :baz)
+
+        expect(inquirer.foo?).to be(true)
+        expect(inquirer.bar?).to be(false)
+        expect(inquirer.baz?).to be(true)
+
+        inquirer.set(:bar, unset: false)
+
+        expect(inquirer.foo?).to be(true)
+        expect(inquirer.bar?).to be(true)
+        expect(inquirer.baz?).to be(true)
+      end
+    end
+
+    context "when predicates are provided for :unset" do
+      subject(:inquirer) { described_class.new(:foo, :bar, :baz) }
+
+      it "does not modify the other predicates" do
+        inquirer.set(:foo, :baz)
+
+        expect(inquirer.foo?).to be(true)
+        expect(inquirer.bar?).to be(false)
+        expect(inquirer.baz?).to be(true)
+
+        inquirer.set(:bar, unset: [:foo])
+
+        expect(inquirer.foo?).to be(false)
+        expect(inquirer.bar?).to be(true)
+        expect(inquirer.baz?).to be(true)
+      end
     end
   end
 end
