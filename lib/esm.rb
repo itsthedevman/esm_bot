@@ -76,7 +76,7 @@ def __log(severity, caller_data, content)
 
     content[:error] = {
       message: e.message,
-      backtrace: e.backtrace[0..20]
+      backtrace: ESM.backtrace_cleaner.clean(e.backtrace)
     }
   end
 
@@ -211,6 +211,15 @@ module ESM
       @loader ||= begin
         Zeitwerk::Loader.attr_predicate(:setup, :eager_loaded)
         Zeitwerk::Loader.for_gem(warn_on_extra_files: false)
+      end
+    end
+
+    def backtrace_cleaner
+      @backtrace_cleaner || begin
+        cleaner = ActiveSupport::BacktraceCleaner.new
+        cleaner.add_filter { |line| line.gsub(root.to_s, "") }
+        cleaner.add_silencer { |line| /\/ruby.gems/.match?(line) }
+        cleaner
       end
     end
   end
