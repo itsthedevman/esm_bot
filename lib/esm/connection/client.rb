@@ -11,7 +11,8 @@ module ESM
       delegate :local_address, to: :@socket
       delegate :server_id, to: :@model, allow_nil: true
 
-      def initialize(tcp_client, ledger)
+      def initialize(tcp_server, tcp_client, ledger)
+        @tcp_server = tcp_server
         @socket = Socket.new(tcp_client)
         @ledger = ledger
 
@@ -32,10 +33,11 @@ module ESM
       end
 
       def close
-        info!(address: local_address.inspect, public_id: @id, server_id: @model.server_id, state: :disconnected)
+        return if @id.nil?
 
-        # TODO: Maybe post a message?
-        # TODO: Tell the server to forget our asses
+        info!(address: local_address.inspect, public_id: @id, server_id: @model&.server_id, state: :disconnected)
+
+        @tcp_server.disconnect(@id)
         @socket.close
       end
 
@@ -55,7 +57,7 @@ module ESM
 
         raise RejectedMessage, response.reason if response.rejected?
 
-        decrypted_message = @encryption.decrypt(response.value.bytes)
+        decrypted_message = @encryption.decrypt(response.value)
         ESM::Message.from_string(decrypted_message)
       end
 
@@ -99,7 +101,7 @@ module ESM
         info!(address: local_address.inspect, public_id: public_id, server_id: nil, state: :unidentified)
 
         model = ESM::Server.find_by_public_id(public_id)
-        raise NotAuthorized if model.nil?
+        raise InvalidAccessKey if model.nil?
 
         @model = model
         @id = model.public_id
@@ -118,35 +120,35 @@ module ESM
         message = ESM::Message.from_string(decrypted_message)
 
         binding.pry
-        # Handle any errors
-        if message.errors?
-          outgoing_message&.on_error(incoming_message)
-          return
-        end
+        #   # Handle any errors
+        #   if message.errors?
+        #     outgoing_message&.on_error(incoming_message)
+        #     return
+        #   end
 
-        # Retrieve the original message. If it's nil, the message originated from the client
-        outgoing_message = @message_overseer.retrieve(incoming_message.id)
+        #   # Retrieve the original message. If it's nil, the message originated from the client
+        #   outgoing_message = @message_overseer.retrieve(incoming_message.id)
 
-        info!(
-          outgoing_message: outgoing_message&.to_h,
-          incoming_message: incoming_message.to_h
-        )
+        #   info!(
+        #     outgoing_message: outgoing_message&.to_h,
+        #     incoming_message: incoming_message.to_h
+        #   )
 
-        # Currently, :send_to_channel is the only inbound event. If adding another, convert this code
-        if incoming_message.type == :event && incoming_message.data_type == :send_to_channel
-          server = ESM::Server.find_by(uuid: server_uuid)
-          ESM::Event::SendToChannel.new(server, incoming_message).run!
-          return
-        end
+        #   # Currently, :send_to_channel is the only inbound event. If adding another, convert this code
+        #   if incoming_message.type == :event && incoming_message.data_type == :send_to_channel
+        #     server = ESM::Server.find_by(uuid: server_uuid)
+        #     ESM::Event::SendToChannel.new(server, incoming_message).run!
+        #     return
+        #   end
 
-        outgoing_message&.on_response(incoming_message)
-      rescue => e
-        command = outgoing_message&.command
+        #   outgoing_message&.on_response(incoming_message)
+        # rescue => e
+        #   command = outgoing_message&.command
 
-        # Bubble up to #on_inbound
-        raise e if command.nil?
+        #   # Bubble up to #on_inbound
+        #   raise e if command.nil?
 
-        raise "Replace!! command.handle_error(e)"
+        #   raise "Replace!! command.handle_error(e)"
       end
 
       private

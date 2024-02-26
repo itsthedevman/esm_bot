@@ -6,10 +6,7 @@ module ESM
       ################################
       # Class methods
       ################################
-
       class << self
-        attr_reader :instance
-
         delegate :disconnect_all!, :pause, :resume, to: :@instance, allow_nil: true
 
         def run!
@@ -28,10 +25,10 @@ module ESM
       ################################
       # Instance methods
       ################################
-
       def initialize
         @ledger = Ledger.new
         @connections = Concurrent::Map.new
+        @status = Inquirer.new(:stopped, :paused, :started, default: :stopped)
       end
 
       def start
@@ -40,17 +37,23 @@ module ESM
         check_every = ESM.config.loops.connection_server.check_every
         @task = Concurrent::TimerTask.execute(execution_interval: check_every) { on_connect }
 
-        info!(status: "Started")
+        @status.set(:started)
+        info!(status: @status)
       end
 
       def stop
-        true
+        @status.set(:stopped)
+        @connections.each(&:close)
+
+        @server.shutdown(:RDWR)
       end
 
       private
 
       def on_connect
-        client = Client.new(@server.accept, @ledger)
+        return unless @status.started?
+
+        client = Client.new(self, @server.accept, @ledger)
         @waiting_room << client
       end
     end

@@ -30,7 +30,6 @@ class Inquirer
 
     if default
       default = [default] unless default.is_a?(Array)
-
       set(*default)
     end
   end
