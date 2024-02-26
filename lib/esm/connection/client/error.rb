@@ -20,6 +20,22 @@ module ESM
       class RejectedMessage < Error
         def initialize(reason = "") = super("Message was rejected. #{reason}")
       end
+
+      class DecryptionError < Error
+        def initialize(message = "") = super(message.presence || "Failed to decrypt")
+      end
+
+      class InvalidBase64 < DecryptionError
+        def initialize = super("Invalid base64")
+      end
+
+      class InvalidSecretKey < DecryptionError
+        def initialize = super("Invalid secret key")
+      end
+
+      class InvalidNonce < DecryptionError
+        def initialize = super("Invalid nonce")
+      end
     end
   end
 end

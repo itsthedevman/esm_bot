@@ -54,37 +54,9 @@ development:
 
 test:
   !!merge <<: *default
-
-  loops:
-    # ESM::Request::Overseer
-    request_overseer:
-      check_every: 0.5
-
-    # ESM::Websocket::Request::Overseer
-    websocket_request_overseer:
-      check_every: 0.5
-
-    connection_message_overseer:
-      check_every: 0.01
-
-    # ESM::Websocket::Connection::Overseer
-    websocket_connection_overseer:
-      check_every: 0.5
-
-    # ESM::Bot::DeliveryOverseer
-    bot_delivery_overseer:
-      check_every: 0.01
-
-    # ESM::Request::Overseer
-    request_overseer:
-      check_every: 0.5
-
-    # ESM::Websocket::Request::Overseer
-    websocket_request_overseer:
-      check_every: 0.5
+  error_logging_channel_id: ""
   cache:
     server_ids: 0
-  error_logging_channel_id: ""
 
 production:
   !!merge <<: *default
