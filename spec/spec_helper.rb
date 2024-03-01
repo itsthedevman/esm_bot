@@ -111,7 +111,7 @@ RSpec.configure do |config|
       execute_sqf!(sqf)
     end
 
-    if (connection_server = ESM::Connection::Server.instance)
+    if (connection_server = ESM.connection_server)
       # Ensure every message is either replied to or timed out
       wait_for { connection_server.message_overseer.size }.to eq(0), connection_server.message_overseer.mailbox.to_s
 

@@ -215,12 +215,19 @@ module ESM
     end
 
     def backtrace_cleaner
-      @backtrace_cleaner || begin
+      @backtrace_cleaner ||= begin
         cleaner = ActiveSupport::BacktraceCleaner.new
         cleaner.add_filter { |line| line.gsub(root.to_s, "") }
         cleaner.add_silencer { |line| /\/ruby.gems/.match?(line) }
         cleaner
       end
+    end
+
+    #
+    # Handles the connection between the bot and all of the A3 servers
+    #
+    def connection_server
+      @connection_server ||= ESM::Connection::Server.new
     end
   end
 end

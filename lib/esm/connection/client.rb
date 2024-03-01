@@ -23,7 +23,7 @@ module ESM
         @initialized = false
         @metadata = set_metadata(vg_enabled: false, vg_max_sizes: 0)
 
-        check_every = ESM.config.loops.connection_client.check_every
+        check_every = ESM.config.connection_client.check_every
         @task = Concurrent::TimerTask.execute(execution_interval: check_every) { on_message }
         @thread_pool = Concurrent::ThreadPoolExecutor.new(
           min_threads: 2,
@@ -37,8 +37,10 @@ module ESM
 
         info!(address: local_address.inspect, public_id: @id, server_id: @model&.server_id, state: :disconnected)
 
-        @tcp_server.disconnect(@id)
+        @task.shutdown
         @socket.close
+      ensure
+        @tcp_server.disconnected(self)
       end
 
       def send_message(message = nil, type: :message, **)
@@ -76,7 +78,7 @@ module ESM
           when :handshake
             forward_response_to_caller(request)
           when :message
-            if @ledger.exists?(request)
+            if @ledger.include?(request)
               forward_response_to_caller(request)
             else
               on_request(request)
@@ -95,7 +97,6 @@ module ESM
         end
       end
 
-      # TODO: This instance will need to disconnect itself if it doesn't receive the identify request within 10 seconds
       def on_identification(response)
         public_id = response.content
         info!(address: local_address.inspect, public_id: public_id, server_id: nil, state: :unidentified)
@@ -111,6 +112,8 @@ module ESM
 
         perform_handshake!
         request_initialization!
+
+        @tcp_server.connected(self)
       rescue Client::RejectedMessage
         close
       end

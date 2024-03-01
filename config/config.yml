@@ -53,6 +53,8 @@ development:
 
 test:
   !!merge <<: *default
+  connection_server:
+    disconnect_after: 0.5
   error_logging_channel_id: ""
   cache:
     server_ids: 0
