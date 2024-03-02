@@ -49,9 +49,6 @@ describe ESM::Event::ServerInitialization, :requires_connection, v2: true do
     end.not_to raise_error
 
     server.reload
-
-    # Clear the message sent from the event
-    connection_server.message_overseer.remove_all!
   end
 
   it "updates the server" do

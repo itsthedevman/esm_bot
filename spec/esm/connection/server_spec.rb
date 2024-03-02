@@ -17,6 +17,10 @@ describe ESM::Connection::Server, v2: true do
     end
 
     context "when the client has been in the waiting room for too long" do
+      before do
+        ESM.config.connection_server.disconnect_after = 0.5
+      end
+
       it "times out the client" do
         client = ESM::Connection::Client.new(nil, nil, nil)
         expect(client).to receive(:close)

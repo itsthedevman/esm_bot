@@ -3,6 +3,8 @@
 module ESM
   module Connection
     class Server
+      attr_reader :connections
+
       def initialize
         @ledger = Ledger.new
         @status = Inquirer.new(:stopped, :paused, :started, default: :stopped)
@@ -12,15 +14,13 @@ module ESM
       end
 
       def start
-        @server = Socket.new(
-          TCPServer.new("0.0.0.0", ESM.config.ports.connection_server)
-        )
+        @server = TCPServer.new("0.0.0.0", ESM.config.ports.connection_server)
 
-        @connect_task = Concurrent::TimerTask.execute(execution_interval: @config.connection) do
+        @connect_task = Concurrent::TimerTask.execute(execution_interval: @config.connection_check) do
           on_connect
         end
 
-        @disconnect_task = Concurrent::TimerTask.execute(execution_interval: @config.waiting_room) do
+        @disconnect_task = Concurrent::TimerTask.execute(execution_interval: @config.waiting_room_check) do
           check_waiting_room
         end
 
@@ -37,14 +37,14 @@ module ESM
       end
 
       def stop
-        @status.set(:stopped)
         @connections.each(&:close)
 
         @waiting_room.shutdown
         @connect_task.shutdown
         @disconnect_task.shutdown
 
-        @server&.shutdown(:RDWR) if @server&.readable?(0) || @server&.writeable?(0)
+        @server.shutdown(:RDWR) if @status.started?
+        @status.set(:stopped)
       end
 
       def connected(client)

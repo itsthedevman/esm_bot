@@ -14,10 +14,6 @@ default: &default
   websocket_request_overseer:
     check_every: 15
 
-  # ESM::Connection::MessageOverseer
-  connection_message_overseer:
-    check_every: 0.1
-
   # ESM::Websocket::Connection::Overseer
   websocket_connection_overseer:
     check_every: 3
@@ -28,13 +24,18 @@ default: &default
 
   # ESM::Connection::Server
   connection_server:
-    connection: 0.01
-    waiting_room: 1
+    connection_check: 0.01
+    waiting_room_check: 1
     disconnect_after: 10
 
   # ESM::Connection::Client
   connection_client:
-    check_every: 0.001
+    request_check: 0.001
+    response_timeout: 10
+    min_threads: 2
+    max_threads: 20
+    max_queue: 250
+
   cache:
     server_ids: 60
   tips:
@@ -53,8 +54,6 @@ development:
 
 test:
   !!merge <<: *default
-  connection_server:
-    disconnect_after: 0.5
   error_logging_channel_id: ""
   cache:
     server_ids: 0

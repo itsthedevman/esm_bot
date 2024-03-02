@@ -19,9 +19,6 @@ describe "ESMs_system_message_respond_to", :requires_connection, v2: true do
       success = true
     end
 
-    # Needed for the message cycle to properly complete
-    connection_server.message_overseer.watch(outbound_message)
-
     execute_sqf!(
       <<~SQF
         ["#{outbound_message.id}"] call ESMs_system_message_respond_to;
@@ -49,9 +46,6 @@ describe "ESMs_system_message_respond_to", :requires_connection, v2: true do
 
       success = true
     end
-
-    # Needed for the message cycle to properly complete
-    connection_server.message_overseer.watch(outbound_message)
 
     execute_sqf!(
       <<~SQF

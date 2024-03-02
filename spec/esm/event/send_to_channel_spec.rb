@@ -5,7 +5,6 @@ describe ESM::Event::SendToChannel, :requires_connection, v2: true do
 
   after do
     community.update!(logging_channel_id: nil)
-    connection_server.message_overseer.remove_all!
   end
 
   it "sends a message" do

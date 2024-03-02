@@ -21,9 +21,6 @@ describe "ESMs_system_message_respond_withError", :requires_connection, v2: true
       success = true
     end
 
-    # Needed for the message cycle to properly complete
-    connection_server.message_overseer.watch(outbound_message)
-
     execute_sqf!(
       <<~SQF
         ["#{outbound_message.id}", "An error message"] call ESMs_system_message_respond_withError;

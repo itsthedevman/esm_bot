@@ -89,13 +89,13 @@ module ESM
     end
 
     def connection
-
+      ESM.connection_server.connections[public_id]
     end
 
     def connected?
       return ESM::Websocket.connected?(server_id) unless v2? # V1
 
-      metadata.initialized == "true"
+      !connection.nil?
     end
 
     def uptime
