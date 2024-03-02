@@ -203,7 +203,7 @@ module ESM
           aliases: true
         )[env.to_s]
 
-        config.to_istruct
+        config.to_struct
       end
     end
 
