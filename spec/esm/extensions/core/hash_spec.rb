@@ -1,6 +1,32 @@
 # frozen_string_literal: true
 
 describe Hash do
+  describe "#to_struct" do
+    it "converts to Struct" do
+      obj = {foo: "bar"}.to_struct
+      expect(obj).not_to be_nil
+      expect(obj).to be_a(Struct)
+      expect(obj.foo).to eq("bar")
+    end
+
+    it "is recursive" do
+      obj = {foo: {bar: {baz: true}}}.to_struct
+      expect(obj).not_to be_nil
+      expect(obj).to be_a(Struct)
+      expect(obj.foo).to be_a(Struct)
+      expect(obj.foo.bar).to be_a(Struct)
+      expect(obj.foo.bar.baz).to be(true)
+    end
+
+    it "preserves ruby classes" do
+      input = {time: Time.current}
+      output = input.to_struct
+      expect(output).not_to be_nil
+      expect(output).to be_a(Struct)
+      expect(output.time).to eq(input[:time])
+    end
+  end
+
   describe "#to_ostruct" do
     it "converts to OpenStruct" do
       obj = {foo: "bar"}.to_ostruct
