@@ -12,11 +12,10 @@ GIT
     discordrb-webhooks (3.5.0)
       rest-client (>= 2.0.0)
 
-GIT
-  remote: https://github.com/itsthedevman/redis_ipc
-  revision: f01e772f628186d228596e5ea6a2b0d55aadac12
+PATH
+  remote: ..
   specs:
-    redis_ipc (1.0.1)
+    redis_ipc (1.0.2)
       activesupport (>= 6.1)
       concurrent-ruby (~> 1.2)
       concurrent-ruby-ext (~> 1.2)

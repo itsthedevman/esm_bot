@@ -129,8 +129,8 @@ module ESM
       ESM::Connection::Server.run!
       ESM::API.connect(
         logger: ESM.logger,
-        consumer: {pool_size: 30},
-        dispatcher: {pool_size: 10}
+        consumer: {pool_size: 10},
+        dispatcher: {pool_size: 5}
       )
 
       # Once everything is set up, the commands can be hooked
