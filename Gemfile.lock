@@ -1,6 +1,6 @@
 GIT
   remote: https://github.com/itsthedevman/discordrb.git
-  revision: 3fc283e8f21cb1bb79303ea96edfa6637ec72850
+  revision: ebb5e8da004b6bc6114b5ff8859cc825de8c0702
   branch: fix/group-subcommand-mixing
   specs:
     discordrb (3.5.0)
@@ -120,7 +120,7 @@ GEM
       activerecord (>= 5.a)
       database_cleaner-core (~> 2.0.0)
     database_cleaner-core (2.0.1)
-    diff-lcs (1.5.0)
+    diff-lcs (1.5.1)
     docile (1.4.0)
     domain_name (0.6.20240107)
     dotenv (2.8.1)
@@ -161,7 +161,7 @@ GEM
     httparty (0.21.0)
       mini_mime (>= 1.0.0)
       multi_xml (>= 0.5.2)
-    i18n (1.14.1)
+    i18n (1.14.4)
       concurrent-ruby (~> 1.0)
     io-console (0.7.1)
     irb (1.11.1)
@@ -188,7 +188,7 @@ GEM
     minitest (5.21.1)
     multi_json (1.15.0)
     multi_xml (0.6.0)
-    multipart-post (2.3.0)
+    multipart-post (2.4.0)
     mustermann (3.0.0)
       ruby2_keywords (~> 0.0.1)
     mutex_m (0.2.0)
@@ -277,11 +277,11 @@ GEM
       rspec-support (~> 3.12.0)
     rspec-expectations (3.12.3)
       diff-lcs (>= 1.2.0, < 2.0)
-      rspec-support (~> 3.12.0)
-    rspec-mocks (3.12.6)
+      rspec-support (~> 3.13.0)
+    rspec-mocks (3.13.0)
       diff-lcs (>= 1.2.0, < 2.0)
-      rspec-support (~> 3.12.0)
-    rspec-support (3.12.1)
+      rspec-support (~> 3.13.0)
+    rspec-support (3.13.1)
     rspec-wait (0.0.9)
       rspec (>= 3, < 4)
     rubocop (1.59.0)

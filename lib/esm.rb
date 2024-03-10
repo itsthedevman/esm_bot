@@ -33,6 +33,7 @@
   "puma/events",
   "pry",
   "redis",
+  "redis_ipc",
   "securerandom",
   "semantic",
   "steam_web_api",
