@@ -60,6 +60,7 @@ module ESM
       return if stopping?
 
       @esm_status = :stopping
+      ESM::API.stop!
       ESM::Websocket::Server.stop
       ESM.connection_server.stop
       ESM::Request::Overseer.die
