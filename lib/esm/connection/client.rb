@@ -35,11 +35,10 @@ module ESM
       end
 
       def close
-        @socket.close
-
         info!(address: local_address.inspect, public_id: @id, server_id: @model&.server_id, state: :disconnected)
 
         @task.shutdown
+        @socket.close
       ensure
         @tcp_server.disconnected(self)
       end

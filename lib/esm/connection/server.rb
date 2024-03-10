@@ -25,7 +25,7 @@ module ESM
         end
 
         resume
-        info!(status: @status)
+        info!(status: @status.to_s)
       end
 
       def pause

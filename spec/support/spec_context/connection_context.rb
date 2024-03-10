@@ -11,17 +11,10 @@ RSpec.shared_context("connection") do
   end
 
   before do |example|
-    connection_server.stop
     next unless example.metadata[:requires_connection]
 
     ESM::ExileTerritory.delete_all
     ESM::Test.callbacks.run_callback(:before_connection, on_instance: self)
-
-    connection_server.start
-
-    wait_for { server.reload.connected? }.to be(true),
-      "esm_arma never connected. From the esm_arma repo, please run `bin/bot_testing`"
-
     ESM::Test.outbound_server_messages.clear
 
     users = []
@@ -33,7 +26,11 @@ RSpec.shared_context("connection") do
       # Creates a user on the server with the same steam_uid
       allow(user).to receive(:connect) { |**attrs| spawn_test_user(user, on: server, **attrs) }
     end
-    info!("initialized")
+
+    connection_server.start
+
+    wait_for { server.reload.connected? }.to be(true),
+      "esm_arma never connected. From the esm_arma repo, please run `bin/bot_testing`"
   rescue ActiveRecord::ConnectionNotEstablished
     raise "Unable to connect to the Exile MySQL server. Please ensure it is running before trying again"
   end
