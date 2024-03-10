@@ -120,14 +120,12 @@ module ESM
       end
 
       # V1
-      # V1
       # Wait until the bot has connected before starting the websocket.
       # This is to avoid servers connecting before the bot is ready
       ESM::Websocket.start!
       ESM::Request::Overseer.watch
       # V1
 
-      # Wait until after the bot is connected before allowing servers to connect
       # Wait until after the bot is connected before allowing servers to connect
       ESM::Connection::Server.run!
       ESM::API.run!
