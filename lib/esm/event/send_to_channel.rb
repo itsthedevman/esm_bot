@@ -63,7 +63,7 @@ module ESM
           fields.each do |field|
             value =
               if field[:value].is_a?(Hash)
-                field[:value].format(join_with: "\n") do |key, value|
+                field[:value].map_join("\n") do |key, value|
                   "**#{key.humanize(keep_id_suffix: true)}:** #{value}"
                 end
               else
