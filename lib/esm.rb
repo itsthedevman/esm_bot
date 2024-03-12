@@ -74,6 +74,7 @@ def __log(severity, caller_data, content)
     e = content[:error]
 
     content[:error] = {
+      class: e.class,
       message: e.message,
       backtrace: ESM.backtrace_cleaner.clean(e.backtrace)
     }
