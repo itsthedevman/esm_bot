@@ -32,6 +32,8 @@ module ESM
       #
       def wait_readable(timeout = 5)
         IO.select([@socket], nil, nil, timeout) || [[], [], []]
+      rescue IOError
+        [[], [], []]
       end
 
       #
@@ -43,6 +45,8 @@ module ESM
       #
       def wait_writeable(timeout = 5)
         IO.select(nil, [@socket], nil, timeout) || [[], [], []]
+      rescue IOError
+        [[], [], []]
       end
 
       def readable?(timeout = 5)

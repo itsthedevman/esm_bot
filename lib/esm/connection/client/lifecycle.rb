@@ -6,6 +6,61 @@ module ESM
       module Lifecycle
         private
 
+        def receive_request
+          data = @socket.read
+          return if data.blank?
+
+          inbound_data = Base64.strict_decode64(data)
+
+          # The first data we receive should be the identification (when @id is nil)
+          # Every request from that point on will be encrypted
+          data =
+            if @id.nil?
+              inbound_data
+            else
+              @encryption.decrypt(inbound_data)
+            end
+
+          data = ESM::JSON.parse(data)
+          return if data.blank?
+
+          Response.new(**data)
+        end
+
+        def send_request(type:, content: nil, id: nil, wait_for_response: true, nonce_indices: [])
+          request = Request.new(id: id, type: type, content: content)
+
+          # This tracks the request and allows us to receive the response across multiple threads
+          mailbox = @ledger.add(request) if wait_for_response
+
+          # Send the data to the client
+          @socket.write(
+            Base64.strict_encode64(
+              @encryption.encrypt(request.to_json, nonce_indices: nonce_indices)
+            )
+          )
+
+          return unless wait_for_response
+
+          # And here is where we receive it
+          case (result = mailbox.take(@config.response_timeout))
+          when Response
+            Result.fulfilled(result.content)
+          when StandardError
+            Result.rejected(result)
+          else
+            # Concurrent::MVar::TIMEOUT
+            Result.rejected(RequestTimeout.new)
+          end
+        end
+
+        def forward_response_to_caller(response)
+          mailbox = @ledger.remove(response)
+          raise InvalidMessage if mailbox.nil?
+
+          mailbox.put(response)
+        end
+
         def on_message
           request = receive_request
           return if request.nil?
@@ -34,6 +89,9 @@ module ESM
           ensure
             @ledger.remove(request)
           end
+        rescue => e
+          error!(error: e)
+          close
         end
 
         def on_identification(response)
@@ -58,9 +116,6 @@ module ESM
         end
 
         def on_request(request)
-          decrypted_message = @encryption.decrypt(request.content.bytes)
-          message = ESM::Message.from_string(decrypted_message)
-
           binding.pry
           #   # Handle any errors
           #   if message.errors?
@@ -107,9 +162,18 @@ module ESM
         end
 
         def request_initialization!
-          info!(address: local_address.inspect, public_id: @id, server_id: @model.server_id, state: :initialization)
+          info!(address: local_address.inspect, public_id: @id, server_id: @model.server_id, state: :pre_initialization)
 
           message = send_message(type: :initialize)
+
+          info!(
+            address: local_address.inspect,
+            public_id: @id,
+            server_id: @model.server_id,
+            state: :initialization,
+            inbound: message.to_h
+          )
+
           ESM::Event::ServerInitialization.new(self, message).run!
         end
       end

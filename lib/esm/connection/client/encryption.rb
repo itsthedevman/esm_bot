@@ -34,7 +34,9 @@ module ESM
           nil
         end
 
-        def encrypt(data, nonce_indices: @nonce_indices)
+        def encrypt(data, nonce_indices: [])
+          nonce_indices = @nonce_indices if nonce_indices.blank?
+
           cipher = OpenSSL::Cipher.new(CIPHER).encrypt
           nonce = cipher.random_iv
 
@@ -50,30 +52,28 @@ module ESM
 
           # If the nonce index is greater than the size of the encrypted_bytes,
           # ruby will add `nil` until it gets to the index
-          Base64.strict_encode64(encrypted_data.compact.pack("C*"))
+          encrypted_data.compact.pack("C*")
         end
 
         #
         # Attempts to decrypt the provided byte array
         #
-        # @param input [String] A Base64 encoded UTF-8 string containing encrypted data
+        # @param input [String] A UTF-8 string containing encrypted data
         # @param nonce_indices [<Type>] The nonce location as an index in the Base64 DEcoded byte array
         #
         # @return [String] The decoded string
         #
         # @raises DecryptionError
-        # @raises InvalidBase64
         # @raises InvalidSecretKey
         # @raises InvalidNonce
         #
-        def decrypt(input, nonce_indices: @nonce_indices)
+        def decrypt(input, nonce_indices: [])
+          nonce_indices = @nonce_indices if nonce_indices.blank?
           cipher = OpenSSL::Cipher.new(CIPHER).decrypt
-
-          encoded_packet = Base64.strict_decode64(input).bytes
 
           nonce = []
           packet = []
-          encoded_packet.each_with_index do |byte, index|
+          input.bytes.each_with_index do |byte, index|
             if nonce_indices[nonce.size] == index
               nonce << byte
               next
@@ -91,8 +91,6 @@ module ESM
           decrypted_data
         rescue ArgumentError => e
           case e.message
-          when "invalid base64"
-            raise InvalidBase64
           when "key must be 32 bytes"
             raise InvalidSecretKey
           when "iv must be #{NONCE_SIZE} bytes"

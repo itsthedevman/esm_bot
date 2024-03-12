@@ -53,59 +53,20 @@ module ESM
 
         response = send_request(
           id: message ? message.id : nil,
-          type: type,
-          content: @encryption.encrypt(message.to_s, nonce_indices: nonce_indices),
-          wait_for_response: wait_for_response
+          content: message.to_s,
+          type:,
+          wait_for_response:,
+          nonce_indices:
         )
 
         return unless wait_for_response
         raise RejectedMessage, response.reason if response.rejected?
 
-        decrypted_message = @encryption.decrypt(response.value)
-        ESM::Message.from_string(decrypted_message)
+        ESM::Message.from_string(response.value)
       end
 
       def set_metadata(**)
         @metadata = Metadata.new(**)
-      end
-
-      private
-
-      def receive_request
-        data = ESM::JSON.parse(@socket.read)
-        return if data.blank?
-
-        Response.new(**data)
-      end
-
-      def send_request(type:, content: nil, id: nil, wait_for_response: true)
-        request = Request.new(id: id, type: type, content: content)
-
-        # This tracks the request and allows us to receive the response across multiple threads
-        mailbox = @ledger.add(request) if wait_for_response
-
-        # Send the data to the client
-        @socket.write(request.to_json)
-
-        return unless wait_for_response
-
-        # And here is where we receive it
-        case (result = mailbox.take(@config.response_timeout))
-        when Response
-          Result.fulfilled(result.content)
-        when StandardError
-          Result.rejected(result)
-        else
-          # Concurrent::MVar::TIMEOUT
-          Result.rejected(RequestTimeout.new)
-        end
-      end
-
-      def forward_response_to_caller(response)
-        mailbox = @ledger.remove(response)
-        raise InvalidMessage if mailbox.nil?
-
-        mailbox.put(response)
       end
     end
   end
