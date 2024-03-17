@@ -2,14 +2,14 @@
 
 module ESM
   module Connection
-    class Server
+    class Client
       class Ledger < Concurrent::Map
         def include?(request)
           !self[request.id].nil?
         end
 
         def add(request)
-          self[request.id] = Concurrent::MVar.new
+          self[request.id] = ESM::Connection::Client::Promise.new
         end
 
         def remove(request)

@@ -3,46 +3,26 @@
 module ESM
   module Connection
     class Server
-      # I would like to use Concurrent::Array but it's not thread safe
-      # https://github.com/ruby-concurrency/concurrent-ruby/issues/929
-      class WaitingRoom
+      class WaitingRoom < Concurrent::Array
         Entry = ImmutableStruct.define(:connected_at, :client)
 
-        def initialize
-          @lock = Mutex.new
-          @inner = []
-        end
-
         def shutdown
-          @lock.synchronize do
-            @inner.each(&:close)
-            @inner = []
-          end
+          each { |e| e.client.close }
         end
 
         def include?(client)
-          @lock.synchronize { @inner.include?(client) }
+          any? { |e| e.client == client }
         end
 
         def <<(client)
-          @lock.synchronize do
-            @inner << Entry.new(
-              connected_at: Time.current,
-              client: client
-            )
-          end
+          super(Entry.new(
+            connected_at: Time.current,
+            client: client
+          ))
         end
 
         def delete(client)
-          @lock.synchronize { @inner.delete(client) }
-        end
-
-        def delete_if(&block)
-          @lock.synchronize { @inner.delete_if(&block) }
-        end
-
-        def size
-          @lock.synchronize { @inner.size }
+          delete_if { |e| e.client == client }
         end
       end
     end

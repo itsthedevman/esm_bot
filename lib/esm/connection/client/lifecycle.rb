@@ -6,63 +6,8 @@ module ESM
       module Lifecycle
         private
 
-        def receive_request
-          data = @socket.read
-          return if data.blank?
-
-          inbound_data = Base64.strict_decode64(data)
-
-          # The first data we receive should be the identification (when @id is nil)
-          # Every request from that point on will be encrypted
-          data =
-            if @id.nil?
-              inbound_data
-            else
-              @encryption.decrypt(inbound_data)
-            end
-
-          data = ESM::JSON.parse(data)
-          return if data.blank?
-
-          Response.new(**data)
-        end
-
-        def send_request(type:, content: nil, id: nil, wait_for_response: true, nonce_indices: [])
-          request = Request.new(id: id, type: type, content: content)
-
-          # This tracks the request and allows us to receive the response across multiple threads
-          mailbox = @ledger.add(request) if wait_for_response
-
-          # Send the data to the client
-          @socket.write(
-            Base64.strict_encode64(
-              @encryption.encrypt(request.to_json, nonce_indices: nonce_indices)
-            )
-          )
-
-          return unless wait_for_response
-
-          # And here is where we receive it
-          case (result = mailbox.take(@config.response_timeout))
-          when Response
-            Result.fulfilled(result.content)
-          when StandardError
-            Result.rejected(result)
-          else
-            # Concurrent::MVar::TIMEOUT
-            Result.rejected(RequestTimeout.new)
-          end
-        end
-
-        def forward_response_to_caller(response)
-          mailbox = @ledger.remove(response)
-          raise InvalidMessage if mailbox.nil?
-
-          mailbox.put(response)
-        end
-
         def on_message
-          request = receive_request
+          request = read
           return if request.nil?
 
           @thread_pool.post do
@@ -81,7 +26,7 @@ module ESM
               raise "Invalid data received: #{response}"
             end
           rescue Client::Error => e
-            send_request(type: :error, content: e.message, wait_for_response: false)
+            write(type: :error, content: e.message, block: false)
             close
           rescue => e
             error!(error: e)
@@ -100,6 +45,7 @@ module ESM
 
           model = ESM::Server.find_by_public_id(public_id)
           raise InvalidAccessKey if model.nil?
+          raise ExistingConnection if model.connected?
 
           @model = model
           @id = model.public_id
@@ -110,8 +56,8 @@ module ESM
           perform_handshake!
           request_initialization!
 
-          @tcp_server.connected(self)
-        rescue Client::RejectedMessage
+          @tcp_server.client_connected(self)
+        rescue Error
           close
         end
 
@@ -151,20 +97,27 @@ module ESM
         def perform_handshake!
           info!(address: local_address.inspect, public_id: @id, server_id: @model.server_id, state: :handshake)
 
-          starting_indices = @encryption.nonce_indices
-          @encryption.regenerate_nonce_indices
+          new_indices = @encryption.generate_nonce_indices
+          message = ESM::Message.event.set_data(:handshake, indices: new_indices)
 
-          message = ESM::Message.event.set_data(:handshake, indices: @encryption.nonce_indices)
+          # This doesn't use #send_request because it needs to hook into the promise to immediately
+          # swap the nonce to the new one before the client has time to respond.
+          # Ignorance is bliss but this shouldn't be a race condition due to network lag
+          # "It works on my computer"
+          response = write(id: message.id, type: :handshake, content: message.to_s)
+            .then { |_| @encryption.nonce_indices = new_indices }
+            .wait_for_response(@config.response_timeout)
 
-          # The response is not needed here
-          # However, the message must be responded to in order to confirm the handshake was a success
-          send_message(message, type: :handshake, nonce_indices: starting_indices)
+          raise response.reason if response.rejected?
+
+          # Ledger doesn't care what object it is, so long as it responds to #id
+          @ledger.remove(message)
         end
 
         def request_initialization!
           info!(address: local_address.inspect, public_id: @id, server_id: @model.server_id, state: :pre_initialization)
 
-          message = send_message(type: :initialize)
+          message = send_request(type: :initialize)
 
           info!(
             address: local_address.inspect,

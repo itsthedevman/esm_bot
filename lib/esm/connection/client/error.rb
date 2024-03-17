@@ -9,6 +9,10 @@ module ESM
         def initialize = super("Request timed out")
       end
 
+      class ExistingConnection < Error
+        def initialize = super("Client already connected")
+      end
+
       class InvalidMessage < Error
         def initialize = super("Invalid message received")
       end
@@ -17,8 +21,8 @@ module ESM
         def initialize = super("Invalid access key")
       end
 
-      class RejectedMessage < Error
-        def initialize(reason = "") = super("Message was rejected. #{reason}")
+      class RejectedRequest < Error
+        def initialize(reason = "") = super(reason)
       end
 
       class DecryptionError < Error

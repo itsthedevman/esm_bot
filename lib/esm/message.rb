@@ -106,6 +106,36 @@ module ESM
       self
     end
 
+    def set_command_metadata(current_user: nil, target_user: nil)
+      metadata = {}
+
+      if current_user
+        metadata[:player] = {
+          steam_uid: current_user.steam_uid,
+          discord_id: current_user.discord_id,
+          discord_name: current_user.username,
+          discord_mention: current_user.mention
+        }
+      end
+
+      if target_user
+        target = {steam_uid: target_user.steam_uid}
+
+        # Instances of User::Ephemeral do not contain discord information
+        if !target_user.is_a?(ESM::User::Ephemeral)
+          target.merge!(
+            discord_id: target_user.discord_id,
+            discord_name: target_user.username,
+            discord_mention: target_user.mention
+          )
+        end
+
+        metadata[:target] = target
+      end
+
+      set_metadata(:command, metadata)
+    end
+
     # Each hash has the following attributes:
     #   type [Symbol, String] The type of error. Valid options are:
     #     code      # Uses the message to look up a predefined message in the locales
@@ -153,42 +183,6 @@ module ESM
 
     def metadata_attributes
       @metadata.to_h
-    end
-
-    #
-    # Sets the user's ID, name, mention, and steam uid to the metadata for this message. Will also do the same for the target user if the command has one
-    # This only applies to messages that have a command in their routing data
-    #
-    def apply_command_metadata(command)
-      metadata = Struct.new(:player, :target).new
-
-      current_user = command.current_user
-      if current_user
-        metadata.player = {
-          steam_uid: current_user.steam_uid,
-          discord_id: current_user.discord_id,
-          discord_name: current_user.username,
-          discord_mention: current_user.mention
-        }
-      end
-
-      target_user = command.target_user
-      if target_user
-        target = {steam_uid: target_user.steam_uid}
-
-        # Instances of User::Ephemeral do not contain discord information
-        if !target_user.is_a?(ESM::User::Ephemeral)
-          target.merge!(
-            discord_id: target_user.discord_id,
-            discord_name: target_user.username,
-            discord_mention: target_user.mention
-          )
-        end
-
-        metadata.target = target
-      end
-
-      set_metadata(:command, metadata)
     end
 
     #
