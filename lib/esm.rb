@@ -113,12 +113,7 @@ module ESM
       require_relative "post_init"
 
       # Start the bot
-      if @console
-        # Allow RSpec to continue
-        Thread.new { bot.run }
-      else
-        bot.run
-      end
+      bot.run(async: @console)
     end
 
     # Load everything right meow

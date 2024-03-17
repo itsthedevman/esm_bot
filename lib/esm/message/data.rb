@@ -58,11 +58,11 @@ module ESM
       # @see config/mapping.yml for more information
       def sanitize_inbound_content(inbound_content)
         inbound_content.deep_symbolize_keys!
-        types_mapping = TYPES_MAPPING[@type]
+        types_mapping = self.class::TYPES_MAPPING[@type]
 
         # Catches if TYPES_MAPPING does not have type defined
         if types_mapping.nil?
-          raise ESM::Exception::InvalidMessage, "Failed to find #{self.class.name} type \"#{@type}\" in \"config/message/*_types.yml\""
+          raise ESM::Exception::InvalidMessage, "Failed to find type :#{@type} in \"#{self.class.name}::TYPES_MAPPING\""
         end
 
         types_mapping.each_with_object({}) do |(attribute_name, attribute_type), output|

@@ -45,7 +45,7 @@ module ESM
       super(token: ESM.config.token, intents: INTENTS)
     end
 
-    def run
+    def run(async: false)
       @timer.start!
 
       ESM::Command.load
@@ -53,7 +53,7 @@ module ESM
       # Binds the Discord Events
       bind_events!
 
-      super
+      super(async)
     end
 
     def stop
