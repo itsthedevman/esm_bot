@@ -66,16 +66,6 @@ module ESM
       ESM::Request::Overseer.die
 
       super
-
-      exit
-    end
-
-    # Overriding DiscordRB's variant to allow commands to be case-insensitive
-    def simple_execute(chain, event)
-      return nil if chain.empty?
-
-      args = chain.split
-      execute_command(args[0].downcase.to_sym, event, args[1..])
     end
 
     ###########################
@@ -119,18 +109,6 @@ module ESM
         return
       end
 
-      # V1
-      # Wait until the bot has connected before starting the websocket.
-      # This is to avoid servers connecting before the bot is ready
-      ESM::Websocket.start!
-      ESM::Request::Overseer.watch
-      # V1
-
-      # Wait until after the bot is connected before allowing servers to connect
-      ESM.connection_server.start
-
-      ESM::API.run!
-
       # Once everything is set up, the commands can be hooked
       ESM::Command.setup_event_hooks!
 
@@ -141,6 +119,16 @@ module ESM
         invite_url: invite_url(permission_bits: ESM::Bot::PERMISSION_BITS),
         started_in: "#{@timer.stop!}s"
       )
+
+      ESM::API.run!
+
+      # V1
+      ESM::Websocket.start!
+      ESM::Request::Overseer.watch
+      # V1
+
+      # Wait until after the bot is connected before allowing servers to connect
+      ESM.connection_server.start
     end
 
     def esm_server_create(event)
