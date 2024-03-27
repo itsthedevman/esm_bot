@@ -109,11 +109,11 @@ module ESM
       @bot ||= ESM::Bot.new
     end
 
-    def run!
+    def run!(async: false)
       require_relative "post_init"
 
       # Start the bot
-      bot.run(async: @console)
+      bot.run(async:)
     end
 
     # Load everything right meow
@@ -124,11 +124,6 @@ module ESM
 
     def root
       @root ||= Pathname.new(File.expand_path("."))
-    end
-
-    # Allow IRB to be not-blocked by ESM's main thread
-    def console!
-      @console = true
     end
 
     def logger

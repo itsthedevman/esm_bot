@@ -2,7 +2,7 @@
 
 # Set to zero for indefinite
 SPEC_TIMEOUT_SECONDS = 3
-LOG_LEVEL = :error
+LOG_LEVEL = :debug
 
 RSpec.configure do |config|
   require_relative "spec_helper_pre_init"
@@ -22,7 +22,7 @@ RSpec.configure do |config|
   config.before :suite do
     FactoryBot.definition_file_paths = [ESM.root.join("spec", "support", "factories")]
     FactoryBot.find_definitions
-    DatabaseCleaner.strategy = :deletion
+    DatabaseCleaner.strategy = :truncation
   end
 
   config.around do |example|
@@ -35,8 +35,6 @@ RSpec.configure do |config|
 
     # Run the test!
     DatabaseCleaner.cleaning { example.run }
-
-    ESM::Websocket.remove_all_connections!
   end
 
   config.before(:context, :territory_admin_bypass) do
@@ -60,7 +58,6 @@ end
 
 # Wait until everything is ready
 # HEY! LISTEN! The following lines must be the last code to execute in this file
-ESM.console!
-ESM.run!
+ESM.run!(async: true)
 ESM::Test.wait_until { ESM::Database.connected? }
 ESM::Test.wait_until { ESM.bot.ready? }
