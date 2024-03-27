@@ -3,7 +3,7 @@
 describe ESM::UserAlias do
   let!(:user) { ESM::Test.user }
   let!(:community) { ESM::Test.community }
-  let!(:server) { ESM::Test.server }
+  let!(:server) { ESM::Test.server(for: community) }
   let(:second_community) { ESM::Test.second_community }
   let(:second_server) { ESM::Test.second_server }
 

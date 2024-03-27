@@ -4,7 +4,7 @@ describe ESM::Event::Xm8NotificationV1 do
   include_context "connection_v1"
 
   let!(:community) { ESM::Test.community }
-  let!(:server) { ESM::Test.server }
+  let!(:server) { ESM::Test.server(for: community) }
   let!(:user) { ESM::Test.user }
   let!(:second_user) { ESM::Test.user }
   let!(:recipients) { [user.steam_uid, second_user.steam_uid] }

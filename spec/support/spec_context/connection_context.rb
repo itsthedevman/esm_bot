@@ -3,8 +3,9 @@
 RSpec.shared_context("connection") do
   let!(:community) { ESM::Test.community }
   let!(:user) { ESM::Test.user }
-  let(:server) { ESM::Test.server }
-  let(:connection_server) { ESM.connection_server }
+  let!(:server) { ESM::Test.server(for: community) }
+  let!(:connection_server) { ESM.connection_server }
+  let(:_spawned_players) { [] }
 
   def execute_sqf!(code)
     ESM::Test.execute_sqf!(server, code, steam_uid: user.steam_uid)
@@ -13,38 +14,36 @@ RSpec.shared_context("connection") do
   before do |example|
     next unless example.metadata[:requires_connection]
 
+    connection_server.resume
+
+    wait_for { ESM.connection_server.allow_connections? }.to be(true)
+
+    # Removing all territories also checks that we're connected to MySQL
     ESM::ExileTerritory.delete_all
+
+    # Callbacks
     ESM::Test.callbacks.run_callback(:before_connection, on_instance: self)
-    ESM::Test.outbound_server_messages.clear
-
-    users = []
-    users << user if respond_to?(:user)
-    users << second_user if respond_to?(:second_user)
-    next if users.blank?
-
-    users.each do |user|
-      # Creates a user on the server with the same steam_uid
-      allow(user).to receive(:connect) { |**attrs| spawn_test_user(user, on: server, **attrs) }
-    end
-
-    connection_server.start
 
     wait_for { server.reload.connected? }.to be(true),
       "esm_arma never connected. From the esm_arma repo, please run `bin/bot_testing`"
+
+    # Add the ability to spawn players on the server
+    allow_any_instance_of(ESM::User).to receive(:connect) do |user, **attrs|
+      spawn_test_user(user, on: server, **attrs)
+      _spawned_players << user
+    end
   rescue ActiveRecord::ConnectionNotEstablished
     raise "Unable to connect to the Exile MySQL server. Please ensure it is running before trying again"
   end
 
   after do |example|
-    connection_server.stop
-
     next unless example.metadata[:requires_connection]
 
-    users = []
-    users << user if respond_to?(:user)
-    users << second_user if respond_to?(:second_user)
+    connection_server.pause
 
-    users = users.format(join_with: "\n") do |user|
+    next if _spawned_players.size == 0
+
+    users = _spawned_players.map_join("\n") do |user|
       next if user.steam_uid.blank?
 
       "ESM_TestUser_#{user.steam_uid} call _deleteFunction;" if user.connected

@@ -7,7 +7,7 @@ RSpec.shared_context("command") do
   let!(:user) { ESM::Test.user(*(respond_to?(:user_args) ? user_args : [])) }
   let(:command_class) { described_class } # This can be overwritten
   let(:command) { @previous_command || command_class.new }
-  let(:server) { ESM::Test.server }
+  let(:server) { ESM::Test.server(for: community) }
   let(:second_user) { ESM::Test.user }
 
   #

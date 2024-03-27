@@ -20,7 +20,7 @@ describe ESM::Community do
   # rubocop:disable Rails/DynamicFindBy
   describe "#find_by_server_id" do
     let(:community) { ESM::Test.community }
-    let(:server) { ESM::Test.server }
+    let(:server) { ESM::Test.server(for: community) }
 
     it "should find the community by a server id" do
       result = ESM::Community.find_by_server_id(server.server_id)

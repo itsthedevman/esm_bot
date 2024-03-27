@@ -3,12 +3,14 @@
 describe ESM::Event::SendToChannel, :requires_connection, v2: true do
   include_context "connection"
 
+  let!(:channel) { ESM::Test.channel(in: community) }
+
   after do
     community.update!(logging_channel_id: nil)
   end
 
   it "sends a message" do
-    inbound_message = ESM::Message.event.set_data(:send_to_channel, {id: ESM::Test.channel.id.to_s, content: Faker::String.random})
+    inbound_message = ESM::Message.event.set_data(:send_to_channel, {id: channel.id.to_s, content: Faker::String.random})
 
     described_class.new(server, inbound_message).run!
     wait_for { ESM::Test.messages }.not_to be_blank
@@ -28,7 +30,7 @@ describe ESM::Event::SendToChannel, :requires_connection, v2: true do
       ]
     )
 
-    inbound_message = ESM::Message.event.set_data(:send_to_channel, {id: ESM::Test.channel.id.to_s, content: embed_hash.to_json})
+    inbound_message = ESM::Message.event.set_data(:send_to_channel, {id: channel.id.to_s, content: embed_hash.to_json})
 
     described_class.new(server, inbound_message).run!
     wait_for { ESM::Test.messages }.not_to be_blank
@@ -73,7 +75,7 @@ describe ESM::Event::SendToChannel, :requires_connection, v2: true do
     )
 
     inbound_message = ESM::Message.event.set_data(
-      :send_to_channel, {id: ESM::Test.channel.id.to_s, content: embed_hash.to_json}
+      :send_to_channel, {id: channel.id.to_s, content: embed_hash.to_json}
     )
 
     described_class.new(server, inbound_message).run!

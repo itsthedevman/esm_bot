@@ -2,7 +2,7 @@
 
 describe ESM::Bot do
   let(:user) { ESM::Test.user }
-  let(:channel) { ESM::Test.channel }
+  let(:channel) { ESM::Test.channel(in: community) }
 
   it "is not nil" do
     expect(ESM.bot).not_to be_nil

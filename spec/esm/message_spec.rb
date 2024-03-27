@@ -3,7 +3,7 @@
 describe ESM::Message, v2: true do
   let(:community) { ESM::Test.community }
   let(:user) { ESM::Test.user }
-  let(:server) { ESM::Test.server }
+  let(:server) { ESM::Test.server(for: community) }
 
   let(:input) do
     {
@@ -96,7 +96,7 @@ describe ESM::Message, v2: true do
 
     before do
       command.instance_variable_set(:@current_user, user.discord_user)
-      command.instance_variable_set(:@current_channel, ESM::Test.channel)
+      command.instance_variable_set(:@current_channel, ESM::Test.channel(in: community))
 
       message.add_attribute(:command, command)
     end
