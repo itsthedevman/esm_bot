@@ -3,19 +3,23 @@
 module ESM
   module Connection
     class Server
-      attr_reader :status
-
       def initialize
-        @status = Inquirer.new(:stopped, :paused, :started, default: :stopped)
+        @allow_connections = Concurrent::AtomicBoolean.new
+        @config = ESM.config.connection_server
+
         @connections = Concurrent::Map.new
         @waiting_room = WaitingRoom.new
-        @config = ESM.config.connection_server
+      end
+
+      def allow_connections?
+        @allow_connections.true?
       end
 
       def start
-        return unless @status.stopped?
+        return if allow_connections?
 
-        @server = TCPServer.new("0.0.0.0", ESM.config.ports.connection_server)
+        @server = Socket.new(TCPServer.new("0.0.0.0", ESM.config.ports.connection_server))
+        @allow_connections.make_true
 
         @connect_task = Concurrent::TimerTask.execute(execution_interval: @config.connection_check) do
           on_connect
@@ -25,27 +29,27 @@ module ESM
           check_waiting_room
         end
 
-        resume
-      end
-
-      def pause
-        @status.set(:paused)
-      end
-
-      def resume
-        @status.set(:started)
+        info!(status: :started)
       end
 
       def stop
+        return unless allow_connections?
+
+        @allow_connections.make_false
+
         @connect_task.shutdown
-        @connections.each_value(&:close)
+        @connect_task = nil
+
+        @disconnect_task.shutdown
+        @disconnect_task = nil
+
+        @connections.each_value { |client| client.close("shutdown") }
+        @connections.clear
 
         @waiting_room.shutdown
-        @disconnect_task.shutdown
+        @waiting_room.clear
 
-        @server.shutdown(:RDWR) if @status.started?
-
-        @status.set(:stopped)
+        @server.shutdown(:RDWR)
       end
 
       def client(id)
@@ -65,10 +69,9 @@ module ESM
       private
 
       def on_connect
-        return unless @status.started?
+        return unless allow_connections?
 
-        client = Client.new(self, @server.accept)
-        @waiting_room << client
+        @waiting_room << Client.new(self, @server.accept)
       end
 
       def check_waiting_room

@@ -5,6 +5,10 @@ module ESM
     class Client
       Error = ESM::Exception::Error
 
+      class NotConnected < Error
+        def initialize(server_id = nil) = super("#{server_id || "Server"} is not connected at the moment")
+      end
+
       class RequestTimeout < Error
         def initialize = super("Request timed out")
       end

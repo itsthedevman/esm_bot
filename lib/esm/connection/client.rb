@@ -14,6 +14,8 @@ module ESM
       delegate :server_id, to: :@model, allow_nil: true
 
       def initialize(tcp_server, tcp_client)
+        info!("#{tcp_client.local_address.inspect} connecting")
+
         @tcp_server = tcp_server
         @socket = Socket.new(tcp_client)
         @ledger = Ledger.new
@@ -21,33 +23,52 @@ module ESM
 
         @id = nil
         @model = nil
-        @encryption = nil
-        @last_ping_received = nil
-        @initialized = false
         @metadata = set_metadata(vg_enabled: false, vg_max_sizes: 0)
+        @connected = Concurrent::AtomicBoolean.new
 
-        @task = Concurrent::TimerTask.execute(execution_interval: @config.request_check) { on_message }
-        @thread_pool = Concurrent::ThreadPoolExecutor.new(
-          min_threads: @config.min_threads,
-          max_threads: @config.max_threads,
-          max_queue: @config.max_queue
-        )
+        @tasks = [
+          Concurrent::TimerTask.execute(execution_interval: @config.request_check) { read }
+        ]
+      end
+
+      def connected?
+        @connected.true?
       end
 
       def set_metadata(**)
         @metadata = Metadata.new(**)
       end
 
-      def close
-        info!(address: local_address.inspect, public_id: @id, server_id: @model&.server_id, state: :disconnected)
+      def close(reason = nil)
+        return unless connected?
 
-        @task.shutdown
-        @socket.close
-      ensure
+        info!(
+          address: local_address.inspect,
+          public_id: @id,
+          server_id: @model&.server_id,
+          state: :disconnected,
+          reason:
+        )
+
+        @tasks.each(&:shutdown)
+        @connected.make_false
+
         @tcp_server.client_disconnected(self)
+
+        @socket.close
       end
 
-      def send_request(content = nil, type: :message, block: true)
+      def send_message(message, **)
+        send_request(message, type: :message, **)
+      end
+
+      def send_error(error, **)
+        send_request(error, type: :error, **)
+      end
+
+      def send_request(content = nil, type:, block: true)
+        raise NotConnected, @model&.server_id unless connected?
+
         info!(
           address: local_address.inspect,
           public_id: @id,
@@ -72,7 +93,7 @@ module ESM
       #
       # Lower level method to send a request to the client and either disregard the response or block (default)
       #
-      # @see #send_request for a higher level method
+      # @see #send_request or #send_message for higher level methods
       #
       # @param id [String, nil] A UUID, if any, that will be used to differentiate this request
       # @param type [Symbol] The request type. See ESM::Connection::Client::Request::TYPES for full list
@@ -81,7 +102,9 @@ module ESM
       #
       # @return [ESM::Connection::Client::Promise]
       #
-      def write(id: nil, type: :noop, content: nil)
+      def write(type:, id: nil, content: nil)
+        raise NotConnected, @model&.server_id unless connected?
+
         request = Request.new(id: id, type: type, content: content)
 
         # This tracks the request and allows us to receive the response across multiple threads
@@ -116,13 +139,6 @@ module ESM
         return if data.blank?
 
         Request.from_client(data)
-      end
-
-      def forward_response_to_caller(response)
-        promise = @ledger.remove(response)
-        raise InvalidMessage if promise.nil?
-
-        promise.set_response(response)
       end
     end
   end

@@ -11,16 +11,30 @@ module ESM
         @socket = socket
       end
 
+      def accept
+        return unless readable?
+
+        @socket.accept_nonblock
+      rescue => e
+        error!(error: e)
+      end
+
       def read
         return unless readable?
 
         @socket.recv_nonblock(READ_BYTES)
+      rescue => e
+        error!(error: e)
       end
 
       def write(data)
         raise TypeError, "Expected String, got #{data.class}" unless data.is_a?(String)
 
         @socket.send(data, 0)
+      rescue TypeError
+        raise
+      rescue => e
+        error!(error: e)
       end
 
       #
