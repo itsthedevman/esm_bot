@@ -27,7 +27,7 @@ module ESM
         @connected = Concurrent::AtomicBoolean.new
 
         @tasks = [
-          Concurrent::TimerTask.execute(execution_interval: @config.request_check) { read }
+          Concurrent::TimerTask.execute(execution_interval: @config.request_check) { on_message }
         ]
       end
 
@@ -40,8 +40,6 @@ module ESM
       end
 
       def close(reason = nil)
-        return unless connected?
-
         info!(
           address: local_address.inspect,
           public_id: @id,
@@ -107,15 +105,23 @@ module ESM
 
         request = Request.new(id: id, type: type, content: content)
 
-        # This tracks the request and allows us to receive the response across multiple threads
-        @ledger.add(request).then do
-          # Send the data to the client
-          @socket.write(
-            Base64.strict_encode64(
-              @encryption.encrypt(request.to_json)
-            )
-          )
-        end
+        # Adding the request to the ledger allows us to track the request across multiple threads
+        # ensuring the response to passed back to the blocking thread
+        promise = @ledger.add(request)
+
+        # All data passed is in JSON format
+        # ESM will never be huge to the point where JSON is a limitation so this isn't a concern of mine
+        content = request.to_json
+
+        # Errors can happen before we properly set up encryption. Bypassing encryption means we can better communicate
+        content = @encryption.encrypt(content) if type != :error
+
+        # As I've learned there are reasons why Base64 is important for networking
+        # I can guess that Unicode is one of them because I've experienced some weird behavior without this
+        content = Base64.strict_encode64(content)
+
+        # Once the promise is executed, write the content to the client
+        promise.then { @socket.write(content) }
       end
 
       private

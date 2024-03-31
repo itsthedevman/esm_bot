@@ -19,7 +19,7 @@ module ESM
           self
         end
 
-        delegate :execute, to: :@promise
+        delegate :execute, :state, to: :@promise
 
         def wait_for_response(timeout = 0)
           self.then do |_|

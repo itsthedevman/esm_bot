@@ -26,17 +26,14 @@ module ESM
               raise "Invalid data received: #{response}"
             end
           rescue Client::Error => e
-            write(type: :error, content: e.message, block: false)
-            close
+            send_error(e.message)
+            close(e.message)
           rescue => e
             error!(error: e)
-            close
+            close(e.message)
           ensure
             @ledger.remove(request)
           end
-        rescue => e
-          error!(error: e)
-          close
         end
 
         def on_identification(response)

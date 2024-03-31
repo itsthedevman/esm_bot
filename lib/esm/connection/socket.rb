@@ -37,6 +37,11 @@ module ESM
         error!(error: e)
       end
 
+      def close
+        @socket.close_write
+        @socket.close_read
+      end
+
       #
       # Blocks until the socket is readable
       #
