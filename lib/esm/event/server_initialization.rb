@@ -169,7 +169,6 @@ module ESM
         )
 
         @tcp_client.model.reload
-        @tcp_client.initialized = true
       end
     end
   end

@@ -8,7 +8,6 @@ module ESM
       Metadata = ImmutableStruct.define(:vg_enabled, :vg_max_sizes)
 
       attr_reader :id, :model
-      attr_accessor :initialized
 
       delegate :local_address, to: :@socket
       delegate :server_id, to: :@model, allow_nil: true
@@ -24,22 +23,18 @@ module ESM
         @id = nil
         @model = nil
         @metadata = set_metadata(vg_enabled: false, vg_max_sizes: 0)
-        @connected = Concurrent::AtomicBoolean.new
+        @thread_pool = Concurrent::CachedThreadPool.new
 
         @tasks = [
           Concurrent::TimerTask.execute(execution_interval: @config.request_check) { on_message }
         ]
       end
 
-      def connected?
-        @connected.true?
-      end
-
       def set_metadata(**)
         @metadata = Metadata.new(**)
       end
 
-      def close(reason = nil)
+      def close(reason)
         info!(
           address: local_address.inspect,
           public_id: @id,
@@ -49,7 +44,6 @@ module ESM
         )
 
         @tasks.each(&:shutdown)
-        @connected.make_false
 
         @tcp_server.client_disconnected(self)
 
@@ -65,8 +59,6 @@ module ESM
       end
 
       def send_request(content = nil, type:, block: true)
-        raise NotConnected, @model&.server_id unless connected?
-
         info!(
           address: local_address.inspect,
           public_id: @id,
@@ -101,8 +93,6 @@ module ESM
       # @return [ESM::Connection::Client::Promise]
       #
       def write(type:, id: nil, content: nil)
-        raise NotConnected, @model&.server_id unless connected?
-
         request = Request.new(id: id, type: type, content: content)
 
         # Adding the request to the ledger allows us to track the request across multiple threads

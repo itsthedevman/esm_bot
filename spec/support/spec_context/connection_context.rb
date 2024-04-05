@@ -12,17 +12,24 @@ RSpec.shared_context("connection") do
   end
 
   before do |example|
+    ESM.redis.del("server_key_set")
+
     next unless example.metadata[:requires_connection]
 
-    connection_server.resume
-
-    wait_for { ESM.connection_server.allow_connections? }.to be(true)
+    # Store the server key so the build tool can pick it up and write it
+    ESM.redis.set("server_key", server.token.to_json)
+    debug!(server_key: server.token)
 
     # Removing all territories also checks that we're connected to MySQL
     ESM::ExileTerritory.delete_all
 
     # Callbacks
     ESM::Test.callbacks.run_callback(:before_connection, on_instance: self)
+
+    connection_server.resume
+
+    wait_for { ESM.redis.exists?("server_key_set") }.to be(true)
+    wait_for { ESM.connection_server.allow_connections? }.to be(true)
 
     wait_for { server.reload.connected? }.to be(true),
       "esm_arma never connected. From the esm_arma repo, please run `bin/bot_testing`"
@@ -37,10 +44,9 @@ RSpec.shared_context("connection") do
   end
 
   after do |example|
-    next unless example.metadata[:requires_connection]
-
     connection_server.pause
 
+    next unless example.metadata[:requires_connection]
     next if _spawned_players.size == 0
 
     users = _spawned_players.map_join("\n") do |user|

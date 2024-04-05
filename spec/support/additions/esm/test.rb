@@ -100,6 +100,7 @@ module ESM
 
         # Clear the test list in Redis
         redis.del("test")
+        redis.del("server_key")
 
         ESM.bot.delivery_overseer.queue.clear # Otherwise messages from other tests may leak between each other
       end

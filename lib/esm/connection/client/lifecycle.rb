@@ -6,6 +6,13 @@ module ESM
       module Lifecycle
         private
 
+        def forward_response_to_caller(response)
+          promise = @ledger.remove(response)
+          raise InvalidMessage if promise.nil?
+
+          promise.set_response(response)
+        end
+
         def on_message
           request = read
           return if request.nil?
@@ -30,7 +37,7 @@ module ESM
             close(e.message)
           rescue => e
             error!(error: e)
-            close(e.message)
+            close("An error occurred")
           ensure
             @ledger.remove(request)
           end
@@ -54,8 +61,8 @@ module ESM
           request_initialization!
 
           @tcp_server.client_connected(self)
-        rescue Error
-          close
+        rescue Error => e
+          close(e.message)
         end
 
         def on_request(request)
@@ -92,10 +99,10 @@ module ESM
         end
 
         def perform_handshake!
-          info!(address: local_address.inspect, public_id: @id, server_id: @model.server_id, state: :handshake)
-
           new_indices = @encryption.generate_nonce_indices
           message = ESM::Message.event.set_data(:handshake, indices: new_indices)
+
+          info!(address: local_address.inspect, public_id: @id, server_id: @model.server_id, state: :handshake)
 
           # This doesn't use #send_request because it needs to hook into the promise to immediately
           # swap the nonce to the new one before the client has time to respond.

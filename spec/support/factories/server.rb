@@ -23,9 +23,6 @@ FactoryBot.define do
     end
 
     after :create do |server, _evaluator|
-      # Store the server key so the build tool can pick it up and write it
-      ESM.redis.set("server_key", server.token.to_json)
-
       # Remove the default
       server.server_rewards.clear
 
