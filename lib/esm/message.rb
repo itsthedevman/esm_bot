@@ -77,7 +77,7 @@ module ESM
     # They will automatically be sanitized according to their data type as configured in the mapping.
     # NOTE: Invalid data/metadata attributes will be dropped!
     def initialize
-      @id = SecureRandom.uuid.delete("-")
+      @id = SecureRandom.uuid
       @type = :event
       @data = Data.new
       @metadata = Metadata.new
