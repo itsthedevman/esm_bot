@@ -84,9 +84,9 @@ module ESM
         def request_accepted
           if v2_target_server?
             send_to_arma(
-              data: {
-                territory: {
-                  encoded: {id: arguments.territory_id}
+              territory: {
+                encoded: {
+                  id: arguments.territory_id
                 }
               }
             )

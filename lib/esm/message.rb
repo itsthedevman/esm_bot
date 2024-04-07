@@ -26,7 +26,7 @@ module ESM
     def self.from_hash(hash)
       hash = hash.deep_symbolize_keys
 
-      message = event
+      message = new
       message = message.set_id(hash[:id]) if hash[:id].present?
       message = message.set_type(hash[:type]) if hash[:type].present?
 
@@ -40,22 +40,6 @@ module ESM
 
       message = message.add_errors(hash[:errors]) if hash[:errors].present?
       message
-    end
-
-    def self.event
-      new
-    end
-
-    def self.query
-      new.set_type(:query)
-    end
-
-    def self.arma
-      new.set_type(:arma)
-    end
-
-    def self.system
-      new.set_type(:system)
     end
 
     attr_reader :id, :type, :errors

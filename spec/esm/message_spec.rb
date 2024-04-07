@@ -89,7 +89,7 @@ describe ESM::Message, v2: true do
     end
 
     let(:message) do
-      ESM::Message.event
+      ESM::Message.new
         .set_data(:data_test, {foo: "bar"})
         .set_metadata(:metadata_test, {bar: "baz"})
     end
@@ -133,7 +133,7 @@ describe ESM::Message, v2: true do
 
   describe "Checking and converting values" do
     let(:message) do
-      ESM::Message.event
+      ESM::Message.new
     end
 
     it "converts subtypes" do

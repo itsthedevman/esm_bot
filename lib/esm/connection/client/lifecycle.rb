@@ -66,41 +66,33 @@ module ESM
         end
 
         def on_request(request)
-          binding.pry
-          #   # Handle any errors
-          #   if message.errors?
-          #     outgoing_message&.on_error(incoming_message)
-          #     return
-          #   end
+          message = ESM::Message.from_string(request.content)
 
-          #   # Retrieve the original message. If it's nil, the message originated from the client
-          #   outgoing_message = @message_overseer.retrieve(incoming_message.id)
+          info!(address: local_address.inspect, public_id: @id, server_id: @model.server_id, inbound: message.to_h)
 
-          #   info!(
-          #     outgoing_message: outgoing_message&.to_h,
-          #     incoming_message: incoming_message.to_h
-          #   )
+          # Handle any errors
+          if message.errors?
+            binding.pry
+            return
+          end
 
-          #   # Currently, :send_to_channel is the only inbound event. If adding another, convert this code
-          #   if incoming_message.type == :event && incoming_message.data_type == :send_to_channel
-          #     server = ESM::Server.find_by(uuid: server_uuid)
-          #     ESM::Event::SendToChannel.new(server, incoming_message).run!
-          #     return
-          #   end
+          @model.reload
 
-          #   outgoing_message&.on_response(incoming_message)
-          # rescue => e
-          #   command = outgoing_message&.command
-
-          #   # Bubble up to #on_inbound
-          #   raise e if command.nil?
-
-          #   raise "Replace!! command.handle_error(e)"
+          @thread_pool.post do
+            case message.data_type
+            when :send_to_channel
+              ESM::Event::SendToChannel.new(@model, message).run!
+            else
+              raise "Invalid data received: #{message}"
+            end
+          end
+        rescue => e
+          error!(error: e)
         end
 
         def perform_handshake!
           new_indices = @encryption.generate_nonce_indices
-          message = ESM::Message.event.set_data(:handshake, indices: new_indices)
+          message = ESM::Message.new.set_data(:handshake, indices: new_indices)
 
           info!(address: local_address.inspect, public_id: @id, server_id: @model.server_id, state: :handshake)
 

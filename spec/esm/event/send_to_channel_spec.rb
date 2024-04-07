@@ -10,7 +10,7 @@ describe ESM::Event::SendToChannel, :requires_connection, v2: true do
   end
 
   it "sends a message" do
-    inbound_message = ESM::Message.event.set_data(:send_to_channel, {id: channel.id.to_s, content: Faker::String.random})
+    inbound_message = ESM::Message.new.set_data(:send_to_channel, {id: channel.id.to_s, content: Faker::String.random})
 
     described_class.new(server, inbound_message).run!
     wait_for { ESM::Test.messages }.not_to be_blank
@@ -30,7 +30,7 @@ describe ESM::Event::SendToChannel, :requires_connection, v2: true do
       ]
     )
 
-    inbound_message = ESM::Message.event.set_data(:send_to_channel, {id: channel.id.to_s, content: embed_hash.to_json})
+    inbound_message = ESM::Message.new.set_data(:send_to_channel, {id: channel.id.to_s, content: embed_hash.to_json})
 
     described_class.new(server, inbound_message).run!
     wait_for { ESM::Test.messages }.not_to be_blank
@@ -56,7 +56,7 @@ describe ESM::Event::SendToChannel, :requires_connection, v2: true do
   end
 
   it "only allows sending messages to that community's discord channels", :error_testing do
-    inbound_message = ESM::Message.event.set_data(:send_to_channel, {id: "THIS CHANNEL CANNOT EXIST", content: ""})
+    inbound_message = ESM::Message.new.set_data(:send_to_channel, {id: "THIS CHANNEL CANNOT EXIST", content: ""})
 
     described_class.new(server, inbound_message).run!
     wait_for { ESM::Test.messages }.not_to be_blank
@@ -74,7 +74,7 @@ describe ESM::Event::SendToChannel, :requires_connection, v2: true do
       ]
     )
 
-    inbound_message = ESM::Message.event.set_data(
+    inbound_message = ESM::Message.new.set_data(
       :send_to_channel, {id: channel.id.to_s, content: embed_hash.to_json}
     )
 

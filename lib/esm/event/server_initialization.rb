@@ -158,7 +158,7 @@ module ESM
       end
 
       def send_post_init
-        message = ESM::Message.event.set_data("post_init", @data)
+        message = ESM::Message.new.set_data("post_init", @data)
         @tcp_client.send_message(message)
 
         info!(server_id: @model.server_id, uptime: @model.uptime)

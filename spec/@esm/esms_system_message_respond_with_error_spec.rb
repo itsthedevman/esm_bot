@@ -5,7 +5,7 @@ describe "ESMs_system_message_respond_withError", :requires_connection, v2: true
 
   context "when errors are provided" do
     it "contains the errors" do
-      original_message = ESM::Message.event
+      original_message = ESM::Message.new
 
       promise = server.connection
         .write(type: :message, id: original_message.id, content: nil)

@@ -51,9 +51,7 @@ module ESM
               "server"
             end
 
-          send_to_arma(
-            data: {execute_on: execute_on, code: arguments.code_to_execute}
-          )
+          send_to_arma(execute_on: execute_on, code: arguments.code_to_execute)
         end
 
         def on_response(incoming_message, outgoing_message)

@@ -8,7 +8,7 @@ describe ESM::Event::ServerInitialization, :requires_connection, v2: true do
   let(:reward) { server.server_reward }
 
   let!(:message) do
-    ESM::Message.event.set_data(
+    ESM::Message.new.set_data(
       :init,
       {
         extension_version: "2.0.0",

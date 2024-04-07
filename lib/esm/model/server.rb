@@ -66,10 +66,7 @@ module ESM
       ESM::Territory.order(:server_id).where(server_id: id).order(:territory_level)
     end
 
-    def send_message(message = nil, opts = {})
-      message = ESM::Message.from_hash(message) if message.is_a?(Hash)
-      connection.send_message(message)
-    end
+    delegate :send_message, to: :connection
 
     #
     # Returns the server's current version
@@ -141,7 +138,7 @@ module ESM
     def log_error(log_message)
       uuid = SecureRandom.uuid
 
-      message = ESM::Message.event.add_error("message", "[#{uuid}] #{log_message}")
+      message = ESM::Message.new.add_error("message", "[#{uuid}] #{log_message}")
       send_message(message)
 
       return if community.logging_channel_id.blank?

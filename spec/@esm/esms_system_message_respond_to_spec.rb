@@ -4,7 +4,7 @@ describe "ESMs_system_message_respond_to", :requires_connection, v2: true do
   include_context "connection"
 
   it "acknowledges the message" do
-    original_message = ESM::Message.event
+    original_message = ESM::Message.new
 
     # #reset_promise recreates the promise to remove any existing #then callbacks
     # This is needed because we're simulating an existing message that is being replied to

@@ -325,66 +325,41 @@ module ESM
           skipped_actions.set(*)
         end
 
-        #
-        # Sends a message to the target_server
-        #
-        # @param outgoing_message [ESM::Message, Hash] If a ESM::Message is provided, this message will be sent as is. If a Hash is provided, a message will be built from it
-        # @param send_opts [Hash] Passed into #send_message. @see ESM::Connection::Server.fire
-        # @return [ESM::Message] The message that was sent
-        #
-        def send_to_arma(outgoing_message = {}, send_opts = {})
-          raise ESM::Exception::CheckFailure, "Command #{name} must define the `server_id` argument in order to use #send_to_arma" if target_server.nil?
+        def send_to_target_server(message, block: true)
+          raise ArgumentError, "Message must be a ESM::Message" unless message.is_a?(ESM::Message)
 
-          # Allows overwriting the outbound message. Otherwise, build a message from the data
-          if outgoing_message.is_a?(Hash)
-            # Allows providing `data: content` or,
-            #                  `data: { type: :different }` or,
-            #                  `data: { type: :different, content: different_content }`
-            data = outgoing_message[:data] || {}
-            unless data.key?(:type) && (data.key?(:content) || data.size == 1)
-              outgoing_message[:data] = {
-                type: name,
-                content: outgoing_message[:data]
-              }
-            end
-
-            outgoing_message[:type] = :arma unless outgoing_message.key?(:type)
-            outgoing_message = ESM::Message.from_hash(outgoing_message)
-
-            # This is how the message gets back to the command
-            outgoing_message.add_callback(:on_response, on_instance: self) do |incoming_message|
-              timers.time!(:on_response) do
-                on_response(incoming_message, outgoing_message)
-              end
-            end
+          if target_server.nil?
+            raise ESM::Exception::CheckFailure,
+              "Command #{name} must define the `server_id` argument in order to use #send_to_target_server"
           end
 
-          outgoing_message.add_attribute(:server_id, target_server.server_id)
-          outgoing_message.add_attribute(:command, self)
-          outgoing_message.apply_command_metadata
+          message.set_command_metadata(current_user:, target_user:)
 
-          target_server.send_message(outgoing_message, send_opts)
+          target_server.send_message(message, block:)
         end
 
         #
-        # Shorthand method for sending a query message to Arma
+        # Shorthand method for sending a query message to the Exile database
         #
         # @param name [String, Symbol] The name of the query
         # @param **arguments [Hash] The query arguments
         #
         # @return [ESM::Message] The outbound message
         #
-        def query_arma(name, **arguments)
-          send_to_arma(
-            type: :query,
-            data: {
-              type: :query,
-              content: {
-                name: name,
-                arguments: arguments
-              }
-            }
-          )
+        def query_exile_database(name, **arguments)
+          message = ESM::Message.new
+            .set_type(:query)
+            .set_data(:query, name:, arguments:)
+
+          send_to_target_server(message)
+        end
+
+        def send_to_arma(type = name, **data)
+          message = ESM::Message.new
+            .set_type(:arma)
+            .set_data(type, data)
+
+          send_to_target_server(message)
         end
 
         # Convenience method for replying back to the event's channel

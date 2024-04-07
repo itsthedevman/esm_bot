@@ -163,11 +163,11 @@ module ESM
           mention: ""
         }
 
-        message = ESM::Message.arma
+        message = ESM::Message.new.set_type(:arma)
           .set_data(:sqf, {execute_on: "server", code: code})
           .set_command_metadata(current_user: current_user_data.to_istruct)
 
-        server.send_message(message, forget: false)
+        server.send_message(message)
       end
     end
   end
