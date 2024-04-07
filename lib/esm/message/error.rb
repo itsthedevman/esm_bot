@@ -5,7 +5,8 @@ module ESM
     class Error
       attr_reader :type, :content
 
-      def initialize(type, content)
+      def initialize(message, type, content)
+        @message = message
         @type = type.to_sym
         @content = content.to_s
       end
@@ -17,20 +18,19 @@ module ESM
         }
       end
 
-      def to_s(message)
+      def to_s
         case type
         when :code
-          command = message.attributes.command
+          metadata = @message.metadata
 
           replacements = {
-            user: command&.current_user&.mention,
-            target: command&.target_user&.mention,
-            message_id: message.id,
-            server_id: message.attributes.server_id,
-            type: message.type,
-            data_type: message.data_type,
-            mdata_type: message.metadata_type,
-            data_territory_id: message.data_attributes[:content].dig(:territory, :encoded, :id)
+            message_id: @message.id,
+            type: @message.type,
+            data_type: @message.data_type,
+            data_territory_id: @message.data_attributes[:content].dig(:territory, :encoded, :id),
+            server_id: metadata.server_id,
+            user: metadata.player&.discord_mention,
+            target: metadata.target&.discord_mention
           }
 
           # Add the data and metadata to the replacements
@@ -38,12 +38,8 @@ module ESM
           #     "data_steam_uid", and "data_discord_id"
           #
           # Same for metadata's attributes. Except the key prefix is "mdata_"
-          message.data_attributes[:content].each do |key, value|
-            replacements["data_#{key}".to_sym] = value
-          end
-
-          message.metadata_attributes[:content].each do |key, value|
-            replacements["mdata_#{key}".to_sym] = value
+          @message.data_attributes[:content].each do |key, value|
+            replacements[:"data_#{key}"] = value
           end
 
           # Call the exception with the replacements

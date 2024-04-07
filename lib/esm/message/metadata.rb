@@ -2,17 +2,10 @@
 
 module ESM
   class Message
-    class Metadata < Data
-      TYPES_MAPPING = {
-        empty: {},
-        command: {
-          player: :hash_map,
-          target: {
-            type: :hash_map,
-            optional: true
-          }
-        }
-      }.freeze
+    class Metadata < ImmutableStruct.define(:player, :target, :server_id)
+      def initialize(player: nil, target: nil, server_id: nil)
+        new(player:, target:, server_id:)
+      end
     end
   end
 end

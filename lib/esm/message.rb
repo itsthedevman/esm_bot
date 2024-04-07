@@ -84,22 +84,25 @@ module ESM
       self
     end
 
-    # Any extra data that may be needed. For most command messages, this will contain the user's discord and steam data.
-    def set_metadata(type, content)
-      @metadata = Metadata.new(type, content)
-      self
-    end
-
-    def set_command_metadata(current_user: nil, target_user: nil)
-      metadata = {}
+    #
+    # Sets various values used by the arma mod and internally by Message::Error
+    #
+    # @param current_user [ESM::User, nil] The user that executed the command
+    # @param target_user [ESM::User, ESM::User::Ephemeral, nil] The user who is the target of this command
+    # @param server_id [String, nil] The server the command is being executed on
+    #
+    # @return [Message] A referenced to the modified message
+    #
+    def set_metadata(current_user: nil, target_user: nil, server_id: nil)
+      metadata = {server_id:}
 
       if current_user
-        metadata[:player] = {
+        metadata[:player] = Player.new(
           steam_uid: current_user.steam_uid,
           discord_id: current_user.discord_id,
           discord_name: current_user.username,
           discord_mention: current_user.mention
-        }
+        )
       end
 
       if target_user
@@ -114,10 +117,11 @@ module ESM
           )
         end
 
-        metadata[:target] = target
+        metadata[:target] = Target.new(**target)
       end
 
-      set_metadata(:command, metadata)
+      @metadata = Metadata.new(**metadata)
+      self
     end
 
     # Each hash has the following attributes:
@@ -141,7 +145,7 @@ module ESM
     def add_error(type, content)
       return if type.nil? || content.nil?
 
-      @errors << Error.new(type, content)
+      @errors << Error.new(self, type, content)
       self
     end
 
