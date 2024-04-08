@@ -3,12 +3,6 @@
 ENV["ESM_ENV"] = "test"
 ENV["RAILS_ENV"] = "test"
 
-# Must execute before esm is required
-if ENV["CODE_COVERAGE"] == "true"
-  require "simplecov"
-  SimpleCov.start
-end
-
 require "bundler/setup"
 require "awesome_print"
 require "colorize"
