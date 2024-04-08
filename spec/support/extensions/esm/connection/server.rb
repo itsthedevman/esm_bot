@@ -19,6 +19,7 @@ module ESM
       end
 
       def reset_connections
+        @connections.each_value { |client| client.close("spec finish") }
         @waiting_room.shutdown
         @connections.clear
         @waiting_room.clear
