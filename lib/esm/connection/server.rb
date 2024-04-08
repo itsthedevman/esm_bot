@@ -4,52 +4,29 @@ module ESM
   module Connection
     class Server
       def initialize
-        @allow_connections = Concurrent::AtomicBoolean.new
         @config = ESM.config.connection_server
-
         @connections = Concurrent::Map.new
         @waiting_room = WaitingRoom.new
-      end
-
-      def allow_connections?
-        @allow_connections.true?
+        @server = Socket.new(TCPServer.new("0.0.0.0", ESM.config.ports.connection_server))
       end
 
       def start
-        return if allow_connections?
-
-        @server = Socket.new(TCPServer.new("0.0.0.0", ESM.config.ports.connection_server))
-        @allow_connections.make_true
-
-        @connect_task = Concurrent::TimerTask.execute(execution_interval: @config.connection_check) do
-          on_connect
-        end
-
-        @disconnect_task = Concurrent::TimerTask.execute(execution_interval: @config.waiting_room_check) do
-          check_waiting_room
-        end
+        start_connect_task
+        start_disconnect_task
 
         info!(status: :started)
       end
 
       def stop
-        return unless allow_connections?
+        cleanup_tasks
 
-        @allow_connections.make_false
-
-        @connect_task.shutdown
-        @connect_task = nil
-
-        @disconnect_task.shutdown
-        @disconnect_task = nil
-
-        @connections.each_value { |client| client.close("shutdown") }
+        @connections.each_value { |client| client.close("Server shutdown") }
         @connections.clear
 
         @waiting_room.shutdown
         @waiting_room.clear
 
-        @server.shutdown(:RDWR)
+        @server&.shutdown(:RDWR)
       end
 
       def client(id)
@@ -68,10 +45,33 @@ module ESM
 
       private
 
-      def on_connect
-        return unless allow_connections?
+      def start_connect_task
+        @connect_task = Concurrent::TimerTask.execute(execution_interval: @config.connection_check) do
+          on_connect
+        end
+      end
 
-        @waiting_room << Client.new(self, @server.accept)
+      def start_disconnect_task
+        @disconnect_task = Concurrent::TimerTask.execute(execution_interval: @config.waiting_room_check) do
+          check_waiting_room
+        end
+      end
+
+      def cleanup_tasks
+        @connect_task&.shutdown
+        @connect_task = nil
+
+        @disconnect_task&.shutdown
+        @disconnect_task = nil
+      end
+
+      def on_connect
+        socket = @server.accept
+        return unless socket.is_a?(TCPSocket)
+
+        @waiting_room << Client.new(self, socket)
+      rescue => e
+        error!(error: e)
       end
 
       def check_waiting_room
@@ -79,7 +79,7 @@ module ESM
           timed_out = (Time.current - entry.connected_at) >= @config.disconnect_after
           next false unless timed_out
 
-          entry.client.close
+          entry.client.close("Waiting room timeout")
           true
         end
       end

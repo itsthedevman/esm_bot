@@ -70,7 +70,7 @@ module ESM
 
         message =
           case error
-          when ESM::Exception::CheckFailure
+          when ESM::Exception::DataError
             error.data
           when StandardError
             uuid = SecureRandom.uuid.split("-")[0..1].join("")

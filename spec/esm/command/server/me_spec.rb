@@ -49,7 +49,7 @@ describe ESM::Command::Server::Me, category: "command" do
       include_context "connection"
 
       it "returns the user's stats on the server" do
-        execute!(server_id: server.server_id)
+        execute!(arguments: {server_id: server.server_id})
         wait_for { ESM::Test.messages }.not_to be_empty
 
         embed = ESM::Test.messages.first.content
@@ -68,7 +68,7 @@ describe ESM::Command::Server::Me, category: "command" do
           server_id: server.id
         )
 
-        execute!(server_id: server.server_id)
+        execute!(arguments: {server_id: server.server_id})
         wait_for { ESM::Test.messages }.not_to be_empty
 
         embed = ESM::Test.messages.first.content
@@ -86,7 +86,7 @@ describe ESM::Command::Server::Me, category: "command" do
 
         player.kill!
 
-        execute!(server_id: server.server_id)
+        execute!(arguments: {server_id: server.server_id})
         wait_for { ESM::Test.messages }.not_to be_empty
 
         embed = ESM::Test.messages.first.content
@@ -102,7 +102,7 @@ describe ESM::Command::Server::Me, category: "command" do
         account = ESM::ExileAccount.from(user)
         account.delete
 
-        execute!(server_id: server.server_id)
+        execute!(arguments: {server_id: server.server_id})
         wait_for { ESM::Test.messages }.not_to be_empty
 
         embed = ESM::Test.messages.first.content

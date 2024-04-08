@@ -35,26 +35,17 @@ module ESM
       end
 
       if hash[:metadata].present?
-        message = message.set_metadata(hash.dig(:metadata, :type), hash.dig(:metadata, :content))
+        message = message.set_metadata(
+          player: hash.dig(:metadata, :player),
+          target: hash.dig(:metadata, :target)
+        )
       end
 
       message = message.add_errors(hash[:errors]) if hash[:errors].present?
       message
     end
 
-    attr_reader :id, :type, :errors
-
-    # All callbacks are provided with two arguments:
-    #   incoming_message [ESM::Message, nil]  The incoming message from the client, if applicable.
-    #   outgoing_message [ESM::Message, nil]  The outgoing message sent through the server, if applicable.
-    #
-    # Available callbacks:
-    #   on_response
-    #     - Called when a message receives a response to its contents.
-    #   on_error
-    #     - Called when a message experienced an error.
-    #     - There is a default implementation called "on_error". To use it, call `message.add_callback(:on_error, :on_error)`
-    register_callbacks :on_response, :on_error
+    attr_reader :id, :type, :metadata, :errors
 
     # The driver of communication between the bot, server, and client. Rust is strict so this has to be too.
     # Any data and metadata must be configured in config/mapping.yml and defined in esm_message -> data.rs / metadata.rs
@@ -87,40 +78,14 @@ module ESM
     #
     # Sets various values used by the arma mod and internally by Message::Error
     #
-    # @param current_user [ESM::User, nil] The user that executed the command
-    # @param target_user [ESM::User, ESM::User::Ephemeral, nil] The user who is the target of this command
+    # @param player [ESM::User, nil] The user that executed the command
+    # @param target [ESM::User, ESM::User::Ephemeral, nil] The user who is the target of this command
     # @param server_id [String, nil] The server the command is being executed on
     #
     # @return [Message] A referenced to the modified message
     #
-    def set_metadata(current_user: nil, target_user: nil, server_id: nil)
-      metadata = {server_id:}
-
-      if current_user
-        metadata[:player] = Player.new(
-          steam_uid: current_user.steam_uid,
-          discord_id: current_user.discord_id,
-          discord_name: current_user.username,
-          discord_mention: current_user.mention
-        )
-      end
-
-      if target_user
-        target = {steam_uid: target_user.steam_uid}
-
-        # Instances of User::Ephemeral do not contain discord information
-        if !target_user.is_a?(ESM::User::Ephemeral)
-          target.merge!(
-            discord_id: target_user.discord_id,
-            discord_name: target_user.username,
-            discord_mention: target_user.mention
-          )
-        end
-
-        metadata[:target] = Target.new(**target)
-      end
-
-      @metadata = Metadata.new(**metadata)
+    def set_metadata(player: nil, target: nil, server_id: nil)
+      @metadata = Metadata.new(player:, target:, server_id:)
       self
     end
 
@@ -161,18 +126,6 @@ module ESM
       @data.to_h
     end
 
-    def metadata_type
-      @metadata.type
-    end
-
-    def metadata
-      @metadata.content
-    end
-
-    def metadata_attributes
-      @metadata.to_h
-    end
-
     #
     # Converts the message to JSON
     #
@@ -207,7 +160,7 @@ module ESM
         id: id,
         type: type,
         data: data_attributes,
-        metadata: metadata_attributes,
+        metadata: metadata.to_h,
         errors: errors.map(&:to_h)
       }
     end
@@ -230,24 +183,12 @@ module ESM
       errors.any?
     end
 
-    def inspect
-      "#<ESM::Message #{JSON.pretty_generate(to_h)}>"
+    def error_messages
+      errors.map(&:to_s)
     end
 
-    private
-
-    def default_on_error(incoming_message)
-      errors = (self.errors || []) + (incoming_message&.errors || [])
-      errors.map! { |e| e.to_s(self) }.uniq!
-
-      if command.nil?
-        error!(errors: errors)
-      else
-        command.current_cooldown&.reset!
-
-        embed = ESM::Embed.build(:error, description: errors.join("\n"))
-        command.reply(embed)
-      end
+    def inspect
+      "#<ESM::Message #{JSON.pretty_generate(to_h)}>"
     end
   end
 end

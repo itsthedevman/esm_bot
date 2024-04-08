@@ -7,7 +7,7 @@ module ESM
         Entry = ImmutableStruct.define(:connected_at, :client)
 
         def shutdown
-          each { |e| e.client.close("shutdown") }
+          each { |e| e.client.close("Waiting room shutdown") }
         end
 
         def include?(client)

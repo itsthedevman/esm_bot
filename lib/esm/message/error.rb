@@ -43,7 +43,11 @@ module ESM
           end
 
           # Call the exception with the replacements
-          I18n.t("exceptions.extension.#{content}", **replacements)
+          I18n.t(
+            "exceptions.extension.#{content}",
+            default: I18n.t("exceptions.extension.default", error_code: content),
+            **replacements
+          )
         when :message
           content
         else

@@ -103,6 +103,8 @@ module ESM
         redis.del("server_key")
 
         ESM.bot.delivery_overseer.queue.clear # Otherwise messages from other tests may leak between each other
+
+        ESM.connection_server.pause
       end
 
       def wait_for_response(timeout: nil)
@@ -156,16 +158,9 @@ module ESM
       # @note: The result is ran through a JSON parser during the communication process. The type may not be what you expect, but it will be consistent
       #
       def execute_sqf!(server, code, steam_uid: nil)
-        current_user_data = {
-          steam_uid: steam_uid || "",
-          id: "",
-          username: "",
-          mention: ""
-        }
-
         message = ESM::Message.new.set_type(:arma)
           .set_data(:sqf, {execute_on: "server", code: code})
-          .set_command_metadata(current_user: current_user_data.to_istruct)
+          .set_metadata(player: {steam_uid: steam_uid || ""})
 
         server.send_message(message)
       end

@@ -6,19 +6,20 @@ module ESM
       attr_reader :waiting_room, :connections
 
       def pause
+        cleanup_tasks
+
         reset_connections
-        @allow_connections.make_false
       end
 
       def resume
         reset_connections
-        @allow_connections.make_true
+
+        start_connect_task
+        start_disconnect_task
       end
 
       def reset_connections
-        @connections.each_value { |client| client.close("shutdown") }
         @waiting_room.shutdown
-
         @connections.clear
         @waiting_room.clear
       end

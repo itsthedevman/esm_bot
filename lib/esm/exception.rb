@@ -63,29 +63,7 @@ module ESM
       end
     end
 
-    #############################################################
-    # Connection server and Arma errors
-    #############################################################
-
-    # Handles an error code response from the extension
-    class ExtensionError < Error
-      def initialize(error_code)
-        @error_code = error_code
-
-        super("")
-      end
-
-      # Translates the underlying error code.
-      # In normal workflow, this method will be passed the following arguments:
-      # @option [String] :user The mention for the user that ran the command
-      # @option [String] :server_id The ID of the server the command was ran on
-      def translate(**)
-        I18n.t(
-          "exceptions.extension.#{@error_code}",
-          default: I18n.t("exceptions.extension.default", error_code: @error_code),
-          **
-        )
-      end
+    class ExtensionError < DataError
     end
   end
 end

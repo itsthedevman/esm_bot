@@ -313,7 +313,7 @@ describe ESM::Command::Base do
       }.to raise_error(ESM::Exception::CheckFailure)
     end
 
-    describe "Handles Errors", :error_testing do
+    describe "Handles Errors" do
       it "send error (CheckFailure)" do
         execution_args = {command_class: ESM::Command::Test::DirectMessageCommand}
 
@@ -336,12 +336,13 @@ describe ESM::Command::Base do
         )
       end
 
-      it "resets cooldown when an error occurs", :requires_connection do
-        execute!(command_class: ESM::Command::Test::ServerErrorCommand, arguments: {server_id: server.server_id})
+      it "handles errors from the server", :requires_connection do
+        execution_args = {
+          command_class: ESM::Command::Test::ServerErrorCommand,
+          arguments: {server_id: server.server_id}
+        }
 
-        wait_for { ESM::Test.messages.size }.to eq(1)
-
-        expect(previous_command.current_cooldown.active?).to be(false)
+        expect { execute!(**execution_args) }.to raise_error(ESM::Exception::ExtensionError)
       end
     end
   end

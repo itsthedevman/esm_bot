@@ -35,7 +35,7 @@ module ESM
       end
 
       def close(reason)
-        info!(
+        warn!(
           address: local_address.inspect,
           public_id: @id,
           server_id: @model&.server_id,
@@ -72,12 +72,22 @@ module ESM
           content: content.to_s
         )
 
-        return promise unless block
+        return promise.execute unless block
 
         response = promise.wait_for_response(@config.response_timeout)
         raise RejectedRequest, response.reason if response.rejected?
 
-        ESM::Message.from_string(response.value)
+        message = ESM::Message.from_string(response.value)
+        message.metadata.server_id = @model.server_id
+
+        info!(
+          address: local_address.inspect,
+          public_id: @id,
+          server_id: @model.server_id,
+          inbound: message.to_h
+        )
+
+        message
       end
 
       #

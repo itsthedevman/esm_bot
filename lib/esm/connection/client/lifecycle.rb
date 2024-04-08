@@ -65,31 +65,6 @@ module ESM
           close(e.message)
         end
 
-        def on_request(request)
-          message = ESM::Message.from_string(request.content)
-
-          info!(address: local_address.inspect, public_id: @id, server_id: @model.server_id, inbound: message.to_h)
-
-          # Handle any errors
-          if message.errors?
-            binding.pry
-            return
-          end
-
-          @model.reload
-
-          @thread_pool.post do
-            case message.data_type
-            when :send_to_channel
-              ESM::Event::SendToChannel.new(@model, message).run!
-            else
-              raise "Invalid data received: #{message}"
-            end
-          end
-        rescue => e
-          error!(error: e)
-        end
-
         def perform_handshake!
           new_indices = @encryption.generate_nonce_indices
           message = ESM::Message.new.set_data(:handshake, indices: new_indices)
@@ -115,15 +90,37 @@ module ESM
 
           message = send_request(type: :initialize)
 
+          ESM::Event::ServerInitialization.new(self, message).run!
+        end
+
+        def on_request(request)
+          message = ESM::Message.from_string(request.content)
+
           info!(
             address: local_address.inspect,
             public_id: @id,
             server_id: @model.server_id,
-            state: :initialization,
             inbound: message.to_h
           )
 
-          ESM::Event::ServerInitialization.new(self, message).run!
+          # Handle any errors
+          if message.errors?
+            error!(errors: message.error_messages.join("\n"))
+            return
+          end
+
+          @model.reload
+
+          @thread_pool.post do
+            case message.data_type
+            when :send_to_channel
+              ESM::Event::SendToChannel.new(@model, message).run!
+            else
+              raise "Invalid data received: #{message}"
+            end
+          end
+        rescue => e
+          error!(error: e)
         end
       end
     end
