@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# Set to zero for indefinite
+# Set to false for indefinite
 SPEC_TIMEOUT_SECONDS = 3
 LOG_LEVEL = :debug
 
@@ -13,7 +13,7 @@ RSpec.configure do |config|
   config.example_status_persistence_file_path = ".rspec_status"
 
   # Timeout for rspec/wait, default timeout for requests
-  config.wait_timeout = SPEC_TIMEOUT_SECONDS.zero? ? 999_999_999 : SPEC_TIMEOUT_SECONDS
+  config.wait_timeout = (SPEC_TIMEOUT_SECONDS == false) ? 999_999_999 : SPEC_TIMEOUT_SECONDS
 
   config.expect_with :rspec do |c|
     c.syntax = :expect
