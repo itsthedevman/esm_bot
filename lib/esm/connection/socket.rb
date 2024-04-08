@@ -15,6 +15,7 @@ module ESM
         return unless readable?
 
         @socket.accept_nonblock
+      rescue IO::EAGAINWaitReadable
       rescue => e
         error!(error: e)
       end

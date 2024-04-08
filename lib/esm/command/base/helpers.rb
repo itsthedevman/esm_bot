@@ -115,23 +115,19 @@ module ESM
             # Automatically remove the mention characters
             target = arguments.target.gsub(/[<@!&>]/, "").strip
 
+            steam_uid = target.steam_uid?
+            discord_id = target.match?(ESM::Regex::DISCORD_ID_ONLY)
+            return unless steam_uid || discord_id
+
             # Attempt to find the target within ESM
             user = ESM::User.parse(target)
 
             # This validates that the user exists and we get a discord user back
-            if (_discord_user = user&.discord_user)
-              return user
-            end
+            return user if user&.discord_user
 
             # We didn't find a user and a steam uid can't be used to find a Discord user
             # Ephemeral user represents a user that doesn't have a ESM::User
-            return ESM::User::Ephemeral.new(target) if target.steam_uid?
-
-            # target is a discord ID and user is nil
-            discord_user = ESM.bot.user(target) if target.match?(ESM::Regex::DISCORD_ID_ONLY)
-            return ESM::User::Ephemeral.new(target) if discord_user.nil?
-
-            ESM::User.from_discord(discord_user)
+            ESM::User::Ephemeral.new(target)
           end.call
         end
 

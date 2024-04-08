@@ -51,14 +51,10 @@ module ESM
               "server"
             end
 
-          send_to_arma(execute_on: execute_on, code: arguments.code_to_execute)
-        end
+          response = send_to_arma(execute_on: execute_on, code: arguments.code_to_execute)
 
-        def on_response(incoming_message, outgoing_message)
-          executed_on = outgoing_message.data.execute_on
-          data = incoming_message.data
-
-          translation_name = "responses.#{executed_on}"
+          data = response.data
+          translation_name = "responses.#{execute_on}"
           translation_name += "_with_result" if !data.result.nil?
 
           embed = ESM::Embed.build(

@@ -96,7 +96,7 @@ module ESM
 
     def delete_flag
       sqf = "private _flagObject = #{id} call ESMs_system_territory_get; deleteVehicle _flagObject;"
-      ESM::Test.execute_sqf!(server, sqf, steam_uid: owner_uid)
+      server.execute_sqf!(sqf, steam_uid: owner_uid)
     end
 
     private
@@ -130,7 +130,7 @@ module ESM
         sqf += "_flagObject setVariable [\"ExileTerritoryBuildRights\", #{new_value.to_json}, true];"
       end
 
-      ESM::Test.execute_sqf!(server, sqf, steam_uid: owner_uid)
+      server.execute_sqf!(sqf, steam_uid: owner_uid)
     end
 
     def create_territory
@@ -165,7 +165,7 @@ module ESM
         _flagObject setVariable ["ExileFlagTexture", #{flag_texture.quoted}];
       SQF
 
-      ESM::Test.execute_sqf!(server, sqf, steam_uid: owner_uid)
+      server.execute_sqf!(sqf, steam_uid: owner_uid)
     end
   end
 end

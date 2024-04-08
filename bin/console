@@ -5,5 +5,12 @@ require_relative "../lib/esm"
 
 ESM.run!(async: true)
 
+loop do
+  sleep(0.5)
+  break if ESM.bot.ready?
+end
+
+ESM.connection_server.stop
+
 require "pry"
 Pry.start

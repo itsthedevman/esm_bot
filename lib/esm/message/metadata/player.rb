@@ -5,19 +5,25 @@ module ESM
     class Metadata
       class Player < ImmutableStruct.define(:discord_id, :discord_name, :discord_mention, :steam_uid)
         def self.from(user)
+          # Creates a hash with the keys being the keys of this class, and the value of nil
+          # Allows for defaulting the values since ImmutableStruct requires a value of some sort
+          data = members.zip([nil]).to_h
+
           case user
           when ESM::User
-            new(
+            data.merge!(
               steam_uid: user.steam_uid,
               discord_id: user.discord_id,
               discord_name: user.discord_username,
               discord_mention: user.mention
             )
           when ESM::User::Ephemeral
-            new(steam_uid: user.steam_uid)
+            data[:steam_uid] = user.steam_uid
           else
-            new(**Hash[members.zip].merge(user)) # rubocop:disable Style/HashConversion
+            data.merge!(user)
           end
+
+          new(**data)
         end
 
         def to_h
