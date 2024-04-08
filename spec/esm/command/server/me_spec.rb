@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
 describe ESM::Command::Server::Me, category: "command" do
-  describe "V1" do
-    include_context "command"
-    include_examples "validate_command"
+  include_context "command"
+  include_examples "validate_command"
 
+  describe "V1" do
     describe "#execute" do
       include_context "connection_v1"
 
@@ -33,9 +33,6 @@ describe ESM::Command::Server::Me, category: "command" do
   end
 
   describe "V2", category: "command", v2: true do
-    include_context "command"
-    include_examples "validate_command"
-
     it "is an player command" do
       expect(command.type).to eq(:player)
     end
