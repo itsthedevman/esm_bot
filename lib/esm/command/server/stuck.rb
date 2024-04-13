@@ -53,7 +53,7 @@ module ESM
           reply(embed)
         end
 
-        def request_accepted
+        def on_request_accepted
           # Send request to the server
           deliver!(query: "reset_player", targetUID: current_user.steam_uid)
         end

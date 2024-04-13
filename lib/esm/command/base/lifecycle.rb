@@ -87,12 +87,12 @@ module ESM
             load_v1_code! if v1_code_needed? # V1
 
             if @request.accepted
-              request_accepted
+              on_request_accepted
             else
               # Reset the cooldown since the request was declined.
               current_cooldown.reset! if current_cooldown.present?
 
-              request_declined
+              on_request_declined
             end
           end
         end
@@ -100,10 +100,10 @@ module ESM
         def on_execute
         end
 
-        def request_accepted
+        def on_request_accepted
         end
 
-        def request_declined
+        def on_request_declined
         end
       end
     end

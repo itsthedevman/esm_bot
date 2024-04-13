@@ -56,7 +56,7 @@ module ESM
           reply(embed)
         end
 
-        def request_accepted
+        def on_request_accepted
           deliver!(command_name: "reward", function_name: "rewardPlayer", target_uid: current_user.steam_uid)
         end
 

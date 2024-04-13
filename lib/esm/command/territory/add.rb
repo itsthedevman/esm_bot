@@ -29,7 +29,7 @@ module ESM
 
         def on_execute
           # Either a memer or admin trying to add themselves. Either way, the arma server handles this.
-          return request_accepted if same_user?
+          return on_request_accepted if same_user?
 
           # Checks for a registered target user. This also keeps people from adding via steam_uid only
           check_for_registered_target_user!
@@ -81,7 +81,7 @@ module ESM
           reply(embed)
         end
 
-        def request_accepted
+        def on_request_accepted
           if v2_target_server?
             send_to_arma(
               territory: {
