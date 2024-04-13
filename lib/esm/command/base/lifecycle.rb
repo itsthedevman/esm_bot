@@ -100,9 +100,6 @@ module ESM
         def on_execute
         end
 
-        def on_response(_incoming_message, _outgoing_message)
-        end
-
         def request_accepted
         end
 

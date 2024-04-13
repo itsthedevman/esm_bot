@@ -32,7 +32,7 @@ module ESM
             deliver!(query: "player_info", uid: current_user.steam_uid)
           end
 
-          def on_response(incoming_message, _outgoing_message)
+          def on_response
             # V1
             # @response will be an empty array if the user has not joined the server
             # Converting to nil for compatibility

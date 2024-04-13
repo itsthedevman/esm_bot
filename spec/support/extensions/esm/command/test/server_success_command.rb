@@ -15,7 +15,7 @@ module ESM
           send_to_target_server(message)
         end
 
-        def on_response(_, _)
+        def on_response
           reply("Yaay")
         end
       end

@@ -288,7 +288,7 @@ describe ESM::Command::Base do
     end
 
     it "is callable" do
-      expect(command.on_response(nil, nil)).to eq("on_response")
+      expect(command.on_response).to eq("on_response")
     end
   end
 

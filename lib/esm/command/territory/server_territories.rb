@@ -46,7 +46,7 @@ module ESM
           end
         end
 
-        def on_response(incoming_message, _outgoing_message)
+        def on_response
           @territories =
             if v2_target_server?
               incoming_message.data.results.map(&:to_istruct)

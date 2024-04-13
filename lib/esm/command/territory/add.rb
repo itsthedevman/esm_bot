@@ -50,7 +50,7 @@ module ESM
           reply(embed)
         end
 
-        def on_response(_, _)
+        def on_response
           # Send the success message to the requestee (which can be the requestor)
           embed = ESM::Embed.build(
             :success,

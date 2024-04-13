@@ -88,7 +88,7 @@ module ESM
             deliver!(command_name: "exec", function_name: "exec", target: execute_on, code: minify_sqf(arguments.code_to_execute))
           end
 
-          def on_response(_, _)
+          def on_response
             return if @response.message.blank?
 
             reply(response_message)

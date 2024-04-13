@@ -12,7 +12,7 @@ module ESM
           add_request(to: target_user)
         end
 
-        def on_response(_, _)
+        def on_response
         end
 
         def request_accepted
