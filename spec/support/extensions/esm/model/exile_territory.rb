@@ -54,7 +54,6 @@ module ESM
     attribute :deleted_at, :datetime
 
     after_save :update_arma
-    after_create :create_territory
 
     scope :active, -> { where(deleted_at: nil) }
     scope :not_stolen, -> { where(flag_stolen: false) }
@@ -94,8 +93,18 @@ module ESM
       end
     end
 
+    def create_flag
+      sqf = "\"#{id}\" call ExileServer_system_territory_database_load;"
+
+      server.execute_sqf!(sqf, steam_uid: owner_uid)
+    end
+
     def delete_flag
-      sqf = "private _flagObject = #{id} call ESMs_system_territory_get; deleteVehicle _flagObject;"
+      sqf = <<~SQF
+        deleteVehicle (#{id} call ESMs_system_territory_get);
+        isNull(#{id} call ESMs_system_territory_get)
+      SQF
+
       server.execute_sqf!(sqf, steam_uid: owner_uid)
     end
 
@@ -129,41 +138,6 @@ module ESM
       if ((_, new_value) = changed_items["build_rights"])
         sqf += "_flagObject setVariable [\"ExileTerritoryBuildRights\", #{new_value.to_json}, true];"
       end
-
-      server.execute_sqf!(sqf, steam_uid: owner_uid)
-    end
-
-    def create_territory
-      # I cannot get ExileServer_system_territory_database_load to load the territories
-      # IDK why extDB won't pull it back
-      sqf = <<~SQF
-        private _flagObject = createVehicle [
-          "Exile_Construction_Flag_Static",
-          [#{position_x},#{position_y}],
-          [], 0, "CAN_COLLIDE"
-        ];
-
-        if (#{!flag_stolen}) then
-        {
-          _flagObject setFlagTexture #{flag_texture.quoted};
-        };
-
-        ExileLocations pushBack _flagObject;
-
-        _flagObject setVariable ["ExileTerritoryName", #{name.quoted}, true];
-        _flagObject setVariable ["ExileDatabaseID", #{id}];
-        _flagObject setVariable ["ExileOwnerUID", #{owner_uid}, true];
-        _flagObject setVariable ["ExileTerritorySize", #{radius}, true];
-        _flagObject setVariable ["ExileTerritoryBuildRights", #{build_rights.to_json}, true];
-        _flagObject setVariable ["ExileTerritoryModerators", #{moderators.to_json}, true];
-        _flagObject setVariable ["ExileTerritoryLevel", #{level}, true];
-        _flagObject setVariable ["ExileTerritoryLastPayed", #{last_paid_at.to_s.quoted}];
-        _flagObject setVariable ["ExileTerritoryMaintenanceDue", #{7.days.from_now.to_s.quoted}];
-        _flagObject setVariable ["ExileTerritoryNumberOfConstructions", 0, true];
-        _flagObject setVariable ["ExileRadiusShown", false, true];
-        _flagObject setVariable ["ExileFlagStolen", #{flag_stolen}, true];
-        _flagObject setVariable ["ExileFlagTexture", #{flag_texture.quoted}];
-      SQF
 
       server.execute_sqf!(sqf, steam_uid: owner_uid)
     end

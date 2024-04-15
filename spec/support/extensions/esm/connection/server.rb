@@ -7,6 +7,7 @@ module ESM
 
       def pause
         cleanup_tasks
+        @server.block!
 
         reset_connections
       end
@@ -16,6 +17,7 @@ module ESM
 
         start_connect_task
         start_disconnect_task
+        @server.unblock!
       end
 
       def reset_connections

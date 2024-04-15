@@ -54,8 +54,6 @@ module ESM
         @command
       end
 
-      private
-
       def on_error(error)
         return delete_response if error.is_a?(Exception::CheckFailureNoMessage)
 

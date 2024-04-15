@@ -12,7 +12,7 @@ module ESM
       end
 
       def accept
-        return unless readable?
+        return unless acceptable?
 
         @socket.accept_nonblock
       rescue IO::EAGAINWaitReadable
@@ -39,8 +39,8 @@ module ESM
       end
 
       def close
-        @socket.close_write
-        @socket.close_read
+        @socket.close_write if writeable?(0)
+        @socket.close_read if readable?(0)
       end
 
       #
@@ -72,6 +72,9 @@ module ESM
       def readable?(timeout = 5)
         wait_readable(timeout).first.size > 0
       end
+
+      # Important for rspec
+      alias_method :acceptable?, :readable?
 
       def writeable?(timeout = 5)
         wait_writeable(timeout).second.size > 0

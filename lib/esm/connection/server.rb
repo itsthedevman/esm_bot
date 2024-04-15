@@ -7,7 +7,9 @@ module ESM
         @config = ESM.config.connection_server
         @connections = Concurrent::Map.new
         @waiting_room = WaitingRoom.new
-        @server = Socket.new(TCPServer.new("0.0.0.0", ESM.config.ports.connection_server))
+        @server = ESM::Connection::Socket.new(
+          TCPServer.new("0.0.0.0", ESM.config.ports.connection_server)
+        )
       end
 
       def start
@@ -46,22 +48,28 @@ module ESM
       private
 
       def start_connect_task
-        @connect_task = Concurrent::TimerTask.execute(execution_interval: @config.connection_check) do
-          on_connect
+        @connect_task = Thread.new do
+          loop do
+            sleep @config.connection_check
+            on_connect
+          end
         end
       end
 
       def start_disconnect_task
-        @disconnect_task = Concurrent::TimerTask.execute(execution_interval: @config.waiting_room_check) do
-          check_waiting_room
+        @disconnect_task = Thread.new do
+          loop do
+            sleep @config.waiting_room_check
+            check_waiting_room
+          end
         end
       end
 
       def cleanup_tasks
-        @connect_task&.shutdown
+        @connect_task&.exit
         @connect_task = nil
 
-        @disconnect_task&.shutdown
+        @disconnect_task&.exit
         @disconnect_task = nil
       end
 

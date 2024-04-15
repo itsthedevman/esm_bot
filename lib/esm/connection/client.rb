@@ -25,9 +25,12 @@ module ESM
         @metadata = set_metadata(vg_enabled: false, vg_max_sizes: 0)
         @thread_pool = Concurrent::CachedThreadPool.new
 
-        @tasks = [
-          Concurrent::TimerTask.execute(execution_interval: @config.request_check) { on_message }
-        ]
+        @task = Thread.new do
+          loop do
+            sleep @config.request_check
+            on_message
+          end
+        end
       end
 
       def set_metadata(**)
@@ -43,10 +46,8 @@ module ESM
           reason:
         )
 
-        @tasks.each(&:shutdown)
-
+        @task.exit
         @tcp_server.client_disconnected(self)
-
         @socket.close
       end
 

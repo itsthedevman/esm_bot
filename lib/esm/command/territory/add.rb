@@ -50,6 +50,20 @@ module ESM
           reply(embed)
         end
 
+        def on_request_accepted
+          send_to_arma(
+            territory: {
+              encoded: {
+                id: arguments.territory_id
+              }
+            }
+          )
+
+          on_response
+        end
+
+        # V1
+        # This code could stay, or it could be moved into `#on_request_accepted`
         def on_response
           # Send the success message to the requestee (which can be the requestor)
           embed = ESM::Embed.build(
@@ -81,16 +95,8 @@ module ESM
           reply(embed)
         end
 
-        def on_request_accepted
-          if v2_target_server?
-            send_to_arma(
-              territory: {
-                encoded: {
-                  id: arguments.territory_id
-                }
-              }
-            )
-          else
+        module V1
+          def on_request_accepted
             # Request the arma server to add the user
             deliver!(
               function_name: "addPlayerToTerritory",

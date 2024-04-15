@@ -38,24 +38,6 @@ RSpec.configure do |config|
     # Run the test!
     DatabaseCleaner.cleaning { example.run }
   end
-
-  config.before(:context, :territory_admin_bypass) do
-    before_connection do
-      community.update!(territory_admin_ids: [community.everyone_role_id])
-    end
-  end
-
-  config.after(:context, :territory_admin_bypass) do
-    ESM::Test.callbacks.remove_all_callbacks!
-  end
-
-  config.before(:context, :error_testing) do
-    disable_log_printing
-  end
-
-  config.after(:context, :error_testing) do
-    enable_log_printing
-  end
 end
 
 # Wait until everything is ready

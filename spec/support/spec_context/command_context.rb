@@ -31,6 +31,7 @@ RSpec.shared_context("command") do
     arguments = opts.delete(:arguments) || {}
     prompt_response = opts.delete(:prompt_response)
     handle_error = opts.delete(:handle_error)
+    command = command_class.new
 
     channel =
       if (channel = opts.delete(:channel))
@@ -114,5 +115,13 @@ RSpec.shared_context("command") do
 
   def respond_to_prompt(response)
     ESM::Test.response = response
+  end
+
+  def accept_request
+    previous_command.request.respond(true)
+  rescue => e
+    return if e.is_a?(ESM::Exception::CheckFailureNoMessage)
+
+    ESM.bot.deliver(e.data, to: ESM::Test.channel(in: community))
   end
 end
