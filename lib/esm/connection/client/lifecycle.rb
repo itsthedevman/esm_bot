@@ -45,7 +45,13 @@ module ESM
 
         def on_identification(response)
           public_id = response.content
-          info!(address: local_address.inspect, public_id: public_id, server_id: nil, state: :unidentified)
+
+          info!(
+            address: local_address.inspect,
+            public_id: public_id,
+            server_id: nil,
+            state: :unidentified
+          )
 
           model = ESM::Server.find_by_public_id(public_id)
           raise InvalidAccessKey if model.nil?
@@ -55,21 +61,29 @@ module ESM
           @id = model.public_id
           @encryption = Encryption.new(model.token[:secret])
 
-          info!(address: local_address.inspect, public_id: @id, server_id: @model.server_id, state: :identified)
+          info!(
+            address: local_address.inspect,
+            public_id: @id,
+            server_id: @model.server_id,
+            state: :identified
+          )
 
           perform_handshake!
           request_initialization!
 
-          @tcp_server.client_connected(self)
-        rescue Error => e
-          close(e.message)
+          ESM.connection_server.on_authentication(self)
         end
 
         def perform_handshake!
           new_indices = @encryption.generate_nonce_indices
           message = ESM::Message.new.set_data(:handshake, indices: new_indices)
 
-          info!(address: local_address.inspect, public_id: @id, server_id: @model.server_id, state: :handshake)
+          info!(
+            address: local_address.inspect,
+            public_id: @id,
+            server_id: @model.server_id,
+            state: :handshake
+          )
 
           # This doesn't use #send_request because it needs to hook into the promise to immediately
           # swap the nonce to the new one before the client has time to respond.
@@ -86,7 +100,12 @@ module ESM
         end
 
         def request_initialization!
-          info!(address: local_address.inspect, public_id: @id, server_id: @model.server_id, state: :pre_initialization)
+          info!(
+            address: local_address.inspect,
+            public_id: @id,
+            server_id: @model.server_id,
+            state: :pre_initialization
+          )
 
           message = send_request(type: :initialize)
 

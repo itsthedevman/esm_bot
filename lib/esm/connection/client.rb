@@ -12,13 +12,11 @@ module ESM
       delegate :local_address, to: :@socket
       delegate :server_id, to: :@model, allow_nil: true
 
-      def initialize(tcp_server, tcp_client)
-        info!("#{tcp_client.local_address.inspect} connecting")
-
-        @tcp_server = tcp_server
+      def initialize(tcp_client)
         @socket = Socket.new(tcp_client)
         @ledger = Ledger.new
         @config = ESM.config.connection_client
+        @connected_at = Time.current
 
         @id = nil
         @model = nil
@@ -38,6 +36,8 @@ module ESM
       end
 
       def close(reason)
+        ESM.connection_server.on_disconnect(self)
+
         warn!(
           address: local_address.inspect,
           public_id: @id,
@@ -47,7 +47,6 @@ module ESM
         )
 
         @task.exit
-        @tcp_server.client_disconnected(self)
         @socket.close
       end
 
