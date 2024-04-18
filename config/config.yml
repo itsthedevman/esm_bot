@@ -25,7 +25,7 @@ default: &default
   # ESM::Connection::Server
   connection_server:
     connection_check: 0.1
-    waiting_room_check: 1
+    lobby_timeout: 1
     disconnect_after: 10
 
   # ESM::Connection::Client

@@ -11,6 +11,10 @@ module ESM
         @socket = socket
       end
 
+      def address
+        @socket.local_address.inspect_sockaddr
+      end
+
       def accept
         return unless acceptable?
 

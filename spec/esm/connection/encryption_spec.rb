@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-describe ESM::Connection::Client::Encryption do
+describe ESM::Connection::Encryption do
   let(:different_encryption) { described_class.new("This is a complete different key not the same at all") }
 
   subject!(:encryption) { described_class.new("This is the super secret key that is used to encrypt") }
@@ -15,7 +15,7 @@ describe ESM::Connection::Client::Encryption do
         # It should also fail decryption with another key
         expect {
           different_encryption.decrypt(encrypted_text)
-        }.to raise_error(ESM::Connection::Client::DecryptionError)
+        }.to raise_error(ESM::Connection::DecryptionError)
       end
     end
   end
@@ -30,7 +30,7 @@ describe ESM::Connection::Client::Encryption do
 
         expect {
           encryption.decrypt(encrypted_text)
-        }.to raise_error(ESM::Connection::Client::InvalidNonce)
+        }.to raise_error(ESM::Connection::InvalidNonce)
       end
     end
 
@@ -40,7 +40,7 @@ describe ESM::Connection::Client::Encryption do
 
         expect {
           different_encryption.decrypt(encrypted_text)
-        }.to raise_error(ESM::Connection::Client::DecryptionError)
+        }.to raise_error(ESM::Connection::DecryptionError)
       end
     end
 

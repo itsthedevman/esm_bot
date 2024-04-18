@@ -3,28 +3,14 @@
 module ESM
   module Connection
     class Server
-      attr_reader :waiting_room, :connections
-
       def pause
-        cleanup_tasks
         @server.block!
-
-        reset_connections
+        @connection_manager.disconnect_all
       end
 
       def resume
-        reset_connections
-
-        start_connect_task
-        start_disconnect_task
+        @connection_manager.disconnect_all
         @server.unblock!
-      end
-
-      def reset_connections
-        @connections.each_value { |client| client.close("spec finish") }
-        @waiting_room.shutdown
-        @connections.clear
-        @waiting_room.clear
       end
     end
   end

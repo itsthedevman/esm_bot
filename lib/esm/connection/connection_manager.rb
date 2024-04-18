@@ -15,10 +15,12 @@ module ESM
       end
 
       def on_connect(socket)
+        info!(address: socket.address, state: :on_connect)
+
         @lobby << Client.new(socket)
       end
 
-      def on_authentication(client)
+      def on_initialize(client)
         @lobby.delete(client)
         @connections[client.id] = client
       end

@@ -9,7 +9,7 @@ module ESM
 
       attr_reader :id, :model
 
-      delegate :local_address, to: :@socket
+      delegate :address, to: :@socket
       delegate :server_id, to: :@model, allow_nil: true
 
       def initialize(tcp_client)
@@ -21,9 +21,10 @@ module ESM
         @id = nil
         @model = nil
         @metadata = set_metadata(vg_enabled: false, vg_max_sizes: 0)
+        @thread_pool = Concurrent::CachedThreadPool.new
 
         execution_interval = @config.request_check
-        @task = Concurrent::TimerTask.new(execution_interval:) { on_message }
+        @task = Concurrent::TimerTask.execute(execution_interval:) { on_message }
       end
 
       def set_metadata(**)
@@ -34,7 +35,7 @@ module ESM
         ESM.connection_server.on_disconnect(self)
 
         warn!(
-          address: local_address.inspect,
+          address:,
           public_id: @id,
           server_id: @model&.server_id,
           state: :disconnected,
@@ -55,7 +56,7 @@ module ESM
 
       def send_request(content = nil, type:, block: true)
         info!(
-          address: local_address.inspect,
+          address:,
           public_id: @id,
           server_id: @model.server_id,
           outbound: {type: type, content: content.respond_to?(:to_h) ? content.to_h : content}
@@ -76,7 +77,7 @@ module ESM
         message.metadata.server_id = @model.server_id
 
         info!(
-          address: local_address.inspect,
+          address:,
           public_id: @id,
           server_id: @model.server_id,
           inbound: message.to_h
@@ -144,6 +145,13 @@ module ESM
         return if data.blank?
 
         Request.from_client(data)
+      end
+
+      def on_message
+        request = read
+        return if request.nil?
+
+        @thread_pool.post { process_message(request) }
       end
     end
   end
