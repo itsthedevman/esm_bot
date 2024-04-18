@@ -4,48 +4,26 @@ module ESM
   module Connection
     class Client
       module Lifecycle
-        private
-
-        def forward_response_to_caller(response)
-          promise = @ledger.remove(response)
-          raise InvalidMessage if promise.nil?
-
-          promise.set_response(response)
-        end
-
         def on_message
           request = read
           return if request.nil?
 
-          @thread_pool.post do
-            case request.type
-            when :identification
-              on_identification(request)
-            when :handshake
-              forward_response_to_caller(request)
-            when :message
-              if @ledger.include?(request)
-                forward_response_to_caller(request)
-              else
-                on_request(request)
-              end
-            else
-              raise "Invalid data received: #{response}"
-            end
-          rescue Client::Error => e
-            send_error(e.message)
-            close(e.message)
-          rescue => e
-            error!(error: e)
-            close("An error occurred")
-          ensure
-            @ledger.remove(request)
+          if request.type == :identification
+            on_identification(request.content)
+          else
+
           end
+        rescue Client::Error => e
+          send_error(e.message)
+          close(e.message)
+        rescue => e
+          error!(error: e)
+          close("An error occurred")
+        ensure
+          @ledger.remove(request)
         end
 
-        def on_identification(response)
-          public_id = response.content
-
+        def on_identification(public_id)
           info!(
             address: local_address.inspect,
             public_id: public_id,
@@ -75,7 +53,7 @@ module ESM
         end
 
         def perform_handshake!
-          new_indices = @encryption.generate_nonce_indices
+          new_indices = Encryption.generate_nonce_indices
           message = ESM::Message.new.set_data(:handshake, indices: new_indices)
 
           info!(
@@ -130,13 +108,11 @@ module ESM
 
           @model.reload
 
-          @thread_pool.post do
-            case message.data_type
-            when :send_to_channel
-              ESM::Event::SendToChannel.new(@model, message).run!
-            else
-              raise "Invalid data received: #{message}"
-            end
+          case message.data_type
+          when :send_to_channel
+            ESM::Event::SendToChannel.new(@model, message).run!
+          else
+            raise "Invalid data received: #{message}"
           end
         rescue => e
           error!(error: e)

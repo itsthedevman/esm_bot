@@ -21,14 +21,9 @@ module ESM
         @id = nil
         @model = nil
         @metadata = set_metadata(vg_enabled: false, vg_max_sizes: 0)
-        @thread_pool = Concurrent::CachedThreadPool.new
 
-        @task = Thread.new do
-          loop do
-            sleep @config.request_check
-            on_message
-          end
-        end
+        execution_interval = @config.request_check
+        @task = Concurrent::TimerTask.new(execution_interval:) { on_message }
       end
 
       def set_metadata(**)
@@ -46,7 +41,7 @@ module ESM
           reason:
         )
 
-        @task.exit
+        @task.shutdown
         @socket.close
       end
 
@@ -96,7 +91,8 @@ module ESM
       # @see #send_request or #send_message for higher level methods
       #
       # @param id [String, nil] A UUID, if any, that will be used to differentiate this request
-      # @param type [Symbol] The request type. See ESM::Connection::Client::Request::TYPES for full list
+      # @param type [Symbol] The request type.
+      #     See ESM::Connection::Client::Request::TYPES for full list
       # @param content [Symbol, Array<Numeric>, nil, #bytes] The content to send in the request
       # @param block [true, false] Should this method block and wait for the response?
       #
@@ -110,14 +106,17 @@ module ESM
         promise = @ledger.add(request)
 
         # All data passed is in JSON format
-        # ESM will never be huge to the point where JSON is a limitation so this isn't a concern of mine
+        # ESM will never be huge to the point where JSON is a limitation so this
+        # isn't a concern of mine
         content = request.to_json
 
-        # Errors can happen before we properly set up encryption. Bypassing encryption means we can better communicate
+        # Errors can happen before we properly set up encryption.
+        # Bypassing encryption means we can better communicate
         content = @encryption.encrypt(content) if type != :error
 
         # As I've learned there are reasons why Base64 is important for networking
-        # I can guess that Unicode is one of them because I've experienced some weird behavior without this
+        # I can guess that Unicode is one of them because I've experienced some
+        # weird behavior without this
         content = Base64.strict_encode64(content)
 
         # Once the promise is executed, write the content to the client
