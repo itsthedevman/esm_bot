@@ -18,15 +18,14 @@ RSpec.shared_context("connection") do
 
     # Store the server key so the build tool can pick it up and write it
     ESM.redis.set("server_key", server.token.to_json)
-    debug!(server_key: server.token)
+
+    connection_server.resume
 
     # Removing all territories also checks that we're connected to MySQL
     ESM::ExileTerritory.delete_all
 
     # Callbacks
     ESM::Test.callbacks.run_callback(:before_connection, on_instance: self)
-
-    connection_server.resume
 
     wait_for { ESM.redis.exists?("server_key_set") }.to be(true)
 

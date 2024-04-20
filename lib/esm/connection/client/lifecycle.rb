@@ -38,7 +38,7 @@ module ESM
 
         private
 
-        def forward_response_to_caller(request)
+        def forward_to_caller(request)
           promise = @ledger.remove(request)
           raise InvalidMessage if promise.nil?
 
@@ -47,7 +47,7 @@ module ESM
 
         def process_message(request)
           if @ledger.include?(request)
-            forward_response_to_caller(request)
+            forward_to_caller(request)
             return
           end
 
