@@ -2,41 +2,18 @@
 
 module ESM
   module Connection
-    class Socket
+    class Socket < SimpleDelegator
       READ_BYTES = 65_444 - 20 - 8
 
-      delegate_missing_to :@socket
-
-      def initialize(socket)
-        @socket = socket
+      def readable?(timeout = 5)
+        wait_readable(timeout).first.size > 0
       end
 
-      def address
-        @socket.local_address.inspect_sockaddr
+      def writeable?(timeout = 5)
+        wait_writeable(timeout).second.size > 0
       end
 
-      def read
-        return unless readable?
-
-        @socket.recv_nonblock(READ_BYTES)
-      rescue => e
-        error!(error: e)
-      end
-
-      def write(data)
-        raise TypeError, "Expected String, got #{data.class}" unless data.is_a?(String)
-
-        @socket.send(data, 0)
-      rescue TypeError
-        raise
-      rescue => e
-        error!(error: e)
-      end
-
-      def close
-        @socket.close_write if writeable?(0)
-        @socket.close_read if readable?(0)
-      end
+      private
 
       #
       # Blocks until the socket is readable
@@ -46,7 +23,7 @@ module ESM
       # @returns [Array] The sockets grouped by state [readable, writeable, errored]
       #
       def wait_readable(timeout = 5)
-        IO.select([@socket], nil, nil, timeout) || [[], [], []]
+        IO.select([__getobj__], nil, nil, timeout) || [[], [], []]
       rescue IOError
         [[], [], []]
       end
@@ -59,17 +36,9 @@ module ESM
       # @returns [Array] The sockets grouped by state [readable, writeable, errored]
       #
       def wait_writeable(timeout = 5)
-        IO.select(nil, [@socket], nil, timeout) || [[], [], []]
+        IO.select(nil, [__getobj__], nil, timeout) || [[], [], []]
       rescue IOError
         [[], [], []]
-      end
-
-      def readable?(timeout = 5)
-        wait_readable(timeout).first.size > 0
-      end
-
-      def writeable?(timeout = 5)
-        wait_writeable(timeout).second.size > 0
       end
     end
   end

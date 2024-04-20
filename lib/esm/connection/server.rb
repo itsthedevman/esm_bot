@@ -8,12 +8,13 @@ module ESM
       def initialize
         @config = ESM.config.connection_server
         @connection_manager = ConnectionManager.new(@config.lobby_timeout)
-        @server = TCPServer.new("0.0.0.0", ESM.config.ports.connection_server)
+        @server = ServerSocket.new(TCPServer.new("0.0.0.0", ESM.config.ports.connection_server))
       end
 
       def start
         execution_interval = @config.connection_check
-        @on_connect_task = Concurrent::TimerTask.execute(execution_interval:) { on_connect }
+        @task = Concurrent::TimerTask.execute(execution_interval:) { on_connect }
+        @task.add_observer(ErrorHandler.new)
 
         info!(status: :started)
       end
@@ -29,7 +30,7 @@ module ESM
       private
 
       def on_connect
-        socket = @server.accept_nonblock
+        socket = @server.accept
         return unless socket.is_a?(TCPSocket)
 
         @connection_manager.on_connect(socket)

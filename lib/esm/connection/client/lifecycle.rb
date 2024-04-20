@@ -57,7 +57,8 @@ module ESM
           when :message
             on_request(request.content)
           end
-        rescue Client::Error => e
+        rescue Error => e
+          error!(e.message)
           send_error(e.message)
           close(e.message)
         rescue => e

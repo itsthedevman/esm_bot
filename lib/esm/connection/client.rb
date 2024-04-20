@@ -13,7 +13,7 @@ module ESM
       delegate :server_id, to: :@model, allow_nil: true
 
       def initialize(tcp_client)
-        @socket = Socket.new(tcp_client)
+        @socket = ClientSocket.new(tcp_client)
         @ledger = Ledger.new
         @config = ESM.config.connection_client
         @connected_at = Time.current
@@ -25,6 +25,7 @@ module ESM
 
         execution_interval = @config.request_check
         @task = Concurrent::TimerTask.execute(execution_interval:) { on_message }
+        @task.add_observer(ErrorHandler.new)
       end
 
       def set_metadata(**)
@@ -50,16 +51,16 @@ module ESM
         send_request(message, type: :message, **)
       end
 
-      def send_error(error, **)
-        send_request(error, type: :error, **)
+      def send_error(error, block: false)
+        send_request(error, type: :error, block:)
       end
 
       def send_request(content = nil, type:, block: true)
         info!(
           address:,
           public_id: @id,
-          server_id: @model.server_id,
-          outbound: {type: type, content: content.respond_to?(:to_h) ? content.to_h : content}
+          server_id: @model&.server_id,
+          outbound: {type:, content: content.respond_to?(:to_h) ? content.to_h : content}
         )
 
         promise = write(
