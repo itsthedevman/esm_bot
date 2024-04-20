@@ -142,9 +142,10 @@ describe ESM::Command::Territory::Add, category: "command" do
       end
 
       before do
+        expect(territory.create_flag).to be(true)
+
         user.create_account
         second_user.create_account
-        territory.create_flag
       end
 
       context "when the user is a moderator and the target is a different player" do

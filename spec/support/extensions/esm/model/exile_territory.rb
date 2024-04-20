@@ -94,9 +94,13 @@ module ESM
     end
 
     def create_flag
-      sqf = "\"#{id}\" call ExileServer_system_territory_database_load;"
+      sqf = <<~SQF
+        "#{id}" call ExileServer_system_territory_database_load;
+        !isNull("#{id}" call ESMs_system_territory_get);
+      SQF
 
-      server.execute_sqf!(sqf, steam_uid: owner_uid)
+      response = server.execute_sqf!(sqf, steam_uid: owner_uid)
+      response.data
     end
 
     def delete_flag

@@ -16,8 +16,8 @@ module ESM
       end
 
       def on_connect(socket)
-        info!(address: socket.address, state: :on_connect)
         @lobby << Client.new(socket)
+        info!(address: socket.address, state: :on_connect)
       end
 
       def on_initialize(client)
