@@ -22,7 +22,7 @@ RSpec.shared_context("connection") do
     connection_server.resume
 
     # Removing all territories also checks that we're connected to MySQL
-    ESM::ExileTerritory.delete_all
+    ESM::ExileTerritory.destroy_all
 
     # Callbacks
     ESM::Test.callbacks.run_callback(:before_connection, on_instance: self)

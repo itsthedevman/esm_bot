@@ -2,6 +2,9 @@
 
 module ESM
   class ExileTerritory < ArmaRecord
+    class ArmaError < ESM::Exception::Error
+    end
+
     FLAG_TEXTURES = %w[
       exile_assets\texture\flag\flag_mate_bis_co.paa exile_assets\texture\flag\flag_mate_vish_co.paa exile_assets\texture\flag\flag_mate_hollow_co.paa
       exile_assets\texture\flag\flag_mate_legion_ca.paa exile_assets\texture\flag\flag_mate_21dmd_co.paa exile_assets\texture\flag\flag_mate_spawny_co.paa
@@ -95,18 +98,21 @@ module ESM
 
     def create_flag
       sqf = <<~SQF
-        "#{id}" call ExileServer_system_territory_database_load;
-        !isNull("#{id}" call ESMs_system_territory_get);
+        private _flag = #{id} call ESMs_system_territory_get;
+        if (!isNull _flag) exitWith {};
+
+        #{id} call ExileServer_system_territory_database_load;
       SQF
 
-      response = server.execute_sqf!(sqf, steam_uid: owner_uid)
-      response.data
+      server.execute_sqf!(sqf, steam_uid: owner_uid)
     end
 
     def delete_flag
       sqf = <<~SQF
-        deleteVehicle (#{id} call ESMs_system_territory_get);
-        isNull(#{id} call ESMs_system_territory_get)
+        private _flag = #{id} call ESMs_system_territory_get;
+        if (isNull _flag) exitWith {};
+
+        deleteVehicle _flag;
       SQF
 
       server.execute_sqf!(sqf, steam_uid: owner_uid)
