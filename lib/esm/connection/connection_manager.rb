@@ -8,6 +8,7 @@ module ESM
 
         @connections = Concurrent::Map.new
         @lobby = Concurrent::Array.new
+        @task = Concurrent::TimerTask.execute(execution_interval: 1) { check_lobby }
       end
 
       def find(id)
@@ -16,7 +17,6 @@ module ESM
 
       def on_connect(socket)
         info!(address: socket.address, state: :on_connect)
-
         @lobby << Client.new(socket)
       end
 
