@@ -16,7 +16,6 @@ module ESM
         @socket = ClientSocket.new(tcp_client)
         @ledger = Ledger.new
         @config = ESM.config.connection_client
-        @connected_at = Time.current
 
         @id = nil
         @model = nil
@@ -26,6 +25,9 @@ module ESM
         execution_interval = @config.request_check
         @task = Concurrent::TimerTask.execute(execution_interval:) { on_message }
         @task.add_observer(ErrorHandler.new)
+
+        @connected_at = Time.current
+        info!(address:, state: :on_connect)
       end
 
       def set_metadata(**)
@@ -83,6 +85,8 @@ module ESM
           server_id: @model.server_id,
           inbound: message.to_h
         )
+
+        raise ExtensionError, message.error_messages.join("\n") if message.errors?
 
         message
       end

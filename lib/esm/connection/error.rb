@@ -52,5 +52,8 @@ module ESM
     class InvalidNonce < DecryptionError
       def initialize = super("Invalid nonce")
     end
+
+    class ExtensionError < Error
+    end
   end
 end
