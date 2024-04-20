@@ -15,15 +15,6 @@ module ESM
         @socket.local_address.inspect_sockaddr
       end
 
-      def accept
-        return unless acceptable?
-
-        @socket.accept_nonblock
-      rescue IO::EAGAINWaitReadable
-      rescue => e
-        error!(error: e)
-      end
-
       def read
         return unless readable?
 
@@ -76,9 +67,6 @@ module ESM
       def readable?(timeout = 5)
         wait_readable(timeout).first.size > 0
       end
-
-      # Important for rspec
-      alias_method :acceptable?, :readable?
 
       def writeable?(timeout = 5)
         wait_writeable(timeout).second.size > 0

@@ -8,9 +8,7 @@ module ESM
       def initialize
         @config = ESM.config.connection_server
         @connection_manager = ConnectionManager.new(@config.lobby_timeout)
-        @server = Socket.new(
-          TCPServer.new("0.0.0.0", ESM.config.ports.connection_server)
-        )
+        @server = TCPServer.new("0.0.0.0", ESM.config.ports.connection_server)
       end
 
       def start
@@ -31,7 +29,7 @@ module ESM
       private
 
       def on_connect
-        socket = @server.accept
+        socket = @server.accept_nonblock
         return unless socket.is_a?(TCPSocket)
 
         @connection_manager.on_connect(socket)
