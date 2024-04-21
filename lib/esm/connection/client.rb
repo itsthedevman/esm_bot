@@ -34,19 +34,11 @@ module ESM
         @metadata = Metadata.new(**)
       end
 
-      def close(reason)
-        ESM.connection_server.on_disconnect(self)
-
-        warn!(
-          address:,
-          public_id: @id,
-          server_id: @model&.server_id,
-          state: :disconnected,
-          reason:
-        )
-
+      def close
         @task.shutdown
         @socket.close
+
+        ESM.connection_server.on_disconnect(self)
       end
 
       def send_message(message, **)

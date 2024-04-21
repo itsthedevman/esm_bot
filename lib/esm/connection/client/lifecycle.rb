@@ -58,9 +58,8 @@ module ESM
             on_request(request.content)
           end
         rescue Error => e
-          error!(e.message)
-          send_error(e.message)
-          close(e.message)
+          send_error(e)
+          close
         rescue => e
           error!(error: e)
         ensure

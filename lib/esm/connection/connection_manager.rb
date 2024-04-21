@@ -36,7 +36,7 @@ module ESM
           timed_out = (Time.current - client.connected_at) >= @lobby_timeout
           next false unless timed_out
 
-          client.close("Failed to authenticate before timeout")
+          client.close
           true
         end
       end
