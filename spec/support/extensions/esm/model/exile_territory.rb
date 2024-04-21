@@ -99,23 +99,29 @@ module ESM
     def create_flag
       sqf = <<~SQF
         private _flag = #{id} call ESMs_system_territory_get;
-        if (!isNull _flag) exitWith {};
+        if (!isNull _flag) exitWith { false };
 
         #{id} call ExileServer_system_territory_database_load;
       SQF
 
-      server.execute_sqf!(sqf, steam_uid: owner_uid)
+      result = server.execute_sqf!(sqf, steam_uid: owner_uid)
+      success = result.data.result
+
+      raise ArmaError, "Failed to create flag for territory id:#{id}" unless success
     end
 
     def delete_flag
       sqf = <<~SQF
         private _flag = #{id} call ESMs_system_territory_get;
-        if (isNull _flag) exitWith {};
+        if (isNull _flag) exitWith { false };
 
         deleteVehicle _flag;
       SQF
 
-      server.execute_sqf!(sqf, steam_uid: owner_uid)
+      result = server.execute_sqf!(sqf, steam_uid: owner_uid)
+      success = result.data.result
+
+      raise ArmaError, "Failed to delete flag for territory id:#{id}" unless success
     end
 
     private

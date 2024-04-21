@@ -122,6 +122,13 @@ RSpec.shared_context("command") do
   rescue => e
     return if e.is_a?(ESM::Exception::CheckFailureNoMessage)
 
-    ESM.bot.deliver(e.data, to: ESM::Test.channel(in: community))
+    message =
+      if e.respond_to?(:data)
+        e.data
+      else
+        e.message
+      end
+
+    ESM.bot.deliver(message, to: ESM::Test.channel(in: community))
   end
 end

@@ -2,6 +2,15 @@
 
 module ESM
   class Server
+    def delete_all_territories
+      sqf = <<~SQF
+        ExileLocations = [];
+        { deleteVehicle _x } forEach ("Exile_Construction_Flag_Static" allObjects 0);
+      SQF
+
+      execute_sqf!(sqf)
+    end
+
     #
     # Sends the provided SQF code to the linked connection.
     #

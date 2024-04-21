@@ -21,9 +21,6 @@ RSpec.shared_context("connection") do
 
     connection_server.resume
 
-    # Removing all territories also checks that we're connected to MySQL
-    ESM::ExileTerritory.destroy_all
-
     # Callbacks
     ESM::Test.callbacks.run_callback(:before_connection, on_instance: self)
 
@@ -48,6 +45,9 @@ RSpec.shared_context("connection") do
       spawn_test_user(user, on: server, **attrs)
       _spawned_players << user
     end
+
+    # Clear any territories
+    server.delete_all_territories
   rescue ActiveRecord::ConnectionNotEstablished
     raise "Unable to connect to the Exile MySQL server. Please ensure it is running before trying again"
   end
