@@ -21,9 +21,6 @@ RSpec.shared_context("connection") do
 
     connection_server.resume
 
-    # Callbacks
-    ESM::Test.callbacks.run_callback(:before_connection, on_instance: self)
-
     wait_for { ESM.redis.exists?("server_key_set") }.to be(true)
 
     wait_for { server.reload.connected? }.to be(true),

@@ -26,38 +26,12 @@ def send_discord_message(message)
   ESM::Test.response = message
 end
 
-#
-# Waits for a message to be sent from the bot to the server
-#
-# @return [ESM::Message]
-#
-def wait_for_outbound_message
-  message = nil
-  wait_for { message = ESM::Test.outbound_server_messages.shift }.to be_truthy
-  message.content
-end
-
-#
-# Waits for a message to be sent from the client to the bot
-#
-# @return [ESM::Message]
-#
-def wait_for_inbound_message
-  message = nil
-  wait_for { message = ESM::Test.inbound_server_messages.shift }.to be_truthy
-  message.content
-end
-
 def enable_log_printing
   ENV["PRINT_LOG"] = "true"
 end
 
 def disable_log_printing
   ENV["PRINT_LOG"] = "false"
-end
-
-def before_connection(&block)
-  ESM::Test.callbacks.add_callback(:before_connection, &block)
 end
 
 def messages

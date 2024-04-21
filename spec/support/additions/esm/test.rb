@@ -8,11 +8,7 @@ module ESM
 
       attr_reader :response
       attr_writer :messages
-      attr_accessor :skip_cooldown, :block_outbound_messages
-
-      def callbacks
-        @callbacks ||= CallbackHandler.new
-      end
+      attr_accessor :skip_cooldown
 
       def messages
         @messages ||= Messages.new
