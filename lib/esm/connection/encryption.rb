@@ -73,20 +73,20 @@ module ESM
         cipher.iv = nonce.pack("C*")
 
         decrypted_data = cipher.update(packet.pack("C*")) + cipher.final
-        raise DecryptionError if decrypted_data.blank?
+        raise ESM::Exception::DecryptionError if decrypted_data.blank?
 
         decrypted_data
       rescue ArgumentError => e
         case e.message
         when "key must be 32 bytes"
-          raise DecryptionError, "Invalid secret key length"
+          raise ESM::Exception::DecryptionError, "Invalid secret key length"
         when "iv must be #{NONCE_SIZE} bytes"
-          raise DecryptionError, "Invalid IV length"
+          raise ESM::Exception::DecryptionError, "Invalid IV length"
         else
           raise e
         end
       rescue OpenSSL::Cipher::CipherError
-        raise DecryptionError, "Failed to decrypt"
+        raise ESM::Exception::DecryptionError, "Failed to decrypt"
       end
     end
   end
