@@ -108,14 +108,12 @@ module ESM
         # isn't a concern of mine
         content = request.to_json
 
+        # Compress
+        content = ActiveSupport::Gzip.compress(content)
+
         # Errors can happen before we properly set up encryption.
         # Bypassing encryption means we can better communicate
         content = @encryption.encrypt(content) if type != :error
-
-        # As I've learned there are reasons why Base64 is important for networking
-        # I can guess that Unicode is one of them because I've experienced some
-        # weird behavior without this
-        content = Base64.strict_encode64(content)
 
         # Once the promise is executed, write the content to the client
         promise.then { @socket.write(content) }
@@ -127,16 +125,17 @@ module ESM
         data = @socket.read
         return if data.blank?
 
-        inbound_data = Base64.strict_decode64(data)
-
         # The first data we receive should be the identification (when @id is nil)
         # Every request from that point on will be encrypted
         data =
           if @id.nil?
-            inbound_data
+            data
           else
-            @encryption.decrypt(inbound_data)
+            @encryption.decrypt(data)
           end
+
+        # Decompress
+        data = ActiveSupport::Gzip.decompress(data)
 
         data = ESM::JSON.parse(data)
         return if data.blank?

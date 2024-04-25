@@ -10,7 +10,9 @@ module ESM
       def read
         return unless readable?
 
-        recv_nonblock(READ_BYTES)
+        data = recv_nonblock(READ_BYTES)
+
+        Base64.strict_decode64(data)
       rescue => e
         error!(error: e)
       end
@@ -19,6 +21,10 @@ module ESM
         raise TypeError, "Expected String, got #{data.class}" unless data.is_a?(String)
         return unless writeable?
 
+        # Encode
+        data = Base64.strict_encode64(data)
+
+        # Send
         __getobj__.send(data, 0)
       rescue TypeError
         raise
