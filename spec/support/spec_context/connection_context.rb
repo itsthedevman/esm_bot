@@ -65,9 +65,10 @@ RSpec.shared_context("connection") do
           private _deleteFunction = {
             if (isNil "_this") exitWith {};
 
-              deleteVehicle _this;
-              };
-              #{users}
+            deleteVehicle _this;
+          };
+
+          #{users}
         SQF
 
       execute_sqf!(sqf)

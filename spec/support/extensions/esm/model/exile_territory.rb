@@ -99,7 +99,7 @@ module ESM
     def create_flag
       sqf = <<~SQF
         private _flag = #{id} call ESMs_system_territory_get;
-        if (!isNull _flag) exitWith { false };
+        if !(isNull _flag) exitWith { true };
 
         #{id} call ExileServer_system_territory_database_load;
       SQF
@@ -111,11 +111,16 @@ module ESM
     end
 
     def delete_flag
+      # The sleep is required because Arma deletes a vehicle on the next frame
       sqf = <<~SQF
         private _flag = #{id} call ESMs_system_territory_get;
-        if (isNull _flag) exitWith { false };
+        if (isNull _flag) exitWith { true };
 
         deleteVehicle _flag;
+
+        sleep 0.1;
+        private _flag = #{id} call ESMs_system_territory_get;
+        isNull(_flag)
       SQF
 
       result = server.execute_sqf!(sqf, steam_uid: owner_uid)

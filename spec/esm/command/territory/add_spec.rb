@@ -142,10 +142,10 @@ describe ESM::Command::Territory::Add, category: "command" do
       end
 
       before do
-        expect(territory.create_flag).to be(true)
-
         user.create_account
         second_user.create_account
+
+        territory.create_flag
       end
 
       context "when the user is a moderator and the target is a different player" do
@@ -215,13 +215,16 @@ describe ESM::Command::Territory::Add, category: "command" do
       end
 
       context "when the user is a territory admin" do
-        include_context "territory_admin_bypass"
+        before do
+          # Arma vomits unless we return something like `nil`
+          execute_sqf!("ESM_TerritoryAdminUIDs = [#{user.steam_uid.quoted}]; nil")
 
-        it "allows them to add any player" do
           # The user and target user are not members of this territory.
           # However, user is a territory admin
           territory.revoke_membership(user.steam_uid)
+        end
 
+        it "allows them to add any player" do
           execute!(
             arguments: {
               server_id: server.server_id,
@@ -247,10 +250,6 @@ describe ESM::Command::Territory::Add, category: "command" do
         end
 
         it "allows the user to add themselves" do
-          # The user and target user are not members of this territory.
-          # However, user is a territory admin
-          territory.revoke_membership(user.steam_uid)
-
           execute!(
             arguments: {
               server_id: server.server_id,
