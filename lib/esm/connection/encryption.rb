@@ -79,14 +79,14 @@ module ESM
       rescue ArgumentError => e
         case e.message
         when "key must be 32 bytes"
-          raise InvalidSecretKey
+          raise DecryptionError, "Invalid secret key length"
         when "iv must be #{NONCE_SIZE} bytes"
-          raise InvalidNonce
+          raise DecryptionError, "Invalid IV length"
         else
           raise e
         end
       rescue OpenSSL::Cipher::CipherError
-        raise DecryptionError
+        raise DecryptionError, "Failed to decrypt"
       end
     end
   end

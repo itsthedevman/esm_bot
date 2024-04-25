@@ -65,5 +65,24 @@ module ESM
 
     class ExtensionError < DataError
     end
+
+    class RequestTimeout < Error
+      def initialize = super("Request timed out")
+    end
+
+    class ExistingConnection < Error
+      def initialize = super("Client already connected")
+    end
+
+    class InvalidAccessKey < Error
+      def initialize = super("Access denied")
+    end
+
+    class RejectedRequest < Error
+      def initialize(reason = "") = super(reason)
+    end
+
+    class DecryptionError < Error
+    end
   end
 end

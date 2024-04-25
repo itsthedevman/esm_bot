@@ -8,8 +8,8 @@ module ESM
           info!(address:, state: :on_identification, public_id:)
 
           @model = ESM::Server.find_by_public_id(public_id)
-          raise InvalidAccessKey if @model.nil?
-          raise ExistingConnection if @model.connected?
+          raise ESM::Exception::InvalidAccessKey if @model.nil?
+          raise ESM::Exception::ExistingConnection if @model.connected?
 
           authenticate!
           initialize!
@@ -40,7 +40,7 @@ module ESM
 
         def forward_to_caller(request)
           promise = @ledger.remove(request)
-          raise InvalidMessage if promise.nil?
+          raise ESM::Exception::InvalidMessage if promise.nil?
 
           promise.set_response(request)
         end
@@ -81,7 +81,7 @@ module ESM
             .then { |_| @encryption = Encryption.new(@model.token[:secret], nonce_indices:) }
             .wait_for_response(@config.response_timeout)
 
-          raise RejectedRequest, response.reason if response.rejected?
+          raise ESM::Exception::RejectedRequest, response.reason if response.rejected?
 
           # Ledger doesn't care what object it is, so long as it responds to #id
           @ledger.remove(message)

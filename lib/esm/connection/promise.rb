@@ -29,7 +29,7 @@ module ESM
             Response.rejected(result)
           else
             # Concurrent::MVar::TIMEOUT
-            Response.rejected(RequestTimeout.new)
+            Response.rejected(ESM::Exception::RequestTimeout.new)
           end
         end
 

@@ -66,7 +66,7 @@ module ESM
         return promise.execute unless block
 
         response = promise.wait_for_response(@config.response_timeout)
-        raise RejectedRequest, response.reason if response.rejected?
+        raise ESM::Exception::RejectedRequest, response.reason if response.rejected?
 
         message = ESM::Message.from_string(response.value)
         message.metadata.server_id = @model.server_id
@@ -78,7 +78,7 @@ module ESM
           inbound: message.to_h
         )
 
-        raise ExtensionError, message.error_messages.join("\n") if message.errors?
+        raise ESM::Exception::ExtensionError, message.error_messages.join("\n") if message.errors?
 
         message
       end

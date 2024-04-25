@@ -338,7 +338,11 @@ module ESM
           response_message = target_server.send_message(message, block:)
 
           if response_message.errors?
-            embed = ESM::Embed.build(:error, description: response_message.error_messages.join("\n"))
+            embed = ESM::Embed.build(
+              :error,
+              description: response_message.error_messages.join("\n")
+            )
+
             raise ESM::Exception::ExtensionError, embed
           end
 
