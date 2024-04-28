@@ -26,8 +26,6 @@ module ESM
           replacements = {
             message_id: @message.id,
             type: @message.type,
-            data_type: @message.data_type,
-            data_territory_id: @message.data_attributes[:content].dig(:territory, :encoded, :id),
             server_id: metadata.server_id,
             user: metadata.player&.discord_mention,
             target: metadata.target&.discord_mention
@@ -36,9 +34,7 @@ module ESM
           # Add the data and metadata to the replacements
           # For example, if data has two attributes: "steam_uid" and "discord_id", this will define two replacements:
           #     "data_steam_uid", and "data_discord_id"
-          #
-          # Same for metadata's attributes. Except the key prefix is "mdata_"
-          @message.data_attributes[:content].each do |key, value|
+          @message.data.to_h.each do |key, value|
             replacements[:"data_#{key}"] = value
           end
 

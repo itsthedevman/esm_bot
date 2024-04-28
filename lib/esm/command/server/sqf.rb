@@ -51,7 +51,10 @@ module ESM
               "server"
             end
 
-          response = send_to_arma(execute_on: execute_on, code: arguments.code_to_execute)
+          response = call_sqf_function(
+            "ESMs_command_sqf",
+            execute_on: execute_on, code: arguments.code_to_execute
+          )
 
           data = response.data
           translation_name = "responses.#{execute_on}"

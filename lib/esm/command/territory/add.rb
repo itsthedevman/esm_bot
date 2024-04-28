@@ -51,14 +51,7 @@ module ESM
         end
 
         def on_request_accepted
-          send_to_arma(
-            territory: {
-              encoded: {
-                id: arguments.territory_id
-              }
-            }
-          )
-
+          call_sqf_function("ESMs_command_add", territory: arguments.territory_id)
           on_response
         end
 

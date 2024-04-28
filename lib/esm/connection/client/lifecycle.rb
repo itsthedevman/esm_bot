@@ -18,19 +18,19 @@ module ESM
         def on_request(content)
           message = ESM::Message.from_string(content)
 
-          # Handle any errors
-          if message.errors?
-            error!(errors: message.error_messages.join("\n"))
+          if message.type != :call
+            send_error(
+              "Invalid message type received. Received #{message.type}, expected \"call\""
+            )
+
             return
           end
 
           @model.reload
 
-          case message.data_type
+          case message.data.function_name
           when :send_to_channel
             ESM::Event::SendToChannel.new(@model, message).run!
-          else
-            raise "Invalid data received: #{message}"
           end
         rescue => e
           error!(error: e)
@@ -70,8 +70,12 @@ module ESM
           @id = @model.public_id
           @encryption = Encryption.new(@model.token[:secret])
 
+          # Generate new nonce indices for the client
           nonce_indices = Encryption.generate_nonce_indices
-          message = ESM::Message.new.set_data(:handshake, indices: nonce_indices)
+
+          message = ESM::Message.new
+            .set_type(:init)
+            .set_data(indices: nonce_indices)
 
           # This doesn't use #send_request because it needs to hook into the promise to immediately
           # swap the nonce to the new one before the client has time to respond.

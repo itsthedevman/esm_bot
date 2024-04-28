@@ -332,6 +332,8 @@ module ESM
           message.set_metadata(
             player: current_user,
             target: target_user,
+
+            # Used by the error system
             server_id: target_server.server_id
           )
 
@@ -360,15 +362,15 @@ module ESM
         def query_exile_database(name, **arguments)
           message = ESM::Message.new
             .set_type(:query)
-            .set_data(:query, name:, arguments:)
+            .set_data(name:, arguments:)
 
           send_to_target_server(message)
         end
 
-        def send_to_arma(type = name, **data)
+        def call_sqf_function(function_name, **arguments)
           message = ESM::Message.new
-            .set_type(:arma)
-            .set_data(type, data)
+            .set_type(:call)
+            .set_data(function_name:, **arguments)
 
           send_to_target_server(message)
         end

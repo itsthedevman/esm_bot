@@ -2,8 +2,6 @@
 
 module ESM
   class Message
-    include ESM::Callbacks
-
     #
     # Creates an instance of ESM::Message from JSON. See #to_h for the structure
     # @see #to_h
@@ -31,7 +29,7 @@ module ESM
       message = message.set_type(hash[:type]) if hash[:type].present?
 
       if hash[:data].present?
-        message = message.set_data(hash.dig(:data, :type), hash.dig(:data, :content))
+        message = message.set_data(**hash[:data])
       end
 
       if hash[:metadata].present?
@@ -45,15 +43,12 @@ module ESM
       message
     end
 
-    attr_reader :id, :type, :metadata, :errors
+    attr_reader :id, :type, :data, :metadata, :errors
+    attr_predicate :data
 
-    # The driver of communication between the bot, server, and client. Rust is strict so this has to be too.
-    # Any data and metadata must be configured in config/mapping.yml and defined in esm_message -> data.rs / metadata.rs
-    # They will automatically be sanitized according to their data type as configured in the mapping.
-    # NOTE: Invalid data/metadata attributes will be dropped!
     def initialize
       @id = SecureRandom.uuid
-      @type = :event
+      @type = :call
       @data = Data.new
       @metadata = Metadata.new
       @errors = []
@@ -70,8 +65,8 @@ module ESM
     end
 
     # The primary data for this message. It's the good stuff.
-    def set_data(type = @type, content = nil)
-      @data = Data.new(type, content)
+    def set_data(**data_attributes)
+      @data = Data.new(**data_attributes)
       self
     end
 
@@ -81,10 +76,14 @@ module ESM
     # @param player [ESM::User, nil] The user that executed the command
     # @param target [ESM::User, ESM::User::Ephemeral, nil] The user who is the target of this command
     # @param server_id [String, nil] The server the command is being executed on
+    #   Used for error messages
     #
     # @return [Message] A referenced to the modified message
     #
     def set_metadata(player: nil, target: nil, server_id: nil)
+      player = Player.from(player) if player
+      target = Target.from(target) if target
+
       @metadata = Metadata.new(player:, target:, server_id:)
       self
     end
@@ -112,14 +111,6 @@ module ESM
 
       @errors << Error.new(self, type, content)
       self
-    end
-
-    def data_type
-      @data.type
-    end
-
-    def data
-      @data.content
     end
 
     def data_attributes
@@ -166,16 +157,7 @@ module ESM
     end
 
     #
-    # Returns if there is any data on this message
-    #
-    # @return [Boolean]
-    #
-    def data?
-      data.type && data.content
-    end
-
-    #
-    # Returns if there is any metadata on this message
+    # Returns if there are any errors on this message
     #
     # @return [Boolean]
     #

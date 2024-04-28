@@ -3,40 +3,6 @@
 module ESM
   module Event
     class ServerInitialization
-      DATA_ATTRIBUTES = %i[
-        community_id
-        extdb_path
-        gambling_modifier
-        gambling_payout_base
-        gambling_payout_randomizer_max
-        gambling_payout_randomizer_mid
-        gambling_payout_randomizer_min
-        gambling_win_percentage
-        logging_add_player_to_territory
-        logging_channel_id
-        logging_demote_player
-        logging_exec
-        logging_gamble
-        logging_modify_player
-        logging_pay_territory
-        logging_promote_player
-        logging_remove_player_from_territory
-        logging_reward_player
-        logging_transfer_poptabs
-        logging_upgrade_territory
-        max_payment_count
-        server_id
-        taxes_territory_payment
-        taxes_territory_upgrade
-        territory_admin_uids
-        territory_lifetime
-        territory_payment_tax
-        territory_price_per_object
-        territory_upgrade_tax
-      ].freeze
-
-      Data = ImmutableStruct.define(*DATA_ATTRIBUTES)
-
       attr_reader :data
 
       def initialize(tcp_client, message)
@@ -79,7 +45,7 @@ module ESM
       def update_server
         @model.update!(
           server_name: @message.data.server_name,
-          server_start_time: @message.data.server_start_time.utc,
+          server_start_time: Time.parse(@message.data.server_start_time).utc,
           server_version: Semantic::Version.new(@message.data.extension_version),
           disconnected_at: nil
         )
@@ -96,7 +62,9 @@ module ESM
         @model.territories.delete_all
 
         territories =
-          @message.data.territory_data.map do |data|
+          @message.data.territory_data.to_a.map do |data|
+            data = ESM::Arma::HashMap.from(data).to_istruct
+
             {
               server_id: @model.id,
               territory_level: data.level,
@@ -112,7 +80,7 @@ module ESM
       def store_metadata
         @tcp_client.set_metadata(
           vg_enabled: @message.data.vg_enabled,
-          vg_max_sizes: @message.data.vg_max_sizes
+          vg_max_sizes: @message.data.vg_max_sizes.to_a
         )
       end
 
@@ -128,7 +96,8 @@ module ESM
           ]
         ).symbolize_keys
 
-        data = data.merge(
+        @data = data.merge(
+          function_name: "ESMs_system_process_postInit",
           community_id: @community.community_id,
           extdb_path: settings.extdb_path || "",
           logging_channel_id: @community.logging_channel_id,
@@ -137,8 +106,6 @@ module ESM
           taxes_territory_payment: settings.territory_payment_tax / 100,
           taxes_territory_upgrade: settings.territory_upgrade_tax / 100
         )
-
-        @data = Data.new(*DATA_ATTRIBUTES.map { |attribute| data[attribute] })
       end
 
       def build_territory_admins
@@ -158,7 +125,10 @@ module ESM
       end
 
       def send_post_init
-        message = ESM::Message.new.set_data("post_init", @data)
+        message = ESM::Message.new
+          .set_type(:post_init)
+          .set_data(**@data)
+
         @tcp_client.send_message(message)
 
         info!(server_id: @model.server_id, uptime: @model.uptime)
@@ -167,8 +137,6 @@ module ESM
           :reconnect,
           I18n.t("server_connected", server: @model.server_id, uptime: @model.uptime)
         )
-
-        @tcp_client.model.reload
       end
     end
   end
