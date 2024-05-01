@@ -59,20 +59,20 @@ RSpec.shared_context("connection") do
       "ESM_TestUser_#{user.steam_uid} call _deleteFunction;" if user.connected
     end
 
+    sqf = "ESM_TerritoryAdminUIDs = [];"
     if users.present?
-      sqf =
-        <<~SQF
-          private _deleteFunction = {
-            if (isNil "_this") exitWith {};
+      sqf += <<~SQF
+        private _deleteFunction = {
+          if (isNil "_this") exitWith {};
 
-            deleteVehicle _this;
-          };
+          deleteVehicle _this;
+        };
 
-          #{users}
-        SQF
-
-      execute_sqf!(sqf)
+        #{users}
+      SQF
     end
+
+    execute_sqf!(sqf)
   ensure
     connection_server.pause
   end
@@ -156,5 +156,10 @@ RSpec.shared_context("connection") do
 
     user.connected = true
     net_id
+  end
+
+  def make_territory_admin!(user)
+    # Arma vomits unless we return something like `nil`
+    execute_sqf!("ESM_TerritoryAdminUIDs = [#{user.steam_uid.quoted}]; nil")
   end
 end
