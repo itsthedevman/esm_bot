@@ -15,10 +15,8 @@ describe "ESMs_system_message_respond_withError", :requires_connection, v2: true
         <<~SQF
           [
             "#{original_message.id}",
-            "event",
-            "empty",
+            "ack",
             [],
-            "empty",
             [],
             [["code", "ERROR_CODE"], ["message", "An error message"]]
           ] call ESMs_system_message_respond_to;
@@ -31,12 +29,12 @@ describe "ESMs_system_message_respond_withError", :requires_connection, v2: true
 
       message = ESM::Message.from_string(response.value)
 
-      expect(message.type).to eq(:event)
       expect(message.id).to eq(original_message.id)
-      expect(message.data_type).to eq(:empty)
-      expect(message.data).to eq({})
-      expect(message.metadata_type).to eq(:empty)
-      expect(message.metadata).to eq({})
+      expect(message.type).to eq(:ack)
+      expect(message.data).to be_kind_of(ESM::Message::Data)
+      expect(message.data.to_h).to eq({})
+      expect(message.metadata).to be_kind_of(ESM::Message::Metadata)
+      expect(message.metadata.to_h).to eq({})
 
       errors = message.errors.map(&:to_h)
       expect(errors).to include({type: :code, content: "ERROR_CODE"})
