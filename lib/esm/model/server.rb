@@ -149,6 +149,44 @@ module ESM
       )
     end
 
+    #
+    # Sends the provided SQF code to the linked connection.
+    #
+    # @param code [String] Valid and error free SQF code as a string
+    # @param execute_on [String] Valid options: "server", "player", "all"
+    # @param player [ESM::User, nil] The player who initiated the request
+    #   Note: This technically can be `nil` but errors triggered by this function may look weird
+    # @param target [ESM::User, ESM::User::Ephemeral, nil]
+    #   The user to execute the code on if execute_on is "player"
+    #
+    # @return [Any] The result of the SQF code.
+    #
+    # @note: The result is ran through a JSON parser.
+    #   The type may not be what you expect, but it will be consistent.
+    #   For example, an empty hash map will always be represented by an empty array []
+    #
+    def execute_sqf!(code, execute_on: "server", player: nil, target: nil)
+      message = ESM::Message.new.set_type(:call)
+        .set_data(
+          function_name: "ESMs_command_sqf",
+          execute_on: "server",
+          code: code
+        )
+        .set_metadata(player:, target:)
+
+      response = send_message(message).data.result
+
+      # Check if it's JSON like
+      result = ESM::JSON.parse(response.to_s)
+      return response if result.nil?
+
+      # Check to see if its a hashmap
+      possible_hashmap = ESM::Arma::HashMap.from(result)
+      return result if possible_hashmap.nil?
+
+      result
+    end
+
     private
 
     def generate_public_id

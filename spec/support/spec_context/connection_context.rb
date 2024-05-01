@@ -7,8 +7,8 @@ RSpec.shared_context("connection") do
   let!(:connection_server) { ESM.connection_server }
   let(:_spawned_players) { [] }
 
-  def execute_sqf!(code)
-    server.execute_sqf!(code, steam_uid: user.steam_uid)
+  def execute_sqf!(code, **)
+    server.execute_sqf!(code, **)
   end
 
   before do |example|

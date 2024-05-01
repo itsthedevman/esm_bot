@@ -31,8 +31,7 @@ describe "ESMs_system_territory_get", :requires_connection, v2: true do
         SQF
       )
 
-      expect(response).not_to be_nil
-      expect(response.data.result).to eq(true)
+      expect(response).to be(true)
     end
   end
 
@@ -49,8 +48,7 @@ describe "ESMs_system_territory_get", :requires_connection, v2: true do
         SQF
       )
 
-      expect(response).not_to be_nil
-      expect(response.data.result).to eq(false)
+      expect(response).not_to be(false)
     end
   end
 end

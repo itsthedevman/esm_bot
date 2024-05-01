@@ -104,9 +104,7 @@ module ESM
         #{id} call ExileServer_system_territory_database_load;
       SQF
 
-      result = server.execute_sqf!(sqf, steam_uid: owner_uid)
-      success = result.data.result
-
+      success = server.execute_sqf!(sqf)
       raise ArmaError, "Failed to create flag for territory id:#{id}" unless success
     end
 
@@ -123,9 +121,7 @@ module ESM
         isNull(_flag)
       SQF
 
-      result = server.execute_sqf!(sqf, steam_uid: owner_uid)
-      success = result.data.result
-
+      success = server.execute_sqf!(sqf)
       raise ArmaError, "Failed to delete flag for territory id:#{id}" unless success
     end
 
@@ -160,7 +156,7 @@ module ESM
         sqf += "_flagObject setVariable [\"ExileTerritoryBuildRights\", #{new_value.to_json}, true];"
       end
 
-      server.execute_sqf!(sqf, steam_uid: owner_uid)
+      server.execute_sqf!(sqf)
     end
   end
 end
