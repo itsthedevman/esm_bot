@@ -216,12 +216,7 @@ describe ESM::Command::Territory::Add, category: "command" do
 
       context "when the user is a territory admin" do
         before do
-          # Arma vomits unless we return something like `nil`
-          execute_sqf!("ESM_TerritoryAdminUIDs = [#{user.steam_uid.quoted}]; nil")
-
-          # The user and target user are not members of this territory.
-          # However, user is a territory admin
-          territory.revoke_membership(user.steam_uid)
+          make_territory_admin!(user)
         end
 
         it "allows them to add any player" do
