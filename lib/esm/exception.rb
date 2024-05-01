@@ -63,26 +63,43 @@ module ESM
       end
     end
 
+    ###########################################################
+    # Connection and extension related errors
+    #
+
+    # Base type that causes a connection close
+    class ClosableError < Error
+    end
+
+    #
+    # Base type that will send the error back to the client
+    #
+    class SendableError < DataError
+    end
+
     class ExtensionError < DataError
     end
 
-    class RequestTimeout < Error
+    class DecryptionError < ClosableError
+    end
+
+    class InvalidRequest < SendableError
+    end
+
+    class RequestTimeout < DataError
       def initialize = super("Request timed out")
     end
 
-    class ExistingConnection < Error
+    class ExistingConnection < ClosableError
       def initialize = super("Client already connected")
     end
 
-    class InvalidAccessKey < Error
+    class InvalidAccessKey < ClosableError
       def initialize = super("Access denied")
     end
 
-    class RejectedRequest < Error
+    class RejectedPromise < ClosableError
       def initialize(reason = "") = super(reason)
-    end
-
-    class DecryptionError < Error
     end
   end
 end

@@ -12,6 +12,8 @@ module ESM
       delegate :address, to: :@socket
       delegate :server_id, to: :@model, allow_nil: true
 
+      alias_method :public_id, :id
+
       def initialize(tcp_client)
         @socket = ClientSocket.new(tcp_client)
         @ledger = Ledger.new
@@ -66,7 +68,7 @@ module ESM
         return promise.execute unless block
 
         response = promise.wait_for_response(@config.response_timeout)
-        raise ESM::Exception::RejectedRequest, response.reason if response.rejected?
+        raise ESM::Exception::RejectedPromise, response.reason if response.rejected?
 
         message = ESM::Message.from_string(response.value)
         message.metadata.server_id = @model.server_id
@@ -97,7 +99,7 @@ module ESM
       # @return [ESM::Connection::Client::Promise]
       #
       def write(type:, id: nil, content: nil)
-        request = Request.new(id: id, type: type, content: content)
+        request = Request.new(id:, type:, content:)
 
         # Adding the request to the ledger allows us to track the request across multiple threads
         # ensuring the response to passed back to the blocking thread
@@ -111,9 +113,8 @@ module ESM
         # Compress
         content = ActiveSupport::Gzip.compress(content)
 
-        # Errors can happen before we properly set up encryption.
-        # Bypassing encryption means we can better communicate
-        content = @encryption.encrypt(content) if type != :error
+        # Encrypt
+        content = @encryption.encrypt(content)
 
         # Once the promise is executed, write the content to the client
         promise.then { @socket.write(content) }

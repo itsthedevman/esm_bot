@@ -18,9 +18,11 @@ module ESM
         def on_request(content)
           message = ESM::Message.from_string(content)
 
+          info!(address:, public_id:, server_id:, inbound: message.to_h)
+
           if message.type != :call
             send_error(
-              "Invalid message type received. Received #{message.type}, expected \"call\""
+              "Invalid message type received. Received #{message.type.quoted}, expected \"call\""
             )
 
             return
@@ -29,11 +31,11 @@ module ESM
           @model.reload
 
           case message.data.function_name
-          when :send_to_channel
+          when "send_to_channel"
             ESM::Event::SendToChannel.new(@model, message).run!
+          else
+            raise ESM::Exception::InvalidRequest, "Missing or invalid function_name provided in request"
           end
-        rescue => e
-          error!(error: e)
         end
 
         private
@@ -57,9 +59,10 @@ module ESM
           when :message
             on_request(request.content)
           end
-        rescue ESM::Exception::Error => e
-          send_error(e)
+        rescue ESM::Exception::ClosableError
           close
+        rescue ESM::Exception::SendableError => e
+          send_error(e.data)
         rescue => e
           error!(error: e)
         ensure
@@ -85,7 +88,7 @@ module ESM
             .then { |_| @encryption = Encryption.new(@model.token[:secret], nonce_indices:) }
             .wait_for_response(@config.response_timeout)
 
-          raise ESM::Exception::RejectedRequest, response.reason if response.rejected?
+          raise ESM::Exception::RejectedPromise, response.reason if response.rejected?
 
           # Ledger doesn't care what object it is, so long as it responds to #id
           @ledger.remove(message)
