@@ -71,7 +71,7 @@ module ESM
         raise ESM::Exception::RejectedPromise, response.reason if response.rejected?
 
         message = ESM::Message.from_string(response.value)
-        message.metadata.server_id = @model.server_id
+        message.set_metadata(server_id: @model.server_id)
 
         info!(
           address:,

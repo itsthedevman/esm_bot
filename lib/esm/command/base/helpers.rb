@@ -329,26 +329,9 @@ module ESM
               "Command #{name} must define the `server_id` argument in order to use #send_to_target_server"
           end
 
-          message.set_metadata(
-            player: current_user,
-            target: target_user,
+          message.set_metadata(player: current_user, target: target_user)
 
-            # Used by the error system
-            server_id: target_server.server_id
-          )
-
-          response_message = target_server.send_message(message, block:)
-
-          if response_message.errors?
-            embed = ESM::Embed.build(
-              :error,
-              description: response_message.error_messages.join("\n")
-            )
-
-            raise ESM::Exception::ExtensionError, embed
-          end
-
-          response_message
+          target_server.send_message(message, block:)
         end
 
         #
