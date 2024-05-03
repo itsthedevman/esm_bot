@@ -30,7 +30,13 @@ RSpec.shared_context("connection") do
     allow_any_instance_of(ESM::User).to receive(:create_account) do |user|
       next if ESM::ExileAccount.where(uid: user.steam_uid).exists?
 
-      create(:exile_account, uid: user.steam_uid)
+      ESM::ExileAccount.from(user)
+    end
+
+    allow_any_instance_of(ESM::User).to receive(:create_player) do |user|
+      next if ESM::ExilePlayer.where(account_uid: user.steam_uid).exists?
+
+      ESM::ExilePlayer.from(user)
     end
 
     # This allows us to "spawn" players on the server
@@ -38,6 +44,7 @@ RSpec.shared_context("connection") do
     # can be treated as a player
     allow_any_instance_of(ESM::User).to receive(:connect) do |user, **attrs|
       user.create_account
+      user.create_player
 
       spawn_test_user(user, on: server, **attrs)
       _spawned_players << user
