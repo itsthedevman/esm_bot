@@ -67,8 +67,8 @@ RSpec.shared_context("connection") do
     end
 
     sqf = "ESM_TerritoryAdminUIDs = [];"
-    if users.present?
-      sqf += <<~SQF
+    sqf += if users.present?
+      <<~SQF
         private _deleteFunction = {
           if (isNil "_this") exitWith {};
 
@@ -77,6 +77,8 @@ RSpec.shared_context("connection") do
 
         #{users}
       SQF
+    else
+      "nil" # Arma vomits for whatever reason unless we return something
     end
 
     execute_sqf!(sqf)
@@ -155,10 +157,7 @@ RSpec.shared_context("connection") do
       netId _createdPlayer
     SQF
 
-    response = execute_sqf!(sqf)
-    expect(response).not_to be_nil
-
-    net_id = response.data.result
+    net_id = execute_sqf!(sqf)
     expect(net_id).not_to be_nil
 
     user.connected = true

@@ -21,12 +21,12 @@ module ESM
 
       def on_initialize(client)
         @lobby.delete(client)
-        @connections[client.id] = client
+        @connections[client.public_id] = client
       end
 
       def on_disconnect(client)
         @lobby.delete(client)
-        @connections.delete(client.id)
+        @connections.delete(client.public_id)
       end
 
       private

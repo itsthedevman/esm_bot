@@ -5,9 +5,9 @@ module ESM
     class ServerInitialization
       attr_reader :data
 
-      def initialize(tcp_client, message)
+      def initialize(tcp_client, model, message)
         @tcp_client = tcp_client
-        @model = tcp_client.model
+        @model = model
         @message = message
         @community = @model.community
         @discord_server = @community.discord_server

@@ -7,20 +7,18 @@ module ESM
 
       Metadata = ImmutableStruct.define(:vg_enabled, :vg_max_sizes)
 
-      attr_reader :id, :model
+      attr_reader :public_id, :server_id
 
       delegate :address, to: :@socket
-      delegate :server_id, to: :@model, allow_nil: true
-
-      alias_method :public_id, :id
 
       def initialize(tcp_client)
         @socket = ClientSocket.new(tcp_client)
         @ledger = Ledger.new
         @config = ESM.config.connection_client
 
-        @id = nil
-        @model = nil
+        @public_id = nil
+        @server_id = nil
+
         @metadata = set_metadata(vg_enabled: false, vg_max_sizes: 0)
         @thread_pool = Concurrent::CachedThreadPool.new
 
@@ -54,8 +52,8 @@ module ESM
       def send_request(content = nil, type:, block: true)
         info!(
           address:,
-          public_id: @id,
-          server_id: @model&.server_id,
+          public_id:,
+          server_id:,
           outbound: {type:, content: content.respond_to?(:to_h) ? content.to_h : content}
         )
 
@@ -71,16 +69,14 @@ module ESM
         raise ESM::Exception::RejectedPromise, response.reason if response.rejected?
 
         message = ESM::Message.from_string(response.value)
-        message.set_metadata(server_id: @model.server_id)
+        message.set_metadata(server_id:)
 
-        info!(
-          address:,
-          public_id: @id,
-          server_id: @model.server_id,
-          inbound: message.to_h
-        )
+        info!(address:, public_id:, server_id:, inbound: message.to_h)
 
-        raise ESM::Exception::ExtensionError, message.error_messages.join("\n") if message.errors?
+        if message.errors?
+          embed = ESM::Embed.build(:error, description: message.error_messages.join("\n"))
+          raise ESM::Exception::ExtensionError, embed
+        end
 
         message
       end
@@ -129,7 +125,7 @@ module ESM
         # The first data we receive should be the identification (when @id is nil)
         # Every request from that point on will be encrypted
         data =
-          if @id.nil?
+          if @public_id.nil?
             data
           else
             @encryption.decrypt(data)

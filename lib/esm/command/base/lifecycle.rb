@@ -65,9 +65,6 @@ module ESM
           timers.time!(:after_execute) do
             # Update the cooldown after the command has ran just in case there are issues
             create_or_update_cooldown unless skipped_actions.cooldown?
-
-            # This just tracks how many times a command is used
-            ESM::CommandCount.increment_execution_counter(name)
           end
 
           result

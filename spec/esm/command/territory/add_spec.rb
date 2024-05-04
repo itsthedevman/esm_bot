@@ -217,6 +217,7 @@ describe ESM::Command::Territory::Add, category: "command" do
       context "when the user is a territory admin" do
         before do
           make_territory_admin!(user)
+          territory.revoke_membership(user.steam_uid)
         end
 
         it "allows them to add any player" do
@@ -246,6 +247,7 @@ describe ESM::Command::Territory::Add, category: "command" do
 
         it "allows the user to add themselves" do
           execute!(
+            handle_error: true,
             arguments: {
               server_id: server.server_id,
               territory_id: territory.encoded_id,

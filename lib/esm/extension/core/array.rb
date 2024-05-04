@@ -1,6 +1,10 @@
 # frozen_string_literal: true
 
 class Array
+  def to_arma_hashmap
+    ESM::Arma::HashMap.from(self)
+  end
+
   def map_join(join_with = "", &)
     filter_map(&).join(join_with)
   end

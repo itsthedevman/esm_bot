@@ -347,7 +347,8 @@ module ESM
             .set_type(:query)
             .set_data(name:, arguments:)
 
-          send_to_target_server(message)
+          response = send_to_target_server(message)
+          response.data.results
         end
 
         def call_sqf_function(function_name, **arguments)

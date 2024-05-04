@@ -22,7 +22,6 @@ module ESM
 
         ESM.bot.deliver(message, to: @channel)
       rescue ESM::Exception::CheckFailure => e
-        error!(error: e, message_id: @message.id)
         @server.log_error(e.message)
       end
 

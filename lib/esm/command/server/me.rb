@@ -22,7 +22,7 @@ module ESM
         #################################
         def on_execute
           response = query_exile_database("me", uid: current_user.steam_uid)
-          player_data = response.data.results.first&.to_struct
+          player_data = response.first&.to_struct
 
           reply(build_embed(player_data))
         end
