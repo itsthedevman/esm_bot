@@ -139,13 +139,6 @@ module ESM
 
         Request.from_client(data)
       end
-
-      def on_message
-        request = read
-        return if request.nil?
-
-        @thread_pool.post { process_message(request) }
-      end
     end
   end
 end

@@ -7,9 +7,12 @@ module ESM
         check_every = ESM.config.request_overseer.check_every
 
         @thread = Thread.new do
-          loop do
-            ESM::Request.expired.destroy_all
-            sleep(check_every)
+          ESM::ApplicationRecord.connection_pool.with_connection do
+            loop do
+              ESM::Request.expired.destroy_all
+
+              sleep(check_every)
+            end
           end
         end
       end

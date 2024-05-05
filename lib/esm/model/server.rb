@@ -44,7 +44,9 @@ module ESM
     end
 
     def self.server_ids
-      ESM.cache.fetch("server_ids", expires_in: ESM.config.cache.server_ids) { pluck(:server_id) }
+      ::ESM.cache.fetch("server_ids", expires_in: ESM.config.cache.server_ids) do
+        ApplicationRecord.connection_pool.with_connection { pluck(:server_id) }
+      end
     end
 
     # Checks to see if there are any corrections and provides them for the server id

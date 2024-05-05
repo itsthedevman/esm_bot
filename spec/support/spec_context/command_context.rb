@@ -106,7 +106,9 @@ RSpec.shared_context("command") do
       arguments: event.options
     )
 
-    @previous_command.from_discord!
+    ESM::ApplicationRecord.connection_pool.with_connection do
+      @previous_command.from_discord!
+    end
   end
 
   def wait_for_completion!(event = :on_execute)

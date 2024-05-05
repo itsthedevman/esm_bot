@@ -4,48 +4,17 @@ module ESM
   module Connection
     class Client
       module Lifecycle
-        def on_identification(public_id)
-          info!(address:, state: :on_identification, public_id:)
-
-          existing_connection = ESM.connection_server.client(public_id)
-          raise ESM::Exception::ExistingConnection if existing_connection
-
-          model = ESM::Server.find_by_public_id(public_id)
-          raise ESM::Exception::InvalidAccessKey if model.nil?
-
-          authenticate!(model)
-          initialize!(model)
-        end
-
-        def on_request(content)
-          message = ESM::Message.from_string(content)
-
-          info!(address:, public_id:, server_id:, inbound: message.to_h)
-
-          if message.type != :call
-            send_error(
-              "Invalid message type received. Received #{message.type.quoted}, expected \"call\""
-            )
-
-            return
-          end
-
-          model = ESM::Server.find_by_public_id(@public_id)
-          case message.data.function_name
-          when "send_to_channel"
-            ESM::Event::SendToChannel.new(model, message).run!
-          else
-            raise ESM::Exception::InvalidRequest, "Missing or invalid function_name provided in request"
-          end
-        end
+        VALID_REQUEST_TYPES = %w[
+          send_to_channel
+        ]
 
         private
 
-        def forward_to_caller(request)
-          promise = @ledger.remove(request)
-          raise ESM::Exception::InvalidMessage if promise.nil?
+        def on_message
+          request = read
+          return if request.nil?
 
-          promise.set_response(request)
+          @thread_pool.post { process_message(request) }
         end
 
         def process_message(request)
@@ -68,6 +37,28 @@ module ESM
           error!(error: e)
         ensure
           @ledger.remove(request)
+        end
+
+        def forward_to_caller(request)
+          promise = @ledger.remove(request)
+          raise ESM::Exception::InvalidMessage if promise.nil?
+
+          promise.set_response(request)
+        end
+
+        def on_identification(public_id)
+          info!(address:, state: :on_identification, public_id:)
+
+          existing_connection = ESM.connection_server.client(public_id)
+          raise ESM::Exception::ExistingConnection if existing_connection
+
+          ESM::ApplicationRecord.connection_pool.with_connection do
+            model = ESM::Server.find_by_public_id(public_id)
+            raise ESM::Exception::InvalidAccessKey if model.nil?
+
+            authenticate!(model)
+            initialize!(model)
+          end
         end
 
         def authenticate!(model)
@@ -103,6 +94,29 @@ module ESM
           ESM::Event::ServerInitialization.new(self, model, message).run!
 
           ESM.connection_server.on_initialize(self)
+        end
+
+        def on_request(content)
+          message = ESM::Message.from_string(content)
+          info!(address:, public_id:, server_id:, inbound: message.to_h)
+
+          check_for_valid_request!(message)
+
+          ESM::ApplicationRecord.connection_pool.with_connection do
+            model = ESM::Server.find_by_public_id(@public_id)
+
+            case message.data.function_name
+            when "send_to_channel"
+              ESM::Event::SendToChannel.new(model, message).run!
+            end
+          end
+        end
+
+        def check_for_valid_request!(message)
+          return if message.type == :call &&
+            VALID_REQUEST_TYPES.include?(message.data.function_name)
+
+          raise ESM::Exception::InvalidRequest, "Invalid request received. Read the docs!"
         end
       end
     end

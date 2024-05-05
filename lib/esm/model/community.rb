@@ -41,7 +41,9 @@ module ESM
     end
 
     def self.community_ids
-      @community_ids ||= all.pluck(:community_id)
+      ::ESM.cache.fetch("community_ids", expires_in: ::ESM.config.cache.community_ids) do
+        ApplicationRecord.connection_pool.with_connection { pluck(:community_id) }
+      end
     end
 
     def self.correct(id)

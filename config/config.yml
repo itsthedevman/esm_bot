@@ -37,7 +37,9 @@ default: &default
     max_queue: 250
 
   cache:
-    server_ids: 60
+    server_ids: 30
+    community_ids: 30
+
   tips:
   - You can set a default for server and/or community from the player dashboard. Once set, you can omit the server/community argument on most commands to use your defaults.
   - You can create aliases for servers and/or communities from the player dashboard. Once created, you can use the alias instead of a server/community ID
@@ -57,6 +59,7 @@ test:
   error_logging_channel_id: ""
   cache:
     server_ids: 0
+    community_ids: 0
 
 production:
   !!merge <<: *default
