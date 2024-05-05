@@ -34,7 +34,6 @@ RSpec.configure do |config|
     )
 
     ESM::Test.reset!
-
     ESM.connection_server.pause
 
     # Run the test!
