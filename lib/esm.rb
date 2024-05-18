@@ -109,11 +109,11 @@ module ESM
       @bot ||= ESM::Bot.new
     end
 
-    def run!(async: false)
+    def run!(async: false, **)
       require_relative "post_init"
 
       # Start the bot
-      bot.run(async:)
+      bot.run(async:, **)
     end
 
     # Load everything right meow
