@@ -19,7 +19,7 @@ FactoryBot.define do
     before :create do |server, _evaluator|
       next if server.server_id.present?
 
-      server.server_id = Faker::ESM.server_id(community_id: "community_id")
+      server.server_id = Faker::ESM.server_id(community_id: server.community.community_id)
     end
 
     after :create do |server, _evaluator|
