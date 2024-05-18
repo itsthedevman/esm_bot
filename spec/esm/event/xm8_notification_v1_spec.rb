@@ -129,7 +129,7 @@ describe ESM::Event::Xm8NotificationV1 do
         :user_notification_route,
         user: second_user,
         destination_community: community,
-        source_server_id: ESM::Test.second_server.id,
+        source_server_id: ESM::Test.server(for: community).id,
         channel_id: ESM::Community::ESM::SPAM_CHANNEL
       )
 
