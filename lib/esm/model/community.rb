@@ -52,21 +52,17 @@ module ESM
     end
 
     def self.find_by_community_id(id)
-      default_scoped.includes(:servers).order(:community_id).where("community_id ilike ?", id).first
+      includes(:servers).order(:community_id).where("community_id ilike ?", id).first
     end
 
     def self.find_by_guild_id(id)
-      default_scoped.includes(:servers).order(:guild_id).where(guild_id: id).first
+      includes(:servers).order(:guild_id).where(guild_id: id).first
     end
 
     def self.find_by_server_id(id)
       return if id.blank?
 
-      # esm_malden -> esm
-      community_id = id.match(/([^\s]+)_[^\s]+/i)
-      return if community_id.nil?
-
-      find_by_community_id(community_id[1])
+      joins(:servers).order(:guild_id).where(servers: {server_id: id}).first
     end
 
     def self.from_discord(discord_server)
