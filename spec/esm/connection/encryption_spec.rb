@@ -3,7 +3,9 @@
 describe ESM::Connection::Encryption do
   let(:different_encryption) { described_class.new("This is a complete different key not the same at all") }
 
-  subject!(:encryption) { described_class.new("This is the super secret key that is used to encrypt") }
+  let(:key) { "This is the super secret key that is used to encrypt" }
+
+  subject!(:encryption) { described_class.new(key) }
 
   describe "#encrypt" do
     context "when text is provided" do
@@ -15,7 +17,7 @@ describe ESM::Connection::Encryption do
         # It should also fail decryption with another key
         expect {
           different_encryption.decrypt(encrypted_text)
-        }.to raise_error(ESM::Connection::DecryptionError)
+        }.to raise_error(ESM::Exception::DecryptionError)
       end
     end
   end
@@ -25,12 +27,15 @@ describe ESM::Connection::Encryption do
       it "raises an exception" do
         encrypted_text = encryption.encrypt("Hello world")
 
-        # The nonce is 0...size, this is off by 1
-        encryption.nonce_indices = (1...described_class::NONCE_SIZE).to_a
+        # Same key, different indices
+        encryption = described_class.new(
+          key,
+          nonce_indices: (1...described_class::NONCE_SIZE).to_a
+        )
 
         expect {
           encryption.decrypt(encrypted_text)
-        }.to raise_error(ESM::Connection::InvalidNonce)
+        }.to raise_error(ESM::Exception::DecryptionError)
       end
     end
 
@@ -40,7 +45,7 @@ describe ESM::Connection::Encryption do
 
         expect {
           different_encryption.decrypt(encrypted_text)
-        }.to raise_error(ESM::Connection::DecryptionError)
+        }.to raise_error(ESM::Exception::DecryptionError)
       end
     end
 

@@ -7,7 +7,7 @@ module ESM
 
       Metadata = ImmutableStruct.define(:vg_enabled, :vg_max_sizes)
 
-      attr_reader :public_id, :server_id
+      attr_reader :public_id, :server_id, :connected_at
 
       delegate :address, to: :@socket
 
