@@ -3,12 +3,13 @@
 module ESM
   module Connection
     class ConnectionManager
-      def initialize(lobby_timeout)
+      def initialize(lobby_timeout, execution_interval: 1)
         @lobby_timeout = lobby_timeout
 
         @connections = Concurrent::Map.new
         @lobby = Concurrent::Array.new
-        @task = Concurrent::TimerTask.execute(execution_interval: 1) { check_lobby }
+        @task = Concurrent::TimerTask.execute(execution_interval:) { check_lobby }
+        @task.add_observer(ErrorHandler.new)
       end
 
       def find(id)
@@ -31,14 +32,17 @@ module ESM
 
       private
 
+      # Traverse the array without holding onto its mutex
       def check_lobby
-        @lobby.delete_if do |client|
-          timed_out = (Time.current - client.connected_at) >= @lobby_timeout
-          next false unless timed_out
+        client = @lobby.shift
+        return if client.nil?
 
-          client.close
-          true
-        end
+        timed_out = (Time.current - client.connected_at) >= @lobby_timeout
+
+        # Hasn't timed out yet, add it back to the top of the array
+        return @lobby << client unless timed_out
+
+        client.close
       end
     end
   end
