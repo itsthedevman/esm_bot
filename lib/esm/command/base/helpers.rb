@@ -111,23 +111,27 @@ module ESM
           @target_user ||= lambda do
             return if arguments.target.nil?
 
-            # This could be a steam_uid, discord id, or mention
+            # This could be a steam_uid, discord id, or discord mention
             # Automatically remove the mention characters
-            target = arguments.target.gsub(/[<@!&>]/, "").strip
-
-            steam_uid = target.steam_uid?
-            discord_id = target.match?(ESM::Regex::DISCORD_ID_ONLY)
-            return unless steam_uid || discord_id
+            target_string = arguments.target.gsub(/[<@!&>]/, "").strip
 
             # Attempt to find the target within ESM
-            user = ESM::User.parse(target)
+            user = ESM::User.parse(target_string)
 
             # This validates that the user exists and we get a discord user back
             return user if user&.discord_user
 
-            # We didn't find a user and a steam uid can't be used to find a Discord user
-            # Ephemeral user represents a user that doesn't have a ESM::User
-            ESM::User::Ephemeral.new(target)
+            if target_string.discord_id?
+              discord_user = ESM.bot.user(target_string)
+
+              # The target_string does not exist in the database
+              # but it is a valid discord user
+              return ESM::User.from_discord(discord_user) if discord_user
+            end
+
+            # The target_string does not exist in the database, nor in discord
+            # This means the target_string is a steam uid, or gibberish
+            ESM::User::Ephemeral.new(target_string)
           end.call
         end
 

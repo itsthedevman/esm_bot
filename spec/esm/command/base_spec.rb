@@ -187,26 +187,69 @@ describe ESM::Command::Base do
       expect(command.respond_to?(:target_user)).to be(true)
     end
 
-    it "is a valid user" do
-      execute!(arguments: {target: secondary_user.discord_id})
-
-      expect(previous_command.target_user).not_to be_nil
-      expect(previous_command.target_user.discord_id).to eq(secondary_user.discord_id)
+    context "when the target is not steam uid, discord id, or discord mention" do
+      it "is invalid" do
+        expect { execute!(arguments: {target: "000000000000000000"}) }.to raise_error(ESM::Exception::CheckFailure)
+      end
     end
 
-    it "is invalid" do
-      expect { execute!(arguments: {target: "000000000000000000"}) }.to raise_error(ESM::Exception::CheckFailure)
+    context "when the target is a discord ID and the target exists in the DB" do
+      it "returns the database user" do
+        execute!(arguments: {target: secondary_user.discord_id})
+
+        expect(previous_command.target_user.discord_id).to eq(secondary_user.discord_id)
+      end
     end
 
-    it "creates" do
-      discord_id = secondary_user.discord_id
-      secondary_user.destroy
+    context "when the target is a discord ID and the target does not exist in the DB" do
+      it "creates a user and returns it" do
+        discord_id = secondary_user.discord_id
+        secondary_user.destroy
 
-      execute!(arguments: {target: discord_id})
+        execute!(arguments: {target: discord_id})
 
-      new_target_user = ESM::User.find_by_discord_id(discord_id)
-      expect(new_target_user).not_to be(nil)
-      expect(previous_command.target_user.discord_id).to eq(new_target_user.discord_id)
+        new_target_user = ESM::User.find_by_discord_id(discord_id)
+        expect(previous_command.target_user.discord_id).to eq(new_target_user.discord_id)
+      end
+    end
+
+    context "when the target is a steam uid and the target exists in the DB" do
+      it "returns the database user" do
+        execute!(arguments: {target: secondary_user.steam_uid})
+
+        expect(previous_command.target_user.steam_uid).to eq(secondary_user.steam_uid)
+      end
+    end
+
+    context "when the target is a steam uid and the target does not exist in the DB" do
+      it "returns an ephemeral user" do
+        steam_uid = secondary_user.steam_uid
+        secondary_user.destroy
+
+        execute!(arguments: {target: steam_uid})
+
+        expect(previous_command.target_user).to be_kind_of(ESM::User::Ephemeral)
+        expect(previous_command.target_user.steam_uid).to eq(steam_uid)
+      end
+    end
+
+    context "when the target is a discord mention and the target does exist in the DB" do
+      it "returns the database user" do
+        execute!(arguments: {target: secondary_user.discord_mention})
+
+        expect(previous_command.target_user.id).to eq(secondary_user.id)
+      end
+    end
+
+    context "when the target is a discord mention and the target does not exist in the DB" do
+      it "creates a user and returns it" do
+        discord_mention = secondary_user.discord_mention
+        secondary_user.destroy
+
+        execute!(arguments: {target: discord_mention})
+
+        expect(previous_command.target_user.discord_mention).to eq(discord_mention)
+      end
     end
   end
 
