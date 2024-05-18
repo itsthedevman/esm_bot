@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 describe ESM::Server do
+  let!(:community) { ESM::Test.community }
   let!(:server) { ESM::Test.server(for: community) }
 
   # rubocop:disable Rails/DynamicFindBy
