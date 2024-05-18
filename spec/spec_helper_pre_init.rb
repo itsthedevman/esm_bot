@@ -63,8 +63,10 @@ ESM.logger.level =
     Logger::INFO
   when :warn
     Logger::WARN
-  else
+  when :error
     Logger::ERROR
+  else
+    Logger::UNKNOWN
   end
 
 # Enable discordrb logging
