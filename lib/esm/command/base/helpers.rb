@@ -130,8 +130,10 @@ module ESM
             end
 
             # The target_string does not exist in the database, nor in discord
-            # This means the target_string is a steam uid, or gibberish
-            ESM::User::Ephemeral.new(target_string)
+            return ESM::User::Ephemeral.new(target_string) if target_string.steam_uid?
+
+            # The provided text was gibberish
+            nil
           end.call
         end
 
