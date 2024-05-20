@@ -54,7 +54,12 @@ module ESM
 
           def on_response
             # The data must an array if its not already.
-            @territories = [@response] if !@response.is_a?(Array) # V1
+            @territories =
+              if @response.is_a?(Array)
+                @response
+              else
+                [@response]
+              end
 
             check_for_no_territories!
 
