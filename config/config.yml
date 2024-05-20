@@ -48,6 +48,7 @@ default: &default
   - You can route your XM8 notifications to different channels on your Discord. These can be configured from the player dashboard or server dashboard
   - "ESM's tech stack includes Ruby, Ruby on Rails, Redis, and Postgres. The server mod is written in SQF/C# and will be replaced with a Rust one soon:tm:"
   - 'The "slash" part of a slash command can be omitted when used in other commands. For example:```/help with:my aliases```'
+  - "Looking for a community or server, but don't know their ID(s)? Try out the new ID lookup tool on my website: https://esmbot.com/tools/id_lookup"
   error_logging_channel_id: <%= ENV["ERROR_LOGGING_CHANNEL_ID"] %>
 
 development:
