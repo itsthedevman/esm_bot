@@ -19,8 +19,8 @@ module ESM
         @public_id = nil
         @server_id = nil
 
-        @metadata = set_metadata(vg_enabled: false, vg_max_sizes: 0)
         @thread_pool = Concurrent::CachedThreadPool.new
+        set_metadata(vg_enabled: false, vg_max_sizes: 0)
 
         execution_interval = @config.request_check
         @task = Concurrent::TimerTask.execute(execution_interval:) { on_message }
