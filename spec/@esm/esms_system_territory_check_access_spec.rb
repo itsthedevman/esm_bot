@@ -67,15 +67,16 @@ describe "ESMs_system_territory_checkAccess", :requires_connection, v2: true do
     end
   end
 
-  context "when the player does not have high enough permissions"
-  it "returns false" do
-    response = execute_sqf!(
-      <<~SQF
-        private _territory = #{territory.id} call ESMs_system_territory_get;
-        [#{user.steam_uid.quoted}, _territory, "owner"] call ESMs_system_territory_checkAccess
-      SQF
-    )
+  context "when the player does not have high enough permissions" do
+    it "returns false" do
+      response = execute_sqf!(
+        <<~SQF
+          private _territory = #{territory.id} call ESMs_system_territory_get;
+          [#{user.steam_uid.quoted}, _territory, "owner"] call ESMs_system_territory_checkAccess
+        SQF
+      )
 
-    expect(response).to be(false)
+      expect(response).to be(false)
+    end
   end
 end
