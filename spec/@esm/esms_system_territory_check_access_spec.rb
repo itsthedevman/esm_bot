@@ -15,7 +15,7 @@ describe "ESMs_system_territory_checkAccess", :requires_connection, v2: true do
   end
 
   before do
-    user.create_account
+    user.exile_account
     territory.create_flag
   end
 

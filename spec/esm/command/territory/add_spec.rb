@@ -142,8 +142,8 @@ describe ESM::Command::Territory::Add, category: "command" do
       end
 
       before do
-        user.create_account
-        second_user.create_account
+        user.exile_account
+        second_user.exile_account
 
         territory.create_flag
       end
