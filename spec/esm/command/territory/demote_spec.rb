@@ -218,9 +218,7 @@ describe ESM::Command::Territory::Demote, category: "command" do
 
       context "when the player is not a moderator" do
         before do
-          territory.moderators.delete(user.steam_uid)
-          territory.build_rights.delete(user.steam_uid)
-          territory.save!
+          territory.revoke_membership(user.steam_uid)
         end
 
         it "raises Demote_MissingAccess and Demote_MissingAccess_Admin" do
@@ -294,9 +292,7 @@ describe ESM::Command::Territory::Demote, category: "command" do
 
       context "when the target is not a member" do
         before do
-          territory.moderators.delete(second_user.steam_uid)
-          territory.build_rights.delete(second_user.steam_uid)
-          territory.save!
+          territory.revoke_membership(second_user.steam_uid)
         end
 
         it "raises Demote_CannotDemoteNothing" do
