@@ -288,7 +288,7 @@ describe ESM::Command::Territory::Add, category: "command" do
       context "when the flag is null" do
         before { territory.delete_flag }
 
-        it "returns the translated Add_NullFlag_Admin error" do
+        it "returns the translated NullFlag error" do
           execute!(
             handle_error: true,
             arguments: {
@@ -307,9 +307,7 @@ describe ESM::Command::Territory::Add, category: "command" do
           wait_for { ESM::Test.messages.size }.to eq(4)
 
           expect(
-            ESM::Test.messages.retrieve(
-              "Player attempted to add Target to territory, but the territory flag was not found in game"
-            )
+            ESM::Test.messages.retrieve("territory flag was not found in game")
           ).not_to be_nil
 
           expect(
