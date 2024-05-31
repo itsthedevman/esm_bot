@@ -159,7 +159,7 @@ describe ESM::Command::Territory::Demote, category: "command" do
       context "when the territory flag is null" do
         before { territory.delete_flag }
 
-        it "raises NullFlag" do
+        it "raises NullFlag and NullFlag_Admin" do
           expectation = expect do
             execute!(
               arguments: {
@@ -173,6 +173,13 @@ describe ESM::Command::Territory::Demote, category: "command" do
           expectation.to raise_error(ESM::Exception::ExtensionError) do |error|
             expect(error.data.description).to match("I was unable to find a territory")
           end
+
+          wait_for { ESM::Test.messages.size }.to eq(1)
+
+          # Admin log
+          expect(
+            ESM::Test.messages.retrieve("territory flag was not found in game")
+          ).not_to be_nil
         end
       end
 
