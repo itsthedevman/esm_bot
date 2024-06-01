@@ -228,7 +228,7 @@ describe ESM::Command::Territory::Demote, category: "command" do
           territory.revoke_membership(user.steam_uid)
         end
 
-        it "raises Demote_MissingAccess and Demote_MissingAccess_Admin" do
+        it "raises MissingTerritoryAccess and MissingTerritoryAccess_Admin" do
           expectation = expect do
             execute!(
               arguments: {

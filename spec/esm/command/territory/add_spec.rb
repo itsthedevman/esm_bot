@@ -319,7 +319,7 @@ describe ESM::Command::Territory::Add, category: "command" do
       context "when the user is not a moderator or owner of the territory" do
         before { territory.revoke_membership(user.steam_uid) }
 
-        it "returns the translated Add_MissingAccess error" do
+        it "returns the translated MissingTerritoryAccess error" do
           execute!(
             arguments: {
               server_id: server.server_id,
@@ -339,7 +339,7 @@ describe ESM::Command::Territory::Add, category: "command" do
           wait_for { ESM::Test.messages.size }.to eq(4)
 
           expect(
-            ESM::Test.messages.retrieve("Player attempted to add Target to territory, but Player does not have permission")
+            ESM::Test.messages.retrieve("Player attempted to perform an action on Territory but they do not have access")
           ).not_to be_nil
 
           expect(
