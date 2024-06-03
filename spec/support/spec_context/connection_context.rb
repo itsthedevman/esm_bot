@@ -29,8 +29,7 @@ RSpec.shared_context("connection") do
     # Bind methods to the user object for connection based actions
     bind_user_methods
 
-    # Clear any territories
-    server.delete_all_territories
+    server.reset!
   rescue ActiveRecord::ConnectionNotEstablished
     raise "Unable to connect to the Exile MySQL server. Please ensure it is running before trying again"
   end

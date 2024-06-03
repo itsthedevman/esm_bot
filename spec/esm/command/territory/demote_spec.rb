@@ -96,8 +96,8 @@ describe ESM::Command::Territory::Demote, category: "command" do
         create(
           :exile_territory,
           owner_uid: owner_uid,
-          moderators: [owner_uid],
-          build_rights: [owner_uid],
+          moderators: [owner_uid, user.steam_uid, second_user.steam_uid],
+          build_rights: [owner_uid, user.steam_uid, second_user.steam_uid],
           server_id: server.id
         )
       end
@@ -107,11 +107,6 @@ describe ESM::Command::Territory::Demote, category: "command" do
         second_user.exile_account
 
         territory.create_flag
-
-        # I rarely use this syntax, but it felt fun
-        territory.moderators << user.steam_uid << second_user.steam_uid
-        territory.build_rights << user.steam_uid << second_user.steam_uid
-        territory.save!
       end
 
       context "when the player is a moderator and the target is another moderator" do
