@@ -19,6 +19,55 @@ module ESM
       ESM::Embed.new(type, **, &)
     end
 
+    def self.from_hash(hash, &block)
+      hash = hash.with_indifferent_access
+
+      # This is defensively written because this can receive user provided data
+      new do |embed|
+        if (title = hash[:title]) && title.present?
+          embed.title = title.to_s
+        end
+
+        if (description = hash[:description]) && description.present?
+          embed.description = description.to_s
+        end
+
+        color = hash[:color]
+        embed.color =
+          if ESM::Regex::HEX_COLOR.match?(color)
+            color
+          elsif color && ESM::Color::Toast.const_defined?(color.upcase)
+            ESM::Color::Toast.const_get(color.upcase)
+          else
+            ESM::Color.random
+          end
+
+        if (fields = hash[:fields]) && fields.is_a?(Array)
+          fields.each do |field|
+            next unless field.is_a?(Hash)
+
+            name = field[:name].to_s
+            value = field[:value]
+            inline = field[:inline] || false
+
+            # Transform the hash keys/values into a "list"
+            value =
+              if value.is_a?(Hash)
+                value.map_join("\n") do |key, value|
+                  "**#{key.humanize(keep_id_suffix: true)}:** #{value}"
+                end
+              else
+                value.to_s
+              end
+
+            embed.add_field(name:, value:, inline:)
+          end
+        end
+
+        yield(embed) if block
+      end
+    end
+
     ###########################
     # Instance methods
     ###########################
@@ -65,9 +114,9 @@ module ESM
       value = EMPTY_SPACE if value.blank?
 
       if value.is_a?(Array)
-        add_field_array(name: name, values: value, inline: inline)
+        add_field_array(name:, values: value, inline:)
       else
-        store_field(name: name, value: value, inline: inline)
+        store_field(name:, value:, inline:)
       end
 
       self
@@ -155,7 +204,7 @@ module ESM
         timestamp: timestamp,
         color: color,
         footer: footer&.text,
-        fields: fields.map { |f| {name: f.name, value: f.value} },
+        fields: fields.map { |f| {name: f.name, value: f.value, inline: f.inline} },
         author: author,
         thumbnail: thumbnail,
         image: image,
