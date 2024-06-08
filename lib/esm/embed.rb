@@ -19,10 +19,11 @@ module ESM
       ESM::Embed.new(type, **, &)
     end
 
+    # This is defensively written because this can receive user provided data
     def self.from_hash(hash, &block)
-      hash = hash.with_indifferent_access
+      raise TypeError, "Expected Hash, got #{hash.class}" unless hash.is_a?(Hash)
 
-      # This is defensively written because this can receive user provided data
+      hash = hash.with_indifferent_access
       new do |embed|
         if (title = hash[:title]) && title.present?
           embed.title = title.to_s
