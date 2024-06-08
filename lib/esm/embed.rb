@@ -45,11 +45,17 @@ module ESM
 
         if (fields = hash[:fields]) && fields.is_a?(Array)
           fields.each do |field|
-            next unless field.is_a?(Hash)
-
-            name = field[:name].to_s
-            value = field[:value]
-            inline = field[:inline] || false
+            case field
+            when Hash
+              name = field[:name].to_s
+              value = field[:value]
+              inline = field[:inline] || false
+            when Array
+              name, value, inline = field
+              inline ||= false
+            else
+              next
+            end
 
             # Transform the hash keys/values into a "list"
             value =

@@ -122,6 +122,8 @@ module ESM
         end
 
         def on_disconnect
+          return if @public_id.nil?
+
           ESM::ApplicationRecord.connection_pool.with_connection do
             model = ESM::Server.find_by_public_id(@public_id)
             model.update(disconnected_at: ESM::Time.now)

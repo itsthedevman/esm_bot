@@ -65,13 +65,18 @@ module ESM
           input = input.to_h
           return if input.nil?
 
-          input.transform_keys { |k| normalize(k) }
-          input.transform_values { |v| normalize(v) }
+          input.each do |key, value|
+            input[normalize(key)] = normalize(value)
+          end
         when Array, String
           # This will attempt to parse a string for json
           possible_hash_map =
             if input.is_a?(String)
-              input.gsub("\"\"", "\"").to_a
+              input.gsub("\"\"", "\"") # Handle arma string escape
+                .gsub("<br/>", "\\n") # Handle <br/>
+                .gsub("<br />", "\\n") # Handle <br />
+                .gsub("<br></br>", "\\n") # Handle <br></br>
+                .to_a
             else
               input
             end
