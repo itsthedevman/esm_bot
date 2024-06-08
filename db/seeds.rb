@@ -17,10 +17,6 @@ print "Checking commands for invalid configurations..."
 ESM::Command.all.each(&:check_for_valid_configuration!)
 puts " done"
 
-print "Deleting all global commands..."
-::ESM.bot.get_application_commands.each(&:delete)
-puts " done"
-
 print "Configuring bot..."
 ESM::BotAttribute.create!(
   maintenance_mode_enabled: false,
@@ -53,14 +49,6 @@ communities = [
 ].map do |community|
   print "  Creating community for #{community[:community_id]}..."
   community = ESM::Community.create!(community)
-  puts " done"
-
-  print "  Deleting commands for #{community.community_id}..."
-  ::ESM.bot.get_application_commands(server_id: community.guild_id).each(&:delete)
-  puts " done"
-
-  print "  Registering commands for #{community.community_id}..."
-  ESM::Command.register_commands(community.guild_id)
   puts " done"
 
   community
