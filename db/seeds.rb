@@ -57,6 +57,10 @@ end
 community = communities.first
 puts " done"
 
+print "Unlocking all commands"
+ESM::CommandConfiguration.all.update!(allowed_in_text_channels: true, allowlist_enabled: false)
+puts " done"
+
 print "Creating servers..."
 server = ESM::Server.create!(
   community_id: community.id,
