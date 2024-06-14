@@ -36,12 +36,49 @@ describe ESM::Command::Territory::Upgrade, category: "command" do
     describe "#on_execute", requires_connection: true do
       include_context "connection"
 
-      context "when the player is online and upgrades the territory" do
+      let!(:territory) do
+        owner_uid = ESM::Test.steam_uid
+        create(
+          :exile_territory,
+          owner_uid: owner_uid,
+          moderators: [owner_uid, user.steam_uid],
+          build_rights: [owner_uid, user.steam_uid],
+          server_id: server.id,
+          level: 0
+        )
+      end
+
+      before do
+        user.exile_account.update!(locker: 1_000_000) # Aww yea
+        territory.create_flag
+      end
+
+      context "when the player is online, is a moderator, and upgrades the territory" do
+        it "upgrades the territory using poptabs from the player's locker" do
+          execute!(arguments: {territory_id: territory.encoded_id, server_id: server.server_id})
+
+          wait_for { ESM::Test.messages.size }.to eq(2)
+
+          # Player response
+          expect(
+            ESM::Test.messages.retrieve(
+              "`#{territory.encoded_id}` has been upgraded to level #{territory.level + 1}"
+            )
+          ).not_to be(nil)
+
+          # Admin log
+          expect(
+            ESM::Test.messages.retrieve("Territory upgraded to level #{territory.level + 1}")
+          ).not_to be(nil)
+        end
+      end
+
+      context "when the player is offline, is a moderator, and upgrades the territory" do
         it "upgrades the territory using poptabs from the player's locker"
       end
 
-      context "when the player is offline and upgrades the territory" do
-        it "upgrades the territory using poptabs from the player's locker"
+      context "when the player is a territory admin" do
+        it "upgrades the territory"
       end
 
       context "when there is tax on the upgrade" do
