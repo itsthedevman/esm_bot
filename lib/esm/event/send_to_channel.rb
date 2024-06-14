@@ -40,7 +40,7 @@ module ESM
 
       def build_embed(embed_data)
         ESM::Embed.from_hash(embed_data) do |e|
-          e.set_author(name: "Sent from #{@server.server_id}")
+          e.set_author(name: "Sent from #{@server.server_id}") if e.author.nil?
         end
       end
     end
