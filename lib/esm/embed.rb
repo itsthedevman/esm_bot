@@ -25,14 +25,29 @@ module ESM
 
       hash = hash.with_indifferent_access
       new do |embed|
+        ###########
+        # Author
+        # Supports string or HashMap with full options
+        if (author = hash[:author]) && author.present?
+          author = ESM::Arma::HashMap.from(author).presence || {name: author}
+          author = author.slice(:name, :url, :icon_url).symbolize_keys
+          embed.set_author(**author)
+        end
+
+        ###########
+        # Title
         if (title = hash[:title]) && title.present?
           embed.title = title.to_s
         end
 
+        ###########
+        # Description
         if (description = hash[:description]) && description.present?
           embed.description = description.to_s
         end
 
+        ###########
+        # Color
         color = hash[:color]
         embed.color =
           if ESM::Regex::HEX_COLOR.match?(color)
@@ -43,6 +58,8 @@ module ESM
             ESM::Color.random
           end
 
+        ###########
+        # Fields
         if (fields = hash[:fields]) && fields.is_a?(Array)
           fields.each do |field|
             case field
@@ -212,7 +229,7 @@ module ESM
         color: color,
         footer: footer&.text,
         fields: fields.map { |f| {name: f.name, value: f.value, inline: f.inline} },
-        author: author,
+        author: author&.to_hash,
         thumbnail: thumbnail,
         image: image,
         url: url

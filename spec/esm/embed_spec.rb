@@ -381,5 +381,49 @@ describe ESM::Embed do
         end
       end
     end
+
+    describe "when the author is provided" do
+      context "and the value is not a HashMap" do
+        let(:hash) do
+          {author: "Hello World"}
+        end
+
+        it "sets the author's name" do
+          expect(embed.to_h).to match(
+            expectation.merge(
+              author: {
+                name: hash[:author],
+                icon_url: nil,
+                url: nil
+              }
+            )
+          )
+        end
+      end
+
+      context "and the value is a HashMap" do
+        let(:hash) do
+          {
+            author: [
+              ["name", "Author Name"],
+              ["url", "https://google.com"],
+              ["icon_url", "https://static-00.iconduck.com/assets.00/google-icon-2048x2048-pks9lbdv.png"]
+            ]
+          }
+        end
+
+        it "sets the author values" do
+          expect(embed.to_h).to match(
+            expectation.merge(
+              author: {
+                name: hash[:author].dig(0, 1),
+                url: hash[:author].dig(1, 1),
+                icon_url: hash[:author].dig(2, 1)
+              }
+            )
+          )
+        end
+      end
+    end
   end
 end
