@@ -131,15 +131,15 @@ RSpec.shared_context("connection") do
       vest_items: [],
       vest_magazines: [],
       vest_weapons: [],
-      account_money: 0,
-      account_score: 0,
-      account_kills: 0,
-      account_deaths: 0,
+      account_money: user.exile_account.locker,
+      account_score: user.exile_account.score,
+      account_kills: user.exile_account.kills,
+      account_deaths: user.exile_account.deaths,
       clan_id: "",
       clan_name: "",
       temperature: 37,
       wetness: 0,
-      account_locker: 0
+      account_locker: user.exile_account.locker
     }
 
     attributes.each { |key, value| attributes[key] = attrs[key] || value }
