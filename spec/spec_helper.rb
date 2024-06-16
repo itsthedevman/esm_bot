@@ -2,7 +2,7 @@
 
 # Set to false for indefinite
 SPEC_TIMEOUT_SECONDS = 5
-LOG_LEVEL = :info
+LOG_LEVEL = false
 
 require_relative "config"
 
