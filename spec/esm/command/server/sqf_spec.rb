@@ -202,7 +202,7 @@ describe ESM::Command::Server::Sqf, category: "command" do
 
       context "when the code is executed on the player" do
         it "executes the code and a success embed is sent without the result" do
-          user.connect
+          spawn_player_for(user)
 
           execute!(
             arguments: {
@@ -231,7 +231,7 @@ describe ESM::Command::Server::Sqf, category: "command" do
 
       context "when the code is executed on a non-registered steam uid" do
         it "executes the code and a success embed is sent without the result" do
-          second_user.connect
+          spawn_player_for(user)
 
           # Deregister the user
           steam_uid = second_user.steam_uid
