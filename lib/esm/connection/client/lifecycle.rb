@@ -29,6 +29,8 @@ module ESM
           when :message
             on_request(request.content)
           end
+        rescue ESM::Exception::InvalidAccessKey
+          close
         rescue ESM::Exception::ClosableError => e
           warn!(error: e)
           close
