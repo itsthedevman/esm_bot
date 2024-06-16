@@ -37,6 +37,14 @@ RSpec.shared_examples("arma_error_player_needs_to_join") do
   end
 end
 
+RSpec.shared_examples("arma_error_target_needs_to_join") do
+  it "raises TargetNeedsToJoin" do
+    expect { execute_command }.to raise_error(ESM::Exception::ExtensionError) do |error|
+      expect(error.data.description).to match("needs to join")
+    end
+  end
+end
+
 RSpec.shared_examples("arma_error_null_flag") do
   it "raises NullFlag and NullFlag_Admin" do
     expect { execute_command }.to raise_error(ESM::Exception::ExtensionError) do |error|
