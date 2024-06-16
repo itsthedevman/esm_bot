@@ -35,10 +35,8 @@ module ESM
       changed_items = previous_changes.slice(*MAPPING.keys)
       return if changed_items.blank?
 
-      sqf = changed_items.map_join(";") do |key, value|
+      sqf = changed_items.map_join(";") do |key, (_, value)|
         arma_variable = MAPPING[key]
-        value = value.second # [old_value, new_value]
-
         if arma_variable.nil?
           warn!(
             "ServerSetting attribute #{key.quoted} was updated but does not have a MAPPING entry"
@@ -49,7 +47,7 @@ module ESM
 
         value /= 100.0 if %w[territory_upgrade_tax territory_payment_tax].include?(key)
 
-        "missionNamespace setVariable [#{arma_variable.quoted}, #{value}]"
+        "missionNamespace setVariable [#{arma_variable.to_json}, #{value.to_json}]"
       end
 
       server.execute_sqf!(sqf) if server.connected?
