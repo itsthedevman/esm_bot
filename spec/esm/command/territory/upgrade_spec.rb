@@ -48,12 +48,19 @@ describe ESM::Command::Territory::Upgrade, category: "command" do
         )
       end
 
+      let!(:locker_balance) { 1_000_000 }  # Aww yea
+
       before do
-        user.exile_account.update!(locker: 1_000_000) # Aww yea
+        user.exile_account.update!(locker: locker_balance)
         territory.create_flag
       end
 
-      context "when the player is online, is a moderator, and upgrades the territory" do
+      # Happy path
+      shared_examples "a successfully upgraded territory" do
+        let(:upgrade_data) do
+          ESM::Territory.where(server_id: server.id, territory_level: territory.level + 1).first
+        end
+
         it "upgrades the territory using poptabs from the player's locker" do
           execute!(arguments: {territory_id: territory.encoded_id, server_id: server.server_id})
 
@@ -70,19 +77,45 @@ describe ESM::Command::Territory::Upgrade, category: "command" do
           expect(
             ESM::Test.messages.retrieve("Territory upgraded to level #{territory.level + 1}")
           ).not_to be(nil)
+
+          user.exile_account.reload
+
+          # Handle taxes
+          tax = respond_to?(:territory_upgrade_tax) ? territory_upgrade_tax : 0
+          if tax > 0
+            tax = (upgrade_data.territory_purchase_price * (tax / 100.0)).to_i
+          end
+
+          expect(user.exile_account.locker).to eq(
+            locker_balance - upgrade_data.territory_purchase_price - tax
+          )
         end
       end
 
+      context "when the player is online, is a moderator, and upgrades the territory" do
+        before { spawn_player_for(user) }
+
+        it_behaves_like "a successfully upgraded territory"
+      end
+
       context "when the player is offline, is a moderator, and upgrades the territory" do
-        it "upgrades the territory using poptabs from the player's locker"
+        it_behaves_like "a successfully upgraded territory"
       end
 
       context "when the player is a territory admin" do
-        it "upgrades the territory"
+        it_behaves_like "a successfully upgraded territory"
       end
 
       context "when there is tax on the upgrade" do
-        it "includes the tax in the price"
+        let(:territory_upgrade_tax) { Faker::Number.between(from: 1, to: 100) }
+
+        before do
+          server.server_setting.update!(territory_upgrade_tax:)
+        end
+
+        it_behaves_like "a successfully upgraded territory" do
+          it { expect(territory_upgrade_tax).not_to eq(0) }
+        end
       end
 
       context "when the player has not joined the server" do
