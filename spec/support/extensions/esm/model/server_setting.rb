@@ -47,7 +47,7 @@ module ESM
           next
         end
 
-        value /= 100 if %w[territory_upgrade_tax territory_payment_tax].include?(key)
+        value /= 100.0 if %w[territory_upgrade_tax territory_payment_tax].include?(key)
 
         "missionNamespace setVariable [#{arma_variable.quoted}, #{value}]"
       end
