@@ -48,7 +48,17 @@ describe ESM::Command::Territory::Upgrade, category: "command" do
         )
       end
 
+      let(:territory_purchase_price) do
+        server.territories
+          .where(territory_level: territory.level)
+          .pick(:territory_purchase_price)
+      end
+
       let!(:locker_balance) { 1_000_000 }  # Aww yea
+
+      subject(:execute_command) do
+        execute!(arguments: {territory_id: territory.encoded_id, server_id: server.server_id})
+      end
 
       before do
         user.exile_account.update!(locker: locker_balance)
@@ -56,13 +66,9 @@ describe ESM::Command::Territory::Upgrade, category: "command" do
       end
 
       # Happy path
-      shared_examples "a successfully upgraded territory" do
-        let(:upgrade_data) do
-          ESM::Territory.where(server_id: server.id, territory_level: territory.level + 1).first
-        end
-
+      shared_examples "successful_territory_upgrade" do
         it "upgrades the territory using poptabs from the player's locker" do
-          execute!(arguments: {territory_id: territory.encoded_id, server_id: server.server_id})
+          execute_command
 
           wait_for { ESM::Test.messages.size }.to eq(2)
 
@@ -82,12 +88,11 @@ describe ESM::Command::Territory::Upgrade, category: "command" do
 
           # Handle taxes
           tax = respond_to?(:territory_upgrade_tax) ? territory_upgrade_tax : 0
-          if tax > 0
-            tax = (upgrade_data.territory_purchase_price * (tax / 100.0)).to_i
-          end
+          tax = (territory_purchase_price * (tax / 100.0)).to_i if tax > 0
 
-          expect(user.exile_account.locker).to eq(
-            locker_balance - upgrade_data.territory_purchase_price - tax
+          expect(user.exile_account.locker).to(
+            eq(locker_balance - territory_purchase_price - tax),
+            "Purchase price: #{territory_purchase_price}. Tax: #{tax}"
           )
         end
       end
@@ -95,15 +100,22 @@ describe ESM::Command::Territory::Upgrade, category: "command" do
       context "when the player is online, is a moderator, and upgrades the territory" do
         before { spawn_player_for(user) }
 
-        it_behaves_like "a successfully upgraded territory"
+        include_examples "successful_territory_upgrade"
       end
 
       context "when the player is offline, is a moderator, and upgrades the territory" do
-        it_behaves_like "a successfully upgraded territory"
+        include_examples "successful_territory_upgrade"
       end
 
       context "when the player is a territory admin" do
-        it_behaves_like "a successfully upgraded territory"
+        before do
+          make_territory_admin!(user)
+          territory.revoke_membership(user.steam_uid)
+
+          expect(territory.moderators).not_to include(user.steam_uid)
+        end
+
+        include_examples "successful_territory_upgrade"
       end
 
       context "when there is tax on the upgrade" do
@@ -113,37 +125,75 @@ describe ESM::Command::Territory::Upgrade, category: "command" do
           server.server_setting.update!(territory_upgrade_tax:)
         end
 
-        it_behaves_like "a successfully upgraded territory" do
+        include_examples "successful_territory_upgrade" do
           it { expect(territory_upgrade_tax).not_to eq(0) }
         end
       end
 
       context "when the player has not joined the server" do
-        it "raises PlayerNeedsToJoin"
+        before { user.exile_account.destroy! }
+
+        include_examples "arma_error_player_needs_to_join"
       end
 
       context "when the territory is null" do
-        it "raises NullFlag and NullFlag_Admin"
+        before { territory.delete_flag }
+
+        include_examples "arma_error_null_flag"
       end
 
       context "when the player does not have permissions to upgrade" do
-        it "raises MissingTerritoryAccess and MissingTerritoryAccess_Admin"
+        before do
+          territory.revoke_membership(user.steam_uid)
+        end
+
+        include_examples "arma_error_missing_territory_access"
       end
 
       context "when the flag has been stolen" do
-        it "raises Upgrade_StolenFlag"
+        before do
+          territory.update!(flag_stolen: true)
+        end
+
+        it "raises Upgrade_StolenFlag" do
+          expect { execute_command }.to raise_error(ESM::Exception::ExtensionError) do |error|
+            expect(error.data.description).to match("has been stolen")
+          end
+        end
       end
 
       context "when the flag is already at max level" do
-        it "raise Upgrade_MaxLevel"
+        before do
+          territory.update!(level: server.territories.size)
+        end
+
+        it "raise Upgrade_MaxLevel" do
+          expect { execute_command }.to raise_error(ESM::Exception::ExtensionError) do |error|
+            expect(error.data.description).to match("already at the highest level")
+          end
+        end
       end
 
       context "when the player is online and does not have enough poptabs" do
-        it "raises Upgrade_TooPoor"
+        let(:locker_balance) { 0 }
+
+        before { spawn_player_for(user) }
+
+        it "raises Upgrade_TooPoor" do
+          expect { execute_command }.to raise_error(ESM::Exception::ExtensionError) do |error|
+            expect(error.data.description).to match("you do not have enough poptabs in your locker. It costs ..#{territory_purchase_price.to_s.to_delimited}.. and you have ..#{user.exile_account.locker}..")
+          end
+        end
       end
 
       context "when the player is not online and does not have enough poptabs" do
-        it "raises Upgrade_TooPoor"
+        let(:locker_balance) { 0 }
+
+        it "raises Upgrade_TooPoor" do
+          expect { execute_command }.to raise_error(ESM::Exception::ExtensionError) do |error|
+            expect(error.data.description).to match("you do not have enough poptabs in your locker. It costs ..#{territory_purchase_price.to_s.to_delimited}.. and you have ..#{user.exile_account.locker}..")
+          end
+        end
       end
     end
   end
