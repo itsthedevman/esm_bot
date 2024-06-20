@@ -395,7 +395,7 @@ describe ESM::Command::Territory::Add, category: "command" do
           wait_for { ESM::Test.messages.size }.to eq(3)
 
           expect(
-            ESM::Test.messages.retrieve("#{user.mention}, this Player already has build rights")
+            ESM::Test.messages.retrieve("#{user.mention}, this player already has build rights")
           ).not_to be_nil
         end
       end
