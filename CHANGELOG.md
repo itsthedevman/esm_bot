@@ -42,6 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 - Removed environment variable `PRINT_LOG`
 - Removed redundant `_context` and `_examples` for RSpec context and examples
+- Removed `ESM::Callbacks`
 
 ## [2.3.1] - 2024-05-29
 
