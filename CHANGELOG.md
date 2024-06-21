@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [2.3.2] - 2024-06-20
 
 ### Added
+- Added `CHANGELOG.md`
 - Added `.env.example` and updated `config.yml` with new options
 - Added V2 support for `ESM::Command::Territory::Upgrade` and added specs
 - Added `ESM::Connection::Client#on_disconnect` handler
@@ -29,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added rake task `commands:list` for listing all commands
 
 ### Changed
+- Updated README.md
 - Updated dependencies
 - Moved command registration process out of `bin/setup` into rake `commands:seed`
 - Changed `ESM::Connection::Client` lifecycle error to not warn on invalid key
