@@ -65,9 +65,8 @@ module ESM
           input = input.to_h
           return if input.nil?
 
-          input.each do |key, value|
-            input[normalize(key)] = normalize(value)
-          end
+          input.transform_keys { |k| normalize(k) }
+          input.transform_values { |v| normalize(v) }
         when Array, String
           # This will attempt to parse a string for json
           possible_hash_map =

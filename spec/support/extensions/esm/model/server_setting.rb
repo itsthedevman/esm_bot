@@ -32,6 +32,8 @@ module ESM
     }.stringify_keys.freeze
 
     def update_arma
+      return unless server.v2? && server.connected?
+
       changed_items = previous_changes.slice(*MAPPING.keys)
       return if changed_items.blank?
 
@@ -50,7 +52,7 @@ module ESM
         "missionNamespace setVariable [#{arma_variable.to_json}, #{value.to_json}]"
       end
 
-      server.execute_sqf!(sqf) if server.connected?
+      server.execute_sqf!(sqf)
     end
   end
 end

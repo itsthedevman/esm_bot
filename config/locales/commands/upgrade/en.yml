@@ -10,3 +10,7 @@ en:
         arguments:
           territory: awesome
           "on": esm_malden
+      success_message: |-
+        Hey %{user}, you successfully upgraded territory `%{territory_id}` for **%{cost}**.
+        Your territory has reached level **%{level}** and now has a radius of **%{range}** meters.
+        After this transaction, you have **%{locker}** left in your locker.

@@ -47,7 +47,7 @@ module ESM
       end
 
       def send_error(content, block: false)
-        message = ESM::Message.new.add_error(type: :message, content:)
+        message = ESM::Message.new.add_error(:message, content)
         send_request(message, type: :error, block:)
       end
 

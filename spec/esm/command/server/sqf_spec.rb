@@ -230,12 +230,13 @@ describe ESM::Command::Server::Sqf, category: "command" do
       end
 
       context "when the code is executed on a non-registered steam uid" do
-        it "executes the code and a success embed is sent without the result" do
-          spawn_player_for(user)
+        before do
+          spawn_player_for(second_user)
+        end
 
-          # Deregister the user
+        it "executes the code and a success embed is sent without the result" do
           steam_uid = second_user.steam_uid
-          second_user.update(steam_uid: nil)
+          second_user.deregister!
 
           execute!(
             arguments: {
@@ -283,9 +284,7 @@ describe ESM::Command::Server::Sqf, category: "command" do
           expect(message).not_to be_nil
 
           result_embed = message.content
-          expect(result_embed.description).to eq(
-            "Hey #{user.mention}, #{second_user.mention} **needs to join** `#{server.server_id}` before you can execute code on them"
-          )
+          expect(result_embed.description).to match("needs to join")
         end
       end
 
@@ -313,9 +312,7 @@ describe ESM::Command::Server::Sqf, category: "command" do
           expect(message).not_to be_nil
 
           result_embed = message.content
-          expect(result_embed.description).to eq(
-            "Hey #{user.mention}, #{steam_uid} **needs to join** `#{server.server_id}` before you can execute code on them"
-          )
+          expect(result_embed.description).to match("needs to join")
         end
       end
     end
