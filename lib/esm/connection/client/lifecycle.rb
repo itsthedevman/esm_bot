@@ -128,9 +128,8 @@ module ESM
 
           ESM::ApplicationRecord.connection_pool.with_connection do
             model = ESM::Server.find_by_public_id(@public_id)
-            model.update(disconnected_at: ESM::Time.now)
-
             uptime = model.uptime
+
             info!(public_id:, server_id:, uptime:, bot_stopping: ESM.bot.stopping?)
 
             message =
@@ -140,6 +139,7 @@ module ESM
                 I18n.t("server_disconnected", server: server_id, uptime:)
               end
 
+            model.update(server_start_time: nil, disconnected_at: ESM::Time.now)
             model.community.log_event(:reconnect, message)
           end
         end
