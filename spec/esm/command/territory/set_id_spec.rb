@@ -164,7 +164,7 @@ describe ESM::Command::Territory::SetId, category: "command" do
         context "and the old territory ID is an encoded ID" do
           before do
             user.exile_account # The UID must be in the account table (FK)
-            territory.set_owner(user.steam_uid)
+            territory.change_owner(user.steam_uid)
           end
 
           include_examples "sets the ID"
@@ -176,9 +176,9 @@ describe ESM::Command::Territory::SetId, category: "command" do
           before do
             user.exile_account # The UID must be in the account table (FK)
 
-            # The call to #set_owner saves the territory
+            # The call to #change_owner saves the territory
             territory.esm_custom_id = old_territory_id
-            territory.set_owner(user.steam_uid)
+            territory.change_owner(user.steam_uid)
           end
 
           include_examples "sets the ID"

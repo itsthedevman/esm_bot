@@ -85,7 +85,7 @@ module ESM
       self
     end
 
-    def set_owner(steam_uid)
+    def change_owner(steam_uid)
       old_owner_uid = owner_uid
 
       moderators.delete(old_owner_uid)
