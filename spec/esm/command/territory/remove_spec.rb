@@ -138,10 +138,48 @@ describe ESM::Command::Territory::Remove, category: "command" do
         include_examples "succeeds"
       end
 
-      context "when the player is a member of the territory and they remove themselves"
-      context "when the player is a territory admin and they remove another territory member"
-      context "when the player is a territory admin and they remove themselves"
-      context "when the player is a moderator and they remove another territory member by UID"
+      context "when the player is a member of the territory and they remove themselves" do
+        let!(:target) { user.mention }
+        let!(:target_uid) { user.steam_uid }
+
+        before do
+          territory.add_moderator!(user.steam_uid)
+        end
+
+        include_examples "succeeds"
+      end
+
+      context "when the player is a territory admin and they remove another territory member" do
+        let!(:territory_admin_uids) { [user.steam_uid] }
+
+        before do
+          expect(territory.moderators).not_to include(user.steam_uid)
+
+          second_user.exile_account
+          territory.add_moderators!(second_user.steam_uid)
+        end
+
+        include_examples "succeeds"
+      end
+
+      context "when the player is a territory admin and they remove themselves" do
+        let!(:territory_admin_uids) { [user.steam_uid] }
+        let!(:target) { user.mention }
+        let!(:target_uid) { user.steam_uid }
+
+        include_examples "succeeds"
+      end
+
+      context "when the player is a moderator and they remove another territory member by UID" do
+        let!(:target) { second_user.steam_uid }
+
+        before do
+          second_user.exile_account
+          territory.add_moderators!(user.steam_uid, second_user.steam_uid)
+        end
+
+        include_examples "succeeds"
+      end
 
       context "when the territory is null"
       context "when the player hasn't joined the server"
