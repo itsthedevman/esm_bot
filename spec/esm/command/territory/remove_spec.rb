@@ -102,6 +102,7 @@ describe ESM::Command::Territory::Remove, category: "command" do
 
       before do
         user.exile_account
+        second_user.exile_account
 
         territory.create_flag
       end
@@ -131,7 +132,6 @@ describe ESM::Command::Territory::Remove, category: "command" do
 
       context "when the player is a moderator and they remove another territory member" do
         before do
-          second_user.exile_account
           territory.add_moderators!(user.steam_uid, second_user.steam_uid)
         end
 
@@ -155,7 +155,6 @@ describe ESM::Command::Territory::Remove, category: "command" do
         before do
           expect(territory.moderators).not_to include(user.steam_uid)
 
-          second_user.exile_account
           territory.add_moderators!(second_user.steam_uid)
         end
 
@@ -174,20 +173,62 @@ describe ESM::Command::Territory::Remove, category: "command" do
         let!(:target) { second_user.steam_uid }
 
         before do
-          second_user.exile_account
           territory.add_moderators!(user.steam_uid, second_user.steam_uid)
         end
 
         include_examples "succeeds"
       end
 
-      context "when the territory is null"
-      context "when the player hasn't joined the server"
-      context "when the target hasn't joined the server"
-      context "when the player is not a member of the territory"
-      context "when the player is a builder in the territory"
-      context "when the target is the owner"
-      context "when the target is not a member of the territory"
+      context "when the territory is null" do
+        before { territory.delete_flag }
+
+        include_examples "arma_error_null_flag"
+      end
+
+      context "when the player hasn't joined the server" do
+        before { user.exile_account.destroy! }
+
+        include_examples "arma_error_player_needs_to_join"
+      end
+
+      context "when the target hasn't joined the server" do
+        before { second_user.exile_account.destroy! }
+
+        include_examples "arma_error_target_needs_to_join"
+      end
+
+      context "when the player is not a member of the territory" do
+        include_examples "arma_error_missing_territory_access"
+      end
+
+      context "when the player is a builder in the territory" do
+        before { territory.add_builder!(user.steam_uid) }
+
+        include_examples "arma_error_missing_territory_access"
+      end
+
+      context "when the target is the owner" do
+        let!(:target) { territory.owner_uid }
+        let!(:target_uid) { territory.owner_uid }
+
+        before { territory.add_moderators!(user.steam_uid) }
+
+        it "raise Remove_CannotRemoveOwner" do
+          expect { execute_command }.to raise_error(ESM::Exception::ExtensionError) do |error|
+            expect(error.data.description).to match("you have no power here")
+          end
+        end
+      end
+
+      context "when the target is not a member of the territory" do
+        before { territory.add_moderators!(user.steam_uid) }
+
+        it "raise Remove_CannotRemoveNothing" do
+          expect { execute_command }.to raise_error(ESM::Exception::ExtensionError) do |error|
+            expect(error.data.description).to match("you can't remove someone you have no power over")
+          end
+        end
+      end
     end
   end
 end
