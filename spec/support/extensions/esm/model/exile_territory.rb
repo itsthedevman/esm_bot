@@ -178,7 +178,8 @@ module ESM
       flag_stolen: "ExileFlagStolen",
       radius: "ExileTerritorySize",
       level: "ExileTerritoryLevel",
-      number_of_constructions: "ExileTerritoryNumberOfConstructions"
+      number_of_constructions: "ExileTerritoryNumberOfConstructions",
+      esm_payment_counter: "ESM_PaymentCounter"
     }.stringify_keys.freeze
 
     def set_variables(items)
