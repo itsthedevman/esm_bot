@@ -199,7 +199,7 @@ module ESM
             public_send(attribute)
           end
 
-        "_territory setVariable [#{arma_variable.to_json}, #{value.to_json}, true];"
+        "_territory setVariable [#{arma_variable.to_json}, #{value.to_json}];"
       end
     end
 
