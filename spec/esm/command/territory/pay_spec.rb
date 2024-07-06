@@ -37,7 +37,7 @@ describe ESM::Command::Territory::Pay, category: "command" do
 
     describe "#on_execute", requires_connection: true do
       include_context "connection" do
-        let!(:territory_builders) { [user.steam_uid] }
+        let!(:territory_build_rights) { [user.steam_uid] }
       end
 
       let(:locker_balance) { 1_000_000 }  # Aww yea
