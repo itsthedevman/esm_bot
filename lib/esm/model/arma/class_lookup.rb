@@ -3,7 +3,7 @@
 module ESM
   module Arma
     class ClassLookup
-      Entry = Struct.new(:class_name, :display_name, :mod, :mod_name, :category, :category_name).freeze
+      Entry = Data.define(:class_name, :display_name, :mod, :mod_name, :category, :category_name)
 
       CATEGORY_VEHICLES = %w[vehicle_static vehicle_car vehicle_tank vehicle_boat vehicle_helicopter vehicle_plan vehicle_misc].freeze
       CATEGORY_EXILE = %w[exile_medical exile_construction exile_consumables exile_misc].freeze
@@ -32,14 +32,18 @@ module ESM
       #
       def self.find(class_name)
         cache if @lookup.nil?
-        @lookup.find { |entry| entry.class_name == class_name.to_s }
+
+        @lookup[class_name.to_s]
       end
 
       def self.where(**query)
         cache if @lookup.nil?
-        raise ESM::Exception::Error, "Invalid key or value is not a string" if !query.all? { |k, _v| Entry.members.include?(k.to_sym) }
 
-        @lookup.select do |entry|
+        if !query.all? { |k, _v| Entry.members.include?(k.to_sym) }
+          raise ESM::Exception::Error, "Invalid key or value is not a string"
+        end
+
+        @lookup.select do |class_name, entry|
           query.all? do |key, value|
             result = entry.send(key.to_sym)
 
@@ -73,15 +77,20 @@ module ESM
               category_data["entries"].each do |class_name, display_name|
                 next if lookup.key?(class_name)
 
-                lookup[class_name] = Entry.new(class_name, display_name, mod, mod_name, category, category_name).freeze
+                lookup[class_name] = Entry.new(
+                  class_name,
+                  display_name,
+                  mod,
+                  mod_name,
+                  category,
+                  category_name
+                )
               end
             end
           end
         end
 
-        # The actual lookup
-        @lookup = lookup.values.sort_by!(&:class_name)
-
+        @lookup = lookup
         true
       end
     end
