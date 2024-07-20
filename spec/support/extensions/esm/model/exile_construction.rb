@@ -2,7 +2,8 @@
 
 module ESM
   class ExileConstruction < ArmaRecord
-    self.ignored_columns = [:class]
+    include ClassColumnSupport
+
     self.table_name = "construction"
 
     attribute :account_uid, :string
@@ -24,5 +25,7 @@ module ESM
     attribute :deleted_at, :datetime
 
     belongs_to :territory, inverse_of: :constructions
+
+    validates :class_name, :account_uid, :territory_id, presence: true
   end
 end

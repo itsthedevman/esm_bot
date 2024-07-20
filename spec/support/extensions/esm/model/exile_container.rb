@@ -2,7 +2,8 @@
 
 module ESM
   class ExileContainer < ArmaRecord
-    self.ignored_columns = [:class]
+    include ClassColumnSupport
+
     self.table_name = "container"
 
     attribute :spawned_at, :datetime
@@ -17,10 +18,10 @@ module ESM
     attribute :up_x, :float
     attribute :up_y, :float
     attribute :up_z, :float
-    attribute :cargo_items, :string
-    attribute :cargo_magazines, :string
-    attribute :cargo_weapons, :string
-    attribute :cargo_container, :string
+    attribute :cargo_items, :json, default: []
+    attribute :cargo_magazines, :json, default: []
+    attribute :cargo_weapons, :json, default: []
+    attribute :cargo_container, :json, default: []
     attribute :last_updated_at, :datetime
     attribute :pin_code, :string
     attribute :territory_id, :integer
@@ -29,5 +30,7 @@ module ESM
     attribute :abandoned, :datetime
 
     belongs_to :territory, inverse_of: :containers
+
+    validates :class_name, :account_uid, :territory_id, presence: true
   end
 end
