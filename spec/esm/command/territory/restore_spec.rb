@@ -101,6 +101,10 @@ describe ESM::Command::Territory::Restore, category: "command" do
         end
 
         it "restores the territory" do
+          expect(territory.deleted_at).not_to be(nil)
+          expect(container.deleted_at).not_to be(nil)
+          expect(construction.deleted_at).not_to be(nil)
+
           previous_last_paid_at = territory.last_paid_at
 
           expect { execute_command }.not_to raise_error
@@ -123,9 +127,7 @@ describe ESM::Command::Territory::Restore, category: "command" do
           territory.delete
         end
 
-        it "raises TODO" do
-          expect { execute_command }.not_to raise_error
-        end
+        include_examples "error_territory_id_does_not_exist"
       end
     end
   end
