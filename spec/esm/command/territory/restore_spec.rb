@@ -51,10 +51,6 @@ describe ESM::Command::Territory::Restore, category: "command" do
       expect(command.type).to eq(:admin)
     end
 
-    it "requires registration" do
-      expect(command.registration_required?).to be(true)
-    end
-
     describe "#on_execute", requires_connection: true do
       include_context "connection"
 

@@ -27,6 +27,10 @@ RSpec.shared_examples("validate_command") do
       expect(description.match?(/todo/i)).to be(false), "Argument \"#{name}\" has a TODO description"
     end
   end
+
+  it "requires registration" do
+    expect(command.registration_required?).to be(true)
+  end
 end
 
 RSpec.shared_examples("arma_error_player_needs_to_join") do
