@@ -175,6 +175,28 @@ describe ESM::Command::Territory::Remove, category: "command" do
         include_examples "succeeds"
       end
 
+      context "when logging is enabled" do
+        before do
+          territory.add_moderators!(user.steam_uid, second_user.steam_uid)
+          server.server_setting.update!(logging_remove_player_from_territory: true)
+        end
+
+        include_examples "arma_discord_logging_enabled" do
+          let(:message) { "`ESMs_command_remove` executed successfully" }
+        end
+      end
+
+      context "when logging is disabled" do
+        before do
+          territory.add_moderators!(user.steam_uid, second_user.steam_uid)
+          server.server_setting.update!(logging_remove_player_from_territory: false)
+        end
+
+        include_examples "arma_discord_logging_disabled" do
+          let(:message) { "`ESMs_command_remove` executed successfully" }
+        end
+      end
+
       context "when the territory is null" do
         before { territory.delete_flag }
 

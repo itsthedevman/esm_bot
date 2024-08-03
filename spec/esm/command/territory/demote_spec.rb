@@ -145,6 +145,26 @@ describe ESM::Command::Territory::Demote, category: "command" do
         include_examples "successful_demotion"
       end
 
+      context "when logging is enabled" do
+        before do
+          server.server_setting.update!(logging_demote_player: true)
+        end
+
+        include_examples "arma_discord_logging_enabled" do
+          let(:message) { "`ESMs_command_demote` executed successfully" }
+        end
+      end
+
+      context "when logging is disabled" do
+        before do
+          server.server_setting.update!(logging_demote_player: false)
+        end
+
+        include_examples "arma_discord_logging_disabled" do
+          let(:message) { "`ESMs_command_demote` executed successfully" }
+        end
+      end
+
       context "when the territory flag is null" do
         before { territory.delete_flag }
 
