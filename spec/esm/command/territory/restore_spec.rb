@@ -44,8 +44,6 @@ describe ESM::Command::Territory::Restore, category: "command" do
     end
   end
 
-  # frozen_string_literal: true
-
   describe "V2", category: "command" do
     it "is an admin command" do
       expect(command.type).to eq(:admin)

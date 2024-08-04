@@ -76,10 +76,7 @@ describe ESM::Command::Territory::Demote, category: "command" do
     end
   end
 
-  describe "V2", category: "command" do
-    include_context "command", described_class
-    include_examples "validate_command"
-
+  describe "V2", v2: true do
     it "is a player command" do
       expect(command.type).to eq(:player)
     end
