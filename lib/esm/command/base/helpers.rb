@@ -327,12 +327,27 @@ module ESM
           skipped_actions.set(*)
         end
 
-        def send_to_target_server(message, block: true)
+        #
+        # Sends a Message to the target server.
+        #
+        # @param message [Message] The message to send to the target server
+        # @param block [Boolean] Whether to wait until the server responds back
+        #   (defaults to true)
+        #
+        # @return [Message, Connection::Promise]
+        #   If block is false, a promise in a processing status is returned.
+        #   If block is true, the response as ESM::Message is returned.
+        #
+        # @raise [Exception::CheckFailure] If the command does not have a valid target server
+        # @raise [Exception::RejectedPromise] If the promise is rejected
+        # @raise [Exception::ExtensionError] If there's an extension error
+        #
+        def send_to_target_server!(message, block: true)
           raise ArgumentError, "Message must be a ESM::Message" unless message.is_a?(ESM::Message)
 
           if target_server.nil?
             raise ESM::Exception::CheckFailure,
-              "Command #{name} must define the `server_id` argument in order to use #send_to_target_server"
+              "Command #{name} must define the `server_id` argument in order to use #send_to_target_server!"
           end
 
           target_server.send_message(message, block:)
@@ -344,26 +359,38 @@ module ESM
         # @param name [String, Symbol] The name of the query
         # @param **arguments [Hash] The query arguments
         #
-        # @return [ESM::Message] The outbound message
+        # @return [ESM::Message] The response
         #
-        def query_exile_database(name, **arguments)
+        # @raise (see #send_to_target_server!)
+        #
+        def query_exile_database!(name, **arguments)
           message = ESM::Message.new
             .set_type(:query)
             .set_data(query_function_name: name, **arguments)
 
-          response = send_to_target_server(message)
+          response = send_to_target_server!(message)
           response.data.results
         end
 
-        alias_method :run_database_query, :query_exile_database
+        alias_method :run_database_query!, :query_exile_database!
 
-        def call_sqf_function(function_name, **arguments)
+        #
+        # Calls the provided missionNamespace variable with the provided arguments
+        #
+        # @param function_name [String] The missionNamespace variable that holds code
+        # @param arguments [Hash] Any additional arguments
+        #
+        # @return [ESM::Message] The response
+        #
+        # @raise (see #send_to_target_server!)
+        #
+        def call_sqf_function!(function_name, **arguments)
           message = ESM::Message.new
             .set_type(:call)
             .set_data(function_name:, **arguments)
             .set_metadata(player: current_user, target: target_user)
 
-          send_to_target_server(message)
+          send_to_target_server!(message)
         end
 
         # Convenience method for replying back to the event's channel

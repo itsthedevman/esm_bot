@@ -31,7 +31,7 @@ module ESM
           check_for_minimum_characters!
           check_for_maximum_characters!
 
-          run_database_query(
+          run_database_query!(
             :set_id,
             steam_uid: current_user.steam_uid,
             territory_id: arguments.old_territory_id,
