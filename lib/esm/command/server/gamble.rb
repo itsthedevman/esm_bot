@@ -58,6 +58,73 @@ module ESM
             update_stats
             send_results
           end
+
+          def update_stats
+            # Ensure the streak is reset when switching between won/lost
+            current_streak =
+              if gamble_stat.last_action == @response.type
+                gamble_stat.current_streak + 1
+              else
+                1
+              end
+
+            case @response.type
+            when "won"
+              # Determine if we've broken our previous streak
+              longest_win_streak =
+                if current_streak > gamble_stat.longest_win_streak
+                  current_streak
+                else
+                  gamble_stat.longest_win_streak
+                end
+
+              # Update the stats
+              gamble_stat.update(
+                total_wins: gamble_stat.total_wins + 1,
+                total_poptabs_won: gamble_stat.total_poptabs_won + @response.amount.to_i,
+                current_streak: current_streak,
+                longest_win_streak: longest_win_streak,
+                last_action: @response.type
+              )
+            when "loss"
+              # Determine if we've broken our previous streak
+              longest_loss_streak =
+                if current_streak > gamble_stat.longest_loss_streak
+                  current_streak
+                else
+                  gamble_stat.longest_loss_streak
+                end
+
+              # Update the stats
+              gamble_stat.update(
+                total_losses: gamble_stat.total_losses + 1,
+                total_poptabs_loss: gamble_stat.total_poptabs_loss + @response.amount.to_i,
+                current_streak: current_streak,
+                longest_loss_streak: longest_loss_streak,
+                last_action: @response.type
+              )
+            end
+          end
+
+          def send_results
+            embed = ESM::Notification.build_random(
+              community_id: target_community.id,
+              type: @response.type,
+              category: "gambling",
+              serverid: target_server.server_id,
+              servername: target_server.server_name,
+              communityid: target_community.community_id,
+              username: current_user.username,
+              usertag: current_user.mention,
+              amountchanged: @response.amount,
+              amountgambled: arguments.amount,
+              lockerbefore: @response.locker_before,
+              lockerafter: @response.locker_after
+            )
+
+            embed.footer = "Current Streak: #{gamble_stat.current_streak}"
+            reply(embed)
+          end
         end
 
         private
@@ -191,73 +258,6 @@ module ESM
               value: most_poptabs_lost_stat.total_poptabs_loss.to_poptab
             )
           )
-        end
-
-        def update_stats
-          # Ensure the streak is reset when switching between won/lost
-          current_streak =
-            if gamble_stat.last_action == @response.type
-              gamble_stat.current_streak + 1
-            else
-              1
-            end
-
-          case @response.type
-          when "won"
-            # Determine if we've broken our previous streak
-            longest_win_streak =
-              if current_streak > gamble_stat.longest_win_streak
-                current_streak
-              else
-                gamble_stat.longest_win_streak
-              end
-
-            # Update the stats
-            gamble_stat.update(
-              total_wins: gamble_stat.total_wins + 1,
-              total_poptabs_won: gamble_stat.total_poptabs_won + @response.amount.to_i,
-              current_streak: current_streak,
-              longest_win_streak: longest_win_streak,
-              last_action: @response.type
-            )
-          when "loss"
-            # Determine if we've broken our previous streak
-            longest_loss_streak =
-              if current_streak > gamble_stat.longest_loss_streak
-                current_streak
-              else
-                gamble_stat.longest_loss_streak
-              end
-
-            # Update the stats
-            gamble_stat.update(
-              total_losses: gamble_stat.total_losses + 1,
-              total_poptabs_loss: gamble_stat.total_poptabs_loss + @response.amount.to_i,
-              current_streak: current_streak,
-              longest_loss_streak: longest_loss_streak,
-              last_action: @response.type
-            )
-          end
-        end
-
-        def send_results
-          embed = ESM::Notification.build_random(
-            community_id: target_community.id,
-            type: @response.type,
-            category: "gambling",
-            serverid: target_server.server_id,
-            servername: target_server.server_name,
-            communityid: target_community.community_id,
-            username: current_user.username,
-            usertag: current_user.mention,
-            amountchanged: @response.amount,
-            amountgambled: arguments.amount,
-            lockerbefore: @response.locker_before,
-            lockerafter: @response.locker_after
-          )
-
-          embed.footer = "Current Streak: #{gamble_stat.current_streak}"
-          reply(embed)
         end
       end
     end
