@@ -7,6 +7,7 @@ module ESM
     private
 
     MAPPING = {
+      gambling_locker_limit_enabled: "ESM_Gambling_LockerLimitEnabled",
       gambling_modifier: "ESM_Gambling_Modifier",
       gambling_payout_base: "ESM_Gambling_PayoutBase",
       gambling_payout_randomizer_max: "ESM_Gambling_PayoutRandomizerMax",
