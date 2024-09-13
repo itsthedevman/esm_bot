@@ -158,3 +158,23 @@ RSpec.shared_examples("arma_discord_logging_disabled") do
     expect(log_message).to be_nil
   end
 end
+
+RSpec.shared_examples("raises_check_failure") do
+  let(:message) { "" }
+
+  it "is expected to raise CheckFailure" do
+    expect { execute_command }.to raise_error(ESM::Exception::CheckFailure) do |error|
+      expect(error.data.description).to match(message)
+    end
+  end
+end
+
+RSpec.shared_examples("raises_server_not_connected") do
+  it "is expected to raise CheckFailure" do
+    expect { execute_command }.to raise_error(ESM::Exception::CheckFailure) do |error|
+      expect(error.data.description).to match(
+        "it looks like `#{server.server_id}` isn't connected right now"
+      )
+    end
+  end
+end

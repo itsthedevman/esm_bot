@@ -4,6 +4,9 @@ module ESM
   module Command
     module Server
       class Gamble < ApplicationCommand
+        WON_ACTION = "won"
+        LOSS_ACTION = "loss"
+
         #################################
         #
         # Arguments (required first, then order matters)
@@ -32,10 +35,9 @@ module ESM
           check_for_connected_server!
           check_for_bad_amount!
 
-          call_sqf_function!("ESMs_command_gamble", amount: arguments.amount)
-
-          update_stats
-          send_results
+          response = call_sqf_function!("ESMs_command_gamble", amount: arguments.amount)
+          update_stats(response.data.win)
+          send_results(response.data.response)
         end
 
         module V1
@@ -140,6 +142,60 @@ module ESM
             server_id: target_server.id,
             user_id: current_user.id
           ).first_or_create
+        end
+
+        def update_stats(won)
+          # Ensure the streak is reset when switching between won/loss
+          current_streak =
+            if gamble_stat.last_action == (won ? WON_ACTION : LOSS_ACTION)
+              gamble_stat.current_streak + 1
+            else
+              1
+            end
+
+          if won
+            # Determine if we've broken our previous streak
+            longest_win_streak =
+              if current_streak > gamble_stat.longest_win_streak
+                current_streak
+              else
+                gamble_stat.longest_win_streak
+              end
+
+            # Update the stats
+            gamble_stat.update(
+              total_wins: gamble_stat.total_wins + 1,
+              total_poptabs_won: gamble_stat.total_poptabs_won + arguments.amount,
+              current_streak: current_streak,
+              longest_win_streak: longest_win_streak,
+              last_action: WON_ACTION
+            )
+          else
+            # Determine if we've broken our previous streak
+            longest_loss_streak =
+              if current_streak > gamble_stat.longest_loss_streak
+                current_streak
+              else
+                gamble_stat.longest_loss_streak
+              end
+
+            # Update the stats
+            gamble_stat.update(
+              total_losses: gamble_stat.total_losses + 1,
+              total_poptabs_loss: gamble_stat.total_poptabs_loss + arguments.amount,
+              current_streak: current_streak,
+              longest_loss_streak: longest_loss_streak,
+              last_action: LOSS_ACTION
+            )
+          end
+        end
+
+        def send_results(response)
+          embed = embed_from_message!(response).tap do |e|
+            e.footer = "Current Streak: #{gamble_stat.current_streak}"
+          end
+
+          reply(embed)
         end
 
         def send_stats
