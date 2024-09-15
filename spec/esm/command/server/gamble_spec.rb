@@ -160,7 +160,7 @@ describe ESM::Command::Server::Gamble, category: "command" do
 
       shared_examples "raise_bad_amount" do
         include_examples "raises_check_failure" do
-          let(:message) { "I'm sorry #{user.mention}, but you simply cannot gamble nothing." }
+          let(:matcher) { "I'm sorry #{user.mention}, but you simply cannot gamble nothing." }
         end
       end
 
@@ -178,7 +178,7 @@ describe ESM::Command::Server::Gamble, category: "command" do
 
         let(:streak) { 1 }
         let(:won_amount) { amount * 3 } # With everything set to 1
-        let(:won_amount_delimited) { ActiveSupport::NumberHelper.number_to_delimited(won_amount) }
+        let(:won_amount_delimited) { won_amount.to_delimitated_s }
 
         it(it_message || "is expected to gamble the amount and won") do
           execute_command
@@ -188,9 +188,7 @@ describe ESM::Command::Server::Gamble, category: "command" do
           embed = ESM::Test.messages.retrieve("Winner winner!")&.content
 
           expect(embed).not_to be(nil)
-
           expect(embed.description).to match("#{won_amount_delimited} poptabs")
-
           expect(embed.footer.text).to eq("Current Streak: #{streak}")
 
           new_locker_balance = locker_balance + won_amount
@@ -215,7 +213,7 @@ describe ESM::Command::Server::Gamble, category: "command" do
 
         let(:streak) { 1 }
         let(:loss_amount) { amount }
-        let(:loss_amount_delimited) { ActiveSupport::NumberHelper.number_to_delimited(loss_amount) }
+        let(:loss_amount_delimited) { loss_amount.to_delimitated_s }
 
         it(it_message || "is expected to gamble the amount and lost") do
           execute_command
@@ -223,8 +221,8 @@ describe ESM::Command::Server::Gamble, category: "command" do
           wait_for { ESM::Test.messages.size }.to be > 1
 
           embed = ESM::Test.messages.retrieve("Better luck next time!")&.content
-          expect(embed).not_to be(nil)
 
+          expect(embed).not_to be(nil)
           expect(embed.description).to match("#{loss_amount_delimited} poptabs")
           expect(embed.footer.text).to eq("Current Streak: #{streak}")
 
@@ -303,7 +301,7 @@ describe ESM::Command::Server::Gamble, category: "command" do
           include_examples "successful_gamble_won"
         end
 
-        ###
+        ##
 
         context "and the player is online and they lost" do
           let!(:net_id) { spawn_player_for(user) }
@@ -311,19 +309,19 @@ describe ESM::Command::Server::Gamble, category: "command" do
           include_examples "successful_gamble_loss"
         end
 
-        ###
+        ##
 
         context "and the player is offline and they won" do
           include_examples "successful_gamble_won"
         end
 
-        ###
+        ##
 
         context "and the player is offline and they lost" do
           include_examples "successful_gamble_loss"
         end
 
-        ###
+        ##
 
         context "and the player has a winning streak" do
           include_examples "successful_gamble_won" do
@@ -339,7 +337,7 @@ describe ESM::Command::Server::Gamble, category: "command" do
           end
         end
 
-        ###
+        ##
 
         context "and the player has a losing streak" do
           include_examples "successful_gamble_loss" do
@@ -379,21 +377,39 @@ describe ESM::Command::Server::Gamble, category: "command" do
       ###
 
       context "when logging is enabled" do
-        before do
-          server.server_setting.update!(logging_gamble_player: true)
-        end
+        let!(:amount) { 1 }
+
+        # Loss
+        let!(:server_setting) { {gambling_win_percentage: 0, logging_gamble: true} }
 
         include_examples "arma_discord_logging_enabled" do
           let(:message) { "`ESMs_command_gamble` executed successfully" }
+
+          let(:fields) do
+            [
+              player_field,
+              {
+                name: "Locker before",
+                value: locker_balance.to_delimitated_s,
+                inline: true
+              },
+              {
+                name: "Locker after",
+                value: (locker_balance - amount).to_delimitated_s,
+                inline: true
+              }
+            ]
+          end
         end
       end
 
       ###
 
       context "when logging is disabled" do
-        before do
-          server.server_setting.update!(logging_gamble_player: false)
-        end
+        let!(:amount) { 1 }
+
+        # Loss
+        let!(:server_setting) { {gambling_win_percentage: 0, logging_gamble: false} }
 
         include_examples "arma_discord_logging_disabled" do
           let(:message) { "`ESMs_command_gamble` executed successfully" }
@@ -403,6 +419,7 @@ describe ESM::Command::Server::Gamble, category: "command" do
       ###
 
       context "when the player is gambling more than what they have" do
+        let!(:amount) { 1_000 }
         let!(:locker_balance) { 0 }
 
         include_examples "arma_error_too_poor"
@@ -411,11 +428,42 @@ describe ESM::Command::Server::Gamble, category: "command" do
       ###
 
       context "when the locker limit is enabled" do
-        context "and the player has too many poptabs in their locker"
+        let!(:amount) { 1_000 }
 
-        ###
+        # Win
+        let!(:server_setting) do
+          {gambling_locker_limit_enabled: true, gambling_win_percentage: 100}
+        end
 
-        context "and the player will have too many poptabs after gambling"
+        let!(:max_deposit) do
+          execute_sqf!("getNumber(missionConfigFile >> 'CfgLocker' >> 'maxDeposit')")
+        end
+
+        context "and the player has too many poptabs in their locker before gambling" do
+          let!(:locker_balance) { max_deposit }
+
+          include_examples "raises_extension_error", "is expected to raise Gamble_LockerFull" do
+            let!(:matcher) { "your locker is full" }
+          end
+        end
+
+        ##
+
+        context "and the player has too many poptabs in their locker after gambling" do
+          let!(:locker_balance) { max_deposit - amount }
+
+          it "is expected to succeed but caps the locker amount to maxDeposit" do
+            execute_command
+
+            wait_for { ESM::Test.messages.size }.to be > 1
+
+            embed = ESM::Test.messages.retrieve("Winner winner!")&.content
+
+            expect(embed).not_to be(nil)
+            expect(embed.description).to match("poptabs due to server limits")
+            expect(user.exile_account.reload.locker).to eq(max_deposit)
+          end
+        end
       end
     end
   end
