@@ -36,7 +36,7 @@ module ESM
           check_for_bad_amount!
 
           response = call_sqf_function!("ESMs_command_gamble", amount: arguments.amount)
-          update_stats(response.data.win)
+          update_stats(response.data)
           send_results(response.data.response)
         end
 
@@ -144,7 +144,10 @@ module ESM
           ).first_or_create
         end
 
-        def update_stats(won)
+        def update_stats(response)
+          won = response.win
+          amount_changed = response.amount.to_i
+
           # Ensure the streak is reset when switching between won/loss
           current_streak =
             if gamble_stat.last_action == (won ? WON_ACTION : LOSS_ACTION)
@@ -165,7 +168,7 @@ module ESM
             # Update the stats
             gamble_stat.update(
               total_wins: gamble_stat.total_wins + 1,
-              total_poptabs_won: gamble_stat.total_poptabs_won + arguments.amount,
+              total_poptabs_won: gamble_stat.total_poptabs_won + amount_changed,
               current_streak: current_streak,
               longest_win_streak: longest_win_streak,
               last_action: WON_ACTION
@@ -182,7 +185,7 @@ module ESM
             # Update the stats
             gamble_stat.update(
               total_losses: gamble_stat.total_losses + 1,
-              total_poptabs_loss: gamble_stat.total_poptabs_loss + arguments.amount,
+              total_poptabs_loss: gamble_stat.total_poptabs_loss + amount_changed,
               current_streak: current_streak,
               longest_loss_streak: longest_loss_streak,
               last_action: LOSS_ACTION
