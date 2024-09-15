@@ -117,7 +117,7 @@ describe ESM::Command::Server::Gamble, category: "command" do
     describe "#on_execute", requires_connection: true do
       include_context "connection"
 
-      let(:locker_balance) { 1_000_000 }  # Aww yea
+      let(:locker_balance) { 5_000 }  # yea
       let(:amount) {}
 
       let(:server_setting_default) do
@@ -164,25 +164,84 @@ describe ESM::Command::Server::Gamble, category: "command" do
         end
       end
 
-      shared_examples "successful_gamble_win" do
-        let!(:server_setting) { {gambling_win_percentage: 100} }
+      shared_examples "successful_gamble_won" do |it_message = nil|
+        let!(:server_setting) do
+          {
+            gambling_win_percentage: 100,
+            gambling_payout_base: 100,
+            gambling_modifier: 1,
+            gambling_payout_randomizer_min: 1,
+            gambling_payout_randomizer_mid: 1,
+            gambling_payout_randomizer_max: 1
+          }
+        end
 
-        it "is expected to gamble the amount and win"
+        let(:streak) { 1 }
+        let(:won_amount) { amount * 3 } # With everything set to 1
+        let(:won_amount_delimited) { ActiveSupport::NumberHelper.number_to_delimited(won_amount) }
+
+        it(it_message || "is expected to gamble the amount and won") do
+          execute_command
+
+          wait_for { ESM::Test.messages.size }.to be > 1
+
+          embed = ESM::Test.messages.retrieve("Winner winner!")&.content
+
+          expect(embed).not_to be(nil)
+
+          expect(embed.description).to match("#{won_amount_delimited} poptabs")
+
+          expect(embed.footer.text).to eq("Current Streak: #{streak}")
+
+          new_locker_balance = locker_balance + won_amount
+          if defined?(net_id)
+            locker = execute_sqf! <<~SQF
+              private _playerObject = objectFromNetID "#{net_id}";
+              if (isNull _playerObject) exitWith { nil };
+
+              _playerObject getVariable ["ExileLocker", -1]
+            SQF
+
+            expect(locker).to eq(new_locker_balance)
+          end
+
+          user.exile_account.reload
+          expect(user.exile_account.reload.locker).to eq(new_locker_balance)
+        end
       end
 
-      shared_examples "successful_gamble_loss" do
+      shared_examples "successful_gamble_loss" do |it_message = nil|
         let!(:server_setting) { {gambling_win_percentage: 0} }
-        let(:streak) { 1 }
 
-        it "is expected to gamble the amount and lose" do
+        let(:streak) { 1 }
+        let(:loss_amount) { amount }
+        let(:loss_amount_delimited) { ActiveSupport::NumberHelper.number_to_delimited(loss_amount) }
+
+        it(it_message || "is expected to gamble the amount and lost") do
           execute_command
 
           wait_for { ESM::Test.messages.size }.to be > 1
 
           embed = ESM::Test.messages.retrieve("Better luck next time!")&.content
           expect(embed).not_to be(nil)
-          expect(embed.description).not_to be_blank
+
+          expect(embed.description).to match("#{loss_amount_delimited} poptabs")
           expect(embed.footer.text).to eq("Current Streak: #{streak}")
+
+          new_locker_balance = locker_balance - loss_amount
+          if defined?(net_id)
+            locker = execute_sqf! <<~SQF
+              private _playerObject = objectFromNetID "#{net_id}";
+              if (isNull _playerObject) exitWith { nil };
+
+              _playerObject getVariable ["ExileLocker", -1]
+            SQF
+
+            expect(locker).to eq(new_locker_balance)
+          end
+
+          user.exile_account.reload
+          expect(user.exile_account.reload.locker).to eq(new_locker_balance)
         end
       end
 
@@ -193,11 +252,15 @@ describe ESM::Command::Server::Gamble, category: "command" do
         include_examples "reply_with_stats"
       end
 
+      ###
+
       context "when the amount is 'stats'", requires_connection: false do
         let!(:amount) { "stats" }
 
         include_examples "reply_with_stats"
       end
+
+      ###
 
       context "when the server is not connected", requires_connection: false do
         context "and the stats are requested" do
@@ -213,11 +276,15 @@ describe ESM::Command::Server::Gamble, category: "command" do
         end
       end
 
+      ###
+
       context "when the amount is negative" do
         let(:amount) { -1 }
 
         include_examples "raise_bad_amount"
       end
+
+      ###
 
       context "when the amount is zero" do
         let(:amount) { 0 }
@@ -225,43 +292,91 @@ describe ESM::Command::Server::Gamble, category: "command" do
         include_examples "raise_bad_amount"
       end
 
+      ###
+
       context "when the amount is a positive number" do
         let(:amount) { 50 }
 
-        context "and the player is online" do
-          # it "is expected to update the player's locker variable"
+        context "and the player is online and they won" do
+          let!(:net_id) { spawn_player_for(user) }
+
+          include_examples "successful_gamble_won"
         end
 
-        context "and the player is offline" do
-          # it "is expected to update the player's locker database"
-        end
+        ###
 
-        context "and the player loses" do
+        context "and the player is online and they lost" do
+          let!(:net_id) { spawn_player_for(user) }
+
           include_examples "successful_gamble_loss"
         end
 
-        context "and the player has a streak" do
-          before do
-            user.user_gamble_stats.first_or_initialize.update!(
-              server:,
-              current_streak: 1,
-              last_action: described_class::LOSS_ACTION
-            )
-          end
+        ###
 
+        context "and the player is offline and they won" do
+          include_examples "successful_gamble_won"
+        end
+
+        ###
+
+        context "and the player is offline and they lost" do
+          include_examples "successful_gamble_loss"
+        end
+
+        ###
+
+        context "and the player has a winning streak" do
+          include_examples "successful_gamble_won" do
+            let(:streak) { 2 }
+
+            before do
+              user.user_gamble_stats.first_or_initialize.update!(
+                server:,
+                current_streak: 1,
+                last_action: described_class::WON_ACTION
+              )
+            end
+          end
+        end
+
+        ###
+
+        context "and the player has a losing streak" do
           include_examples "successful_gamble_loss" do
             let(:streak) { 2 }
+
+            before do
+              user.user_gamble_stats.first_or_initialize.update!(
+                server:,
+                current_streak: 1,
+                last_action: described_class::LOSS_ACTION
+              )
+            end
           end
         end
       end
 
+      ###
+
       context "when the amount is 'all'" do
-        it "is expected to gamble all of the player's locker"
+        include_examples "successful_gamble_loss",
+          "is expected to gamble all of the poptabs and lose" do
+          let!(:amount) { "all" }
+          let!(:loss_amount) { locker_balance }
+        end
       end
 
+      ###
+
       context "when the amount is 'half'" do
-        it "is expected to gamble half of the player's locker"
+        include_examples "successful_gamble_loss",
+          "is expected to gamble half of the poptabs and lose" do
+          let!(:amount) { "half" }
+          let!(:loss_amount) { locker_balance / 2 }
+        end
       end
+
+      ###
 
       context "when logging is enabled" do
         before do
@@ -273,6 +388,8 @@ describe ESM::Command::Server::Gamble, category: "command" do
         end
       end
 
+      ###
+
       context "when logging is disabled" do
         before do
           server.server_setting.update!(logging_gamble_player: false)
@@ -283,14 +400,21 @@ describe ESM::Command::Server::Gamble, category: "command" do
         end
       end
 
+      ###
+
       context "when the player is gambling more than what they have" do
         let!(:locker_balance) { 0 }
 
         include_examples "arma_error_too_poor"
       end
 
+      ###
+
       context "when the locker limit is enabled" do
         context "and the player has too many poptabs in their locker"
+
+        ###
+
         context "and the player will have too many poptabs after gambling"
       end
     end
