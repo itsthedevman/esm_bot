@@ -53,6 +53,24 @@ module ESM
         "missionNamespace setVariable [#{arma_variable.to_json}, #{value.to_json}]"
       end
 
+      if changed_items.key?("gambling_payout_base")
+        sqf += ";missionNamespace setVariable [\"ESM_Gambling_PayoutModifier\", ESM_Gambling_PayoutBase / 100]"
+      end
+
+      if changed_items.key?("gambling_win_percentage")
+        sqf += ";missionNamespace setVariable [\"ESM_Gambling_WinPercentage\", ESM_Gambling_WinPercentage / 100]"
+      end
+
+      changes_gambling_randomizer = %w[
+        gambling_payout_randomizer_max
+        gambling_payout_randomizer_mid
+        gambling_payout_randomizer_min
+      ]
+
+      if changed_items.keys.intersect?(changes_gambling_randomizer)
+        sqf += ";missionNamespace setVariable [\"ESM_Gambling_PayoutRandomizer\", [ESM_Gambling_PayoutRandomizerMin,ESM_Gambling_PayoutRandomizerMid,ESM_Gambling_PayoutRandomizerMax]]"
+      end
+
       server.execute_sqf!(sqf)
     end
   end
