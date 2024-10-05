@@ -50,8 +50,8 @@ RSpec.shared_examples("raises_check_failure") do
   end
 end
 
-RSpec.shared_examples("raises_extension_error") do
-  include_examples "raises_exception", "is expected to raise ExtensionError" do
+RSpec.shared_examples("raises_extension_error") do |it_message = nil|
+  include_examples "raises_exception", it_message || "is expected to raise ExtensionError" do
     let(:exception_class) { ESM::Exception::ExtensionError }
   end
 end
