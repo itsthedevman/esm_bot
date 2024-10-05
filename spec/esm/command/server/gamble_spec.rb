@@ -484,7 +484,6 @@ describe ESM::Command::Server::Gamble, category: "command" do
           it "is expected to succeed but caps the locker amount to maxDeposit" do
             execute_command
 
-            binding.pry
             wait_for { ESM::Test.messages.size }.to be > 1
 
             embed = ESM::Test.messages.retrieve("Winner winner!")&.content
