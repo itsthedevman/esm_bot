@@ -134,7 +134,6 @@ describe ESM::Command::Server::Gamble, category: "command" do
       # Callbacks
 
       before do
-        trace!("before")
         server.server_setting.update!(server_setting_default.merge(server_setting))
         user.exile_account.update!(locker: locker_balance)
       end
@@ -285,7 +284,7 @@ describe ESM::Command::Server::Gamble, category: "command" do
       ###
 
       context "when the amount is zero" do
-        let(:amount) { 0 }
+        let!(:amount) { 0 }
 
         include_examples "raise_bad_amount"
       end
@@ -293,7 +292,7 @@ describe ESM::Command::Server::Gamble, category: "command" do
       ###
 
       context "when the amount is a positive number" do
-        let(:amount) { 50 }
+        let!(:amount) { 50 }
 
         context "and the player is online and they won" do
           let!(:net_id) { spawn_player_for(user) }
@@ -357,20 +356,50 @@ describe ESM::Command::Server::Gamble, category: "command" do
       ###
 
       context "when the amount is 'all'" do
-        include_examples "successful_gamble_loss",
-          "is expected to gamble all of the poptabs and lose" do
-          let!(:amount) { "all" }
+        let!(:amount) { "all" }
+
+        include_examples(
+          "successful_gamble_loss",
+          "is expected to gamble all of the poptabs and lose"
+        ) do
           let!(:loss_amount) { locker_balance }
+        end
+
+        context "and the player has no money" do
+          # We don't store locker data so the extension has to handle this check
+          let!(:locker_balance) { 0 }
+
+          include_examples(
+            "raises_extension_error",
+            "is expected to raise Gamble_CannotGambleNothing"
+          ) do
+            let!(:matcher) { "#{user.mention}, you cannot gamble nothing!" }
+          end
         end
       end
 
       ###
 
       context "when the amount is 'half'" do
-        include_examples "successful_gamble_loss",
-          "is expected to gamble half of the poptabs and lose" do
-          let!(:amount) { "half" }
+        let!(:amount) { "half" }
+
+        include_examples(
+          "successful_gamble_loss",
+          "is expected to gamble half of the poptabs and lose"
+        ) do
           let!(:loss_amount) { locker_balance / 2 }
+        end
+
+        context "and the player has no money" do
+          # We don't store locker data so the extension has to handle this check
+          let!(:locker_balance) { 0 }
+
+          include_examples(
+            "raises_extension_error",
+            "is expected to raise Gamble_CannotGambleNothing"
+          ) do
+            let!(:matcher) { "#{user.mention}, you cannot gamble nothing!" }
+          end
         end
       end
 
@@ -443,7 +472,7 @@ describe ESM::Command::Server::Gamble, category: "command" do
           let!(:locker_balance) { max_deposit }
 
           include_examples "raises_extension_error", "is expected to raise Gamble_LockerFull" do
-            let!(:matcher) { "your locker is full" }
+            let!(:matcher) { "#{user.mention}, your locker is full" }
           end
         end
 
@@ -455,6 +484,7 @@ describe ESM::Command::Server::Gamble, category: "command" do
           it "is expected to succeed but caps the locker amount to maxDeposit" do
             execute_command
 
+            binding.pry
             wait_for { ESM::Test.messages.size }.to be > 1
 
             embed = ESM::Test.messages.retrieve("Winner winner!")&.content
