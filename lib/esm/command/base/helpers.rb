@@ -109,7 +109,7 @@ module ESM
         #
         def target_user
           @target_user ||= lambda do
-            return if arguments.target.nil?
+            return if arguments.target.blank?
 
             # This could be a steam_uid, discord id, or discord mention
             # Automatically remove the mention characters
@@ -144,7 +144,7 @@ module ESM
         # @return [String, nil] The steam uid from given argument or the steam uid registered to the target_user (which may be nil)
         #
         def target_uid
-          return if arguments.target.nil?
+          return if arguments.target.blank?
 
           @target_uid ||= lambda do
             arguments.target.steam_uid? ? arguments.target : target_user&.steam_uid

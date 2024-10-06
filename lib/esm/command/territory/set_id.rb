@@ -82,13 +82,13 @@ module ESM
         private
 
         def check_for_minimum_characters!
-          return if arguments.new_territory_id.nil?
+          return if arguments.new_territory_id.blank?
 
           raise_error!(:minimum_characters, user: current_user.mention) if arguments.new_territory_id.size < 3
         end
 
         def check_for_maximum_characters!
-          return if arguments.new_territory_id.nil?
+          return if arguments.new_territory_id.blank?
 
           raise_error!(:maximum_characters, user: current_user.mention) if arguments.new_territory_id.size > 20
         end
