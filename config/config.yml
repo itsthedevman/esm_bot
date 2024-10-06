@@ -50,7 +50,7 @@ default: &default
   # ESM::Connection::Client
   connection_client:
     request_check: 0.0005
-    response_timeout: 2
+    response_timeout: 5
     min_threads: 2
     max_threads: 20
     max_queue: 250
@@ -72,6 +72,8 @@ default: &default
 development:
   !!merge <<: *default
   error_logging_channel_id: ""
+  connection_client:
+    response_timeout: 2
 
 test:
   !!merge <<: *default
