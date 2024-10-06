@@ -73,7 +73,7 @@ module ESM
             ESM::Embed.build(
               :error,
               description: I18n.t(
-                "exceptions.extension.error",
+                "exceptions.extension.message_undeliverable",
                 user: @command.current_user.mention,
                 server_id: @command.target_server.server_id
               )
