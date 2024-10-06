@@ -246,6 +246,8 @@ describe ESM::Command::Server::Gamble, category: "command" do
       # Tests
 
       context "when the amount is omitted", requires_connection: false do
+        let!(:amount) { nil }
+
         include_examples "reply_with_stats"
       end
 
