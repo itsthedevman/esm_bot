@@ -55,6 +55,7 @@ ESM.loader.tap do |loader|
   # Ignore inits
   loader.ignore(ESM.root.join("lib", "esm", "database.rb"))
   loader.ignore(ESM.root.join("lib", "post_init.rb"))
+  loader.ignore(ESM.root.join("lib", "post_init_dev.rb"))
   loader.ignore(ESM.root.join("lib", "pre_init.rb"))
   loader.ignore(ESM.root.join("lib", "pre_init_dev.rb"))
 
