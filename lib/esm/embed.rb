@@ -94,7 +94,7 @@ module ESM
             # Transform the hash keys/values into a "list"
             value =
               if value.is_a?(Hash)
-                value.map_join("\n") do |key, value|
+                value.join_map("\n") do |key, value|
                   "**#{key.humanize(keep_id_suffix: true)}:** #{value}"
                 end
               else
