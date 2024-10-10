@@ -59,8 +59,15 @@ module ESM
     # Not database backed
     attribute :number_of_constructions, :integer, default: 0
 
-    has_many :containers, class_name: "ESM::ExileContainer", dependent: :destroy
-    has_many :constructions, class_name: "ESM::ExileConstruction", dependent: :destroy
+    has_many :containers,
+      class_name: "ESM::ExileContainer",
+      foreign_key: "territory_id",
+      dependent: :destroy
+
+    has_many :constructions,
+      class_name: "ESM::ExileConstruction",
+      foreign_key: "territory_id",
+      dependent: :destroy
 
     after_save :update_arma
 
@@ -172,6 +179,27 @@ module ESM
       raise ArmaError, "Failed to delete flag for territory id:#{id}" unless success
     end
 
+    def to_h
+      name_lookup = ExileAccount.all.pluck(:uid, :name).to_h
+      name_lookup.default = "Name not found"
+
+      attrs = %i[
+        id esm_custom_id
+        owner_uid radius level
+        flag_texture flag_stolen last_paid_at
+        build_rights moderators
+      ]
+
+      attributes.symbolize_keys.slice(*attrs).tap do |hash|
+        hash[:owner_name] = name_lookup[hash[:owner_uid]]
+        hash[:territory_name] = name
+        hash[:object_count] = constructions.size
+        hash[:moderators].map! { |uid| {uid:, name: name_lookup[uid]} }
+        hash[:build_rights].map! { |uid| {uid:, name: name_lookup[uid]} }
+        hash[:last_paid_at] = hash[:last_paid_at].strftime("%Y-%m-%dT%X")
+      end
+    end
+
     private
 
     MAPPING = {
@@ -186,7 +214,7 @@ module ESM
     }.stringify_keys.freeze
 
     def set_variables(items)
-      items.map_join(" ") do |attribute|
+      items.join_map(" ") do |attribute|
         arma_variable = MAPPING[attribute]
         if arma_variable.nil?
           warn!(
