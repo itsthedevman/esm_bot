@@ -367,6 +367,7 @@ module ESM
           message = ESM::Message.new
             .set_type(:query)
             .set_data(query_function_name: name, **arguments)
+            .set_metadata(player: current_user, target: target_user)
 
           response = send_to_target_server!(message)
           response.data.results
