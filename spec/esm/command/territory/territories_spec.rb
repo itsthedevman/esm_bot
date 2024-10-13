@@ -52,7 +52,7 @@ describe ESM::Command::Server::Territories, category: "command" do
               )
             end
 
-            field_info.push({value: "__Territory Members__"}, {name: "Owner", value: territory.owner})
+            field_info.push({value: "__Territory Members__"}, {name: ":crown: Owner", value: territory.owner})
 
             # Now check the fields
             # Removing them from the embed so we can check moderators/builders easily
@@ -88,7 +88,7 @@ describe ESM::Command::Server::Territories, category: "command" do
               field = embed.fields.shift
 
               if index.zero?
-                expect(field.name).to match(/build rights/i)
+                expect(field.name).to match(/builders/i)
               else
                 expect(field.name).to eq(ESM::Embed::EMPTY_SPACE)
               end
@@ -207,7 +207,7 @@ describe ESM::Command::Server::Territories, category: "command" do
             expect(embed.description).to eq(territory.payment_reminder_message)
 
             field_info = [
-              {name: "Territory ID", value: "```#{territory.id}```"},
+              {name: "Territory ID", value: "```#{exile_territory.encoded_id}```"},
               {name: "Flag Status", value: "```#{territory.flag_status}```"},
               {
                 name: "Next Due Date",
@@ -279,7 +279,7 @@ describe ESM::Command::Server::Territories, category: "command" do
                 field = embed.fields.shift
 
                 if index.zero?
-                  expect(field.name).to match(/build rights/i)
+                  expect(field.name).to match(/builders/i)
                 else
                   expect(field.name).to eq(ESM::Embed::EMPTY_SPACE)
                 end
