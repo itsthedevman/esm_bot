@@ -352,8 +352,7 @@ module ESM
 
           message = message.set_metadata(
             player: current_user,
-            target: target_user,
-            server_id: target_server.server_id
+            target: target_user
           )
 
           target_server.send_message(message, block:)

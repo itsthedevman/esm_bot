@@ -95,7 +95,7 @@ module ESM
             value =
               if value.is_a?(Hash)
                 value.join_map("\n") do |key, value|
-                  "**#{key.humanize(keep_id_suffix: true)}:** #{value}"
+                  "**#{key.to_s.humanize(keep_id_suffix: true)}:** #{value}"
                 end
               else
                 value.to_s

@@ -73,8 +73,8 @@ RSpec.shared_context("connection") do
     end
 
     sqf = ""
-    sqf += if users.present?
-      <<~SQF
+    if users.present?
+      sqf += <<~SQF
         private _deleteFunction = {
           if (isNil "_this") exitWith {};
 
