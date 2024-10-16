@@ -6,6 +6,7 @@ module ESM
       module Lifecycle
         VALID_REQUEST_TYPES = %w[
           send_to_channel
+          send_xm8_notification
         ]
 
         private
@@ -100,22 +101,6 @@ module ESM
           ESM.connection_server.on_initialize(self)
         end
 
-        def on_request(content)
-          message = ESM::Message.from_string(content)
-          info!(address:, public_id:, server_id:, inbound: message.to_h)
-
-          check_for_valid_request!(message)
-
-          ESM::ApplicationRecord.connection_pool.with_connection do
-            model = ESM::Server.find_by_public_id(@public_id)
-
-            case message.data.function_name
-            when "send_to_channel"
-              ESM::Event::SendToChannel.new(model, message).run!
-            end
-          end
-        end
-
         def check_for_valid_request!(message)
           return if message.type == :call &&
             VALID_REQUEST_TYPES.include?(message.data.function_name)
@@ -141,6 +126,27 @@ module ESM
 
             model.update(server_start_time: nil, disconnected_at: ESM::Time.now)
             model.community.log_event(:reconnect, message)
+          end
+        end
+
+        def on_request(content)
+          message = ESM::Message.from_string(content)
+          info!(address:, public_id:, server_id:, inbound: message.to_h)
+
+          check_for_valid_request!(message)
+
+          ESM::ApplicationRecord.connection_pool.with_connection do
+            model = ESM::Server.find_by_public_id(@public_id)
+
+            event_class =
+              case message.data.function_name
+              when "send_to_channel"
+                Event::SendToChannel
+              when "send_xm8_notification"
+                Event::SendXm8Notification
+              end
+
+            event_class.new(model, message).run!
           end
         end
       end
