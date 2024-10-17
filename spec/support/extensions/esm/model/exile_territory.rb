@@ -219,7 +219,7 @@ module ESM
         hash[:object_count] = object_count
         hash[:moderators] = moderators_as_hash
         hash[:build_rights] = builders_as_hash
-        hash[:last_paid_at] = hash[:last_paid_at].strftime("%Y-%m-%dT%X")
+        hash[:last_paid_at] = hash[:last_paid_at].strftime(ESM::Time::Format::SQL_TIME)
       end
     end
 
