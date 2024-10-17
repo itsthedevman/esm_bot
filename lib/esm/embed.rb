@@ -109,6 +109,29 @@ module ESM
       end
     end
 
+    def self.from_hash!(hash)
+      # Missing data or extra data? That's a paddling
+      embed_data = hash.slice(*ATTRIBUTES)
+
+      if embed_data.blank?
+        raise ArgumentError, I18n.translate(
+          "exceptions.embed.missing_attributes",
+          attributes: Embed::ATTRIBUTES.map(&:quoted).to_sentence
+        )
+      end
+
+      invalid_attributes = hash.keys - embed_data.keys
+
+      if invalid_attributes.size > 0
+        raise ArgumentError, I18n.translate(
+          "exceptions.embed.invalid_attributes",
+          attributes: invalid_attributes.map(&:quoted).to_sentence
+        )
+      end
+
+      from_hash(embed_data)
+    end
+
     ###########################
     # Instance methods
     ###########################
