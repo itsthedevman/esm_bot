@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module ESM
-  class Xm8Notification < ImmutableStruct.define(:id, :recipient_uid, :content, :created_at)
+  class Xm8Notification < ImmutableStruct.define(:uuids, :recipient_uids, :content, :created_at)
     class InvalidContent < Exception::Error
     end
 
@@ -42,6 +42,12 @@ module ESM
     def valid?
       # Most notifications are about a territory
       content.territory_id.present? && content.territory_name.present?
+    end
+
+    def to_embed(context)
+      embed = ESM::Notification.build_random(**context.merge(type:, category: "xm8"))
+      embed.footer = "[#{context.server_id}] #{context.server_name}"
+      embed
     end
   end
 end

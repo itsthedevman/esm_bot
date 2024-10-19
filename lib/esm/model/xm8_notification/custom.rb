@@ -4,7 +4,15 @@ module ESM
   class Xm8Notification
     class Custom < Xm8Notification
       def valid?
-        content.to_h.slice(*Embed::ATTRIBUTES).size > 0
+        Embed.from_hash!(content.to_h)
+      rescue ArgumentError
+        false
+      end
+
+      def to_embed(context)
+        Embed.from_hash!(content.to_h).tap do |e|
+          e.footer = "[#{context.server_id}] #{context.server_name}"
+        end
       end
     end
   end
