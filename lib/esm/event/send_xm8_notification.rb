@@ -11,7 +11,7 @@ module ESM
 
         @notifications = message.data.notifications.filter_map do |n|
           Xm8Notification.from(n)
-        rescue NameError
+        rescue Xm8Notification::InvalidType
           notify_invalid_notification!(n, :invalid_type)
           nil
         rescue Xm8Notification::InvalidContent
@@ -21,9 +21,7 @@ module ESM
       end
 
       def run!
-
       end
-
 
       private
 

@@ -2,9 +2,6 @@
 
 module ESM
   class Xm8Notification < ImmutableStruct.define(:uuids, :recipient_uids, :content, :created_at)
-    class InvalidContent < Exception::Error
-    end
-
     TYPES = {
       "base-raid": BaseRaid,
       "charge-plant-started": ChargePlantStarted,
@@ -19,14 +16,20 @@ module ESM
       "protection-money-paid": ProtectionMoneyPaid
     }.with_indifferent_access.freeze
 
+    class InvalidType < Exception::Error
+    end
+
+    class InvalidContent < Exception::Error
+    end
+
     def self.from(hash)
       type = hash[:type]
       klass = TYPES[type]
-      raise NameError, "\"#{type}\" is not a valid XM8 notification type" unless klass
+      raise InvalidType, "\"#{type}\" is not a valid XM8 notification type" if klass.nil?
 
       hash[:content] = hash[:content].to_istruct
 
-      notification = klass.new(**hash)
+      notification = klass.new(**hash.without(:type))
       notification.validate!
       notification
     end
@@ -36,7 +39,7 @@ module ESM
     end
 
     def validate!
-      raise InvalidContent unless notification.valid?
+      raise InvalidContent unless valid?
     end
 
     def valid?
