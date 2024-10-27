@@ -1,16 +1,33 @@
 # frozen_string_literal: true
 
 describe ESM::Xm8Notification do
+  let(:linked_notifications) do
+    {
+      SecureRandom.uuid => ESM::Test.steam_uid,
+      SecureRandom.uuid => ESM::Test.steam_uid,
+      SecureRandom.uuid => ESM::Test.steam_uid
+    }
+  end
+
+  subject(:notification) do
+    described_class.new(
+      uuids: linked_notifications.keys,
+      recipient_uids: linked_notifications.values,
+      content: {},
+      created_at: Time.current
+    )
+  end
+
   describe ".from" do
     let(:type) {}
-    let(:recipient_uid) { ESM::Test.steam_uid }
+    let(:recipient_uids) { [ESM::Test.steam_uid] }
     let(:data) { {territory_name: Faker::String.random, territory_id: Faker::String.random} }
 
     let(:notification_hash) do
       {
-        id: Faker::Number.positive,
+        uuids: [SecureRandom.uuid],
         type:,
-        recipient_uid:,
+        recipient_uids:,
         content: data.to_json,
         created_at: Faker::Time.forward.strftime(ESM::Time::Format::SQL_TIME)
       }
@@ -22,7 +39,7 @@ describe ESM::Xm8Notification do
       let!(:type) { "base-raid" }
 
       it "is expected to convert the content to a hash" do
-        expect(notification.data).to eq(data)
+        expect(notification.content.to_h).to eq(data)
       end
     end
 
@@ -31,7 +48,7 @@ describe ESM::Xm8Notification do
 
       it "is expected to raise NameError" do
         expect { notification }.to raise_error(
-          NameError, "\"foobar\" is not a valid XM8 notification type"
+          ESM::Xm8Notification::InvalidType, "\"foobar\" is not a valid XM8 notification type"
         )
       end
     end
@@ -50,6 +67,7 @@ describe ESM::Xm8Notification do
 
     context "when the type is custom" do
       let!(:type) { "custom" }
+      let!(:data) { {title: Faker::String.random, description: Faker::String.random} }
 
       it { is_expected.to be_instance_of(described_class::Custom) }
     end
@@ -92,6 +110,7 @@ describe ESM::Xm8Notification do
 
     context "when the type is marxet-item-sold" do
       let!(:type) { "marxet-item-sold" }
+      let!(:data) { {item_name: Faker::String.random, poptabs_received: Faker::String.random} }
 
       it { is_expected.to be_instance_of(described_class::MarxetItemSold) }
     end
@@ -106,6 +125,34 @@ describe ESM::Xm8Notification do
       let!(:type) { "protection-money-paid" }
 
       it { is_expected.to be_instance_of(described_class::ProtectionMoneyPaid) }
+    end
+  end
+
+  describe "#reject_unregistered_uids!" do
+    let(:registered_uids) { linked_notifications.values }
+
+    subject(:unregistered_uids) { notification.reject_unregistered_uids!(registered_uids) }
+
+    context "when there are no unregistered UIDs" do
+      it "removes nothing" do
+        is_expected.to eq([])
+
+        expect(notification.uuids).to eq(linked_notifications.keys)
+        expect(notification.recipient_uids).to eq(linked_notifications.values)
+      end
+    end
+
+    context "when there are unregistered UIDs" do
+      let!(:registered_uids) { [linked_notifications.values.sample] }
+      let!(:registered_uuid) { registered_uids.map { |uid| linked_notifications.key(uid) } }
+      let!(:unregistered_uids) { linked_notifications.values - registered_uids }
+
+      it "removes the unregistered UIDs and corresponding UUID" do
+        is_expected.to eq(unregistered_uids)
+
+        expect(notification.uuids).to eq(linked_notifications.keys)
+        expect(notification.recipient_uids).to eq(linked_notifications.values)
+      end
     end
   end
 end

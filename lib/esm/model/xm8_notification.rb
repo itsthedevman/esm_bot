@@ -16,6 +16,8 @@ module ESM
       "protection-money-paid": ProtectionMoneyPaid
     }.with_indifferent_access.freeze
 
+    STATUS_NOT_REGISTERED = "recipient_not_registered"
+
     class InvalidType < Exception::Error
     end
 
@@ -51,6 +53,21 @@ module ESM
       embed = ESM::Notification.build_random(**context.merge(type:, category: "xm8"))
       embed.footer = "[#{context.server_id}] #{context.server_name}"
       embed
+    end
+
+    def reject_unregistered_uids!(uid_lookup)
+      unregistered = []
+
+      recipient_uids.each_with_index.reverse_each do |uid, index|
+        next if uid_lookup.include?(uid)
+
+        unregistered << uid
+
+        recipient_uids.delete_at(index)
+        uuids.delete_at(index)
+      end
+
+      unregistered
     end
   end
 end
