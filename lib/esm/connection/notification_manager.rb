@@ -3,98 +3,80 @@
 module ESM
   module Connection
     class NotificationManager
-      PRACTICAL_MAX = 1 << 30
+      include Singleton
 
-      def initialize(execution_interval: 0.5, batch_size: 50)
-        @notifications_by_steam_uid = Concurrent::Map.new
-        @steam_uids_for_processing = Concurrent::Set.new
-        @batch_size = batch_size
+      attr_reader :queue
 
-        @task = Concurrent::TimerTask.execute(execution_interval:) { process_batch }
+      def self.add(notifications)
+        notifications.each { |n| instance.queue.push(n) }
       end
 
-      def add_batch(batch)
-        batch.each do |notification|
-          recipient_uid = notification.recipient_uid
-
-          @notifications_by_steam_uid.compute(recipient_uid) do |notifications|
-            (notifications || Concurrent::Array.new) << notification
-          end
-
-          @steam_uids_for_processing << recipient_uid
-        end
+      def initialize(execution_interval: 0.5)
+        @queue = Queue.new
+        @task = Concurrent::TimerTask.execute(execution_interval:) { process_next }
       end
 
       private
 
-      def process_batch
-        batch = retrieve_batch
+      def process_next
+        notification = @queue.pop(timeout: 0)
+        return if notification.nil?
 
-        batch.each do |notification|
+        users = notification.users.select_for_xm8_notifications
+        data = {
+          notification:,
+          users:,
+          user_ids: users.map(&:id), # No pluck, that fires a query
+          embed: notification.to_embed
+        }
 
-        end
+        status_update = send_to_users(**data)
+        status_update.merge!(send_to_custom_routes(**data))
       end
 
-      def retrieve_batch
-        batch = []
+      def send_to_users(notification:, users:, user_ids:, embed:)
+        dm_preferences_by_user_id = ESM::UserNotificationPreference.where(user_id: user_ids)
+          .pluck(:user_id, notification.type.underscore)
+          .to_h
 
-        # Retrieve a batch with minimal amount of mutex holding if possible, I think
-        @steam_uids_for_processing.delete_if do |steam_uid|
-          # This is doing some heavy lifting, imo
-          # I'm balancing holding a mutex and ensuring a notification isn't accidentally dropped
-          # if I used #clear, for example.
-          batch += @notifications_by_steam_uid[steam_uid].shift(PRACTICAL_MAX)
-
-          # The batch size is more of a "soft" limit
-          batch.size < @batch_size
-        end
-
-        batch
-      end
-
-      def send_to_users(embed)
-        # Get the preferences for all the users we're supposed to send to
-        dm_preferences_by_user_id = ESM::UserNotificationPreference.where(
-          user_id: @users.pluck(:id)
-        ).pluck(
-          :user_id, @xm8_type.underscore
-        ).to_h
-
-        # Default the preference to allow. This is used for if the user hasn't ran the preference command before
+        # Default the preference to allow.
+        # This is needed if the user hasn't ran the preference command before
         dm_preferences_by_user_id.default = true
 
-        @users.each do |user|
+        users.each do |user|
           dm_allowed = dm_preferences_by_user_id[user.id]
           next unless dm_allowed
 
-          pending_delivery = ESM.bot.deliver(embed, to: user.discord_user, async: false)
-          message = pending_delivery&.wait_for_delivery
+          message = ESM.bot.deliver(embed, to: user.discord_user, block: true)
+          # TODO: Update status on server
         end
       end
 
-      def send_to_custom_routes(embed)
+      def send_to_custom_routes(notification:, users:, user_ids:, embed:)
+        user_lookup = users.to_h { |u| [u.id, u] }
+
         # Custom routes are a little different.
         #   Using a mention in an embed does not cause a "notification" on discord.
         #     This does not work since these are often urgent.
         #   To get around this, routes need to be grouped by channel.
         #   From here, an initial message can be sent tagging each user with this channel (and type)
         users_by_channel_id = ESM::UserNotificationRoute.select(:user_id, :channel_id)
-          .includes(:user)
           .enabled
           .accepted
-          .where(notification_type: @xm8_type, user_id: @users.pluck(:id))
-          .where("source_server_id IS NULL OR source_server_id = ?", @server.id)
+          .where(notification_type: notification.type, user_id: user_ids)
+          .where("source_server_id IS NULL OR source_server_id = ?", notification.server.id)
           .group_by(&:channel_id)
-          .transform_values! { |r| r.map(&:user) }
 
-        users_by_channel_id.each do |channel_id, users|
-          pending_delivery = ESM.bot.deliver(
+        users_by_channel_id.each do |channel_id, routes|
+          users = routes.map { |route| user_lookup[route.user_id] }
+
+          notification_message = ESM.bot.deliver(
             embed,
             to: channel_id,
-            embed_message: "#{@xm8_type.titleize} - #{users.map(&:mention).join(" ")}",
-            async: false
+            embed_message: "#{notification.type.titleize} - #{users.map(&:mention).join(" ")}",
+            block: true
           )
-          notification_message = pending_delivery&.wait_for_delivery
+          # TODO: Update status on server
         end
       end
     end

@@ -1,7 +1,10 @@
 # frozen_string_literal: true
 
 module ESM
-  class Xm8Notification < ImmutableStruct.define(:uuids, :recipient_uids, :content, :created_at)
+  class Xm8Notification < ImmutableStruct.define(
+    :id, :uuids, :recipient_uids, :server,
+    :content, :created_at
+  )
     TYPES = {
       "base-raid": BaseRaid,
       "charge-plant-started": ChargePlantStarted,
@@ -36,6 +39,13 @@ module ESM
       notification
     end
 
+    def initialize(**opts)
+      # ID is internal for tracking purposes
+      opts[:id] = SecureRandom.uuid
+
+      new(**opts)
+    end
+
     def type
       @type ||= self.class.name.dasherize
     end
@@ -47,6 +57,10 @@ module ESM
     def valid?
       # Most notifications are about a territory
       content.territory_id.present? && content.territory_name.present?
+    end
+
+    def users
+      User.where(steam_uid: recipient_uids)
     end
 
     def to_embed(context)

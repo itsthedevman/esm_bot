@@ -12,22 +12,10 @@ module ESM
       end
 
       def run!
-        notifications, unregistered_notifications = separate_notifications_by_registration
-
-        # Update the server's database
-        update_unregistered_notifications(unregistered_notifications) if unregistered_notifications
-        return unless notifications.size > 0
-
-        Connection::NotificationManager.
-      end
-
-      private
-
-      def separate_notifications_by_registration
         # To keep the network traffic down, a single notification can have one or more recipients
         notifications =
-          message.data.notifications.filter_map do |n|
-            Xm8Notification.from(n)
+          message.data.notifications.filter_map do |notification_data|
+            Xm8Notification.from(notification_data.merge(server:))
           rescue Xm8Notification::InvalidType
             notify_invalid_notification!(n, :invalid_type)
             nil
@@ -36,21 +24,30 @@ module ESM
             nil
           end
 
-        registered_uids =
-          User.where(
-            steam_uid: notifications.flat_map(&:recipient_uids)
-          ).pluck(:steam_uid)
+        registered_uids = User.where(
+          steam_uid: notifications.flat_map(&:recipient_uids)
+        ).pluck(:steam_uid)
 
+        # Filter out any unregistered UIDs, and keeping any notifications with recipients
         unregistered_notifications = []
         notifications.select! do |notification|
-          unregistered = notification.reject_unregistered_uids!(registered_uids)
-          unregistered_notifications += unregistered if unregistered.size > 0
+          unregistered_uids = notification.reject_unregistered_uids!(registered_uids)
+          unregistered_notifications += unregistered_uids if unregistered_uids.size > 0
 
           notification.recipient_uids.size > 0
         end
 
-        [notifications, unregistered_notifications]
+        # Update the server's database to stop sending these
+        if unregistered_notifications.size > 0
+          update_unregistered_notifications(unregistered_notifications)
+        end
+
+        return unless notifications.size > 0
+
+        Connection::NotificationManager.add(notifications)
       end
+
+      private
 
       def notify_invalid_notification!(notification, type)
         embed =
