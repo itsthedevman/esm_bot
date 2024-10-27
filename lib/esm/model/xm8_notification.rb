@@ -50,23 +50,14 @@ module ESM
       @type ||= self.class.name.dasherize
     end
 
-    def validate!
-      raise InvalidContent unless valid?
-    end
+    def send_to_recipients
+      status = {success: [], failure: []}
+      user_ids = users.map(&:id)
 
-    def valid?
-      # Most notifications are about a territory
-      content.territory_id.present? && content.territory_name.present?
-    end
+      send_to_dm(status, user_ids)
+      send_to_custom_routes(status, user_ids)
 
-    def users
-      User.where(steam_uid: recipient_uids)
-    end
-
-    def to_embed(context)
-      embed = ESM::Notification.build_random(**context.merge(type:, category: "xm8"))
-      embed.footer = "[#{context.server_id}] #{context.server_name}"
-      embed
+      status
     end
 
     def reject_unregistered_uids!(uid_lookup)
@@ -82,6 +73,82 @@ module ESM
       end
 
       unregistered
+    end
+
+    def users
+      @users ||= User.where(steam_uid: recipient_uids).select_for_xm8_notifications
+    end
+
+    def to_embed(context)
+      @embed ||= lambda do
+        embed = ESM::Notification.build_random(**context.merge(type:, category: "xm8"))
+        embed.footer = "[#{context.server_id}] #{context.server_name}"
+        embed
+      end.call
+    end
+
+    def each_recipient(&)
+      raise "UUIDs and users do not match in size" if uuids.size != users.size
+
+      uuids.zip(users).each(&)
+    end
+
+    private
+
+    def validate!
+      raise InvalidContent unless valid?
+    end
+
+    def valid?
+      # Most notifications are about a territory
+      content.territory_id.present? && content.territory_name.present?
+    end
+
+    def send_to_dm(status, user_ids)
+      preferences_by_user_id = ESM::UserNotificationPreference.where(user_id: user_ids)
+        .pluck(:user_id, type.underscore)
+        .to_h
+
+      # Default the preference to allow.
+      # This is needed if the user hasn't ran the preference command before
+      preferences_by_user_id.default = true
+
+      each_recipient do |uuid, user|
+        dm_allowed = preferences_by_user_id[user.id]
+        next unless dm_allowed
+
+        message = ESM.bot.deliver(to_embed, to: user.discord_user, block: true)
+
+        status[message ? :success : :failure] << uuid
+      end
+    end
+
+    def send_to_custom_routes(status, user_ids)
+      user_lookup = users.to_h { |u| [u.id, u] }
+
+      # Custom routes are a little different.
+      #   Using a mention in an embed does not cause a "notification" on discord.
+      #     This does not work since these are often urgent.
+      #   To get around this, routes need to be grouped by channel.
+      #   From here, an initial message can be sent tagging each user with this channel (and type)
+      users_by_channel_id = ESM::UserNotificationRoute.select(:user_id, :channel_id)
+        .enabled
+        .accepted
+        .where(notification_type: type, user_id: user_ids)
+        .where("source_server_id IS NULL OR source_server_id = ?", server.id)
+        .group_by(&:channel_id)
+
+      # TODO: handle working this into #each_recipient
+      users_by_channel_id.each_with_object({}) do |(channel_id, routes), status|
+        users = routes.map { |route| user_lookup[route.user_id] }
+
+        message = ESM.bot.deliver(
+          embed,
+          to: channel_id,
+          embed_message: "#{type.titleize} - #{users.map(&:mention).join(" ")}",
+          block: true
+        )
+      end
     end
   end
 end
