@@ -399,8 +399,7 @@ module ESM
 
         # Convenience method for replying back to the event's channel
         def reply(message)
-          pending_delivery = ESM.bot.deliver(message, to: current_channel, async: false)
-          pending_delivery.wait_for_delivery
+          ESM.bot.deliver(message, to: current_channel, block: true)
         end
 
         def edit_message(message, content)
