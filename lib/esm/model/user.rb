@@ -34,14 +34,6 @@ module ESM
     # validates :discord_id, uniqueness: true, presence: true
     # validates :steam_uid, uniqueness: true
 
-    scope :select_for_xm8_notifications, lambda do
-      select(
-        :id, :discord_id,
-        # Required by #discord_user
-        :discord_username, :discord_avatar
-      )
-    end
-
     delegate :on, to: :discord_user, allow_nil: true
 
     #########################

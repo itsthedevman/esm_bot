@@ -19,7 +19,7 @@ module ESM
       private
 
       def process_next
-        notification = @queue.pop(timeout: 0)
+        notification = queue.pop(timeout: 0)
         return if notification.nil?
 
         notification.send_to_recipients

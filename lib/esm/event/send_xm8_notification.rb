@@ -12,42 +12,64 @@ module ESM
       end
 
       def run!
-        # To keep the network traffic down, a single notification can have one or more recipients
-        notifications =
-          message.data.notifications.filter_map do |notification_data|
-            Xm8Notification.from(notification_data.merge(server:))
-          rescue Xm8Notification::InvalidType
-            notify_invalid_notification!(n, :invalid_type)
-            nil
-          rescue Xm8Notification::InvalidContent
-            notify_invalid_notification!(n, :invalid_attributes)
-            nil
-          end
-
-        registered_uids = User.where(
-          steam_uid: notifications.flat_map(&:recipient_uids)
-        ).pluck(:steam_uid)
-
-        # Filter out any unregistered UIDs, and keeping any notifications with recipients
-        unregistered_notifications = []
-        notifications.select! do |notification|
-          unregistered_uids = notification.reject_unregistered_uids!(registered_uids)
-          unregistered_notifications += unregistered_uids if unregistered_uids.size > 0
-
-          notification.recipient_uids.size > 0
-        end
-
-        # Update the server's database to stop sending these
-        if unregistered_notifications.size > 0
-          update_unregistered_notifications(unregistered_notifications)
-        end
-
-        return unless notifications.size > 0
+        notifications = filter_notifications
+        return if notifications.blank?
 
         Connection::NotificationManager.add(notifications)
       end
 
       private
+
+      def filter_notifications
+        notifications =
+          filter_unregistered_recipients(message.data.notifications)
+
+        notifications.map do |notification|
+          Xm8Notification.from(notification)
+        rescue Xm8Notification::InvalidType
+          notify_invalid_notification!(n, :invalid_type)
+        rescue Xm8Notification::InvalidContent
+          notify_invalid_notification!(n, :invalid_attributes)
+        end
+      end
+
+      def filter_unregistered_recipients(notifications)
+        uid_to_user_mapping = User.where(steam_uid: recipient_steam_uids)
+          .pluck(:steam_uid, :user_id)
+          .to_h
+
+        notifications_to_send = []
+        notifications_to_reject = []
+
+        notifications.each do |notification|
+          recipient_notification_mapping = {}
+
+          # These two attributes are index linked, meaning index 0 in both arrays are related
+          recipients = notification[:recipient_uids].zip(notification[:uuids])
+
+          # Remove any unregistered UIDs, and store the associated UUID
+          recipients.each do |uid, uuid|
+            user = uid_to_user_mapping[uid]
+            next notifications_to_reject << uuid if user.nil?
+
+            recipient_notification_mapping[user] = uuid
+          end
+
+          next if recipient_notification_mapping.blank?
+
+          notification[:server] = server
+          notification[:recipient_notification_mapping] = recipient_notification_mapping
+
+          notifications_to_send << notification
+        end
+
+        # Update the server's database to stop sending these
+        if notifications_to_reject.size > 0
+          update_unregistered_notifications(notifications_to_reject)
+        end
+
+        notifications_to_send
+      end
 
       def notify_invalid_notification!(notification, type)
         embed =

@@ -1,10 +1,8 @@
 # frozen_string_literal: true
 
 module ESM
-  class Xm8Notification < ImmutableStruct.define(
-    :id, :uuids, :recipient_uids, :server,
-    :content, :created_at
-  )
+  attributes = %i[id recipient_notification_mapping server content created_at]
+  class Xm8Notification < ImmutableStruct.define(*attributes)
     TYPES = {
       "base-raid": BaseRaid,
       "charge-plant-started": ChargePlantStarted,
@@ -19,7 +17,9 @@ module ESM
       "protection-money-paid": ProtectionMoneyPaid
     }.with_indifferent_access.freeze
 
-    STATUS_NOT_REGISTERED = "recipient_not_registered"
+    STATUS_NOT_REGISTERED = "not registered"
+    STATUS_DM = "direct message"
+    STATUS_CUSTOM = "custom route"
 
     class InvalidType < Exception::Error
     end
@@ -43,7 +43,7 @@ module ESM
       # ID is internal for tracking purposes
       opts[:id] = SecureRandom.uuid
 
-      new(**opts)
+      super
     end
 
     def type
@@ -51,46 +51,23 @@ module ESM
     end
 
     def send_to_recipients
-      status = {success: [], failure: []}
-      user_ids = users.map(&:id)
+      status = {success: {}, failure: {}}
+      user_ids = recipient_notification_mapping.keys.map(&:id)
 
       send_to_dm(status, user_ids)
       send_to_custom_routes(status, user_ids)
 
-      status
-    end
+      update_notification_status(status)
 
-    def reject_unregistered_uids!(uid_lookup)
-      unregistered = []
-
-      recipient_uids.each_with_index.reverse_each do |uid, index|
-        next if uid_lookup.include?(uid)
-
-        unregistered << uid
-
-        recipient_uids.delete_at(index)
-        uuids.delete_at(index)
-      end
-
-      unregistered
-    end
-
-    def users
-      @users ||= User.where(steam_uid: recipient_uids).select_for_xm8_notifications
+      nil
     end
 
     def to_embed(context)
-      @embed ||= lambda do
+      @to_embed ||= lambda do
         embed = ESM::Notification.build_random(**context.merge(type:, category: "xm8"))
         embed.footer = "[#{context.server_id}] #{context.server_name}"
         embed
       end.call
-    end
-
-    def each_recipient(&)
-      raise "UUIDs and users do not match in size" if uuids.size != users.size
-
-      uuids.zip(users).each(&)
     end
 
     private
@@ -113,42 +90,50 @@ module ESM
       # This is needed if the user hasn't ran the preference command before
       preferences_by_user_id.default = true
 
-      each_recipient do |uuid, user|
+      recipient_notification_mapping.each do |user, uuid|
         dm_allowed = preferences_by_user_id[user.id]
         next unless dm_allowed
 
         message = ESM.bot.deliver(to_embed, to: user.discord_user, block: true)
 
-        status[message ? :success : :failure] << uuid
+        status[message ? :success : :failure][uuid] << STATUS_SENT_TO_DM
       end
     end
 
+    # Custom routes are a little different.
+    #   Using a mention in an embed does not cause a "notification" on discord.
+    #     This does not work since these are often urgent.
+    #   To get around this, routes need to be grouped by channel.
+    #   From here, an initial message can be sent tagging each user with this channel (and type)
     def send_to_custom_routes(status, user_ids)
-      user_lookup = users.to_h { |u| [u.id, u] }
+      user_lookup = recipient_notification_mapping.keys.to_h { |u| [u.id, u] }
 
-      # Custom routes are a little different.
-      #   Using a mention in an embed does not cause a "notification" on discord.
-      #     This does not work since these are often urgent.
-      #   To get around this, routes need to be grouped by channel.
-      #   From here, an initial message can be sent tagging each user with this channel (and type)
-      users_by_channel_id = ESM::UserNotificationRoute.select(:user_id, :channel_id)
-        .enabled
+      users_by_channel_id = ESM::UserNotificationRoute.enabled
         .accepted
         .where(notification_type: type, user_id: user_ids)
         .where("source_server_id IS NULL OR source_server_id = ?", server.id)
-        .group_by(&:channel_id)
+        .pluck(:channel_id, :user_id)
+        .group_by(&:first)
+        .transform_values { |g| g.map { |(_channel_id, user_id)| user_lookup[user_id] } }
 
-      # TODO: handle working this into #each_recipient
-      users_by_channel_id.each_with_object({}) do |(channel_id, routes), status|
-        users = routes.map { |route| user_lookup[route.user_id] }
-
+      users_by_channel_id.each do |channel_id, users|
         message = ESM.bot.deliver(
-          embed,
+          to_embed,
           to: channel_id,
           embed_message: "#{type.titleize} - #{users.map(&:mention).join(" ")}",
           block: true
         )
+
+        notification_uuids = users.map { |u| recipient_notification_mapping[u] }
+        notification_uuids.each do |uuid|
+          status[message ? :success : :failure][uuid] << STATUS_CUSTOM
+        end
       end
+    end
+
+    def update_notification_status(status)
+      # Transform the data into Hash (uuid => status_message)
+      # Send to server
     end
   end
 end
