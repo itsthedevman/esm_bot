@@ -34,8 +34,9 @@ module ESM
       end
 
       def filter_unregistered_recipients(notifications)
+        recipient_steam_uids = notifications.map { |n| n[:recipient_uids] }
         uid_to_user_mapping = User.where(steam_uid: recipient_steam_uids)
-          .pluck(:steam_uid, :user_id)
+          .pluck(:steam_uid, :id)
           .to_h
 
         notifications_to_send = []
@@ -60,7 +61,7 @@ module ESM
           notification[:server] = server
           notification[:recipient_notification_mapping] = recipient_notification_mapping
 
-          notifications_to_send << notification
+          notifications_to_send << notification.without(:recipient_uids, :uuids)
         end
 
         # Update the server's database to stop sending these
@@ -98,7 +99,7 @@ module ESM
 
       def update_unregistered_notifications(unregistered_notifications)
         status_update = unregistered_notifications.to_h do |uuid|
-          [uuid, Xm8Notification::STATUS_NOT_REGISTERED]
+          [uuid, "FAILED: Recipient #{Xm8Notification::STATUS_NOT_REGISTERED}"]
         end
 
         message = ESM::Message.new
