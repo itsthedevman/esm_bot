@@ -2,7 +2,7 @@
 
 module ESM
   attributes = %i[id recipient_notification_mapping server content created_at]
-  class Xm8Notification < ImmutableStruct.define(*attributes)
+  class Xm8Notification < Struct.new(*attributes)
     TYPES = {
       "base-raid": BaseRaid,
       "charge-plant-started": ChargePlantStarted,
@@ -44,14 +44,30 @@ module ESM
       opts[:id] = SecureRandom.uuid
 
       super
+
+      # Notification generation data
+      @context = {
+        communityid: server.community.community_id,
+        serverid: server.server_id,
+        servername: server.server_name,
+        territoryid: content.territory_id || "",
+        territoryname: content.territory_name || "",
+        item: content.item_name || "",
+        amount: content.poptabs_received || ""
+      }
     end
 
     def type
-      @type ||= self.class.name.dasherize
+      @type ||= self.class.name.demodulize.underscore.dasherize
     end
 
     def send_to_recipients
-      status = {success: {}, failure: {}}
+      default_block = ->(h, k) { h[k] = [] }
+      status = {
+        success: Hash.new(&default_block),
+        failure: Hash.new(&default_block)
+      }
+
       user_ids = recipient_notification_mapping.keys.map(&:id)
 
       send_to_dm(status, user_ids)
@@ -62,19 +78,23 @@ module ESM
       nil
     end
 
-    def to_embed(context)
-      @to_embed ||= lambda do
-        embed = ESM::Notification.build_random(**context.merge(type:, category: "xm8"))
-        embed.footer = "[#{context.server_id}] #{context.server_name}"
-        embed
-      end.call
-    end
+    def to_embed
+      embed = ESM::Notification.build_random(
+        community_id: server.community.id,
+        type:,
+        category: "xm8",
+        **@context
+      )
 
-    private
+      embed.footer = "[#{server.server_id}] #{server.server_name}"
+      embed
+    end
 
     def validate!
       raise InvalidContent unless valid?
     end
+
+    private
 
     def valid?
       # Most notifications are about a territory
@@ -83,7 +103,7 @@ module ESM
 
     def send_to_dm(status, user_ids)
       preferences_by_user_id = ESM::UserNotificationPreference.where(user_id: user_ids)
-        .pluck(:user_id, type.underscore)
+        .pluck(:user_id, Arel.sql(type.underscore))
         .to_h
 
       # Default the preference to allow.
@@ -96,7 +116,7 @@ module ESM
 
         message = ESM.bot.deliver(to_embed, to: user.discord_user, block: true)
 
-        status[message ? :success : :failure][uuid] << STATUS_SENT_TO_DM
+        status[message ? :success : :failure][uuid] << STATUS_DM
       end
     end
 
@@ -132,8 +152,24 @@ module ESM
     end
 
     def update_notification_status(status)
-      # Transform the data into Hash (uuid => status_message)
-      # Send to server
+      status_update = {}
+
+      status[:success].each do |uuid, status|
+        status_update[uuid] = "SUCCESS: Sent to #{status.to_sentence}"
+      end
+
+      status[:failure].each do |uuid, status|
+        status_update[uuid] = "FAILED: Attempted #{status.to_sentence}"
+      end
+
+      message = ESM::Message.new
+        .set_type(:query)
+        .set_data(
+          query_function_name: "update_xm8_notification_status",
+          **status_update
+        )
+
+      server.send_message(message, block: false)
     end
   end
 end
