@@ -3,6 +3,18 @@
 module ESM
   module Event
     class SendXm8Notification
+      def self.notification_manager
+        @notification_manager ||= NotificationManager.new
+      end
+
+      def self.send_notifications(notifications)
+        if notifications.any? { |n| !n.is_a?(Xm8Notification) }
+          raise TypeError, "Invalid notifications provided: #{notifications}"
+        end
+
+        notification_manager.add(notifications)
+      end
+
       attr_reader :server, :community, :message
 
       def initialize(server, message)
@@ -15,7 +27,7 @@ module ESM
         notifications = filter_notifications
         return if notifications.blank?
 
-        Connection::NotificationManager.add(notifications)
+        self.class.send_notifications(notifications)
       end
 
       private
@@ -36,8 +48,7 @@ module ESM
       def filter_unregistered_recipients(notifications)
         recipient_steam_uids = notifications.map { |n| n[:recipient_uids] }
         uid_to_user_mapping = User.where(steam_uid: recipient_steam_uids)
-          .pluck(:steam_uid, :id)
-          .to_h
+          .to_h { |u| [u.steam_uid, u] }
 
         notifications_to_send = []
         notifications_to_reject = []
