@@ -2,6 +2,7 @@
 
 module ESM
   attributes = %i[id recipient_notification_mapping server content created_at]
+
   class Xm8Notification < Struct.new(*attributes)
     TYPES = {
       "base-raid": BaseRaid,

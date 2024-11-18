@@ -9,9 +9,9 @@ module ESM
         false
       end
 
-      def to_embed(context)
+      def to_embed
         Embed.from_hash!(content.to_h).tap do |e|
-          e.footer = "[#{context.server_id}] #{context.server_name}"
+          e.footer = "[#{server.server_id}] #{server.server_name}"
         end
       end
     end
