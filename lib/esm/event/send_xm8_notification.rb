@@ -110,13 +110,13 @@ module ESM
 
       def update_unregistered_notifications(unregistered_notifications)
         status_update = unregistered_notifications.to_h do |uuid|
-          [uuid, "FAILED: Recipient #{Xm8Notification::STATUS_NOT_REGISTERED}"]
+          [uuid, Xm8Notification.failed_state(Xm8Notification::DETAILS_NOT_REGISTERED)]
         end
 
         message = ESM::Message.new
           .set_type(:query)
           .set_data(
-            query_function_name: "update_xm8_notification_status",
+            query_function_name: "update_xm8_notification_state",
             **status_update
           )
 

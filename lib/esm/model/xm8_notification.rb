@@ -17,9 +17,17 @@ module ESM
       "protection-money-paid": ProtectionMoneyPaid
     }.with_indifferent_access.freeze
 
-    STATUS_NOT_REGISTERED = "not registered"
-    STATUS_DM = "direct message"
-    STATUS_CUSTOM = "custom route"
+    # Must match the ENUM in MySQL for xm8_notifications
+    STATES = [
+      STATE_NEW = "new",
+      STATE_PENDING = "pending",
+      STATE_FAILED = "failed",
+      STATE_SENT = "sent"
+    ]
+
+    DETAILS_NOT_REGISTERED = "not registered"
+    DETAILS_DM = "direct message"
+    DETAILS_CUSTOM = "custom route"
 
     class InvalidType < Exception::Error
     end
@@ -37,6 +45,14 @@ module ESM
       notification = klass.new(**hash.without(:type))
       notification.validate!
       notification
+    end
+
+    def self.failed_state(state_details)
+      {state: Xm8Notification::STATE_FAILED, state_details:}
+    end
+
+    def self.sent_state(state_details)
+      {state: Xm8Notification::STATE_SENT, state_details:}
     end
 
     def initialize(**opts)
@@ -63,17 +79,17 @@ module ESM
 
     def send_to_recipients
       default_block = ->(h, k) { h[k] = [] }
-      status = {
+      states = {
         success: Hash.new(&default_block),
         failure: Hash.new(&default_block)
       }
 
       user_ids = recipient_notification_mapping.keys.map(&:id)
 
-      send_to_dm(status, user_ids)
-      send_to_custom_routes(status, user_ids)
+      send_to_dm(states, user_ids)
+      send_to_custom_routes(states, user_ids)
 
-      update_notification_status(status)
+      update_notification_states(states)
 
       nil
     end
@@ -101,7 +117,7 @@ module ESM
       content.territory_id.present? && content.territory_name.present?
     end
 
-    def send_to_dm(status, user_ids)
+    def send_to_dm(states, user_ids)
       preferences_by_user_id = ESM::UserNotificationPreference.where(user_id: user_ids)
         .pluck(:user_id, Arel.sql(type.underscore))
         .to_h
@@ -116,7 +132,7 @@ module ESM
 
         message = ESM.bot.deliver(to_embed, to: user.discord_user, block: true)
 
-        status[message ? :success : :failure][uuid] << STATUS_DM
+        states[message ? :success : :failure][uuid] << DETAILS_DM
       end
     end
 
@@ -125,7 +141,7 @@ module ESM
     #     This does not work since these are often urgent.
     #   To get around this, routes need to be grouped by channel.
     #   From here, an initial message can be sent tagging each user with this channel (and type)
-    def send_to_custom_routes(status, user_ids)
+    def send_to_custom_routes(states, user_ids)
       user_lookup = recipient_notification_mapping.keys.to_h { |u| [u.id, u] }
 
       users_by_channel_id = ESM::UserNotificationRoute.enabled
@@ -146,27 +162,27 @@ module ESM
 
         notification_uuids = users.map { |u| recipient_notification_mapping[u] }
         notification_uuids.each do |uuid|
-          status[message ? :success : :failure][uuid] << STATUS_CUSTOM
+          states[message ? :success : :failure][uuid] << DETAILS_CUSTOM
         end
       end
     end
 
-    def update_notification_status(status)
-      status_update = {}
+    def update_notification_states(states)
+      state_update = {}
 
-      status[:success].each do |uuid, status|
-        status_update[uuid] = "SUCCESS: Sent to #{status.to_sentence}"
+      states[:success].each do |uuid, state|
+        state_update[uuid] = self.class.sent_state(state.to_sentence)
       end
 
-      status[:failure].each do |uuid, status|
-        status_update[uuid] = "FAILED: Attempted #{status.to_sentence}"
+      states[:failure].each do |uuid, state|
+        state_update[uuid] = self.class.failed_state(state.to_sentence)
       end
 
       message = ESM::Message.new
         .set_type(:query)
         .set_data(
-          query_function_name: "update_xm8_notification_status",
-          **status_update
+          query_function_name: "update_xm8_notification_state",
+          **state_update
         )
 
       server.send_message(message, block: false)
