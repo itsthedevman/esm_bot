@@ -39,4 +39,16 @@ describe ESM::Event::SendXm8Notification, :requires_connection do
     # create(:exile_xm8_notification, recipient_uid: second_user.steam_uid, type: "base-raid", content: {territory_id: territory.encoded_id, territory_name: territory.name}.to_json, territory_id: territory.id)
     sleep 9999999
   end
+
+  context "when the notification type is base-raid"
+  context "when the notification type is charge-plant-started"
+  context "when the notification type is custom"
+  context "when the notification type is flag-restored"
+  context "when the notification type is flag-steal-started"
+  context "when the notification type is flag-stolen"
+  context "when the notification type is grind-started"
+  context "when the notification type is hack-started"
+  context "when the notification type is marxet-item-sold"
+  context "when the notification type is protection-money-due"
+  context "when the notification type is protection-money-paid"
 end
