@@ -2,6 +2,7 @@
 
 module ESM
   class ExileXm8Notification < ArmaRecord
+    self.inheritance_column = nil
     self.table_name = "xm8_notification"
 
     attribute :uuid, :string, default: -> { SecureRandom.uuid }
@@ -9,7 +10,8 @@ module ESM
     attribute :territory_id, :integer, default: nil
     attribute :type, :string
     attribute :content, :json
-    attribute :status, :string, default: "new"
+    attribute :state, :string, default: "new"
+    attribute :state_details, :string
     attribute :attempt_count, :integer, default: 0
     attribute :created_at, :datetime, default: -> { Time.current }
     attribute :last_attempt_at, :datetime

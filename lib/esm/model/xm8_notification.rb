@@ -25,7 +25,7 @@ module ESM
       STATE_SENT = "sent"
     ]
 
-    DETAILS_NOT_REGISTERED = "not registered"
+    DETAILS_NOT_REGISTERED = "recipient not registered"
     DETAILS_DM = "direct message"
     DETAILS_CUSTOM = "custom route"
 
