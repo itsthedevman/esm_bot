@@ -188,7 +188,22 @@ describe ESM::Event::SendXm8Notification, :requires_connection do
     end
   end
 
-  context "when the notification type is marxet-item-sold"
+  context "when the notification type is marxet-item-sold" do
+    let(:recipient_uids) { [user.steam_uid] }
+    let(:notification_type) { "marxet-item-sold" }
+    let(:notification_content) { {item_name:, poptabs_received:}.stringify_keys }
+
+    let(:item_name) { ESM::Arma::ClassLookup.all.values.sample.display_name }
+    let(:poptabs_received) { Faker::Number.positive.to_i.to_s }
+
+    let(:notification_sqf) do
+      <<~SQF
+        [#{recipient_uids.first.to_json}, #{item_name.to_json}, #{poptabs_received.to_json}] call ExileServer_system_xm8_sendItemSold
+      SQF
+    end
+
+    include_examples "sends"
+  end
 
   context "when the notification type is invalid" do
     let(:notification_sqf) do
