@@ -11,8 +11,9 @@ RSpec.configure do |config|
     FactoryBot.definition_file_paths = [ESM.root.join("spec", "support", "factories")]
     FactoryBot.find_definitions
 
-    DatabaseCleaner.strategy = :truncation
-    DatabaseCleaner[:active_record, db: ESM::ExileAccount].strategy = :truncation
+    DatabaseCleaner.strategy = :deletion
+    DatabaseCleaner[:active_record, db: ESM::ExileAccount].strategy = :deletion
+    DatabaseCleaner.clean
   end
 
   config.around do |example|
