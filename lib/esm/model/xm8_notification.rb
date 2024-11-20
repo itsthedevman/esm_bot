@@ -28,7 +28,8 @@ module ESM
 
     DETAILS_NOT_REGISTERED = "recipient not registered"
     DETAILS_DM = "direct message"
-    DETAILS_CUSTOM = "custom route"
+    DETAILS_CUSTOM = "custom route(s)"
+    DETAILS_NO_DESTINATION = "#{DETAILS_DM} disallowed, no #{DETAILS_CUSTOM}"
 
     class InvalidType < Exception::Error
     end
@@ -90,6 +91,7 @@ module ESM
       send_to_dm(states, user_ids)
       send_to_custom_routes(states, user_ids)
 
+      process_undeliverable_notifications(states)
       update_notification_states(states)
 
       nil
@@ -165,6 +167,16 @@ module ESM
         notification_uuids.each do |uuid|
           states[message ? :success : :failure][uuid] << DETAILS_CUSTOM
         end
+      end
+    end
+
+    # Handle notifications in which the recipient has blocked direct message
+    # and has no custom routes for the notification to be sent to.
+    def process_undeliverable_notifications(states)
+      recipient_notification_mapping.values.each do |uuid|
+        next if states[:success].key?(uuid) || states[:failure].key?(uuid)
+
+        states[:failure][uuid] << DETAILS_NO_DESTINATION
       end
     end
 

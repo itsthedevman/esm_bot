@@ -8,6 +8,9 @@ describe ESM::Event::SendXm8Notification, :requires_connection do
   let!(:territory_moderators) { [second_user.steam_uid] }
 
   let(:recipient_uids) { [user.steam_uid, second_user.steam_uid] }
+
+  let(:notification_type) { "base-raid" }
+  let(:xm8_sqf_function) { "ExileServer_system_xm8_sendBaseRaid" }
   let(:notification_state_details) { ESM::Xm8Notification::DETAILS_DM }
   let(:notification_content) do
     {
@@ -24,9 +27,6 @@ describe ESM::Event::SendXm8Notification, :requires_connection do
   end
 
   subject(:trigger_notification) { execute_sqf!(notification_sqf) }
-
-  let(:notification_type) {}
-  let(:xm8_sqf_function) {}
 
   before do
     second_user.exile_account
@@ -219,9 +219,6 @@ describe ESM::Event::SendXm8Notification, :requires_connection do
   end
 
   context "when the notification has unregistered users" do
-    let(:notification_type) { "base-raid" }
-    let(:xm8_sqf_function) { "ExileServer_system_xm8_sendBaseRaid" }
-
     before do
       recipient_uids # Cache before they're removed
       user.update!(steam_uid: nil)
@@ -238,14 +235,179 @@ describe ESM::Event::SendXm8Notification, :requires_connection do
       expect(ESM::Test.messages.size).to eq(0)
 
       notifications.each do |notification|
-        expect(notification.state).to eq("failed")
         expect(notification.state_details).to eq(ESM::Xm8Notification::DETAILS_NOT_REGISTERED)
         expect(notification.acknowledged_at).not_to be(nil)
       end
     end
   end
 
-  context "when the notification has no recipients"
-  context "when the notification fails to send"
-  context "when the recipients have custom routes"
+  context "when the notification fails to send to direct message" do
+    before do
+      # Failures are when the message fails to send
+      allow(ESM.bot).to receive(:deliver).and_return(nil)
+    end
+
+    it "updates the database with a failure to send" do
+      trigger_notification
+
+      notifications = ESM::ExileXm8Notification.where(state: ESM::Xm8Notification::STATE_FAILED)
+      wait_for { notifications.size }.to eq(recipient_uids.size)
+
+      # Nothing is sent
+      expect(ESM::Test.messages.size).to eq(0)
+
+      notifications.each do |notification|
+        expect(notification.state_details).to eq(ESM::Xm8Notification::DETAILS_DM)
+        expect(notification.acknowledged_at).not_to be(nil)
+      end
+    end
+  end
+
+  context "when the recipients have direct messages disallowed and they have no custom routes" do
+    let!(:territory_moderators) { [] }
+    let!(:recipient_uids) { [user.steam_uid] }
+
+    before do
+      create(:user_notification_preference, user:, server:, base_raid: false)
+    end
+
+    it "updates the database with a failure because of no destinations" do
+      trigger_notification
+
+      notifications = ESM::ExileXm8Notification.where(state: ESM::Xm8Notification::STATE_FAILED)
+      wait_for { notifications.size }.to eq(recipient_uids.size)
+
+      expect(ESM::Test.messages.size).to eq(0)
+
+      notifications.each do |notification|
+        expect(notification.state_details).to eq(ESM::Xm8Notification::DETAILS_NO_DESTINATION)
+      end
+    end
+  end
+
+  context "when the recipients have custom routes" do
+    let(:channel_id) { ESM::Test.channel(in: community).id }
+    let(:destination_community) { community }
+
+    before do
+      # Disable DM notifications to allow for easier testing
+      create(:user_notification_preference, user:, server:, base_raid: false)
+    end
+
+    context "when the custom route is disabled" do
+      let!(:territory_moderators) { [] }
+      let!(:recipient_uids) { [user.steam_uid] }
+
+      let!(:routes) do
+        [
+          create(
+            :user_notification_route,
+            user:,
+            destination_community:,
+            channel_id:,
+            enabled: false
+          )
+        ]
+      end
+
+      it "does not send" do
+        trigger_notification
+
+        notifications = ESM::ExileXm8Notification.where(state: ESM::Xm8Notification::STATE_FAILED)
+        wait_for { notifications.size }.to eq(recipient_uids.size)
+
+        expect(ESM::Test.messages.size).to eq(0)
+      end
+    end
+
+    context "when the custom route is not accepted yet" do
+      let!(:routes) do
+        [
+          create(
+            :user_notification_route,
+            user:,
+            destination_community:,
+            channel_id:,
+            user_accepted: false
+          ),
+
+          create(
+            :user_notification_route,
+            user: second_user,
+            destination_community:,
+            channel_id:,
+            community_accepted: false
+          )
+        ]
+      end
+
+      it "does not send" do
+        trigger_notification
+
+        notifications = ESM::ExileXm8Notification.where(state: ESM::Xm8Notification::STATE_FAILED)
+        wait_for { notifications.size }.to eq(recipient_uids.size)
+
+        expect(ESM::Test.messages.size).to eq(0)
+      end
+    end
+
+    context "when the custom route sends to any server" do
+      let!(:routes) do
+        [
+          create(
+            :user_notification_route,
+            user:,
+            destination_community:,
+            channel_id:
+          ),
+
+          create(
+            :user_notification_route,
+            user: second_user,
+            destination_community:,
+            channel_id:
+          )
+        ]
+      end
+
+      it "sends to the channel" do
+        trigger_notification
+
+        notifications = ESM::ExileXm8Notification.where(state: ESM::Xm8Notification::STATE_SENT)
+        wait_for { notifications.size }.to eq(recipient_uids.size)
+
+        expect(ESM::Test.messages.size).to eq(2)
+
+        channel_ids = ESM::Test.messages.destinations
+        binding.pry
+      end
+    end
+
+    context "when the custom route sends to a specific server" do
+      let!(:routes) do
+        [
+          create(
+            :user_notification_route,
+            user:,
+            destination_community:,
+            channel_id:,
+            source_server_id: server.id
+          ),
+
+          create(
+            :user_notification_route,
+            user: second_user,
+            destination_community:,
+            channel_id:,
+            source_server_id: ESM::Test.server(for: community).id
+          )
+        ]
+      end
+
+      it "sends to the channel" do
+      end
+    end
+  end
+
+  context "when the recipients disallow direct message"
 end
