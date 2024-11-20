@@ -248,7 +248,9 @@ module ESM
     def __deliver(message, delivery_channel, embed_message: "", replying_to: nil)
       info!(
         channel: "#{delivery_channel.name} (#{delivery_channel.id})",
-        message: message.is_a?(ESM::Embed) ? message.to_h : message
+        message: message.is_a?(ESM::Embed) ? message.to_h : message,
+        embed_message:,
+        replying_to:
       )
 
       if message.is_a?(ESM::Embed)
