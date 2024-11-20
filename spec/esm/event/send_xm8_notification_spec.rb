@@ -385,6 +385,9 @@ describe ESM::Event::SendXm8Notification, :requires_connection do
     end
 
     context "when the custom route sends to a specific server" do
+      let!(:territory_moderators) { [] }
+      let!(:recipient_uids) { [user.steam_uid] }
+
       let!(:routes) do
         [
           create(
@@ -405,12 +408,51 @@ describe ESM::Event::SendXm8Notification, :requires_connection do
         ]
       end
 
-      it "sends to the channel" do
+      it "sends to channels that match the one source server" do
+        trigger_notification
+
+        notifications = ESM::ExileXm8Notification.where(state: ESM::Xm8Notification::STATE_SENT)
+        wait_for { notifications.size }.to eq(recipient_uids.size)
+
+        expect(ESM::Test.messages.size).to eq(1)
+
+        channel = ESM::Test.messages.first.destination
+        expect(channel.id.to_s).to eq(routes.first.channel_id)
       end
     end
 
-    context "when the custom route sends to any server and they are the same channels"
-  end
+    context "when the custom route sends to any server and they are the same channels" do
+      let!(:routes) do
+        [
+          create(
+            :user_notification_route,
+            user:,
+            destination_community:,
+            channel_id:
+          ),
 
-  context "when the recipients disallow direct message"
+          create(
+            :user_notification_route,
+            user: second_user,
+            destination_community:,
+            channel_id:
+          )
+        ]
+      end
+
+      it "sends to channels that match the one source server" do
+        trigger_notification
+
+        notifications = ESM::ExileXm8Notification.where(state: ESM::Xm8Notification::STATE_SENT)
+        wait_for { notifications.size }.to eq(recipient_uids.size)
+
+        expect(ESM::Test.messages.size).to eq(1)
+
+        channel = ESM::Test.messages.first.destination
+        routes.each do |route|
+          expect(route.channel_id).to eq(channel.id.to_s)
+        end
+      end
+    end
+  end
 end
