@@ -41,6 +41,8 @@ module ESM
     # @return [ESM::Embed] The newly built instance
     #
     def self.from_hash(hash, &block)
+      hash.deep_symbolize_keys!
+
       new do |embed|
         ###########
         # Author
@@ -84,6 +86,10 @@ module ESM
               name = field[:name].to_s
               value = field[:value]
               inline = field[:inline] || false
+            when Data, Struct, OpenStruct
+              name = field.name.to_s
+              value = field.value
+              inline = field.inline || false
             when Array
               name, value, inline = field
               inline ||= false
