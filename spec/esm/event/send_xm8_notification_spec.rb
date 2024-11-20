@@ -189,7 +189,23 @@ describe ESM::Event::SendXm8Notification, :requires_connection do
   end
 
   context "when the notification type is marxet-item-sold"
-  context "when the notification type is invalid"
+
+  context "when the notification type is invalid" do
+    let(:notification_sqf) do
+      <<~SQF
+        ["some-invalid-type", #{recipient_uids.to_json}, []] call ExileServer_system_xm8_send;
+      SQF
+    end
+
+    it "logs a message to the server and discord" do
+      trigger_notification
+
+      wait_for { ESM::Test.messages.size }.to eq(1)
+      message = ESM::Test.messages.first.content
+      expect(message).to match("has encountered an error")
+    end
+  end
+
   context "when the notification has unregistered users"
   context "when the notification has no recipients"
   context "when the notification fails to send"
