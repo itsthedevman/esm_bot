@@ -8,7 +8,7 @@ describe ESM::Event::SendXm8Notification, :requires_connection do
   let!(:territory_moderators) { [second_user.steam_uid] }
 
   let(:recipient_uids) { [user.steam_uid, second_user.steam_uid] }
-  let(:notification_state_details) { "direct message" }
+  let(:notification_state_details) { ESM::Xm8Notification::DETAILS_DM }
   let(:notification_content) do
     {
       territory_id: territory.encoded_id,
@@ -41,7 +41,7 @@ describe ESM::Event::SendXm8Notification, :requires_connection do
       wait_for { ESM::Test.messages.size }.to eq(recipient_uids.size)
 
       # Check database update
-      notifications = ESM::ExileXm8Notification.where(state: "sent")
+      notifications = ESM::ExileXm8Notification.where(state: ESM::Xm8Notification::STATE_SENT)
       wait_for { notifications.size }.to eq(recipient_uids.size)
 
       notifications.each do |notification|
@@ -157,9 +157,6 @@ describe ESM::Event::SendXm8Notification, :requires_connection do
       it "includes title, description, fields, etc." do
         trigger_notification
 
-        # Check outbound messages
-        wait_for { ESM::Test.messages.size }.to eq(recipient_uids.size)
-
         # For timing to ensure everything completes
         notifications = ESM::ExileXm8Notification.where(state: "sent")
         wait_for { notifications.size }.to eq(recipient_uids.size)
@@ -221,7 +218,33 @@ describe ESM::Event::SendXm8Notification, :requires_connection do
     end
   end
 
-  context "when the notification has unregistered users"
+  context "when the notification has unregistered users" do
+    let(:notification_type) { "base-raid" }
+    let(:xm8_sqf_function) { "ExileServer_system_xm8_sendBaseRaid" }
+
+    before do
+      recipient_uids # Cache before they're removed
+      user.update!(steam_uid: nil)
+      second_user.update!(steam_uid: nil)
+    end
+
+    it "updates the database with a failure for no registration" do
+      trigger_notification
+
+      notifications = ESM::ExileXm8Notification.where(state: ESM::Xm8Notification::STATE_FAILED)
+      wait_for { notifications.size }.to eq(recipient_uids.size)
+
+      # Nothing is sent
+      expect(ESM::Test.messages.size).to eq(0)
+
+      notifications.each do |notification|
+        expect(notification.state).to eq("failed")
+        expect(notification.state_details).to eq(ESM::Xm8Notification::DETAILS_NOT_REGISTERED)
+        expect(notification.acknowledged_at).not_to be(nil)
+      end
+    end
+  end
+
   context "when the notification has no recipients"
   context "when the notification fails to send"
   context "when the recipients have custom routes"
