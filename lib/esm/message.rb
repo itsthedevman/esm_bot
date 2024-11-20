@@ -11,7 +11,7 @@ module ESM
     # @return [Self]
     #
     def self.from_string(json)
-      from_hash(json.to_h)
+      from_hash(json.to_deep_h)
     end
 
     #

@@ -139,9 +139,7 @@ module ESM
     # Sends a message to the client with a unique ID then logs the ID to the community's logging channel
     def log_error(log_message)
       uuid = SecureRandom.uuid
-
-      message = ESM::Message.new.add_error("message", "[#{uuid}] #{log_message}")
-      send_error(message)
+      send_error("[#{uuid}] #{log_message}")
 
       return if community.logging_channel_id.blank?
 

@@ -36,12 +36,12 @@ module ESM
         notifications =
           filter_unregistered_recipients(message.data.notifications)
 
-        notifications.map do |notification|
+        notifications.filter_map do |notification|
           Xm8Notification.from(notification)
         rescue Xm8Notification::InvalidType
-          notify_invalid_notification!(n, :invalid_type)
+          notify_invalid_notification!(notification, :invalid_type)
         rescue Xm8Notification::InvalidContent
-          notify_invalid_notification!(n, :invalid_attributes)
+          notify_invalid_notification!(notification, :invalid_attributes)
         end
       end
 
@@ -84,28 +84,20 @@ module ESM
       end
 
       def notify_invalid_notification!(notification, type)
-        embed =
-          ESM::Embed.build do |e|
-            e.title = I18n.t(
-              "xm8_notifications.#{type}.title",
-              server: server.server_id
-            )
+        error = [
+          I18n.t(
+            "xm8_notifications.#{type}.title",
+            server: server.server_id
+          ),
+          I18n.t(
+            "xm8_notifications.#{type}.description",
+            type: notification[:type]
+          ),
+          I18n.t(:xm8_notification),
+          JSON.pretty_generate(notification[:content])
+        ]
 
-            e.description = I18n.t(
-              "xm8_notifications.#{type}.description",
-              type: notification[:type]
-            )
-
-            e.add_field(
-              name: I18n.t(:xm8_notification),
-              value: "```#{JSON.pretty_generate(notification)}```"
-            )
-
-            e.color = :red
-            e.footer = I18n.t("xm8_notifications.footer")
-          end
-
-        server.community.log_event(:xm8, embed)
+        server.log_error(error.join("\n"))
       end
 
       def update_unregistered_notifications(unregistered_notifications)

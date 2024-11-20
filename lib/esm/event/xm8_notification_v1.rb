@@ -202,21 +202,21 @@ module ESM
       def notify_invalid_attributes!
         case @xm8_type
         when "custom"
-          error = I18n.t("xm8_notifications.invalid_attributes.custom.error")
-          remedy = I18n.t("xm8_notifications.invalid_attributes.custom.remedy")
+          error = I18n.t("xm8_notifications.v1.invalid_attributes.custom.error")
+          remedy = I18n.t("xm8_notifications.v1.invalid_attributes.custom.remedy")
         when "marxet-item-sold"
-          error = I18n.t("xm8_notifications.invalid_attributes.marxet_item_sold.error")
-          remedy = I18n.t("xm8_notifications.invalid_attributes.marxet_item_sold.remedy")
+          error = I18n.t("xm8_notifications.v1.invalid_attributes.marxet_item_sold.error")
+          remedy = I18n.t("xm8_notifications.v1.invalid_attributes.marxet_item_sold.remedy")
         end
 
         embed =
           ESM::Embed.build do |e|
-            e.title = I18n.t("xm8_notifications.invalid_attributes.title", server: @server.server_id)
-            e.description = I18n.t("xm8_notifications.invalid_attributes.description", error: error, remedy: remedy) if error && remedy
+            e.title = I18n.t("xm8_notifications.v1.invalid_attributes.title", server: @server.server_id)
+            e.description = I18n.t("xm8_notifications.v1.invalid_attributes.description", error: error, remedy: remedy) if error && remedy
 
-            log_message = I18n.t("xm8_notifications.invalid_attributes.log_message.base")
-            log_message += I18n.t("xm8_notifications.invalid_attributes.log_message.title", title: @message.title) if @message.title.present?
-            log_message += I18n.t("xm8_notifications.invalid_attributes.log_message.title", message: @message.description) if @message.description.present?
+            log_message = I18n.t("xm8_notifications.v1.invalid_attributes.log_message.base")
+            log_message += I18n.t("xm8_notifications.v1.invalid_attributes.log_message.title", title: @message.title) if @message.title.present?
+            log_message += I18n.t("xm8_notifications.v1.invalid_attributes.log_message.title", message: @message.description) if @message.description.present?
 
             e.add_field(name: I18n.t(:message), value: log_message)
             e.add_field(name: I18n.t("xm8_notifications.recipient_steam_uids"), value: "```#{@recipients.join("\n")}```")
@@ -249,13 +249,13 @@ module ESM
               end
 
             direct_message_status = I18n.t(
-              "xm8_notifications.log.message_statuses.values.direct_message.#{direct_message}",
+              "xm8_notifications.v1.log.message_statuses.values.direct_message.#{direct_message}",
               user: user.discord_username,
               steam_uid: user.steam_uid
             )
 
             custom_route_status = I18n.t(
-              "xm8_notifications.log.message_statuses.values.custom_routes.#{custom_routes}",
+              "xm8_notifications.v1.log.message_statuses.values.custom_routes.#{custom_routes}",
               number_sent: hash[:custom_routes][:sent],
               number_expected: hash[:custom_routes][:expected]
             )
@@ -278,19 +278,19 @@ module ESM
         # Notify the community if they subscribe to this notification
         embed =
           ESM::Embed.build do |e|
-            e.title = I18n.t("xm8_notifications.log.title", type: @xm8_type, server: @server.server_id)
-            e.description = I18n.t("xm8_notifications.log.description", title: notification.title, description: notification.description)
+            e.title = I18n.t("xm8_notifications.v1.log.title", type: @xm8_type, server: @server.server_id)
+            e.description = I18n.t("xm8_notifications.v1.log.description", title: notification.title, description: notification.description)
 
             if message_statuses.present?
               e.add_field(
-                name: I18n.t("xm8_notifications.log.message_statuses.name"),
+                name: I18n.t("xm8_notifications.v1.log.message_statuses.name"),
                 value: message_statuses.join("\n\n")
               )
             end
 
             if unregistered_steam_uids.present?
               e.add_field(
-                name: I18n.t("xm8_notifications.log.unregistered_steam_uids"),
+                name: I18n.t("xm8_notifications.v1.log.unregistered_steam_uids"),
                 value: unregistered_steam_uids
               )
             end

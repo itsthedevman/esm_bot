@@ -46,9 +46,14 @@ describe ESM::Event::SendXm8Notification, :requires_connection do
 
       notifications.each do |notification|
         expect(notification.recipient_uid).to be_in(recipient_uids)
-        expect(notification.territory_id).to eq(territory.id)
+
+        # These don't have a territory ID
+        if !["custom", "marxet-item-sold"].include?(notification_type)
+          expect(notification.territory_id).to eq(territory.id)
+        end
+
         expect(notification.type).to eq(notification_type)
-        expect(notification.content).to eq(notification_content)
+        expect(notification.content).to match(notification_content)
         expect(notification.state_details).to eq(notification_state_details)
         expect(notification.acknowledged_at).not_to be(nil)
       end
@@ -122,8 +127,69 @@ describe ESM::Event::SendXm8Notification, :requires_connection do
     include_examples "sends"
   end
 
-  context "when the notification type is custom"
+  context "when the notification type is custom" do
+    let(:notification_type) { "custom" }
+    let(:notification_content) do
+      hash = embed_data.to_h
+      hash["fields"] = be_a(String)
+      hash
+    end
+
+    let(:embed_data) do
+      ESM::Arma::HashMap.new(
+        title: "This is a title",
+        description: "This is a description",
+        fields: [
+          {name: "field title", value: "field value", inline: true}
+        ]
+      )
+    end
+
+    let(:notification_sqf) do
+      <<~SQF
+        [#{recipient_uids.to_json}, #{embed_data.to_json}] call ExileServer_system_xm8_sendCustom
+      SQF
+    end
+
+    include_examples "sends"
+
+    context "when the embed data is valid" do
+      it "includes title, description, fields, etc." do
+        trigger_notification
+
+        # Check outbound messages
+        wait_for { ESM::Test.messages.size }.to eq(recipient_uids.size)
+
+        # For timing to ensure everything completes
+        notifications = ESM::ExileXm8Notification.where(state: "sent")
+        wait_for { notifications.size }.to eq(recipient_uids.size)
+
+        embed = ESM::Test.messages.first.content
+        expect(embed.title).to eq(embed_data[:title])
+        expect(embed.description).to eq(embed_data[:description])
+        embed.fields.zip(embed_data[:fields]).each do |embed_field, input_field|
+          expect(embed_field.name).to eq(input_field[:name])
+          expect(embed_field.value).to eq(input_field[:value])
+          expect(embed_field.inline).to eq(input_field[:inline])
+        end
+      end
+    end
+
+    context "when the embed data is not valid" do
+      let(:embed_data) { [] }
+
+      it "logs a message to the server and discord" do
+        trigger_notification
+
+        wait_for { ESM::Test.messages.size }.to eq(1)
+        message = ESM::Test.messages.first.content
+        expect(message).to match("has encountered an error")
+      end
+    end
+  end
+
   context "when the notification type is marxet-item-sold"
+  context "when the notification type is invalid"
   context "when the notification has unregistered users"
   context "when the notification has no recipients"
   context "when the notification fails to send"
