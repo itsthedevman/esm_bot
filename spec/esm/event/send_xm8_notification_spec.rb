@@ -292,6 +292,7 @@ describe ESM::Event::SendXm8Notification, :requires_connection do
     before do
       # Disable DM notifications to allow for easier testing
       create(:user_notification_preference, user:, server:, base_raid: false)
+      create(:user_notification_preference, user: second_user, server:, base_raid: false)
     end
 
     context "when the custom route is disabled" do
@@ -351,7 +352,7 @@ describe ESM::Event::SendXm8Notification, :requires_connection do
       end
     end
 
-    context "when the custom route sends to any server" do
+    context "when the custom route sends to any server and they are separate channels" do
       let!(:routes) do
         [
           create(
@@ -365,7 +366,7 @@ describe ESM::Event::SendXm8Notification, :requires_connection do
             :user_notification_route,
             user: second_user,
             destination_community:,
-            channel_id:
+            channel_id: ESM::Test.channel(in: destination_community).id
           )
         ]
       end
@@ -378,8 +379,8 @@ describe ESM::Event::SendXm8Notification, :requires_connection do
 
         expect(ESM::Test.messages.size).to eq(2)
 
-        channel_ids = ESM::Test.messages.destinations
-        binding.pry
+        channel_ids = ESM::Test.messages.destinations.map { |c| c.id.to_s }
+        expect(channel_ids).to match(routes.map(&:channel_id))
       end
     end
 
@@ -407,6 +408,8 @@ describe ESM::Event::SendXm8Notification, :requires_connection do
       it "sends to the channel" do
       end
     end
+
+    context "when the custom route sends to any server and they are the same channels"
   end
 
   context "when the recipients disallow direct message"
