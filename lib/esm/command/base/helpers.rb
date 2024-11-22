@@ -506,13 +506,13 @@ module ESM
         #
         def embed_from_message!(message_or_hash)
           hash =
-            if message.is_a?(Message)
+            if message_or_hash.is_a?(Message)
               message_or_hash.data.to_h
             else
               message_or_hash
             end
 
-          Embed.from_hash!(hash.deep_symbolize_keys)
+          Embed.from_hash!(hash)
         rescue ArgumentError => e
           target_server.connection.send_error(e)
 

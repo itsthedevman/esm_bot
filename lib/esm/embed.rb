@@ -41,7 +41,7 @@ module ESM
     # @return [ESM::Embed] The newly built instance
     #
     def self.from_hash(hash, &block)
-      hash.deep_symbolize_keys!
+      hash = hash.deep_symbolize_keys
 
       new do |embed|
         ###########
