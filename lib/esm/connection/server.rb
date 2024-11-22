@@ -24,7 +24,10 @@ module ESM
       end
 
       def stop
-        @server&.shutdown(:RDWR)
+        @server.shutdown(:RDWR)
+        @task.shutdown
+
+        @connection_manager.stop
       end
 
       def client(id)
