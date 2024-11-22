@@ -8,7 +8,11 @@ module ESM
 
         def initialize(execution_interval: 0.5)
           @queue = Queue.new
-          @task = Concurrent::TimerTask.execute(execution_interval:) { process_next }
+
+          @task = Concurrent::TimerTask.execute(execution_interval:) do
+            ESM::Database.with_connection { process_next }
+          end
+
           @task.add_observer(ErrorHandler.new)
         end
 
