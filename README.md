@@ -78,7 +78,7 @@ bin/dev
   - Automatic reconnection
   - Client and server socket abstractions
 - **Database**: PostgreSQL with Active Record models
-- **Events**: Handles Discord events and XM8 notifications
+- **Events**: Handles events from Discord and Arma 3 servers
 
 ### License
 <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">
