@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 # Set to false for indefinite
-SPEC_TIMEOUT_SECONDS = 5
-LOG_LEVEL = :debug
+SPEC_TIMEOUT_SECONDS = 7
+LOG_LEVEL = false
 
 require_relative "config"
 
