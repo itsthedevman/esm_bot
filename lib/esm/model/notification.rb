@@ -20,11 +20,16 @@ module ESM
         community_id: community_id,
         notification_type: type,
         notification_category: category
-      ).sample(1).first
+      ).sample
 
       # Grab a default if one was not found
       if notification.nil?
-        notification = DEFAULTS[category].select { |n| n["type"] == type }.sample(1).first
+        default = DEFAULTS[category]
+          .select { |n| n["type"] == type }
+          .sample
+          .transform_keys { |k| "notification_#{k}" }
+
+        notification = new(default)
       end
 
       notification.build_embed(**)
