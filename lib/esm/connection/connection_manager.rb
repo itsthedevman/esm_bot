@@ -17,11 +17,6 @@ module ESM
         @heartbeat.add_observer(ErrorHandler.new)
       end
 
-      def stop
-        @lobby_task.shutdown
-        @heartbeat.shutdown
-      end
-
       def find(id)
         @connections[id]
       end
