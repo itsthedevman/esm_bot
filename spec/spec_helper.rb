@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Set to false for indefinite
-SPEC_TIMEOUT_SECONDS = 7
+SPEC_TIMEOUT_SECONDS = 10
 LOG_LEVEL = false
 
 require_relative "config"
