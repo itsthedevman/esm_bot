@@ -68,7 +68,7 @@ module ESM
       ESM::Territory.order(:server_id).where(server_id: id).order(:territory_level)
     end
 
-    delegate :send_message, :send_error, to: :connection
+    delegate :send_message, :send_error, to: :connection, allow_nil: true
 
     #
     # Returns the server's current version
