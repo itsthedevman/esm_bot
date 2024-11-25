@@ -25,5 +25,20 @@ module ESM
       class_name: "ESM::ExileTerritory",
       foreign_key: "territory_id",
       optional: true
+
+    scope :failed, -> { order(state: :asc).where(state: "failed") }
+    scope :sent, -> { order(state: :asc).where(state: "sent") }
+
+    scope :base_raid, -> { where(type: "base-raid") }
+    scope :charge_plant_started, -> { where(type: "charge-plant-started") }
+    scope :custom, -> { where(type: "custom") }
+    scope :flag_restored, -> { where(type: "flag-restored") }
+    scope :flag_steal_started, -> { where(type: "flag-steal-started") }
+    scope :flag_stolen, -> { where(type: "flag-stolen") }
+    scope :grind_started, -> { where(type: "grind-started") }
+    scope :hack_started, -> { where(type: "hack-started") }
+    scope :marxet_item_sold, -> { where(type: "marxet-item-sold") }
+    scope :protection_money_due, -> { where(type: "protection-money-due") }
+    scope :protection_money_paid, -> { where(type: "protection-money-paid") }
   end
 end
