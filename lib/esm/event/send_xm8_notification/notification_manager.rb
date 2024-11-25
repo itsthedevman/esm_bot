@@ -6,13 +6,10 @@ module ESM
       class NotificationManager
         attr_reader :queue
 
-        def initialize(execution_interval: 0.5)
+        def initialize(execution_interval: 1)
           @queue = Queue.new
 
-          @task = Concurrent::TimerTask.execute(execution_interval:) do
-            ESM::Database.with_connection { process_next }
-          end
-
+          @task = Concurrent::TimerTask.execute(execution_interval:) { process_next }
           @task.add_observer(ErrorHandler.new)
         end
 
@@ -26,7 +23,7 @@ module ESM
           notification = queue.pop(timeout: 0)
           return if notification.nil?
 
-          notification.send_to_recipients
+          ESM::Database.with_connection { notification.send_to_recipients }
         end
       end
     end
