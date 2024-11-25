@@ -3,7 +3,7 @@
 module ESM
   module Connection
     class ConnectionManager
-      def initialize(lobby_timeout: 1, heartbeat_timeout: 5, execution_interval: 1)
+      def initialize(lobby_timeout: 3, heartbeat_timeout: 5, execution_interval: 1)
         @lobby_timeout = lobby_timeout
         @heartbeat_timeout = heartbeat_timeout
 
@@ -52,7 +52,7 @@ module ESM
         # Hasn't timed out yet, add it back to the top of the array
         return @lobby << client unless timed_out
 
-        client.close
+        client.shutdown
       end
 
       # Traverse the connections and ping them every so often to determine if they are
@@ -67,7 +67,7 @@ module ESM
         response = client.write(type: :heartbeat).wait_for_response(@heartbeat_timeout)
         return @ids_to_check << id if response.fulfilled?
 
-        client.close
+        client.shutdown
       end
     end
   end
