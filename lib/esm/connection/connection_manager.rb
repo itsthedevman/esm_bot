@@ -52,7 +52,7 @@ module ESM
         # Hasn't timed out yet, add it back to the top of the array
         return @lobby << client unless timed_out
 
-        client.shutdown
+        client.close
       end
 
       # Traverse the connections and ping them every so often to determine if they are
@@ -67,7 +67,7 @@ module ESM
         response = client.write(type: :heartbeat).wait_for_response(@heartbeat_timeout)
         return @ids_to_check << id if response.fulfilled?
 
-        client.shutdown
+        client.close
       end
     end
   end

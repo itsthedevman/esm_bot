@@ -43,7 +43,7 @@ module ESM
           on_disconnect
         end
 
-        @socket.shutdown
+        @socket.close
       end
 
       def send_message(message, **)
