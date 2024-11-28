@@ -33,9 +33,9 @@ module ESM
 
         def on_execute
           check_for_registered_target_user! if target_user.is_a?(ESM::User)
+          check_for_pending_request!
 
           # Create a confirmation request to the requestee
-          check_for_pending_request!
           add_request(
             to: current_user,
             description: I18n.t(
@@ -55,14 +55,25 @@ module ESM
         end
 
         def on_request_accepted
-          result =
+          if target_user
+            query_exile_database!("reset_player", uid: target_user.steam_uid)
+          else
+            query_exile_database!("reset_all")
+          end
+
+          description =
             if target_user
-              query_exile_database!("reset_player", uid: target_user.steam_uid)
+              I18n.t(
+                "commands.reset.success_message_target",
+                user: current_user.mention,
+                target: target_user.mention
+              )
             else
-              query_exile_database!("reset_all")
+              I18n.t("commands.reset.success_message_all", user: current_user.mention)
             end
 
-          binding.pry
+          embed = ESM::Embed.build(:success, description:)
+          reply(embed)
         end
 
         module V1

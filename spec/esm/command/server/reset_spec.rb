@@ -192,21 +192,46 @@ describe ESM::Command::Server::Reset, category: "command" do
       subject(:execute_command) { execute!(arguments:) }
 
       before do
-        user.exile_account # Create the account so there is at least one non-stuck player
+        # So there is at least one non-stuck player
+        account = create(:exile_account, uid: ESM::Test.steam_uid)
+        create(:exile_player, account_uid: account.uid)
       end
 
-      context "when a server is provided" do
+      context "when the target is not provided" do
         let!(:arguments) { {server_id: server.server_id} }
 
-        context "and there are stuck players" do
-          let!(:players) do
-            5.times.map do
-              create(:exile_account, uid: ESM::Test.steam_uid)
-            end
-          end
+        let!(:players) do
+          5.times.map do
+            account = create(:exile_account, uid: ESM::Test.steam_uid)
 
-          it "resets all stuck players" do
-            expect(ESM::ExileAccount.all.size).to eq(6)
+            # Important bit here -> damage: 1
+            create(:exile_player, account_uid: account.uid, damage: 1)
+          end
+        end
+
+        it "resets all stuck players" do
+          expect(ESM::ExilePlayer.all.size).to eq(6)
+
+          execute_command
+
+          wait_for { ESM::Test.messages.size }.to eq(2)
+
+          accept_request
+
+          wait_for { ESM::Test.messages.size }.to eq(3)
+
+          embed = latest_message
+          expect(embed.description).to match("reset all stuck players")
+
+          # "resetting" involves deleting the player
+          expect(ESM::ExilePlayer.all.size).to eq(1)
+        end
+      end
+
+      context "when a target is provided" do
+        shared_examples "resets_player" do
+          it "resets the player" do
+            expect(ESM::ExilePlayer.all.size).to eq(2)
 
             execute_command
 
@@ -216,17 +241,37 @@ describe ESM::Command::Server::Reset, category: "command" do
 
             wait_for { ESM::Test.messages.size }.to eq(3)
 
-            expect(ESM::ExileAccount.all.size).to eq(1)
+            embed = latest_message
+            expect(embed.description).to match("has been reset successfully")
+
+            # "resetting" involves deleting the player
+            expect(ESM::ExilePlayer.all.size).to eq(1)
           end
         end
 
-        context "and there are no stuck players"
-      end
+        context "and the target is a registered user" do
+          let!(:arguments) { {target: user.mention, server_id: server.server_id} }
 
-      context "when a target is provided" do
-        context "and the target is stuck"
-        context "and the target is not stuck"
-        context "and the target is a steam uid"
+          before do
+            # Important bit here -> damage: 1
+            user.exile_player.update!(damage: 1)
+          end
+
+          include_examples "resets_player"
+        end
+
+        context "and the target is a steam uid" do
+          let!(:arguments) { {target: player.account_uid, server_id: server.server_id} }
+
+          let!(:player) do
+            account = create(:exile_account, uid: ESM::Test.steam_uid)
+
+            # Important bit here -> damage: 1
+            create(:exile_player, account_uid: account.uid, damage: 1)
+          end
+
+          include_examples "resets_player"
+        end
       end
     end
   end
