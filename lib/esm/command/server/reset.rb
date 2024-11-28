@@ -54,28 +54,41 @@ module ESM
           reply(embed)
         end
 
-        def on_response
-          embed =
-            if target_user.present?
-              if @response.success
-                ESM::Embed.build(:success, description: I18n.t("commands.reset.success_message_target", user: current_user.mention, target: target_user.mention))
-              else
-                ESM::Embed.build(:error, description: I18n.t("commands.reset.failure_message_target", user: current_user.mention, target: target_user.mention))
-              end
-            elsif @response.success
-              ESM::Embed.build(:success, description: I18n.t("commands.reset.success_message_all", user: current_user.mention))
+        def on_request_accepted
+          result =
+            if target_user
+              query_exile_database!("reset_player", uid: target_user.steam_uid)
             else
-              ESM::Embed.build(:error, description: I18n.t("commands.reset.failure_message_all", user: current_user.mention))
+              query_exile_database!("reset_all")
             end
 
-          reply(embed)
+          binding.pry
         end
 
-        def on_request_accepted
-          deliver!(
-            query: target_user.present? ? "reset_player" : "reset_all",
-            targetUID: target_user&.steam_uid
-          )
+        module V1
+          def on_response
+            embed =
+              if target_user.present?
+                if @response.success
+                  ESM::Embed.build(:success, description: I18n.t("commands.reset.success_message_target", user: current_user.mention, target: target_user.mention))
+                else
+                  ESM::Embed.build(:error, description: I18n.t("commands.reset.failure_message_target", user: current_user.mention, target: target_user.mention))
+                end
+              elsif @response.success
+                ESM::Embed.build(:success, description: I18n.t("commands.reset.success_message_all", user: current_user.mention))
+              else
+                ESM::Embed.build(:error, description: I18n.t("commands.reset.failure_message_all", user: current_user.mention))
+              end
+
+            reply(embed)
+          end
+
+          def on_request_accepted
+            deliver!(
+              query: target_user.present? ? "reset_player" : "reset_all",
+              targetUID: target_user&.steam_uid
+            )
+          end
         end
       end
     end
