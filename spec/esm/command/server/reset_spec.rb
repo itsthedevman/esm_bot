@@ -273,6 +273,21 @@ describe ESM::Command::Server::Reset, category: "command" do
           include_examples "resets_player"
         end
       end
+
+      context "when the player already has a request" do
+        let!(:arguments) { {server_id: server.server_id} }
+
+        before do
+          # Executing the command but not handling the request will cause the request to be pending
+          execute!(arguments:)
+          previous_command.current_cooldown.reset!
+        end
+
+        # This will then trigger the command again to cause the error
+        include_examples "raises_check_failure" do
+          let!(:matcher) { "request pending" }
+        end
+      end
     end
   end
 end
