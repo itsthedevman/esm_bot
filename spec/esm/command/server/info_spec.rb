@@ -181,14 +181,62 @@ describe ESM::Command::Server::Info, category: "command" do
           end
         end
 
-        context "and the player is dead"
+        context "and the player is dead" do
+          before do
+            user.exile_player.destroy!
+          end
+
+          it "is expected to return information about the player" do
+            execute_command
+
+            wait_for { ESM::Test.messages.size }.to eq(1)
+
+            embed = latest_message
+            expect(embed.title).to match(/stats on `#{server.server_id}`/i)
+
+            field = embed.fields.first
+            expect(field.name).to match(/general/i)
+            expect(field.value).to match("**You are dead**")
+
+            field = embed.fields.second
+            expect(field.name).to match(/currency/i)
+            expect(field.value).to match(/money.+you are dead.+locker.+poptabs.+respect.+/im)
+
+            field = embed.fields.third
+            expect(field.name).to match(/scoreboard/i)
+            expect(field.value).to match(/kills.+deaths.+kd ratio.+/im)
+          end
+        end
       end
 
-      context "when the target is a steam uid"
-      context "when the target has not joined the server"
+      context "when the target is a steam uid" do
+        let!(:target) { user.steam_uid }
+
+        before do
+          user.exile_player
+        end
+
+        it "is expected to return information about the player" do
+          execute_command
+
+          wait_for { ESM::Test.messages.size }.to eq(1)
+
+          embed = latest_message
+          expect(embed.title).to match(/stats on `#{server.server_id}`/i)
+        end
+      end
+
+      context "when the target has not joined the server" do
+        let!(:target) { user.steam_uid }
+
+        include_examples "raises_check_failure" do
+          let!(:matcher) { "I didn't find any player information related" }
+        end
+      end
 
       context "when the target is a territory"
       context "when the target is not a valid territory"
+      context "when the target is not provided"
     end
   end
 end
