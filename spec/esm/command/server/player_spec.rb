@@ -315,7 +315,7 @@ describe ESM::Command::Server::Player, category: "command" do
         let!(:action) { "locker" }
 
         shared_examples "modifies" do
-          it "modifies the player's poptabs" do
+          it "modifies the player's locker" do
             execute_command
 
             wait_for { ESM::Test.messages.size }.to eq(2)
@@ -367,25 +367,132 @@ describe ESM::Command::Server::Player, category: "command" do
       context "when the action is 'Change player respect'" do
         let!(:action) { "respect" }
 
-        context "and the amount is positive"
-        context "and the amount is negative"
-        context "and the amount is not provided"
+        shared_examples "modifies" do
+          it "modifies the player's respect" do
+            execute_command
+
+            wait_for { ESM::Test.messages.size }.to eq(2)
+
+            # Admin log
+            expect(
+              ESM::Test.messages.retrieve("respect has been modified")
+            ).not_to be(nil)
+
+            # Player response
+            embed = ESM::Test.messages.retrieve("respect by")&.content
+            expect(embed).not_to be(nil)
+
+            expect(embed.description).to eq(
+              "#{user.mention}, you've modified `#{second_user.steam_uid}`'s respect by #{amount.to_readable} points. They used to have #{previous_amount.to_readable}, they now have #{final_amount.to_readable}."
+            )
+          end
+        end
+
+        context "and the amount is positive" do
+          let!(:previous_amount) { account.score }
+          let!(:amount) { Faker::Number.positive.to_i }
+          let!(:final_amount) { amount }
+
+          include_examples "modifies"
+        end
+
+        context "and the amount is negative" do
+          let!(:previous_amount) { 10_000 }
+          let!(:amount) { Faker::Number.negative.to_i }
+
+          before do
+            account.update!(score: previous_amount)
+          end
+
+          include_examples "modifies"
+        end
+
+        context "and the amount is not provided" do
+          let!(:amount) { nil }
+          let!(:final_amount) { nil }
+
+          include_examples "raises_check_failure" do
+            let!(:matcher) { "Missing argument" }
+          end
+        end
       end
 
       context "when the action is 'Heal player'" do
         let!(:action) { "heal" }
 
-        it "heals the player"
-        it "ignores the amount argument"
+        let!(:amount) { 100 } # This is ignored.
+        let!(:final_amount) {}
+
+        it "heals the player" do
+          execute_command
+
+          wait_for { ESM::Test.messages.size }.to eq(2)
+
+          # Admin log
+          expect(
+            ESM::Test.messages.retrieve("Target has been healed")
+          ).not_to be(nil)
+
+          # Player response
+          # Since this is randomized, it's hard to match to
+          embed = ESM::Test.messages
+            .reject { |m| m.content.to_s.match?("target has been healed") }
+            .first
+            &.content
+
+          expect(embed).not_to be(nil)
+          expect(embed.description).not_to be_blank
+        end
+
+        it "ignores the amount argument" do
+          execute_command
+
+          expect(previous_command.arguments.amount).to be(nil)
+        end
       end
 
       context "when the action is 'Kill player'" do
         let!(:action) { "kill" }
 
-        it "kills the player"
-        it "will ignore the amount argument"
+        let!(:amount) { 100 } # This is ignored.
+        let!(:final_amount) {}
 
-        context "and the target is already dead"
+        it "kills the player" do
+          execute_command
+
+          wait_for { ESM::Test.messages.size }.to eq(2)
+
+          # Admin log
+          expect(
+            ESM::Test.messages.retrieve("Target has been killed")
+          ).not_to be(nil)
+
+          # Player response
+          # Since this is randomized, it's hard to match to
+          embed = ESM::Test.messages
+            .reject { |m| m.content.to_s.match?("target has been killed") }
+            .first
+            &.content
+
+          expect(embed).not_to be(nil)
+          expect(embed.description).not_to be_blank
+        end
+
+        it "ignores the amount argument" do
+          execute_command
+
+          expect(previous_command.arguments.amount).to be(nil)
+        end
+
+        context "and the target is already dead" do
+          before do
+            player.destroy!
+          end
+
+          include_examples "raises_extension_error" do
+            let!(:matcher) { "is already dead" }
+          end
+        end
       end
 
       context "when the target is a non-registered steam uid" do
@@ -401,22 +508,30 @@ describe ESM::Command::Server::Player, category: "command" do
       end
 
       context "when logging is enabled" do
+        let!(:action) { "kill" }
+        let!(:final_amount) {}
+
         before do
           server.server_setting.update!(logging_modify_player: true)
         end
 
         include_examples "arma_discord_logging_enabled" do
-          let(:message) { "`ESM_Logging_ModifyPlayer` executed successfully" }
+          let(:message) { "`ESMs_command_player` executed successfully" }
+          let(:fields) { [player_field, target_field] }
         end
       end
 
       context "when logging is disabled" do
+        let!(:action) { "kill" }
+        let!(:final_amount) {}
+
         before do
           server.server_setting.update!(logging_modify_player: false)
         end
 
         include_examples "arma_discord_logging_disabled" do
-          let(:message) { "`ESM_Logging_ModifyPlayer` executed successfully" }
+          let(:message) { "`ESMs_command_player` executed successfully" }
+          let(:fields) { [player_field, target_field] }
         end
       end
     end
