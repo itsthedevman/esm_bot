@@ -65,11 +65,8 @@ module ESM
 
           check_for_territory_info!(territory)
 
-          territory = ESM::Exile::Territory.new(
-            server: target_server,
-            territory: territory.to_istruct
-          )
-
+          # This takes a hash
+          territory = ESM::Exile::Territory.new(server: target_server, territory:)
           territory.to_embed
         end
 
@@ -81,8 +78,9 @@ module ESM
 
           check_for_player_info!(player)
 
+          # This takes an object
+          # Territory and Player need to be updated to match
           player = ESM::Exile::Player.new(server: target_server, player: player.to_istruct)
-
           player.to_embed
         end
 

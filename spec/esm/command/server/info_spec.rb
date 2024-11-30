@@ -149,9 +149,12 @@ describe ESM::Command::Server::Info, category: "command" do
     describe "#on_execute", requires_connection: true do
       include_context "connection"
 
+      let(:territory_id) { nil }
       let(:target) { user.mention }
 
-      subject(:execute_command) { execute!(arguments: {server_id: server.server_id, target:}) }
+      subject(:execute_command) do
+        execute!(arguments: {server_id: server.server_id, target:, territory_id:})
+      end
 
       context "when the target is a player" do
         context "and the player is alive" do
@@ -234,9 +237,108 @@ describe ESM::Command::Server::Info, category: "command" do
         end
       end
 
-      context "when the target is a territory"
-      context "when the target is not a valid territory"
-      context "when the target is not provided"
+      context "when the target is a territory" do
+        let!(:target) { nil }
+        let!(:territory_id) { territory.encoded_id }
+
+        it "is expected to return information about the territory" do
+          execute_command
+
+          wait_for { ESM::Test.messages.size }.to eq(1)
+
+          embed = latest_message
+          exile_territory = ESM::Exile::Territory.new(server: server, territory: territory.to_h)
+
+          expect(embed.title).to eq("Territory \"#{exile_territory.name}\"")
+          expect(embed.thumbnail.url).to eq(exile_territory.flag_path)
+          expect(embed.color).to eq(exile_territory.status_color)
+          expect(embed.description).to eq(exile_territory.payment_reminder_message)
+
+          field_info = [
+            {name: "Territory ID", value: "```#{exile_territory.id}```"},
+            {name: "Flag Status", value: "```#{exile_territory.flag_status}```"},
+            {
+              name: "Next Due Date",
+              value: "```#{exile_territory.next_due_date.strftime(ESM::Time::Format::TIME)}```"
+            },
+            {
+              name: "Last Paid",
+              value: "```#{exile_territory.last_paid_at.strftime(ESM::Time::Format::TIME)}```"
+            },
+            {name: "Price to renew protection", value: exile_territory.renew_price},
+            {value: "__Current Territory Stats__"},
+            {name: "Level", value: exile_territory.level},
+            {name: "Radius", value: "#{exile_territory.radius}m"},
+            {
+              name: "Current / Max Objects",
+              value: "#{exile_territory.object_count}/#{exile_territory.max_object_count}"
+            }
+          ]
+
+          if exile_territory.upgradeable?
+            field_info.push(
+              {value: "__Next Territory Stats__"},
+              {name: "Level", value: exile_territory.upgrade_level},
+              {name: "Radius", value: "#{exile_territory.upgrade_radius}m"},
+              {name: "Max Objects", value: exile_territory.upgrade_object_count},
+              {name: "Price", value: exile_territory.upgrade_price}
+            )
+          end
+
+          field_info.push(
+            {value: "__Territory Members__"},
+            {name: ":crown: Owner", value: exile_territory.owner}
+          )
+
+          # Now check the fields
+          # Removing them from the embed so we can check moderators/builders easily
+          field_info.each do |field|
+            embed_field = embed.fields.shift
+            expect(embed_field.name).to eq(field[:name].to_s) if field[:name].present?
+            expect(embed_field.value).to eq(field[:value].to_s)
+          end
+
+          if exile_territory.moderators.present?
+            moderator_fields = ESM::Embed.new
+              .add_field(value: exile_territory.moderators)
+              .fields
+              .map(&:value)
+
+            moderator_fields.each do |moderator_field|
+              field = embed.fields.shift
+              expect(field.name).to match(/moderator/i)
+              expect(field.value).to eq(moderator_field)
+            end
+          end
+
+          if exile_territory.builders.present?
+            builder_fields = ESM::Embed.new
+              .add_field(value: exile_territory.builders)
+              .fields
+              .map(&:value)
+
+            builder_fields.each do |builder_field|
+              field = embed.fields.shift
+              expect(field.name).to match(/builder/i)
+              expect(field.value).to eq(builder_field)
+            end
+          end
+        end
+      end
+
+      context "when the target is not a valid territory" do
+        let!(:territory_id) { "12345" }
+
+        include_examples "error_territory_id_does_not_exist"
+      end
+
+      context "when the target is not provided" do
+        let!(:target) { nil }
+
+        include_examples "raises_check_failure" do
+          let!(:matcher) { "you must provide" }
+        end
+      end
     end
   end
 end
