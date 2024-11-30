@@ -28,7 +28,7 @@ module ESM
         argument(
           :amount,
           type: :integer,
-          checked_against: ->(content) { !content.nil? },
+          checked_against: ->(content) { content.present? },
           checked_against_if: ->(_a, _c) { %w[money respect locker].include?(arguments.action) },
           modifier: lambda do |content|
             return content unless %w[heal kill].include?(arguments.action)
@@ -58,7 +58,7 @@ module ESM
             "ESMs_command_player",
             action: arguments.action,
             amount: arguments.amount
-          )
+          ).data
 
           embed = ESM::Notification.build_random(
             community_id: target_community.id,
