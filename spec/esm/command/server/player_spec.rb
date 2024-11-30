@@ -237,6 +237,12 @@ describe ESM::Command::Server::Player, category: "command" do
       let(:action) {}
       let(:amount) {}
 
+      let(:previous_amount) {}
+      let!(:final_amount) { previous_amount + amount }
+
+      let!(:account) { second_user.exile_account }
+      let!(:player) { second_user.exile_player }
+
       subject(:execute_command) do
         execute!(
           arguments: {
@@ -248,6 +254,10 @@ describe ESM::Command::Server::Player, category: "command" do
         )
       end
 
+      before do
+        user.exile_account
+      end
+
       context "when the action is 'Change player poptabs'" do
         let!(:action) { "money" }
 
@@ -255,26 +265,103 @@ describe ESM::Command::Server::Player, category: "command" do
           it "modifies the player's poptabs" do
             execute_command
 
-            wait_for { ESM::Test.messages.size }.to eq(1)
+            wait_for { ESM::Test.messages.size }.to eq(2)
+
+            # Admin log
+            expect(
+              ESM::Test.messages.retrieve("money has been modified")
+            ).not_to be(nil)
+
+            # Player response
+            embed = ESM::Test.messages.retrieve("money by")&.content
+            expect(embed).not_to be(nil)
+
+            expect(embed.description).to eq(
+              "#{user.mention}, you've modified `#{second_user.steam_uid}`'s money by #{amount.to_readable} poptabs. They used to have #{previous_amount.to_readable} poptabs, they now have #{final_amount.to_readable}."
+            )
           end
         end
 
         context "and the amount is positive" do
+          let!(:previous_amount) { player.money }
           let!(:amount) { Faker::Number.positive.to_i }
+          let!(:final_amount) { amount }
 
           include_examples "modifies"
         end
 
-        context "and the amount is negative"
-        context "and the amount is not provided"
+        context "and the amount is negative" do
+          let!(:previous_amount) { 10_000 }
+          let!(:amount) { Faker::Number.negative.to_i }
+
+          before do
+            player.update!(money: previous_amount)
+          end
+
+          include_examples "modifies"
+        end
+
+        context "and the amount is not provided" do
+          let!(:amount) { nil }
+          let!(:final_amount) { nil }
+
+          include_examples "raises_check_failure" do
+            let!(:matcher) { "Missing argument" }
+          end
+        end
       end
 
       context "when the action is 'Change locker poptabs'" do
         let!(:action) { "locker" }
 
-        context "and the amount is positive"
-        context "and the amount is negative"
-        context "and the amount is not provided"
+        shared_examples "modifies" do
+          it "modifies the player's poptabs" do
+            execute_command
+
+            wait_for { ESM::Test.messages.size }.to eq(2)
+
+            # Admin log
+            expect(
+              ESM::Test.messages.retrieve("locker has been modified")
+            ).not_to be(nil)
+
+            # Player response
+            embed = ESM::Test.messages.retrieve("locker by")&.content
+            expect(embed).not_to be(nil)
+
+            expect(embed.description).to eq(
+              "#{user.mention}, you've modified `#{second_user.steam_uid}`'s locker by #{amount.to_readable} poptabs. They used to have #{previous_amount.to_readable} poptabs, they now have #{final_amount.to_readable}."
+            )
+          end
+        end
+
+        context "and the amount is positive" do
+          let!(:previous_amount) { account.locker }
+          let!(:amount) { Faker::Number.positive.to_i }
+          let!(:final_amount) { amount }
+
+          include_examples "modifies"
+        end
+
+        context "and the amount is negative" do
+          let!(:previous_amount) { 10_000 }
+          let!(:amount) { Faker::Number.negative.to_i }
+
+          before do
+            account.update!(locker: previous_amount)
+          end
+
+          include_examples "modifies"
+        end
+
+        context "and the amount is not provided" do
+          let!(:amount) { nil }
+          let!(:final_amount) { nil }
+
+          include_examples "raises_check_failure" do
+            let!(:matcher) { "Missing argument" }
+          end
+        end
       end
 
       context "when the action is 'Change player respect'" do
@@ -311,6 +398,26 @@ describe ESM::Command::Server::Player, category: "command" do
 
       context "when the target has not joined the server" do
         it "raises"
+      end
+
+      context "when logging is enabled" do
+        before do
+          server.server_setting.update!(logging_modify_player: true)
+        end
+
+        include_examples "arma_discord_logging_enabled" do
+          let(:message) { "`ESM_Logging_ModifyPlayer` executed successfully" }
+        end
+      end
+
+      context "when logging is disabled" do
+        before do
+          server.server_setting.update!(logging_modify_player: false)
+        end
+
+        include_examples "arma_discord_logging_disabled" do
+          let(:message) { "`ESM_Logging_ModifyPlayer` executed successfully" }
+        end
       end
     end
   end
