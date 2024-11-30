@@ -234,33 +234,83 @@ describe ESM::Command::Server::Player, category: "command" do
     describe "#on_execute", requires_connection: true do
       include_context "connection"
 
+      let(:action) {}
+      let(:amount) {}
+
+      subject(:execute_command) do
+        execute!(
+          arguments: {
+            server_id: server.server_id,
+            target: second_user.mention,
+            action:,
+            amount:
+          }
+        )
+      end
+
       context "when the action is 'Change player poptabs'" do
-        it "modifies the player's money"
-        it "requires an amount argument"
+        let!(:action) { "money" }
+
+        shared_examples "modifies" do
+          it "modifies the player's poptabs" do
+            execute_command
+
+            wait_for { ESM::Test.messages.size }.to eq(1)
+          end
+        end
+
+        context "and the amount is positive" do
+          let!(:amount) { Faker::Number.positive.to_i }
+
+          include_examples "modifies"
+        end
+
+        context "and the amount is negative"
+        context "and the amount is not provided"
       end
 
       context "when the action is 'Change locker poptabs'" do
-        it "modifies the player's locker"
-        it "requires an amount argument"
+        let!(:action) { "locker" }
+
+        context "and the amount is positive"
+        context "and the amount is negative"
+        context "and the amount is not provided"
       end
 
       context "when the action is 'Change player respect'" do
-        it "modifies the player's respect"
-        it "requires an amount argument"
+        let!(:action) { "respect" }
+
+        context "and the amount is positive"
+        context "and the amount is negative"
+        context "and the amount is not provided"
       end
 
       context "when the action is 'Heal player'" do
+        let!(:action) { "heal" }
+
         it "heals the player"
         it "ignores the amount argument"
       end
 
       context "when the action is 'Kill player'" do
+        let!(:action) { "kill" }
+
         it "kills the player"
         it "will ignore the amount argument"
+
+        context "and the target is already dead"
       end
 
       context "when the target is a non-registered steam uid" do
         it "works"
+      end
+
+      context "when the player has not joined the server" do
+        it "raises"
+      end
+
+      context "when the target has not joined the server" do
+        it "raises"
       end
     end
   end
