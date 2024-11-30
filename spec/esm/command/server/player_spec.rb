@@ -236,6 +236,7 @@ describe ESM::Command::Server::Player, category: "command" do
 
       let(:action) {}
       let(:amount) {}
+      let(:target) { second_user.mention }
 
       let(:previous_amount) {}
       let!(:final_amount) { previous_amount + amount }
@@ -247,7 +248,7 @@ describe ESM::Command::Server::Player, category: "command" do
         execute!(
           arguments: {
             server_id: server.server_id,
-            target: second_user.mention,
+            target:,
             action:,
             amount:
           }
@@ -496,15 +497,47 @@ describe ESM::Command::Server::Player, category: "command" do
       end
 
       context "when the target is a non-registered steam uid" do
-        it "works"
+        let!(:action) { "respect" }
+        let!(:amount) { 100 }
+        let!(:final_amount) {}
+        let!(:target) { second_user.steam_uid }
+
+        it "accepts the steam uid" do
+          execute_command
+
+          wait_for { ESM::Test.messages.size }.to eq(2)
+
+          # Admin log
+          expect(
+            ESM::Test.messages.retrieve("respect has been modified")
+          ).not_to be(nil)
+
+          # Player response
+          embed = ESM::Test.messages.retrieve("respect by")&.content
+          expect(embed).not_to be(nil)
+        end
       end
 
       context "when the player has not joined the server" do
-        it "raises"
+        let!(:action) { "kill" }
+        let!(:final_amount) {}
+
+        before do
+          user.exile_account.destroy!
+        end
+
+        include_examples "arma_error_player_needs_to_join"
       end
 
       context "when the target has not joined the server" do
-        it "raises"
+        let!(:action) { "kill" }
+        let!(:final_amount) {}
+
+        before do
+          second_user.exile_account.destroy!
+        end
+
+        include_examples "arma_error_target_needs_to_join"
       end
 
       context "when logging is enabled" do
