@@ -98,6 +98,8 @@ describe ESM::Command::Server::Reward, category: "command" do
       end
 
       context "when there are rewards" do
+        before do
+        end
       end
 
       context "when there are no rewards" do
@@ -112,6 +114,18 @@ describe ESM::Command::Server::Reward, category: "command" do
 
         include_examples "raises_check_failure" do
           let!(:matcher) { "the selected reward package is not available at this time" }
+        end
+      end
+
+      context "when there is an existing request" do
+        before do
+          # Executing the command but not handling the request will cause the request to be pending
+          execute!(arguments: {server_id: server.server_id})
+          previous_command.current_cooldown.reset!
+        end
+
+        include_examples "raises_check_failure" do
+          let!(:matcher) { "it appears you already have a request pending" }
         end
       end
     end
