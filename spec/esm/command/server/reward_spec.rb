@@ -98,7 +98,33 @@ describe ESM::Command::Server::Reward, category: "command" do
       end
 
       context "when there are rewards" do
+        let!(:reward_items) do
+          {Exile_Weapon_AKM: 1, Exile_Magazine_30Rnd_762x39_AK: 3}
+        end
+
+        let!(:player_poptabs) { 10 }
+        let!(:locker_poptabs) { 20 }
+        let!(:respect) { 30 }
+
         before do
+          server.server_reward.update!(
+            reward_items:,
+            player_poptabs:,
+            locker_poptabs:,
+            respect:
+          )
+        end
+
+        it "gifts them to the player" do
+          execute_command
+
+          wait_for { ESM::Test.messages.size }.to eq(2)
+          accept_request
+          wait_for { ESM::Test.messages.size }.to eq(3)
+
+          embed = latest_message
+          expect(embed).not_to be(nil)
+          binding.pry
         end
       end
 
