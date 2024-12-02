@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-describe ESM::Exile::Territory do
+describe ESM::Exile::Territory, v2: true do
   let!(:community) { ESM::Test.community }
   let!(:server) { ESM::Test.server(for: community, traits: [:v2, :with_territories]) }
   let!(:settings) { server.server_setting }
