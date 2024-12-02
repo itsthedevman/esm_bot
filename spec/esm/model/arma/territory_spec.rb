@@ -10,7 +10,7 @@ describe ESM::Exile::Territory, v2: true do
     moderator_uids = Array.new(2) { ESM::Test.steam_uid }
     builder_uids = Array.new(2) { ESM::Test.steam_uid }
 
-    build(
+    create(
       :exile_territory,
       owner_uid: owner_uid,
       moderators: [owner_uid] + moderator_uids,
@@ -33,7 +33,7 @@ describe ESM::Exile::Territory, v2: true do
 
   describe "#id" do
     it "is expected to return the value" do
-      id = territory_example.esm_custom_id || territory_example.id
+      id = territory_example.esm_custom_id || territory_example.encoded_id
 
       expect(territory.id).to eq(id)
     end
@@ -195,7 +195,7 @@ describe ESM::Exile::Territory, v2: true do
 
     before do
       territory_example.moderators.each do |uid|
-        create(:exile_account, uid:)
+        create(:exile_account, uid:) if ESM::ExileAccount.find_by(uid:).nil?
       end
     end
 
@@ -216,7 +216,7 @@ describe ESM::Exile::Territory, v2: true do
 
     before do
       territory_example.build_rights.each do |uid|
-        create(:exile_account, uid:)
+        create(:exile_account, uid:) if ESM::ExileAccount.find_by(uid:).nil?
       end
     end
 
