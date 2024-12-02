@@ -91,13 +91,27 @@ describe ESM::Command::Server::Reward, category: "command" do
     describe "#on_execute", requires_connection: true do
       include_context "connection"
 
-      subject(:execute_command) { execute!(arguments: {server_id: server.server_id}) }
+      let(:number_of_messages) { 3 }
+
+      subject(:execute_command) do
+        result = execute!(arguments: {server_id: server.server_id})
+
+        wait_for { ESM::Test.messages.size }.to eq(2)
+
+        accept_request
+
+        wait_for { ESM::Test.messages.size }.to eq(number_of_messages)
+
+        result
+      end
 
       before do
         spawn_player_for(user)
       end
 
       context "when there are rewards" do
+        let!(:number_of_messages) { 4 }
+
         let!(:reward_items) do
           {Exile_Weapon_AKM: 1, Exile_Magazine_30Rnd_762x39_AK: 3}
         end
@@ -105,6 +119,16 @@ describe ESM::Command::Server::Reward, category: "command" do
         let!(:player_poptabs) { 10 }
         let!(:locker_poptabs) { 20 }
         let!(:respect) { 30 }
+
+        let!(:expected_reward_items) do
+          <<~STRING.strip
+            - 10x Poptabs added to your player
+            - 20x Poptabs added to your locker
+            - 30x Respect
+            - 3x 7.62 mm 30Rnd Mag
+            - 1x AKM 7.62 mm
+          STRING
+        end
 
         before do
           server.server_reward.update!(
@@ -118,13 +142,17 @@ describe ESM::Command::Server::Reward, category: "command" do
         it "gifts them to the player" do
           execute_command
 
-          wait_for { ESM::Test.messages.size }.to eq(2)
-          accept_request
-          wait_for { ESM::Test.messages.size }.to eq(3)
+          # Admin message
+          embed = ESM::Test.messages.retrieve("Player received the following")&.content
 
-          embed = latest_message
           expect(embed).not_to be(nil)
-          binding.pry
+          expect(embed.description).to match(expected_reward_items)
+
+          # Player message
+          embed = ESM::Test.messages.retrieve("here's what you just received")&.content
+
+          expect(embed).not_to be(nil)
+          expect(embed.description).to match(expected_reward_items)
         end
       end
 
@@ -152,6 +180,55 @@ describe ESM::Command::Server::Reward, category: "command" do
 
         include_examples "raises_check_failure" do
           let!(:matcher) { "it appears you already have a request pending" }
+        end
+      end
+
+      context "when the player has not joined the server" do
+        before do
+          user.exile_account.destroy!
+        end
+
+        it "is expected to raise PlayerNeedsToJoin" do
+          execute_command
+
+          embed = latest_message
+          expect(embed.description).to match("need to join")
+        end
+      end
+
+      context "when the player is not alive on the server" do
+        before do
+          user.kill_player!(server)
+        end
+
+        it "is expected to raise AlivePlayer" do
+          execute_command
+
+          embed = latest_message
+          expect(embed.description).to match("you are dead")
+        end
+      end
+
+      context "when logging is enabled" do
+        let!(:number_of_messages) { 4 }
+
+        before do
+          server.server_setting.update!(logging_reward_player: true)
+        end
+
+        include_examples "arma_discord_logging_enabled" do
+          let(:message) { "`ESMs_command_reward` executed successfully" }
+          let(:fields) { [player_field] }
+        end
+      end
+
+      context "when logging is disabled" do
+        before do
+          server.server_setting.update!(logging_reward_player: false)
+        end
+
+        include_examples "arma_discord_logging_disabled" do
+          let(:message) { "`ESMs_command_reward` executed successfully" }
         end
       end
     end
