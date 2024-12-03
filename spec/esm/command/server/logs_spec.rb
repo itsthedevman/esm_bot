@@ -112,6 +112,11 @@ describe ESM::Command::Server::Logs, category: "command" do
         end
       end
 
+      before do
+        # These specs don't trigger the standard workflow
+        command.load_v1_code!
+      end
+
       it "parses German months" do
         checker(german_months)
       end
