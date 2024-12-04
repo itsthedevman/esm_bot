@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2024_12_03_010055) do
+ActiveRecord::Schema[7.2].define(version: 2024_12_03_183836) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
   enable_extension "plpgsql"
@@ -92,6 +92,7 @@ ActiveRecord::Schema[7.2].define(version: 2024_12_03_010055) do
     t.text "welcome_message", default: ""
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "allow_v2_servers", default: false
     t.index ["community_id"], name: "index_communities_on_community_id", unique: true
     t.index ["guild_id"], name: "index_communities_on_guild_id", unique: true
     t.index ["public_id"], name: "index_communities_on_public_id", unique: true
@@ -216,7 +217,7 @@ ActiveRecord::Schema[7.2].define(version: 2024_12_03_010055) do
 
   create_table "server_settings", force: :cascade do |t|
     t.integer "server_id"
-    t.text "extdb_path"
+    t.text "extdb_conf_path"
     t.integer "gambling_payout_base", default: 95
     t.integer "gambling_modifier", default: 1
     t.float "gambling_payout_randomizer_min", default: 0.0
@@ -246,6 +247,14 @@ ActiveRecord::Schema[7.2].define(version: 2024_12_03_010055) do
     t.integer "server_restart_min", default: 0
     t.datetime "deleted_at", precision: nil
     t.boolean "gambling_locker_limit_enabled", default: true, null: false
+    t.string "extdb_conf_header_name"
+    t.integer "extdb_version"
+    t.string "log_output"
+    t.text "database_uri"
+    t.string "server_mod_name"
+    t.string "number_locale"
+    t.integer "exile_logs_search_days"
+    t.json "additional_logs", default: []
     t.index ["deleted_at"], name: "index_server_settings_on_deleted_at"
     t.index ["server_id"], name: "index_server_settings_on_server_id"
   end
