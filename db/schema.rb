@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2024_12_03_183836) do
+ActiveRecord::Schema[7.2].define(version: 2024_12_05_054436) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
   enable_extension "plpgsql"
@@ -136,13 +136,15 @@ ActiveRecord::Schema[7.2].define(version: 2024_12_03_183836) do
   end
 
   create_table "log_entries", force: :cascade do |t|
-    t.integer "log_id", null: false
+    t.uuid "uuid", null: false
+    t.bigint "log_id", null: false
     t.datetime "log_date"
     t.string "file_name", null: false
     t.json "entries"
     t.index ["log_id", "log_date", "file_name"], name: "index_log_entries_on_log_id_and_log_date_and_file_name"
     t.index ["log_id", "log_date"], name: "index_log_entries_on_log_id_and_log_date"
     t.index ["log_id"], name: "index_log_entries_on_log_id"
+    t.index ["uuid"], name: "index_log_entries_on_uuid"
   end
 
   create_table "logs", force: :cascade do |t|
@@ -414,7 +416,7 @@ ActiveRecord::Schema[7.2].define(version: 2024_12_03_183836) do
   add_foreign_key "cooldowns", "communities", on_delete: :cascade
   add_foreign_key "cooldowns", "servers", on_delete: :cascade
   add_foreign_key "cooldowns", "users", on_delete: :nullify
-  add_foreign_key "log_entries", "logs", on_delete: :cascade
+  add_foreign_key "log_entries", "logs"
   add_foreign_key "logs", "servers", on_delete: :cascade
   add_foreign_key "requests", "users", column: "requestee_user_id", on_delete: :cascade
   add_foreign_key "requests", "users", column: "requestor_user_id", on_delete: :cascade
