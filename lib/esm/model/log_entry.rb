@@ -2,6 +2,7 @@
 
 module ESM
   class LogEntry < ApplicationRecord
+    attribute :uuid, :uuid
     attribute :log_id, :integer
     attribute :file_name, :string
     attribute :entries, :json
