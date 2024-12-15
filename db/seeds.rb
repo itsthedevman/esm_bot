@@ -115,7 +115,10 @@ server.server_rewards.where(reward_id: nil).first.update!(
 server.server_rewards.create!(
   server_id: server.id,
   reward_id: "vehicles",
-  reward_items: {},
+  reward_items: {
+    Exile_Item_DuctTape: 1,
+    Exile_Item_CarWheel: 1
+  },
   reward_vehicles: [
     {
       class_name: "Exile_Car_Hatchback_Beige",
@@ -130,9 +133,9 @@ server.server_rewards.create!(
       spawn_location: "player_decides"
     }
   ],
-  player_poptabs: 0,
+  player_poptabs: 100,
   locker_poptabs: 0,
-  respect: 0
+  respect: 5
 )
 puts " done"
 
