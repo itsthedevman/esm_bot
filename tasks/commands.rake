@@ -11,11 +11,7 @@ namespace :commands do
     puts JSON.pretty_generate(commands)
   end
 
-  task seed: :bot do
-    print "Deleting all global commands..."
-    ESM.bot.get_application_commands.each(&:delete)
-    puts " done"
-
+  task seed_for_communities: :bot do
     ESM::Community.all.each do |community|
       print "  Deleting commands for #{community.community_id}..."
       ESM.bot.get_application_commands(server_id: community.guild_id).each(&:delete)
@@ -25,9 +21,22 @@ namespace :commands do
       ESM::Command.register_commands(community.guild_id)
       puts " done"
     end
+  end
 
+  task seed_for_global: :bot do
     print "  Registering global commands..."
     ESM::Command.register_commands
+    puts " done"
+  end
+
+  task seed: :bot do
+    Rake::Task["delete_global"].invoke
+    Rake::Task["seed_for_global"].invoke
+  end
+
+  task delete_global: :bot do
+    print "Deleting all global commands..."
+    ESM.bot.get_application_commands.each(&:delete)
     puts " done"
   end
 end
