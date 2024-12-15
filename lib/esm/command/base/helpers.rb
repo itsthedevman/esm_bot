@@ -345,6 +345,8 @@ module ESM
         def send_to_target_server!(message, block: true)
           raise ArgumentError, "Message must be a ESM::Message" unless message.is_a?(ESM::Message)
 
+          check_for_connected_server!
+
           if target_server.nil?
             raise ESM::Exception::CheckFailure,
               "Command #{name} must define the `server_id` argument in order to use #send_to_target_server!"
