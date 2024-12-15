@@ -398,8 +398,8 @@ module ESM
         end
 
         # Convenience method for replying back to the event's channel
-        def reply(message)
-          ESM.bot.deliver(message, to: current_channel, block: true)
+        def reply(message, to: current_channel)
+          ESM.bot.deliver(message, to:, block: true)
         end
 
         def edit_message(message, content)
