@@ -94,7 +94,7 @@ module ESM
             ESM::Embed.build(:error, description: I18n.t("exceptions.system", error_code: uuid))
           end
 
-        ESM.bot.deliver(message, to: channel)
+        ESM.bot.deliver(message, to: @command.current_channel)
 
         @command
       end
