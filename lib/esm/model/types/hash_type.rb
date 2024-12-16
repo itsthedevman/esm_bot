@@ -2,9 +2,19 @@
 
 class HashType < ActiveRecord::Type::Json
   def deserialize(value)
-    hash = super
-    return hash unless hash.is_a?(Hash)
+    deep_symbolize_keys(super)
+  end
 
-    hash.deep_symbolize_keys
+  private
+
+  def deep_symbolize_keys(value)
+    case value
+    when Hash
+      value.deep_symbolize_keys
+    when Array
+      value.map { |v| deep_symbolize_keys(v) }
+    else
+      value
+    end
   end
 end
