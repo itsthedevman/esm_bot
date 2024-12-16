@@ -87,6 +87,10 @@ module ESM
       version?("2.0.0")
     end
 
+    def metadata
+      connection&.metadata
+    end
+
     def connection
       ESM::Connection::Server.client(public_id)
     end
