@@ -50,6 +50,9 @@ ESM.loader.tap do |loader|
   # ESM::Jobs::SomeJob -> SomeJob
   loader.push_dir(ESM.root.join("lib", "esm", "jobs"))
 
+  # ActiveRecord types, we load them below
+  loader.push_dir(ESM.root.join("lib", "esm", "model", "types"))
+
   # Don't load extensions, we do that above
   loader.ignore(ESM.root.join("lib", "esm", "extension"))
 
@@ -63,6 +66,18 @@ ESM.loader.tap do |loader|
   # gemspec expects this file, but Zeitwerk does not like it
   loader.ignore(ESM.root.join("lib", "esm", "version.rb"))
   loader.ignore(ESM.root.join("lib", "esm", "esm.rb"))
+
+  # Get it ready
+  loader.setup
+
+  # Get them ready for below
+  loader.eager_load_dir(ESM.root.join("lib", "esm", "model", "types"))
 end
 
+#############################
+# Register database types
+#############################
+ActiveRecord::Type.register(:hash, HashType)
+
+#############################
 info!("Completed in #{timer.stop!}s")

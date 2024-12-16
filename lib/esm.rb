@@ -126,7 +126,6 @@ module ESM
 
     # Load everything right meow
     def load!
-      loader.setup
       loader.eager_load
     end
 

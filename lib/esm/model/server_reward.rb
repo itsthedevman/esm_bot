@@ -8,12 +8,12 @@ module ESM
     # Valid attributes:
     #   class_name <String>
     #   quantity <Integer>
-    attribute :reward_items, :json, default: {}
+    attribute :reward_items, :hash, default: {}
 
     # Valid attributes:
     #   class_name <String>
     #   spawn_location <String> Valid options: "nearby", "virtual_garage", "player_decides"
-    attribute :reward_vehicles, :json, default: []
+    attribute :reward_vehicles, :hash, default: []
 
     attribute :player_poptabs, :integer, limit: 8, default: 0
     attribute :locker_poptabs, :integer, limit: 8, default: 0
