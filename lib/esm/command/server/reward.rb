@@ -4,7 +4,11 @@ module ESM
   module Command
     module Server
       class Reward < ApplicationCommand
-        SPAWN_LOCATIONS = ["virtual_garage", "player_decides"].freeze
+        NEARBY = ServerReward::LOCATION_NEARBY
+        VIRTUAL_GARAGE = ServerReward::LOCATION_VIRTUAL_GARAGE
+        PLAYER_DECIDES = ServerReward::LOCATION_PLAYER_DECIDES
+
+        SPAWN_LOCATIONS = [VIRTUAL_GARAGE, PLAYER_DECIDES].freeze
 
         #################################
         #
@@ -25,6 +29,8 @@ module ESM
         # Don't allow adjusting this cooldown. Each reward has it's own cooldown
         change_attribute :cooldown_time, modifiable: false, default: 2.seconds
 
+        # override :current_channel, :current_user ?
+
         # FOR DEV ONLY
         skip_action :cooldown, :connected_server
 
@@ -44,15 +50,14 @@ module ESM
             )
 
             reply(embed)
+
+            # Overwrite the current channel so errors are properly sent to the correct channel
+            @current_channel = current_user.discord_user.pm
           end
 
-          @vehicles = []
-          @nearby_vehicles = []
           @reward_package = {}
-
-          @locations = selected_reward.reward_vehicles
-            .group_by { |v| v["spawn_location"] }
-            .transform_values(&:size)
+          @vehicles = load_reward_vehicles
+          @locations = load_vehicle_locations
 
           send_request_description
           request_spawn_locations if spawn_locations_needed?
@@ -64,7 +69,7 @@ module ESM
               description: I18n.t("commands.reward.errors.no_reply", user: current_user.mention)
             )
 
-            reply(embed, to: current_user)
+            reply(embed)
 
             return
           when :cancel
@@ -74,7 +79,7 @@ module ESM
               description: "You may re-run the command to start over"
             )
 
-            reply(embed, to: current_user)
+            reply(embed)
 
             return
           end
@@ -82,7 +87,7 @@ module ESM
           response = call_sqf_function!("ESMs_command_reward", **@reward_package)
 
           embed = embed_from_message!(response)
-          reply(embed, to: current_user)
+          reply(embed)
         end
 
         private
@@ -109,6 +114,25 @@ module ESM
 
         def selected_reward
           @selected_reward ||= target_server.server_rewards.find_by(reward_id: arguments.reward_id)
+        end
+
+        def load_reward_vehicles
+          vehicles = selected_reward.vehicles
+          vehicles.each do |vehicle|
+            vehicle[:chosen_location] = NEARBY if vehicle[:spawn_location] == NEARBY
+          end
+
+          # Alternative to sort_by to avoid dealing with "booleans" and sorting
+          nil_locations, present_locations = vehicles.partition { |v| v[:chosen_location].nil? }
+
+          # Put the vehicles that need locations up front
+          nil_locations + present_locations
+        end
+
+        def load_vehicle_locations
+          selected_reward.reward_vehicles
+            .group_by { |v| v[:spawn_location] }
+            .transform_values(&:size)
         end
 
         def spawn_locations_needed?
@@ -198,42 +222,69 @@ module ESM
             e.footer = I18n.t("#{base_path}.footer")
           end
 
-          reply(embed, to: current_user)
+          reply(embed)
         end
 
         def request_spawn_locations
           @territories = query_exile_database!("reward_territories", uid: current_user.steam_uid)
 
           if @territories.present?
+            max_size_lookup = target_server.metadata.vg_max_sizes.to_a
+
             @territories.map! do |territory|
+              max_size = max_size_lookup[territory[:level]].to_i
+
               territory[:territory_id] ||= territory["custom_id"]
+              territory[:number_of_free_spots] =
+                if territory[:vehicle_count] >= max_size
+                  -1
+                else
+                  max_size - territory[:vehicle_count]
+                end
+
               territory.to_istruct
             end
 
-            @territories.sort_by!(&:territory_id)
+            @territories.sort_by! do |territory|
+              [
+                territory.territory_id,
+                -territory.number_of_free_spots
+              ]
+            end
           end
 
-          @vehicles = selected_reward.vehicles
-            .reject do |vehicle|
-              # They'll be added back later. We don't need a location for them
-              @nearby_vehicles << vehicle if vehicle[:spawn_location] == "nearby"
+          @vehicle_configuration_message = reply(vehicle_configuration_content)
+        end
+
+        def vehicle_configuration_content
+          content = <<~STRING.chomp
+            ## Vehicle Configuration
+            ```#{spawn_locations_table}```
+            ## Vehicles
+            ```#{vehicles_table}```
+          STRING
+
+          content +=
+            if @results.blank?
+              <<~STRING
+
+                ### Results
+                TODO
+              STRING
+            else
+              <<~STRING
+
+                ### Results
+                ```#{@results}```
+              STRING
             end
 
-          embed =
-            ESM::Embed.new do |e|
-              e.title = "Vehicle Configuration"
-              e.description = ""
-              e.add_field(name: "", value: "```#{spawn_locations_table}```")
-              e.add_field(name: "Vehicles", value: "```#{vehicles_table}```")
-            end
-
-          reply(embed, to: current_user)
+          content
         end
 
         def spawn_locations_table
           Terminal::Table.new do |t|
             t.style = {
-              # width: 63,
               border: :unicode,
               border_top: false,
               border_right: false,
@@ -241,25 +292,16 @@ module ESM
               border_left: false
             }
 
-            t.headings = ["Territory ID", "Name", "Free Spots"]
-            t.add_row(["Nearby", "Spawn near player", "∞"])
+            t.headings = ["ID", "Name", "Slots left"]
 
-            max_size_lookup = target_server.metadata.vg_max_sizes.to_a
+            t.add_row([NEARBY, "Spawn near player", "∞"])
+            t.add_separator(border_type: :dash)
 
             @territories.each do |territory|
-              max_size = max_size_lookup[territory.level].to_i
-
-              free_spots =
-                if territory.vehicle_count >= max_size
-                  "full"
-                else
-                  max_size - territory.vehicle_count
-                end
-
               t.add_row([
                 territory.custom_id || territory.territory_id,
                 territory.name.truncate(60),
-                free_spots
+                territory.number_of_free_spots
               ])
             end
           end
@@ -269,27 +311,39 @@ module ESM
           Terminal::Table.new do |t|
             t.style = {
               border: :unicode,
-              # width: 63,
               border_top: false,
               border_right: false,
               border_bottom: false,
               border_left: false
             }
 
-            t.headings = ["Vehicle #", "Location", "Vehicle Name"]
+            t.headings = ["Vehicle #", "Location", "Vehicle Name", "Limited To"]
 
             @vehicles.each_with_index do |vehicle, index|
-              display_name =
-                if vehicle[:spawn_location] == "virtual_garage"
-                  "#{vehicle[:display_name].truncate(60)} (VG ONLY)"
+              display_name = vehicle[:display_name].truncate(80)
+
+              limited_to =
+                case vehicle[:spawn_location]
+                when VIRTUAL_GARAGE
+                  "Virtual Garage"
+                when NEARBY
+                  "Nearby"
                 else
-                  vehicle[:display_name].truncate(80)
+                  ""
+                end
+
+              vehicle_id =
+                if vehicle[:spawn_location] == NEARBY
+                  "╌╌╌"
+                else
+                  index + 1
                 end
 
               t.add_row([
-                index + 1,
+                vehicle_id,
                 vehicle[:chosen_location] || "Choose...",
-                display_name
+                display_name,
+                limited_to
               ])
             end
           end
@@ -328,79 +382,94 @@ module ESM
 
         def store_vehicle_location(response_event)
           # Supports one at a time or multiple
-          location_data = response_event.message.content.split.map { |s| s.split(":") }
+          location_data = response_event.message.content.split.map { |s| s.squish.split(":") }
 
-          success = false
-          location_data.each do |vehicle_index, location|
-            vehicle_index = [vehicle_index.to_i - 1, 0].max
+          results = location_data.to_h { |i, _l| [i.to_i, ""] }
+
+          # valid_vehicle_id:nearby
+          # valid_vehicle_id:valid_territory_id
+          # valid_vehicle_id:invalid_territory_id
+          # locked_vehicle_id:invalid_location
+          location_data.each do |provided_index, location|
+            location = location.downcase
+            provided_index = provided_index.to_i
+            vehicle_index = [provided_index - 1, 0].max
+
             vehicle = @vehicles[vehicle_index]
-            next if vehicle.nil?
+            if vehicle.nil?
+              results[provided_index] = "Not a valid vehicle #"
+              next
+            end
 
             # Check to make sure this territory is valid.
             # The user can use a custom id or territory ID
-            location = location.downcase
             territory = @territories.find do |territory|
               location.casecmp?(territory.custom_id) ||
                 location.casecmp?(territory.territory_id)
             end
 
-            # Store the location on the vehicle
-            previous_choice = vehicle[:chosen_location]
+            # Block assigning a VG only vehicle to nearby
+            if vehicle[:spawn_location] == VIRTUAL_GARAGE && location == NEARBY
+              results[provided_index] = "Vehicle is limited to VG, location must be a territory ID"
+              next
+            end
 
-            if territory && SPAWN_LOCATIONS.include?(vehicle[:spawn_location])
-              territory.vehicle_count += 1
+            # Store the location on the vehicle
+            if location == NEARBY
+              vehicle[:chosen_location] = NEARBY
+              vehicle.delete(:territory_id)
+            elsif territory && SPAWN_LOCATIONS.include?(vehicle[:spawn_location])
+              territory.number_of_free_spots += 1
 
               vehicle[:chosen_location] = territory.custom_id || territory.territory_id
               vehicle[:territory_id] = territory.id
-            elsif vehicle[:spawn_location] == "player_decides"
-              vehicle[:chosen_location] = "Nearby"
-              vehicle.delete(:territory_id)
             else
-              next # Territory is invalid
+              results[provided_index] = "\"#{location}\" is not a valid territory ID"
+              next
             end
 
-            # Increase the vehicle count because we're removing one
+            previous_choice = vehicle[:chosen_location]
+
+            # Increase the vehicle count if we removed one
             previous_territory = @territories.find do |territory|
               previous_choice.casecmp?(territory.custom_id) ||
                 previous_choice.casecmp?(territory.territory_id)
             end
 
-            previous_territory.vehicle_count -= 1 if previous_territory
-            success = true
+            if previous_territory && previous_territory.number_of_free_spots != -1
+              previous_territory.number_of_free_spots -= 1
+            end
           end
 
-          if !success
-            response_event.message.react("❌")
-            return :continue
+          @results = results.join_map("\n") do |index, reason|
+            reason = reason.presence || "Updated"
+            "##{index}: #{reason}"
           end
 
-          response_event.message.react("✅")
-          edit_message(@vehicle_message, vehicle_embed)
+          edit_message(@vehicle_configuration_message, vehicle_configuration_content)
 
           :continue
         end
 
         def on_accept
-          vehicles = @vehicles + @nearby_vehicles
-
-          if vehicles.present?
+          if @vehicles.present?
             # Check to see if all vehicles have the required information
-            invalid_vehicle_numbers = vehicles.map.with_index do |vehicle, index|
+            invalid_vehicle_numbers = @vehicles.map.with_index do |vehicle, index|
               next if vehicle[:territory_id].present? ||
-                (vehicle[:chosen_location] || vehicle[:spawn_location]).casecmp?("nearby")
+                (vehicle[:chosen_location] || vehicle[:spawn_location]).casecmp?(NEARBY)
 
               index + 1
             end.compact
 
             if invalid_vehicle_numbers.present?
-              reply("Yo, you forgot some. #{invalid_vehicle_numbers}", to: current_user)
+              reply("Yo, you forgot some. #{invalid_vehicle_numbers}")
               return :continue
             end
 
-            vehicles.map! do |vehicle|
+            @vehicles.map! do |vehicle|
               {
                 class_name: vehicle[:class_name],
-                spawn_location: vehicle[:territory_id] || "nearby"
+                spawn_location: vehicle[:territory_id] || NEARBY
               }
             end
           end
@@ -421,8 +490,8 @@ module ESM
             @reward_package[:items] = items
           end
 
-          if vehicles.present?
-            @reward_package[:vehicles] = vehicles
+          if @vehicles.present?
+            @reward_package[:vehicles] = @vehicles
           end
         end
 

@@ -2,6 +2,10 @@
 
 module ESM
   class ServerReward < ApplicationRecord
+    LOCATION_NEARBY = "nearby"
+    LOCATION_VIRTUAL_GARAGE = "virtual_garage"
+    LOCATION_PLAYER_DECIDES = "player_decides"
+
     attribute :server_id, :integer
     attribute :reward_id, :string
 
