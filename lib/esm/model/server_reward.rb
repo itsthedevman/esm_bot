@@ -2,10 +2,6 @@
 
 module ESM
   class ServerReward < ApplicationRecord
-    LOCATION_NEARBY = "nearby"
-    LOCATION_VIRTUAL_GARAGE = "virtual_garage"
-    LOCATION_PLAYER_DECIDES = "player_decides"
-
     attribute :server_id, :integer
     attribute :reward_id, :string
 
@@ -16,7 +12,7 @@ module ESM
 
     # Valid attributes:
     #   class_name <String>
-    #   spawn_location <String> Valid options: "nearby", "virtual_garage", "player_decides"
+    #   limited_to <String> Valid options: "nearby", "virtual_garage"
     attribute :reward_vehicles, :hash, default: []
 
     attribute :player_poptabs, :integer, limit: 8, default: 0
@@ -32,10 +28,10 @@ module ESM
     def vehicles
       @vehicles ||= reward_vehicles.map do |vehicle_data|
         class_name = vehicle_data[:class_name]
-        spawn_location = vehicle_data[:spawn_location]
+        limited_to = vehicle_data[:limited_to]
         display_name = ESM::Arma::ClassLookup.find(class_name).try(:display_name) || class_name
 
-        {class_name:, display_name:, spawn_location:}
+        {class_name:, display_name:, limited_to:}
       end
     end
 

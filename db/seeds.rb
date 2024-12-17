@@ -122,15 +122,14 @@ server.server_rewards.create!(
   reward_vehicles: [
     {
       class_name: "Exile_Car_Hatchback_Beige",
-      spawn_location: "nearby"
+      limited_to: "nearby"
     },
     {
       class_name: "Exile_Chopper_Huron_Black",
-      spawn_location: "virtual_garage"
+      limited_to: "virtual_garage"
     },
     {
-      class_name: "Exile_Car_Hunter",
-      spawn_location: "player_decides"
+      class_name: "Exile_Car_Hunter"
     }
   ],
   player_poptabs: 100,
