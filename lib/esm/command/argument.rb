@@ -130,88 +130,89 @@ module ESM
       # A configurable representation of a command argument
       #
       # @param name [Symbol, String]
-      #     The argument's name
+      #   The argument's name
       #
       # @param type [Symbol, String]
-      #     The argument's type (directly linked to Discord).
-      #     Optional.
-      #     Default: :string
+      #   The argument's type, mapped to Discord types
+      #   via Discordrb::Interactions::OptionBuilder::TYPES.
+      #   Optional. Default: :string
       #
-      # @param opts [Hash]
-      #     Options to configure the argument
+      # @param opts [Hash] Options to configure the argument
+      #   @option opts [Boolean, Hash] :required (false)
+      #     Controls if the argument is required by Discord and/or the Bot.
+      #     When Hash: {discord: Boolean, bot: Boolean} for fine-grained control
+      #     When Boolean: Sets both discord and bot requirements
       #
-      #   @option opts [TrueClass, FalseClass, Hash] :required
-      #     Controls if the argument should be required by Discord and by the Bot
-      #     Fine grain control can be achieved by providing a Hash.
-      #     For example, not require an argument on Discord but require it on the bot side
-      #       required: {discord: false, bot: true}
-      #     Optional. Default: false
-      #
-      #   @option opts [Symbol, String, nil] :template
-      #     The name of a default entry in which `opts` are merged into.
-      #     Useful for having an argument that acts like another argument, but may have different configuration
+      #   @option opts [Symbol, String] :template
+      #     Name of a template from TEMPLATES or DEFAULT_TEMPLATE to inherit options from.
+      #     Template options are merged with provided opts (opts take precedence)
       #
       #   @option opts [String] :description
-      #     This argument's description, in less than 100 characters.
-      #       This description is used in Discord when viewing the argument.
-      #       Note: Providing this option is optional, however, all arguments MUST have a non-blank description
-      #     This value defaults to the value located at the locale path:
-      #         commands.<command_name>.arguments.<argument_name>.description
+      #     Discord-visible description (max 100 characters).
+      #     Required either here or in locale path:
+      #       commands.<command_name>.arguments.<argument_name>.description
       #
       #   @option opts [String] :description_extra
-      #     Any extra information to be included that wouldn't fit in the 100 character limit
-      #       Note: Providing this option is optional, however, this argument MUST have a non-blank description
-      #       This description is used in the help documentation with the help command and on the website
-      #     This value defaults to the value located at the locale path:
-      #         commands.<command_name>.arguments.<argument_name>.description_extra
+      #     Additional help text shown in documentation and website.
+      #     Optional. Defaults to locale path:
+      #       commands.<command_name>.arguments.<argument_name>.description_extra
       #
       #   @option opts [String] :optional_text
-      #     Allows for overriding the "this argument is optional" text in the help documentation.
-      #       This opt is ignored if `required: true`
-      #     Optional.
-      #     This value defaults to the value located at the locale path:
-      #         commands.<command_name>.arguments.<argument_name>.optional_text
+      #     Override text indicating argument is optional.
+      #     Ignored if required: true
+      #     Defaults to locale path:
+      #       commands.<command_name>.arguments.<argument_name>.optional_text
       #
       #   @option opts [Symbol, String] :display_name
-      #     Changes how the argument is displayed to the user, but not in the code
-      #     Optional.
+      #     User-facing argument name. Internal name remains unchanged.
       #
       #   @option opts [Object] :default
-      #     The default value if this argument. This value is ignored if `required: true`
-      #     Optional.
-      #     Default: nil
+      #     Default value if argument is optional (ignored if required: true)
       #
-      #   @option opts [Boolean] :preserve_case
-      #     Controls if this argument's value should be converted to lowercase or not.
-      #     Optional.
-      #     Default: false
+      #   @option opts [Boolean] :preserve_case (false)
+      #     If false, converts argument value to lowercase
       #
       #   @option opts [Proc] :modifier
-      #     A block of code used to modify this argument's value before validation
-      #     Optional.
+      #     Transforms the argument value before validation
       #
       #   @option opts [Hash] :choices
-      #     The key: display_value of choices the user can pick from
-      #     Optional.
+      #     Valid choices as {value: "Display Name"}.
+      #     Note: Internally converted to Discord format {"Display Name": "value"}
       #
       #   @option opts [Integer] :min_value
-      #     If type is integer/number, this is the minimum value that can be selected
+      #     Minimum allowed value for number/integer types
       #
       #   @option opts [Integer] :max_value
-      #     If type is integer/number, this is the maximum value that can be selected
+      #     Maximum allowed value for number/integer types
       #
       #   @option opts [Regex, String, Proc, Array] :checked_against
-      #     Used to perform validation against the content provided to the argument
-      #     Regex/String  - Content must `match?`
-      #     Proc          - Content is passed in and can return a truthy value to consider the content as valid
-      #     Array         - Content must be one of the values
+      #     Validation rules:
+      #     - Regex/String: Value must match pattern
+      #     - Proc: Must return truthy value
+      #     - Array: Value must be included
+      #     Invalid values trigger standard validation error handling
       #
       #   @option opts [Proc] :checked_against_if
-      #     Used to determine if the argument should be validated against :checked_against.
-      #     Can return a truthy value to continue to validation. Falsey values will cause validation to be skipped
+      #     Controls when :checked_against validation occurs.
+      #     Must return truthy value to trigger validation
       #
       #   @option opts [String, Symbol] :placeholder
-      #     Used when the command usage is displayed and use_placeholders are true. Defaults to the display name
+      #     Placeholder text shown in usage examples.
+      #     Defaults to argument name
+      #
+      # @example Basic required string argument
+      #   argument :username, required: true
+      #
+      # @example Number with range and custom validation
+      #   argument :count, :integer,
+      #     min_value: 0,
+      #     max_value: 100,
+      #     checked_against: ->(val) { val.even? }
+      #
+      # @example Using a template with overrides
+      #   argument :territory, template: :territory_id,
+      #     description: "Custom description"
+      #
       def initialize(name, type = nil, opts = {})
         template_name = (opts[:template] || name).to_sym
 
