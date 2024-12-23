@@ -3,7 +3,7 @@
 module ESM
   class Bot
     class DeliveryOverseer
-      class Envelope < ImmutableStruct.define(:id, :message, :delivery_channel, :embed_message, :replying_to, :wait)
+      class Envelope < ImmutableStruct.define(:id, :message, :delivery_channel, :embed_message, :replying_to, :wait, :view)
         def initialize(**args)
           defaults = {id: nil, wait: false}
 
@@ -61,13 +61,17 @@ module ESM
         @sender_thread_two = oversee!
       end
 
-      def add(message, delivery_channel, embed_message: "", replying_to: nil, wait: false)
+      def add(
+        message, delivery_channel,
+        embed_message: "", replying_to: nil, wait: false, view: nil
+      )
         envelope = Envelope.new(
-          message: message,
-          delivery_channel: delivery_channel,
-          embed_message: embed_message,
-          replying_to: replying_to,
-          wait: wait
+          message:,
+          delivery_channel:,
+          embed_message:,
+          replying_to:,
+          view:,
+          wait:
         )
 
         @queue << envelope
@@ -95,13 +99,7 @@ module ESM
             envelope = @queue.pop(timeout: 0)
             next if envelope.nil?
 
-            message = ESM.bot.__deliver(
-              envelope.message,
-              envelope.delivery_channel,
-              embed_message: envelope.embed_message,
-              replying_to: envelope.replying_to
-            )
-
+            message = ESM.bot.__deliver(envelope)
             next unless envelope.wait
 
             @deliveries_mutex.synchronize do

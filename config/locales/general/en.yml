@@ -40,6 +40,7 @@ en:
   request_timed_out: |-
     I'm sorry %{user}, `%{server_id}` never replied to your command
     Here was the command you ran: ```%{command_message}``` Please wait a few minutes and try again.
+  request_cancelled: "Request cancelled. No changes have been made."
   datetime:
     dotiw:
       words_connector: ", "
@@ -152,6 +153,8 @@ en:
   dm: "Direct Message"
   text: "Text"
   message: "Message"
+  continue: "Continue"
+  cancel: "Cancel"
   xm8_notification: "XM8 notification"
   uptime: "Uptime"
   server_connected: "**Server is now online**"

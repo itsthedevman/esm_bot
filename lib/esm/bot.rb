@@ -195,10 +195,11 @@ module ESM
     # @param embed_message [String] An optional message to attach with an embed. Only works if `message` is an embed
     # @param replying_to [Discordrb::Message] A message to "reply" to. Discord will reference the previous message
     # @param block [true/false] Controls if this should block and wait for the message to send and discord to reply, or send it and immediately return
+    # @param view [Discordrb::Components::View, nil] Any extra interaction components (buttons, select boxes, etc.)
     #
     # @return [Discordrb::Message, nil]
     #
-    def deliver(message, to:, embed_message: "", replying_to: nil, block: false)
+    def deliver(message, to:, embed_message: "", replying_to: nil, block: false, view: nil)
       return if message.blank?
 
       replying_to = nil if replying_to.present? && !replying_to.is_a?(Discordrb::Message)
@@ -220,12 +221,12 @@ module ESM
       promise = @delivery_overseer.add(
         message,
         delivery_channel,
-        embed_message: embed_message,
-        replying_to: replying_to,
+        embed_message:,
+        replying_to:,
+        view:,
         wait: block
       )
 
-      # A "promise" is returned only if block is true.
       # If block is false, this will be nil and immediately return
       promise&.wait_for_delivery
     rescue ESM::Exception::ChannelAccessDenied
@@ -248,20 +249,43 @@ module ESM
       nil
     end
 
-    def __deliver(message, delivery_channel, embed_message: "", replying_to: nil)
+    def __deliver(envelope)
+      message = envelope.message
+      delivery_channel = envelope.delivery_channel
+      embed_message = envelope.embed_message
+      replying_to = envelope.replying_to
+      view = envelope.view
+
       info!(
         channel: "#{delivery_channel.name} (#{delivery_channel.id})",
         message: message.is_a?(ESM::Embed) ? message.to_h : message,
         embed_message:,
-        replying_to:
+        replying_to:,
+        view:
       )
 
       if message.is_a?(ESM::Embed)
         # Send the embed
-        delivery_channel.send_embed(embed_message, nil, nil, false, nil, replying_to) { |embed| message.transfer(embed) }
+        delivery_channel.send_embed(
+          embed_message,  # Message
+          nil,            # Embed
+          nil,            # Attachments
+          false,          # Text-to-speech
+          nil,            # Allowed mentions
+          replying_to,    # Message reference
+          view            # Components
+        ) { |embed| message.transfer(embed) }
       else
         # Send the text message
-        delivery_channel.send_message(message, false, nil, nil, nil, replying_to)
+        delivery_channel.send_message(
+          message,        # Content
+          false,          # Text-to-speech
+          nil,            # Embed
+          nil,            # Attachments
+          nil,            # Allowed mentions
+          replying_to,    # Message reference
+          view            # Components
+        )
       end
     rescue => e
       warn!(error: e)

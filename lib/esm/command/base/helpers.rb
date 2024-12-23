@@ -55,6 +55,10 @@ module ESM
           end
         end
 
+        def bot
+          ESM.bot
+        end
+
         #
         # See class method .usage above
         #
@@ -303,13 +307,22 @@ module ESM
         #
         def raise_error!(error_name = nil, **args, &block)
           exception_class = args.delete(:exception_class) || ESM::Exception::CheckFailure
-          path_prefix = args.delete(:path_prefix) || "commands.#{name}.errors"
+
+          prefix = args.delete(:path_prefix)
+          path_prefix =
+            if prefix.nil?
+              "commands.#{name}.errors."
+            elsif prefix.present?
+              "#{prefix}."
+            else
+              ""
+            end
 
           reason =
             if block
               yield
             elsif error_name
-              ESM::Embed.build(:error, description: I18n.t("#{path_prefix}.#{error_name}", **args))
+              ESM::Embed.build(:error, description: I18n.t("#{path_prefix}#{error_name}", **args))
             end
 
           warn!(
@@ -400,8 +413,8 @@ module ESM
         end
 
         # Convenience method for replying back to the event's channel
-        def reply(message, to: current_channel)
-          ESM.bot.deliver(message, to:, block: true)
+        def reply(message, to: current_channel, block: true, **)
+          ESM.bot.deliver(message, to:, block:, **)
         end
 
         def edit_message(message, content)
@@ -533,6 +546,51 @@ module ESM
         end
 
         alias_method :embed_from_hash!, :embed_from_message!
+
+        def create_view(&)
+          Discordrb::Components::View.new(&)
+        end
+
+        def prompt_for_confirmation!(message_or_embed, timeout: 2.minutes)
+          message = reply(
+            message_or_embed,
+            view: create_view do |view|
+              view.row do |r|
+                uuid = SecureRandom.uuid
+                r.button(
+                  label: I18n.t("continue"),
+                  style: :success,
+                  emoji: "✅",
+                  custom_id: "#{uuid}-true"
+                )
+
+                r.button(
+                  label: I18n.t("cancel"),
+                  style: :danger,
+                  emoji: "🛑",
+                  custom_id: "#{uuid}-false"
+                )
+              end
+            end
+          )
+
+          event = bot.add_await!(Discordrb::Events::ButtonEvent, timeout:)
+          if event.nil?
+            message.delete
+            raise_error!(:interaction_timeout, path_prefix: "command_errors")
+          end
+
+          # Acknowledges the button interaction to avoid timeout error
+          event.defer_update
+
+          confirmed = event.interaction.button.custom_id.ends_with?("true")
+          if !confirmed
+            embed = ESM::Embed.build(:success, description: I18n.t("request_cancelled"))
+            reply(embed)
+          end
+
+          confirmed
+        end
       end
     end
   end
