@@ -1,0 +1,44 @@
+---
+en:
+  commands:
+    reward_admin:
+      description: "Gives a specific reward to a player"
+      description_extra: "This command allows admins to give poptabs, respect, items, or vehicles to any player. These are redeemable in game."
+      examples:
+      - description: "Adds 5000 poptabs to @discord_mention's rewards on esm_tanoa"
+        arguments:
+          whom: "@discord_mention"
+          "on": "esm_tanoa"
+          type: "poptabs"
+          amount: "5000"
+      - description: "Adds 100 respect to @discord_mention's rewards on esm_malden"
+        arguments:
+          whom: "@discord_mention"
+          "on": "esm_malden"
+          type: "respect"
+          amount: "100"
+      - description: "Adds two RCOs to 76561234567890123's rewards on esm_altis"
+        arguments:
+          whom: "76561234567890123"
+          "on": "esm_altis"
+          type: "item"
+          classname: "optic_Hamr"
+          amount: "2"
+      - description: "Adds a Land Rover to @discord_mention's rewards on esm_malden"
+        arguments:
+          whom: "@discord_mention"
+          "on": "esm_malden"
+          type: "vehicle"
+          classname: "Exile_Car_LandRover_Red"
+      arguments:
+        type:
+          description: "The type of reward to give (poptabs, respect, item, vehicle)"
+        classname:
+          description: "The classname of the item or vehicle to give"
+          optional_text: "Only required for item and vehicle reward types"
+        amount:
+          description: "The amount to give to the player"
+          optional_text: "Required for poptabs, respect and items. Ignored for vehicles"
+      errors:
+        missing_classname: "A classname is required when giving items or vehicles"
+        missing_amount: "An amount is required when giving poptabs, respect or items"
