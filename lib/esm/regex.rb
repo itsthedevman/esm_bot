@@ -22,6 +22,7 @@ module ESM
     TARGET_OR_TERRITORY_ID = /#{TARGET.source}|#{TERRITORY_ID.source}/
     REWARD_ID = /\S+/
     REWARD_ID_ONLY = /^#{REWARD_ID.source}$/
+    POSITIVE_NUMBER = /[1-9]\d*/
 
     # Log Parsing
     LOG_TIMESTAMP = /\[(?<time>\d{2}:\d{2}:\d{2}):\d{6} (?<zone>[-+]?\d{2}:\d{2})\] \[thread \d+\] /i

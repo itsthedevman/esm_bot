@@ -34,11 +34,8 @@ en:
         type:
           description: "The type of reward to give (poptabs, respect, item, vehicle)"
         classname:
-          description: "The classname of the item or vehicle to give"
-          optional_text: "Only required for item and vehicle reward types"
+          description: "The classname of the item or vehicle to give. Ignored for poptabs and respect"
         amount:
-          description: "The amount to give to the player"
-          optional_text: "Required for poptabs, respect and items. Ignored for vehicles"
+          description: "The amount of poptabs, respect, or items to give to the player. Ignored for vehicles"
       errors:
-        missing_classname: "A classname is required when giving items or vehicles"
         missing_amount: "An amount is required when giving poptabs, respect or items"
