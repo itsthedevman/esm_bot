@@ -103,6 +103,8 @@ module ESM
           message = send_request(type: :initialize)
           ESM::Event::ServerInitialization.new(self, model, message).run!
 
+          @socket.set_address_to_remote!
+
           ESM::Connection::Server.on_initialize(self)
         end
 

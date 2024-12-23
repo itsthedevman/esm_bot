@@ -18,6 +18,10 @@ module ESM
         @address = socket.local_address.inspect_sockaddr
       end
 
+      def set_address_to_remote!
+        @address = @socket.remote_address.inspect_sockaddr
+      end
+
       def shutdown(...)
         @socket.shutdown(...)
       rescue Errno::ENOTCONN
