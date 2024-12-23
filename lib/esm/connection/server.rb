@@ -34,10 +34,10 @@ module ESM
       end
 
       def stop
-        @connection_manager.stop
+        @connection_manager&.stop
 
-        @server.close
-        @task.shutdown
+        @server&.close
+        @task&.shutdown
       end
 
       def client(id)
