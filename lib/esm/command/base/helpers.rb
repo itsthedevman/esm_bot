@@ -412,6 +412,38 @@ module ESM
           send_to_target_server!(message)
         end
 
+        #
+        # Directly calls a provided missionNamespace variable with the provided arguments.
+        # Unlike `call_sqf_function!`, the target function does not need to handle ESM's
+        # message acknowledgment workflow. This allows calling functions that do not except
+        # an ESM message as the argument.
+        #
+        # @param function_name [String] A valid SQF function name
+        # @param *args [Any] Any valid JSON data, used as positional data
+        # @param **kwargs [Hash] Any key/value data to be sent as a hashmap
+        #
+        # @return [Any] The result of the function call
+        #
+        def call_sqf_function_direct!(function_name, *args, **kwargs)
+          # Collapses the args and kwargs into a single value or array
+          # ("function", 1)                 -> 1 call function
+          # ("function", "arg_1", 2)        -> ["arg_1", 2] call function
+          # ("function", key_1: "value_1")  -> [["key_1", "value_1"]] call function
+          # ("function", 1, 2, key_2: 2)    -> [1, 2, [["key_2", 2]]] call function
+          arguments =
+            if kwargs.present?
+              args.present? ? [*args, kwargs] : kwargs
+            else
+              (args.size == 1) ? args.first : args
+            end
+
+          call_sqf_function!(
+            "ESMs_system_function_call",
+            target_function: function_name,
+            arguments:
+          ).data.result
+        end
+
         # Convenience method for replying back to the event's channel
         def reply(message, to: current_channel, block: true, **)
           ESM.bot.deliver(message, to:, block:, **)
