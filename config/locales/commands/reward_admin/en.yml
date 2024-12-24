@@ -39,3 +39,4 @@ en:
           description: "The amount of poptabs, respect, or items to give to the player. Ignored for vehicles"
       errors:
         missing_amount: "An amount is required when giving poptabs, respect or items"
+        invalid_classname: "`%{classname}` is not a valid classname on %{server_id}"

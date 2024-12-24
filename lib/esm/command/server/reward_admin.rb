@@ -65,20 +65,18 @@ module ESM
 
           # Handle classname
           case arguments.type
+          when VEHICLE, ITEM
+            check_for_valid_classname!
           when POPTAB, RESPECT
             arguments.classname = nil
           end
-
-          # TODO: Add a3 class lookup check
-          # If the class doesn't exist, add warning to confirmation
 
           # Confirm with the player
           confirmed = prompt_for_confirmation!(
             ESM::Embed.build do |e|
               e.title = "Confirmation"
-              e.description = "Are you sure?"
-            end,
-            timeout: 5.seconds
+              e.description = "Are you sure you want to continue?"
+            end
           )
 
           return unless confirmed
@@ -97,6 +95,21 @@ module ESM
 
         def check_for_amount!
           raise_error!(:missing_amount) unless arguments.amount.positive?
+        end
+
+        def check_for_valid_classname!
+          is_valid = call_sqf_function_direct!(
+            "ESMs_util_config_isValidClassName",
+            arguments.classname
+          )
+
+          return if is_valid
+
+          raise_error!(
+            :invalid_classname,
+            classname: arguments.classname,
+            server_id: target_server.server_id
+          )
         end
       end
     end
