@@ -50,6 +50,10 @@
 # Load extensions and other useful classes to have
 Dir["#{__dir__}/esm/extension/**/*.rb"].sort.each { |extension| require extension }
 
+# ActiveRecord types, these have to be loaded outside of zeitwerk due to the models themselves
+# requiring these to be loaded
+Dir["#{__dir__}/esm/model/types/*.rb"].sort.each { |db_type| require db_type }
+
 require "otr-activerecord" if ENV["ESM_ENV"] != "production"
 
 # Load Dotenv variables; overwriting any that already exist
@@ -126,6 +130,7 @@ module ESM
 
     # Load everything right meow
     def load!
+      loader.setup
       loader.eager_load
     end
 
