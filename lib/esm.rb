@@ -19,6 +19,7 @@
   "active_support/all",
   "activerecord-import",
   "base64",
+  "chronic_duration",
   "colorize",
   "concurrent",
   "discordrb",
