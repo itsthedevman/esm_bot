@@ -37,6 +37,28 @@ en:
           description: "The classname of the item or vehicle to give. Ignored for poptabs and respect"
         amount:
           description: "The amount of poptabs, respect, or items to give to the player. Ignored for vehicles"
+        expires_after:
+          description: "Duration until reward expires (e.g. '7 days', '24h', 'never'). Defaults based on reward type."
       errors:
         missing_amount: "An amount is required when giving poptabs, respect or items"
-        invalid_classname: "`%{classname}` is not a valid classname on %{server_id}"
+        invalid_classname: "`%{classname}` is not a valid classname on `%{server_id}`"
+        invalid_expires_after: ""
+      confirmation:
+        title: "Add Player Reward - Confirmation"
+        content: |
+          Please review the reward details below:
+
+          **Recipient:** %{recipient}
+          **Type:** %{type}
+          %{reward_details}
+          **Expires:** %{expiry}
+
+          This reward will be available for %{recipient_mention} to claim on `%{server_id}`
+        reward_details:
+          poptab: "**Amount:** %{amount} poptabs"
+          respect: "**Amount:** %{amount} respect"
+          item: "**Item:** %{name} (x%{amount})"
+          vehicle: "**Vehicle:** %{name}"
+        expiry:
+          never: "Never"
+          timed: "In %{duration}"

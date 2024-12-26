@@ -448,8 +448,12 @@ module ESM
         end
 
         # Convenience method for replying back to the event's channel
-        def reply(message, to: current_channel, block: true, **)
-          ESM.bot.deliver(message, to:, block:, **)
+        def reply(message_or_view, to: current_channel, block: true, **)
+          if message_or_view.is_a?(Discordrb::Components::View)
+            ESM.bot.deliver(nil, to:, block:, view: message_or_view)
+          else
+            ESM.bot.deliver(message_or_view, to:, block:, **)
+          end
         end
 
         def edit_message(message, content)
@@ -587,7 +591,7 @@ module ESM
         end
 
         def prompt_for_confirmation!(message_or_embed, timeout: 2.minutes)
-          message = reply(
+          button_message = reply(
             message_or_embed,
             view: create_view do |view|
               view.row do |r|
@@ -610,8 +614,9 @@ module ESM
           )
 
           event = bot.add_await!(Discordrb::Events::ButtonEvent, timeout:)
+          edit_message(button_message, message_or_embed)
+
           if event.nil?
-            message.delete
             raise_error!(:interaction_timeout, path_prefix: "command_errors")
           end
 

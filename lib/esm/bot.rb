@@ -200,7 +200,7 @@ module ESM
     # @return [Discordrb::Message, nil]
     #
     def deliver(message, to:, embed_message: "", replying_to: nil, block: false, view: nil)
-      return if message.blank?
+      return if message.blank? && view.nil? # Allow sending just the view context
 
       replying_to = nil if replying_to.present? && !replying_to.is_a?(Discordrb::Message)
       message = message.join("\n") if message.is_a?(Array)
