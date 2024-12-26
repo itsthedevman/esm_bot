@@ -255,9 +255,12 @@ module ESM
         #
         # Makes calls to I18n.t shorter
         #
-        def t(translation_name, **)
+        def translate(translation_name, **)
           I18n.t("commands.#{name}.#{translation_name}", **)
         end
+
+        alias_method :t, :translate
+        alias_method :locale, :translate
 
         def argument?(argument_name)
           arguments.key?(argument_name) || arguments.display_name_mapping.key?(argument_name)
