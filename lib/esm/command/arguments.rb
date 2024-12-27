@@ -84,17 +84,23 @@ module ESM
         templates[mapping]
       end
 
-      ###
-      # Allows referencing arguments that may not exist on the current command, but does on others
       def method_missing(method_name, *arguments, &block)
-        self[method_name.to_sym]
+        method_name = method_name.to_s
+        if method_name.end_with?("=")
+          self[method_name.chomp("=").to_sym] = arguments.first
+        else
+          self[method_name.to_sym]
+        end
       end
 
       def respond_to_missing?(method_name, _include_private = false)
-        key?(method_name.to_sym) || super
+        method_name = method_name.to_s
+        if method_name.end_with?("=")
+          key?(method_name.chomp("=").to_sym) || super
+        else
+          key?(method_name.to_sym) || super
+        end
       end
-      #
-      ###
 
       private
 
@@ -106,15 +112,6 @@ module ESM
 
           # self[server_id] = value from discord
           self[name] = values[argument.display_name]
-
-          # self.server_id
-          define_method(name) { self[name] }
-
-          # self.for #=> server_id
-          define_method(argument.display_name) { self[name] }
-
-          # self.server_id = value
-          define_method(:"#{name}=") { |value| self[name] = value }
         end
       end
     end
