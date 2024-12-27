@@ -4,10 +4,9 @@ module ESM
   module Command
     module Server
       class RewardAdmin < ApplicationCommand
-        POPTAB = "poptab"
+        POPTAB = "poptabs"
         RESPECT = "respect"
-        ITEM = "item"
-        VEHICLE = "vehicle"
+        CLASSNAME = "classname"
 
         #################################
         #
@@ -24,26 +23,22 @@ module ESM
         argument :type, required: true, choices: {
           POPTAB => "Poptabs",
           RESPECT => "Respect",
-          ITEM => "Item",
-          VEHICLE => "Vehicle"
+          CLASSNAME => "Item/Vehicle"
         }
 
         # Required for items and vehicles - ignored for poptabs, and respect
         argument :classname,
           preserve_case: true,
           required: {discord: false, bot: true},
-          checked_against_if: ->(_a, _c) { [ITEM, VEHICLE].include?(arguments.type) }
+          checked_against_if: ->(_a, _c) { arguments.type == CLASSNAME }
 
-        # Required for all, but vehicle
-        argument :amount,
-          :integer,
-          required: {discord: false, bot: true},
-          default: 0,
-          checked_against: Regex::POSITIVE_NUMBER,
-          checked_against_if: ->(_a, _c) { arguments.type != VEHICLE }
+        # Technically required except for a subset of CLASSNAME entries.
+        argument :amount, :integer,
+          default: 1,
+          checked_against: Regex::POSITIVE_NUMBER
 
         # Optional: Defaults to server settings
-        argument :expires_after, default: "never"
+        argument :expires_in, default: "never"
 
         #
         # Configuration
@@ -58,31 +53,22 @@ module ESM
         def on_execute
           check_for_registered_target_user! if target_user.is_a?(ESM::User)
 
-          # Handle amount
-          case arguments.type
-          when POPTAB, RESPECT, ITEM
-            check_for_amount!
-          else
-            arguments.amount = nil
-          end
+          # I originally had checks to block amount from being set for vehicles.
+          # With items/vehicles being one, it doesn't matter anymore
+          check_for_amount!
 
-          # Handle classname
-          case arguments.type
-          when VEHICLE, ITEM
-            # TODO: Is there a need to separate vehicles/items at this level?
-            # If I keep them separate, I need to add a cfgVehicle check here
-            # Otherwise, I can handle item/vehicle detection on the A3 side
+          if arguments.type == CLASSNAME
             check_for_valid_classname!
 
-            display_name = ESM::Arma::ClassLookup.find(arguments.classname)&.display_name ||
-              arguments.classname
-          when POPTAB, RESPECT
+            display_name = ESM::Arma::ClassLookup.find(arguments.classname)&.display_name
+            display_name ||= arguments.classname
+          else
             arguments.classname = nil
           end
 
           # Calculate expiry
-          if !arguments.expires_after.casecmp?("never")
-            duration = ChronicDuration.parse(arguments.expires_after)
+          if !arguments.expires_in.casecmp?("never")
+            duration = ChronicDuration.parse(arguments.expires_in)
             check_for_valid_duration!(duration)
 
             expires_at = Time.current + duration
@@ -90,20 +76,23 @@ module ESM
 
           # Confirm with the player
           confirmed = prompt_for_confirmation!(
-            confirmation_embed(display_name, expires_at)
+            confirmation_embed(display_name, duration)
           )
 
           return unless confirmed
 
           # Update the server
           run_database_query!(
-            "reward_create",
+            "add_reward",
             uid: target_user.steam_uid,
             expires_at:,
+            source: "command_reward_admin",
             **arguments.slice(:type, :classname, :amount)
           )
 
           # Respond
+          embed = ESM::Embed.build(:success, description: translate("success"))
+          reply(embed)
         end
 
         private
@@ -128,10 +117,10 @@ module ESM
         end
 
         def check_for_valid_duration!(duration)
-          raise_error!(:invalid_expires_after, provided: arguments.expires_after) if duration.nil?
+          raise_error!(:invalid_expires_in, expires_in: arguments.expires_in) if duration.nil?
         end
 
-        def confirmation_embed(display_name, expires_at)
+        def confirmation_embed(display_name, duration)
           ESM::Embed.build do |e|
             e.title = translate("confirmation.title")
 
@@ -143,10 +132,10 @@ module ESM
               end
 
             expiry =
-              if expires_at
+              if duration
                 translate(
                   "confirmation.expiry.timed",
-                  duration: ESM::Time.distance_of_time_in_words(expires_at)
+                  duration: ChronicDuration.output(duration)
                 )
               else
                 translate("confirmation.expiry.never")
