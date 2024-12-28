@@ -222,7 +222,11 @@ module ESM
 
         @name = name
         @type = type ? type.to_sym : :string
-        @discord_type = Discordrb::Interactions::OptionBuilder::TYPES[@type]
+
+        @discord_type = Discordrb::Interactions::OptionBuilder::TYPES[
+          (type == :float) ? :number : @type
+        ]
+
         @display_name = (opts[:display_name] || name).to_sym
         @command_class = opts[:command_class]
         @command_name = command_class.command_name.to_sym
@@ -265,11 +269,13 @@ module ESM
         input_present = input.present?
         input = default_value if !input_present && default_value?
 
+        casted_content = cast_to_type(input)
+
         sanitized_content =
-          if input.is_a?(String) && input_present
-            preserve_case? ? input.strip : input.downcase.strip
+          if casted_content.is_a?(String) && input_present
+            preserve_case? ? casted_content.strip : casted_content.downcase.strip
           else
-            input
+            casted_content
           end
 
         content =
@@ -346,15 +352,16 @@ module ESM
 
       def to_h
         {
-          name: name,
-          command_name: command_name,
-          display_name: display_name,
-          description: description,
-          description_extra: description_extra,
-          optional_text: optional_text,
-          default_value: default_value,
-          modifier: modifier,
-          checked_against: checked_against,
+          name:,
+          type:,
+          command_name:,
+          display_name:,
+          description:,
+          description_extra:,
+          optional_text:,
+          default_value:,
+          modifier:,
+          checked_against:,
           preserve_case: preserve_case?,
           discord: @options,
           bot: {
@@ -447,6 +454,25 @@ module ESM
           checked_against.include?(content)
         when Symbol
           !!content.public_send(checked_against)
+        end
+      end
+
+      def cast_to_type(value)
+        case type
+        when :integer
+          return value if value.is_a?(Integer)
+
+          value.to_i
+        when :float
+          return value if value.is_a?(Float)
+
+          value.to_f
+        when :boolean
+          return value if value.is_a?(TrueClass) || value.is_a?(FalseClass)
+
+          value == "true"
+        else
+          value
         end
       end
     end

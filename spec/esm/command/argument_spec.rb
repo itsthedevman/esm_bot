@@ -51,14 +51,77 @@ describe ESM::Command::Argument do
   context "when the type is not provided" do
     it "defaults to string" do
       expect(argument.type).to eq(:string)
+      expect(argument.discord_type).to eq(Discordrb::Interactions::OptionBuilder::TYPES[:string])
+    end
+
+    context "when the value is a string" do
+      it "does not cast" do
+        expect(transform_and_validate!("test")).to eq("test")
+      end
     end
   end
 
-  context "when the type is provided" do
-    subject(:argument) { new_argument(:with_locale, :integer) }
+  context "when the type is :integer" do
+    subject(:argument) { new_argument(:an_argument, :integer) }
 
     it "uses the type" do
       expect(argument.type).to eq(:integer)
+      expect(argument.discord_type).to eq(Discordrb::Interactions::OptionBuilder::TYPES[:integer])
+    end
+
+    context "when the value is an integer" do
+      it "does not cast" do
+        expect(transform_and_validate!(1)).to eq(1)
+      end
+    end
+
+    context "when the value is a string" do
+      it "casts the value to integer" do
+        expect(transform_and_validate!("1")).to eq(1)
+      end
+    end
+  end
+
+  context "when the type is :float" do
+    subject(:argument) { new_argument(:an_argument, :float) }
+
+    it "uses the type but changes the discord type to :number" do
+      expect(argument.type).to eq(:float)
+      expect(argument.discord_type).to eq(Discordrb::Interactions::OptionBuilder::TYPES[:number])
+    end
+
+    context "when the value is an float" do
+      it "does not cast" do
+        expect(transform_and_validate!(1.0)).to eq(1.0)
+      end
+    end
+
+    context "when the value is a string" do
+      it "casts the value to float" do
+        expect(transform_and_validate!("1.0")).to eq(1.0)
+      end
+    end
+  end
+
+  context "when the type is :boolean" do
+    subject(:argument) { new_argument(:an_argument, :boolean) }
+
+    it "uses the type" do
+      expect(argument.type).to eq(:boolean)
+      expect(argument.discord_type).to eq(Discordrb::Interactions::OptionBuilder::TYPES[:boolean])
+    end
+
+    context "when the value is an boolean" do
+      it "does not cast" do
+        expect(transform_and_validate!(false)).to eq(false)
+      end
+    end
+
+    context "when the value is a string" do
+      it "casts the value to integer" do
+        expect(transform_and_validate!("true")).to eq(true)
+        expect(transform_and_validate!("false")).to eq(false)
+      end
     end
   end
 
