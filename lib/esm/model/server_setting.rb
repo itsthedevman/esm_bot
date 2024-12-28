@@ -68,6 +68,9 @@ module ESM
     # Whether to log when a player is removed from a territory
     attribute :logging_remove_player_from_territory, :boolean, default: true
 
+    # Whether to log when a player is rewarded by an admin
+    attribute :logging_reward_admin, :boolean, default: true
+
     # Whether to log when a player is rewarded
     attribute :logging_reward_player, :boolean, default: true
 
