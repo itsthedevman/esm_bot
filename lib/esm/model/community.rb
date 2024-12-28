@@ -99,8 +99,12 @@ module ESM
         raise ESM::Exception::Error, "Attempted to log :#{event} to #{guild_id} without explicit permission.\nMessage:\n#{message}"
       end
 
-      # Check this first to avoid an infinite loop if the bot cannot send a message to this channel
-      # since this method is called from the #deliver method for this exact reason.
+      send_to_logging_channel(message)
+    end
+
+    def send_to_logging_channel(message)
+      return if logging_channel_id.blank?
+
       channel = logging_channel
       return if channel.nil?
 
