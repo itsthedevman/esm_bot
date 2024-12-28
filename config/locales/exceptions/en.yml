@@ -107,3 +107,4 @@ en:
       If you are no longer in need of my previous services, please reply with `cancel`. After which, you may execute your command again.
     no_permissions: "I'm sorry %{user}, only the owner of this community has access to this command"
     interaction_timeout: "This button got tired of waiting! Try the command again when you're ready."
+    slow_down: "Whoa %{user} - slow down there partner. One thing at a time"

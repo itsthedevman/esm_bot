@@ -5,7 +5,7 @@ module ESM
     class Ephemeral
       attr_reader :steam_uid, :discord_user
 
-      delegate :mention, :distinct, :username, to: :@discord_user
+      delegate :mention, :discord_mention, :distinct, :username, to: :@discord_user
 
       def initialize(steam_uid)
         @steam_uid = steam_uid
@@ -52,6 +52,7 @@ module ESM
         alias_method :mention, :steam_uid
         alias_method :distinct, :steam_uid
         alias_method :username, :steam_uid
+        alias_method :discord_mention, :mention
       end
     end
   end
