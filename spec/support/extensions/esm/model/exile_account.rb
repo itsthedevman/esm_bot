@@ -21,6 +21,11 @@ module ESM
       foreign_key: "account_uid",
       dependent: :destroy
 
+    has_many :reward,
+      class_name: "ESM::ExileReward",
+      foreign_key: "account_uid",
+      dependent: :destroy
+
     def self.from(user)
       where(uid: user.steam_uid).first_or_create do |account|
         account.name = user.discord_username
