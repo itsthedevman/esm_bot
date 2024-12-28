@@ -121,13 +121,11 @@
   },
   "ESM Command Test": {
     "scope": "ruby",
-    "prefix": [
-      "Command Test"
-    ],
+    "prefix": "esm-command-test",
     "body": [
       "# frozen_string_literal: true",
       "",
-      "describe ${1:command}, category: \"command\" do",
+      "describe command, category: \"command\", v2: true do",
       "\tinclude_context \"command\", described_class",
       "\tinclude_examples \"validate_command\"",
       "",
@@ -140,10 +138,8 @@
       "\t\texpect(command.type).to eq(:admin)",
       "\tend",
       "",
-      "\t# Change \"requires_connection\" to true if this command requires the client to be connected",
-      "\tdescribe \"#on_execute\", requires_connection: false do",
-      "\t\t# Uncomment if \"requires_connection\" is true",
-      "\t\t# include_context \"connection\"",
+      "\tdescribe \"#on_execute\", requires_connection: true do",
+      "\t\tinclude_context \"connection\"",
       "",
       "\t\tcontext \"\"",
       "\tend",
