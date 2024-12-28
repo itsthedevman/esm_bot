@@ -41,6 +41,7 @@ module ESM
       @waiting_for = {}
       @mutex = Mutex.new
       @delivery_overseer = ESM::Bot::DeliveryOverseer.new
+      @esm_status = :stopping
 
       super(token: ESM.config.token, intents: INTENTS)
     end
