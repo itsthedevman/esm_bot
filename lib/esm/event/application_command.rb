@@ -79,6 +79,14 @@ module ESM
                 server_id: @command.target_server.server_id
               )
             )
+          when Discordrb::Errors::UnknownError
+            ESM::Embed.build(
+              :error,
+              description: I18n.t(
+                "command_errors.slow_down",
+                user: @command.current_user.mention
+              )
+            )
           when ESM::Exception::ApplicationError
             error.data
           when StandardError
