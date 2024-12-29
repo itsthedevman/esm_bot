@@ -97,16 +97,6 @@ module ESM
               next
             end
 
-            # Transform the hash keys/values into a "list"
-            value =
-              if value.is_a?(Hash)
-                value.join_map("\n") do |key, value|
-                  "**#{key.to_s.humanize(keep_id_suffix: true)}:** #{value}"
-                end
-              else
-                value.to_s
-              end
-
             embed.add_field(name:, value:, inline:)
           end
         end
@@ -180,11 +170,20 @@ module ESM
       # This will make the name appear empty
       name = EMPTY_SPACE if name.nil?
 
-      # Discord won't send messages that have an empty field. This forces the value to be appear empty, and Discord will accept it.
+      # Discord won't send messages that have an empty field.
+      # This forces the value to be appear empty, and Discord will accept it.
       value = EMPTY_SPACE if value.blank?
 
       if value.is_a?(Array)
         add_field_array(name:, values: value, inline:)
+      elsif value.is_a?(Hash)
+        store_field(
+          name:,
+          value: value.join_map("\n") do |key, value|
+            "**#{key.to_s.humanize(keep_id_suffix: true)}:** #{value}"
+          end,
+          inline:
+        )
       else
         store_field(name:, value:, inline:)
       end
