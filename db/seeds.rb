@@ -98,7 +98,8 @@ ESM::ServerMod.create!(
 )
 
 # This is the default reward
-server.server_rewards.where(reward_id: nil).first.update!(
+server_reward = server.server_rewards.where(reward_id: nil).first
+server_reward.update!(
   server_id: server.id,
   reward_id: nil,
   reward_items: {
@@ -111,6 +112,23 @@ server.server_rewards.where(reward_id: nil).first.update!(
   locker_poptabs: 98_765,
   respect: 1
 )
+
+[
+  {reward_type: ESM::ServerRewardItem::POPTABS, amount: 12_345},
+  {reward_type: ESM::ServerRewardItem::RESPECT, amount: 1337},
+  {reward_type: ESM::ServerRewardItem::CLASSNAME, classname: "Exile_Item_WoodDoorKit", amount: 1},
+  {reward_type: ESM::ServerRewardItem::CLASSNAME, classname: "Exile_Item_WoodWallKit", amount: 3},
+  {reward_type: ESM::ServerRewardItem::CLASSNAME, classname: "Exile_Item_WoodFloorKit", amount: 2},
+  {
+    reward_type: ESM::ServerRewardItem::CLASSNAME,
+    classname: "Exile_Car_HEMMT",
+    amount: 2,
+    expiry_value: 2,
+    expiry_unit: "weeks"
+  }
+].each do |item|
+  server_reward.server_reward_items.create!(item)
+end
 
 server.server_rewards.create!(
   server_id: server.id,

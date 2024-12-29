@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2024_12_28_032141) do
+ActiveRecord::Schema[7.2].define(version: 2024_12_29_054121) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
   enable_extension "plpgsql"
@@ -199,6 +199,20 @@ ActiveRecord::Schema[7.2].define(version: 2024_12_28_032141) do
     t.datetime "deleted_at", precision: nil
     t.index ["deleted_at"], name: "index_server_mods_on_deleted_at"
     t.index ["server_id"], name: "index_server_mods_on_server_id"
+  end
+
+  create_table "server_reward_items", force: :cascade do |t|
+    t.uuid "public_id", null: false
+    t.bigint "server_reward_id"
+    t.string "reward_type", null: false
+    t.string "classname"
+    t.integer "amount", null: false
+    t.integer "expiry_value"
+    t.string "expiry_unit"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["public_id"], name: "index_server_reward_items_on_public_id", unique: true
+    t.index ["server_reward_id"], name: "index_server_reward_items_on_server_reward_id"
   end
 
   create_table "server_rewards", force: :cascade do |t|
@@ -422,6 +436,7 @@ ActiveRecord::Schema[7.2].define(version: 2024_12_28_032141) do
   add_foreign_key "requests", "users", column: "requestee_user_id", on_delete: :cascade
   add_foreign_key "requests", "users", column: "requestor_user_id", on_delete: :cascade
   add_foreign_key "server_mods", "servers", on_delete: :cascade
+  add_foreign_key "server_reward_items", "server_rewards"
   add_foreign_key "server_rewards", "servers", on_delete: :cascade
   add_foreign_key "server_settings", "servers", on_delete: :cascade
   add_foreign_key "servers", "communities", on_delete: :cascade
