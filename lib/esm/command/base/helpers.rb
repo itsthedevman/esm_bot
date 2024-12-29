@@ -614,13 +614,15 @@ module ESM
           )
 
           event = bot.add_await!(Discordrb::Events::ButtonEvent, timeout:)
+
+          # This removes the buttons.
+          # I feel this is better UX since the buttons are not useful anymore
           edit_message(button_message, message_or_embed)
 
-          if event.nil?
-            raise_error!(:interaction_timeout, path_prefix: "command_errors")
-          end
+          # The user never pressed a button
+          raise_error!(:interaction_timeout, path_prefix: "command_errors") if event.nil?
 
-          # Acknowledges the button interaction to avoid timeout error
+          # Acknowledges the button interaction to avoid timeout error in UI
           event.defer_update
 
           confirmed = event.interaction.button.custom_id.ends_with?("true")

@@ -46,7 +46,7 @@ module ESM
 
         command_namespace :server, :admin, command_name: :reward
 
-        command_type :player
+        command_type :admin
 
         #################################
 
@@ -89,6 +89,12 @@ module ESM
             source: "command_reward_admin",
             **arguments.slice(:type, :classname, :amount)
           )
+
+          # Log event to discord
+          if target_server.server_setting.logging_reward_admin?
+            embed = admin_embed(display_name, duration)
+            current_community.send_to_logging_channel(embed)
+          end
 
           # Respond
           embed = ESM::Embed.build(:success, description: translate("success"))
@@ -134,25 +140,67 @@ module ESM
             expiry =
               if duration
                 translate(
-                  "confirmation.expiry.timed",
+                  "expiry.timed",
                   duration: ChronicDuration.output(duration)
                 )
               else
-                translate("confirmation.expiry.never")
+                translate("expiry.never")
               end
 
             e.description = translate(
-              "confirmation.content",
+              "confirmation.description",
               recipient: target_user.discord_mention,
               type: arguments.type.titleize,
               reward_details: translate(
-                "confirmation.reward_details.#{arguments.type}",
+                "reward_details.#{arguments.type}",
                 amount:,
                 name: display_name
               ),
               expiry:,
               recipient_mention: target_user.discord_mention,
               server_id: target_server.server_id
+            )
+          end
+        end
+
+        def admin_embed(display_name, duration)
+          ESM::Embed.build do |e|
+            e.title = translate("admin_log.title")
+
+            amount =
+              if arguments.type == POPTAB
+                arguments.amount.to_delimitated_s
+              else
+                arguments.amount
+              end
+
+            expiry =
+              if duration
+                translate(
+                  "expiry.timed",
+                  duration: ChronicDuration.output(duration)
+                )
+              else
+                translate("expiry.never")
+              end
+
+            e.description = translate(
+              "admin_log.description",
+              recipient: target_user.discord_mention,
+              type: arguments.type.titleize,
+              reward_details: translate(
+                "reward_details.#{arguments.type}",
+                amount:,
+                name: display_name
+              ),
+              expiry:,
+              recipient_mention: target_user.discord_mention,
+              server_id: target_server.server_id
+            )
+
+            e.add_field(
+              name: "Player",
+              value: ESM::Message::Player.from(target_user).to_h
             )
           end
         end

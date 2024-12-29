@@ -45,7 +45,7 @@ en:
         invalid_expires_in: "`%{expires_in}` is not a valid expiration time. Please use a format like `24h` for hours or `7 days` for days."
       confirmation:
         title: "Confirmation"
-        content: |
+        description: |-
           Please review the reward details below:
 
           **Recipient:** %{recipient}
@@ -54,11 +54,18 @@ en:
           **Expires:** %{expiry}
 
           This reward will be available for %{recipient_mention} to claim on `%{server_id}`
-        reward_details:
-          poptabs: "**Amount:** %{amount} poptabs"
-          respect: "**Amount:** %{amount} respect"
-          classname: "**Item/Vehicle:** %{name} (x%{amount})"
-        expiry:
-          never: "Never"
-          timed: "In %{duration}"
+      reward_details:
+        poptabs: "**Amount:** %{amount} poptabs"
+        respect: "**Amount:** %{amount} respect"
+        classname: "**Item/Vehicle:** %{name} (x%{amount})"
+      expiry:
+        never: "Never"
+        timed: "In %{duration}"
       success: "Reward has been added"
+      admin_log:
+        title: "`/server admin reward` executed successfully"
+        description: |-
+          **Recipient:** %{recipient}
+          **Type:** %{type}
+          %{reward_details}
+          **Expires:** %{expiry}
