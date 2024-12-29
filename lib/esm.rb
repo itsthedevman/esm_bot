@@ -105,8 +105,10 @@ end
 
 #################################
 
-require_relative "signal_handler"
-SignalHandler.start
+if ENV["ESM_ENV"] != "test"
+  require_relative "signal_handler"
+  SignalHandler.start
+end
 
 #################################
 
