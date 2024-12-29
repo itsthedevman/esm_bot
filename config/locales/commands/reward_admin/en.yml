@@ -40,7 +40,7 @@ en:
         expires_in:
           description: "Duration until reward expires (e.g. '7 days', '24h', 'never'). Defaults based on reward type."
       errors:
-        missing_amount: "An amount is required when giving poptabs, respect or items"
+        missing_amount: "A positive amount is required"
         invalid_classname: "`%{classname}` is not a valid classname on `%{server_id}`"
         invalid_expires_in: "`%{expires_in}` is not a valid expiration time. Please use a format like `24h` for hours or `7 days` for days."
       confirmation:

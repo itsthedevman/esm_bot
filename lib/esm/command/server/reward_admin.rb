@@ -44,9 +44,13 @@ module ESM
         # Configuration
         #
 
+        change_attribute :allowlist_enabled, default: true
+
         command_namespace :server, :admin, command_name: :reward
 
         command_type :admin
+
+        limit_to :text
 
         #################################
 
@@ -130,13 +134,6 @@ module ESM
           ESM::Embed.build do |e|
             e.title = translate("confirmation.title")
 
-            amount =
-              if arguments.type == POPTAB
-                arguments.amount.to_delimitated_s
-              else
-                arguments.amount
-              end
-
             expiry =
               if duration
                 translate(
@@ -153,7 +150,7 @@ module ESM
               type: arguments.type.titleize,
               reward_details: translate(
                 "reward_details.#{arguments.type}",
-                amount:,
+                amount: arguments.amount.to_delimitated_s,
                 name: display_name
               ),
               expiry:,
@@ -166,13 +163,6 @@ module ESM
         def admin_embed(display_name, duration)
           ESM::Embed.build do |e|
             e.title = translate("admin_log.title")
-
-            amount =
-              if arguments.type == POPTAB
-                arguments.amount.to_delimitated_s
-              else
-                arguments.amount
-              end
 
             expiry =
               if duration
@@ -190,7 +180,7 @@ module ESM
               type: arguments.type.titleize,
               reward_details: translate(
                 "reward_details.#{arguments.type}",
-                amount:,
+                amount: arguments.amount.to_delimitated_s,
                 name: display_name
               ),
               expiry:,
