@@ -4,9 +4,9 @@ module ESM
   module Command
     module Server
       class RewardAdmin < ApplicationCommand
-        POPTAB = "poptabs"
-        RESPECT = "respect"
-        CLASSNAME = "classname"
+        POPTABS = ServerRewardItem::POPTABS
+        RESPECT = ServerRewardItem::RESPECT
+        CLASSNAME = ServerRewardItem::CLASSNAME
 
         #################################
         #
@@ -21,7 +21,7 @@ module ESM
 
         # Required for all
         argument :type, required: true, choices: {
-          POPTAB => "Poptabs",
+          POPTABS => "Poptabs",
           RESPECT => "Respect",
           CLASSNAME => "Item/Vehicle"
         }
