@@ -4,6 +4,7 @@ module Discordrb
   class Channel
     def send_message(content, tts = false, embed = nil, attachments = nil, allowed_mentions = nil, message_reference = nil, components = nil)
       ESM::Test.messages.store(content, self)
+      SpecDiscordMessage.new(content)
     end
 
     def send_embed(content = "", embed = nil, attachments = nil, tts = false, allowed_mentions = nil, message_reference = nil, components = nil)
@@ -13,6 +14,7 @@ module Discordrb
       content = yield(embed, view) if block_given?
 
       ESM::Test.messages.store(content, self)
+      SpecDiscordMessage.new(content)
     end
   end
 end

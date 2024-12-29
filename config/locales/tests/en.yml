@@ -14,6 +14,11 @@ en:
           description: "An argument description"
           description_extra: "An argument description extra"
           optional_text: "An argument optional text"
+        an_argument:
+          description: "An argument description"
+          description_extra: "An argument description extra"
+          optional_text: "An argument optional text"
+
     argument_required:
       examples:
       - description: "testing"

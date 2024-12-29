@@ -29,7 +29,6 @@ RSpec.shared_context("command") do
     send_as = opts.delete(:user) || user
     command_class = opts.delete(:command_class) || self.command_class
     arguments = opts.delete(:arguments) || {}
-    prompt_response = opts.delete(:prompt_response)
     handle_error = opts.delete(:handle_error)
     command = command_class.new
 
@@ -86,7 +85,7 @@ RSpec.shared_context("command") do
       data[:data][:options] = [{type: 1, name: command.command_name, options: options}]
     end
 
-    respond_to_prompt(prompt_response) if prompt_response
+    respond_to_prompt(opts.delete(:prompt_response)) if opts.key?(:prompt_response)
 
     event = Discordrb::Events::ApplicationCommandEvent.new(data.deep_stringify_keys, ESM.bot)
 
