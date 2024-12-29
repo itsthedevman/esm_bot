@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2024_12_05_054436) do
+ActiveRecord::Schema[7.2].define(version: 2024_12_28_032141) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
   enable_extension "plpgsql"
@@ -257,6 +257,7 @@ ActiveRecord::Schema[7.2].define(version: 2024_12_05_054436) do
     t.string "number_locale"
     t.integer "exile_logs_search_days"
     t.json "additional_logs", default: []
+    t.boolean "logging_reward_admin", default: true
     t.index ["deleted_at"], name: "index_server_settings_on_deleted_at"
     t.index ["server_id"], name: "index_server_settings_on_server_id"
   end
