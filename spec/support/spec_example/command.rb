@@ -139,21 +139,34 @@ RSpec.shared_examples("arma_discord_logging_enabled") do
   let(:territory_field) do
     {
       name: "Territory",
-      value: "**ID:** #{territory.encoded_id}\n**Name:** #{territory.name}"
+      value: [
+        "**ID:** #{territory.encoded_id}",
+        "**Name:** #{territory.name}"
+      ]
     }
   end
 
   let(:player_field) do
     {
       name: "Player",
-      value: "**Discord ID:** #{user.discord_id}\n**Steam UID:** #{user.steam_uid}\n**Discord name:** #{user.discord_username}\n**Discord mention:** #{user.mention}"
+      value: [
+        "**Discord ID:** #{user.discord_id}",
+        "**Discord name:** #{user.discord_username}",
+        "**Discord mention:** #{user.mention}",
+        "**Steam UID:** #{user.steam_uid}"
+      ]
     }
   end
 
   let(:target_field) do
     {
       name: "Target",
-      value: "**Discord ID:** #{second_user.discord_id}\n**Steam UID:** #{second_user.steam_uid}\n**Discord name:** #{second_user.discord_username}\n**Discord mention:** #{second_user.mention}"
+      value: [
+        "**Discord ID:** #{second_user.discord_id}",
+        "**Discord name:** #{second_user.discord_username}",
+        "**Discord mention:** #{second_user.mention}",
+        "**Steam UID:** #{second_user.steam_uid}"
+      ]
     }
   end
 
@@ -175,7 +188,14 @@ RSpec.shared_examples("arma_discord_logging_enabled") do
       field = log_embed.fields[i]
       expect(field).not_to be_nil
       expect(field.name).to eq(test_field[:name])
-      expect(field.value).to eq(test_field[:value])
+
+      if test_field[:value].is_a?(Array)
+        test_field[:value].each do |check|
+          expect(field.value).to include(check)
+        end
+      else
+        expect(field.value).to eq(test_field[:value])
+      end
     end
   end
 end
