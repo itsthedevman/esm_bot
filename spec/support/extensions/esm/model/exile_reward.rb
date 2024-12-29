@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module ESM
-  class ExileAccount < ArmaRecord
+  class ExileReward < ArmaRecord
     self.table_name = "reward"
 
     attribute :public_id, :string # 8 char uuid
