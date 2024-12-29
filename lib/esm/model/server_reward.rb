@@ -26,23 +26,5 @@ module ESM
     belongs_to :server
 
     scope :default, -> { where(reward_id: nil).first }
-
-    def vehicles
-      @vehicles ||= reward_vehicles.map do |vehicle_data|
-        class_name = vehicle_data[:class_name]
-        limited_to = vehicle_data[:limited_to]
-        display_name = ESM::Arma::ClassLookup.find(class_name).try(:display_name) || class_name
-
-        {class_name:, display_name:, limited_to:}
-      end
-    end
-
-    def items
-      @items ||= reward_items.map do |class_name, quantity|
-        display_name = ESM::Arma::ClassLookup.find(class_name).try(:display_name) || class_name
-
-        {class_name:, display_name:, quantity:}
-      end
-    end
   end
 end

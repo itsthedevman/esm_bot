@@ -2,7 +2,8 @@
 
 module ESM
   class Server < ApplicationRecord
-    before_create :generate_public_id
+    include Concerns::PublicId
+
     before_create :generate_key
     after_create :create_server_setting
     after_create :create_default_reward
@@ -212,12 +213,6 @@ module ESM
     end
 
     private
-
-    def generate_public_id
-      return if public_id.present?
-
-      self.public_id = SecureRandom.uuid
-    end
 
     # Idk how to store random bytes in redis (Dang you NULL!)
     KEY_CHARS = [

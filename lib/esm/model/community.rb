@@ -2,11 +2,12 @@
 
 module ESM
   class Community < ApplicationRecord
+    include Concerns::PublicId
+
     ALPHABET = ("a".."z").to_a.freeze
     ESM_ID = "452568470765305866"
 
     before_create :generate_community_id
-    before_create :generate_public_id
     after_create :create_command_configurations
     after_create :create_notifications
 
@@ -139,12 +140,6 @@ module ESM
       # Yup. Add to the community_ids so our spell checker works
       self.class.community_ids << new_id
       self.community_id = new_id
-    end
-
-    def generate_public_id
-      return if public_id.present?
-
-      self.public_id = SecureRandom.uuid
     end
 
     def create_command_configurations

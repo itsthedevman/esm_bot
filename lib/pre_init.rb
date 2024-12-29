@@ -46,15 +46,13 @@ ESM.loader.tap do |loader|
   # Convert ESM::Model::Server -> ESM::Server
   loader.collapse(ESM.root.join("lib", "esm", "model"))
 
-  # Forces the jobs to be loaded on the Root path
+  # Forces these to be loaded on the Root path
   # ESM::Jobs::SomeJob -> SomeJob
   loader.push_dir(ESM.root.join("lib", "esm", "jobs"))
 
-  # ActiveRecord types, we load them below
-  loader.push_dir(ESM.root.join("lib", "esm", "model", "types"))
-
-  # Don't load extensions, we do that above
+  # Don't load these, we do that manually
   loader.ignore(ESM.root.join("lib", "esm", "extension"))
+  loader.ignore(ESM.root.join("lib", "esm", "model", "types"))
 
   # Ignore inits
   loader.ignore(ESM.root.join("lib", "esm", "database.rb"))
@@ -66,6 +64,9 @@ ESM.loader.tap do |loader|
   # gemspec expects this file, but Zeitwerk does not like it
   loader.ignore(ESM.root.join("lib", "esm", "version.rb"))
   loader.ignore(ESM.root.join("lib", "esm", "esm.rb"))
+
+  # loader.logger = ESM.logger
+  # loader.log!
 end
 
 #############################
