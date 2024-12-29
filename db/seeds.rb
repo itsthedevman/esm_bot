@@ -118,7 +118,18 @@ server_reward.update!(
   {reward_type: ESM::ServerRewardItem::RESPECT, amount: 1337},
   {reward_type: ESM::ServerRewardItem::CLASSNAME, classname: "Exile_Item_WoodDoorKit", amount: 1},
   {reward_type: ESM::ServerRewardItem::CLASSNAME, classname: "Exile_Item_WoodWallKit", amount: 3},
-  {reward_type: ESM::ServerRewardItem::CLASSNAME, classname: "Exile_Item_WoodFloorKit", amount: 2},
+  {reward_type: ESM::ServerRewardItem::CLASSNAME, classname: "Exile_Item_WoodFloorKit", amount: 2}
+].each do |item|
+  server_reward.server_reward_items.create!(item)
+end
+
+vehicle_reward = server.server_rewards.create!(server_id: server.id, reward_id: "vehicles")
+[
+  {
+    reward_type: ESM::ServerRewardItem::CLASSNAME,
+    classname: "Exile_Plane_AN2_White",
+    amount: 1
+  },
   {
     reward_type: ESM::ServerRewardItem::CLASSNAME,
     classname: "Exile_Car_HEMMT",
@@ -127,33 +138,9 @@ server_reward.update!(
     expiry_unit: "weeks"
   }
 ].each do |item|
-  server_reward.server_reward_items.create!(item)
+  vehicle_reward.server_reward_items.create!(item)
 end
 
-server.server_rewards.create!(
-  server_id: server.id,
-  reward_id: "vehicles",
-  reward_items: {
-    Exile_Item_DuctTape: 1,
-    Exile_Item_CarWheel: 1
-  },
-  reward_vehicles: [
-    {
-      class_name: "Exile_Car_Hatchback_Beige",
-      limited_to: "nearby"
-    },
-    {
-      class_name: "Exile_Chopper_Huron_Black",
-      limited_to: "virtual_garage"
-    },
-    {
-      class_name: "Exile_Car_Hunter"
-    }
-  ],
-  player_poptabs: 100,
-  locker_poptabs: 0,
-  respect: 5
-)
 puts " done"
 
 print "Creating users..."
