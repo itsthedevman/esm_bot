@@ -2,21 +2,32 @@
 
 module ESM
   class Cooldown < ApplicationRecord
+    include Concerns::PublicId
+    include Concerns::Cooldownable
+
+    TYPES = [
+      COMMAND = "command",
+      REWARD = "reward"
+    ].freeze
+
+    self.inheritance_column = nil
+
     attribute :community_id, :integer
     attribute :server_id, :integer
     attribute :user_id, :integer
     attribute :steam_uid, :string
-    attribute :command_name, :string
-    attribute :cooldown_quantity, :integer, default: 1
-    attribute :cooldown_type, :string, default: "seconds"
+
+    enum :type, TYPES.to_h { |t| [t, t] }
+    attribute :key, :string
+
     attribute :cooldown_amount, :integer, default: 0
     attribute :expires_at, :datetime, default: -> { 1.second.ago }
     attribute :created_at, :datetime
     attribute :updated_at, :datetime
 
-    belongs_to :user
-    belongs_to :server
     belongs_to :community
+    belongs_to :user, optional: true # This could be a user_id or steam_uid
+    belongs_to :server, optional: true # Not all commands are server based
 
     after_find :adjust_for_community_changes
 
@@ -28,7 +39,7 @@ module ESM
     end
 
     def active?
-      if cooldown_type == "times"
+      if cooldown_type == COOLDOWN_TYPE_TIMES
         cooldown_amount >= cooldown_quantity
       else
         expires_at >= ::Time.current
@@ -49,14 +60,18 @@ module ESM
       when Enumerator, Integer
         update!(
           cooldown_quantity: cooldown_time.is_a?(Integer) ? cooldown_time : cooldown_time.size,
-          cooldown_type: "times",
+          cooldown_type: COOLDOWN_TYPE_TIMES,
           cooldown_amount: cooldown_amount + 1
         )
       # 1.second, 5.days
       when ActiveSupport::Duration
         # Converts 1.second to [:seconds, 1]
         type, quantity = cooldown_time.parts.to_a.first
-        update!(cooldown_quantity: quantity, cooldown_type: type, expires_at: (executed_at + cooldown_time).to_time)
+        update!(
+          cooldown_quantity: quantity,
+          cooldown_type: type,
+          expires_at: (executed_at + cooldown_time).to_time
+        )
       end
     end
 
@@ -75,20 +90,26 @@ module ESM
 
       # They have changed to times, just reset the cooldown_amount to 0
       # Or they have changed from times to seconds (minutes, hours, etc.)
-      if configuration.cooldown_type == "times" || (configuration.cooldown_type != "times" && cooldown_type == "times")
+      if configuration.cooldown_type == COOLDOWN_TYPE_TIMES || (configuration.cooldown_type != COOLDOWN_TYPE_TIMES && cooldown_type == COOLDOWN_TYPE_TIMES)
         self.expires_at = 1.second.ago
         self.cooldown_amount = 0
       else
         # Converts 1, "minutes" to 1.minutes to 60 (seconds)
-        new_cooldown_seconds = configuration.cooldown_quantity.send(configuration.cooldown_type).to_i
+        new_cooldown_seconds = configuration.cooldown_quantity
+          .send(configuration.cooldown_type)
+          .to_i
+
         current_cooldown_seconds = cooldown_quantity.send(cooldown_type).to_i
 
         # Adjust the expiry time to compensate if the new time is less than the current
-        self.expires_at = expires_at - (current_cooldown_seconds - new_cooldown_seconds) if new_cooldown_seconds < current_cooldown_seconds
+        if new_cooldown_seconds < current_cooldown_seconds
+          self.expires_at = expires_at - (current_cooldown_seconds - new_cooldown_seconds)
+        end
       end
 
       self.cooldown_type = configuration.cooldown_type
       self.cooldown_quantity = configuration.cooldown_quantity
+
       save!
     end
   end

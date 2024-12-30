@@ -107,7 +107,6 @@ server_reward.update!(
     Exile_Item_WoodWallKit: 3,
     Exile_Item_WoodFloorKit: 2
   },
-  reward_vehicles: [],
   player_poptabs: 12_345,
   locker_poptabs: 98_765,
   respect: 1

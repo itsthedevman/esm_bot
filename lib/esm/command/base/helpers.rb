@@ -532,7 +532,7 @@ module ESM
         end
 
         def current_cooldown_query
-          query = ESM::Cooldown.where(command_name: command_name)
+          query = ESM::Cooldown.where(type: :command, key: command_name)
 
           # If the command requires a steam_uid, use it to track the cooldown.
           query =

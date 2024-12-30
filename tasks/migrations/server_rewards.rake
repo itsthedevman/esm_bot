@@ -4,7 +4,9 @@ namespace :migrations do
   namespace :server_rewards do
     task add_reward_id_and_cooldown_defaults: :environment do
       ESM::ServerReward.all.joins(:server).each do |reward|
-        configuration = ESM::CommandConfiguration.select(:cooldown_quantity, :cooldown_type).where(community_id: reward.server.community_id, command_name: "reward").first
+        configuration = ESM::CommandConfiguration.select(:cooldown_quantity, :cooldown_type)
+          .where(community_id: reward.server.community_id, type: :command, key: "reward")
+          .first
 
         reward.update(
           reward_id: nil,

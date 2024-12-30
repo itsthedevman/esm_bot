@@ -6,6 +6,8 @@ module ESM
       extend ActiveSupport::Concern
 
       included do
+        attribute :public_id, :string
+
         before_create :generate_public_id
       end
 

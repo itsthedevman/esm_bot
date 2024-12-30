@@ -13,9 +13,9 @@ describe ESM::Command::Server::Broadcast, category: "command" do
 
     before do
       # Create cooldowns for the users. This is how broadcast knows who to send messages to.
-      create(:cooldown, command_name: "preferences", user: user, community: community, server: server)
-      create(:cooldown, command_name: "preferences", user: user, community: community, server: second_server)
-      create(:cooldown, command_name: "preferences", user: second_user, community: community, server: second_server)
+      create(:cooldown, type: :command, key: "preferences", user: user, community: community, server: server)
+      create(:cooldown, type: :command, key: "preferences", user: user, community: community, server: second_server)
+      create(:cooldown, type: :command, key: "preferences", user: second_user, community: community, server: second_server)
 
       grant_command_access!(community, "broadcast")
 

@@ -66,7 +66,7 @@ module ESM
         def check_for_cooldown!
           return unless on_cooldown?
 
-          if current_cooldown.cooldown_type == "times"
+          if current_cooldown.cooldown_type == Cooldown::COOLDOWN_TYPE_TIMES
             check_failed!(
               :on_cooldown_useage,
               user: current_user.mention,

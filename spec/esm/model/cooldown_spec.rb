@@ -118,7 +118,7 @@ describe ESM::Cooldown do
   describe "#adjust_for_community_changes" do
     let(:community) { ESM::Test.community }
     let(:user) { ESM::Test.user }
-    let!(:cooldown_defaults) { {user_id: user.id, community_id: community.id, command_name: "player_command", expires_at: expires_at} }
+    let!(:cooldown_defaults) { {user_id: user.id, community_id: community.id, type: :command, key: "player_command", expires_at: expires_at} }
     let!(:configuration) { community.command_configurations.where(command_name: cooldown_defaults[:command_name]).first }
     let!(:expires_at) { Time.now.utc + 1.day }
 
