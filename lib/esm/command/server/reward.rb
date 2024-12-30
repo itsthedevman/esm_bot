@@ -12,51 +12,58 @@ module ESM
         # See Argument::TEMPLATES[:server_id]
         argument :server_id, display_name: :on
 
+        # Optional: Defaults to "default" reward
+        argument :reward_id, display_name: :package_name, default: nil
+
         #
         # Configuration
         #
 
         command_type :player
 
-        # Don't allow adjusting this cooldown. Each reward has it's own cooldown
-        change_attribute :cooldown_time, modifiable: false, default: 2.seconds
-
         #################################
 
         def on_execute
-          check_for_valid_reward_id!
-          check_for_reward_items!
+          # Check to see if the provided reward_id has anything to redeem
+          # Check to see if the user is on cooldown for the reward
+          # Show the user what they're going to redeem, for how long, how to redeem in game
+          # and prompt for confirmation.
+          # Add them items to the user's rewards
         end
 
         private
-
-        def check_for_valid_reward_id!
-          return if selected_reward.present?
-
-          raise_error!(
-            :incorrect_reward_id,
-            user: current_user.mention,
-            reward_id: arguments.reward_id
-          )
-        end
-
-        def check_for_reward_items!
-          return if selected_reward.reward_items.present? ||
-            selected_reward.reward_vehicles.present? ||
-            selected_reward.locker_poptabs.positive? ||
-            selected_reward.player_poptabs.positive? ||
-            selected_reward.respect.positive?
-
-          raise_error!(:no_reward_items, user: current_user.mention)
-        end
 
         def selected_reward
           @selected_reward ||= target_server.server_rewards.find_by(reward_id: arguments.reward_id)
         end
 
-        ##################################################################
-
         module V1
+          def on_execute
+            # Check for pending requests
+            check_for_pending_request!
+
+            # Check to see if the server has any rewards for the user before even sending the request
+            check_for_reward_items!
+
+            # Add the request
+            add_request(
+              to: current_user,
+              description: I18n.t(
+                "commands.reward_v1.request_description",
+                user: current_user.mention,
+                server: target_server.server_id
+              )
+            )
+
+            # Remind them to check their PMs
+            embed = ESM::Embed.build(
+              :success,
+              description: I18n.t("commands.request.check_pm", user: current_user.mention)
+            )
+
+            reply(embed)
+          end
+
           def on_response
             # Array<Array<item, quantity>>
             receipt = @response.receipt.to_h
@@ -75,6 +82,19 @@ module ESM
 
           def on_request_accepted
             deliver!(command_name: "reward", function_name: "rewardPlayer", target_uid: current_user.steam_uid)
+          end
+
+          private
+
+          def check_for_reward_items!
+            reward = target_server.server_reward
+
+            return if reward.reward_items.present? ||
+              reward.locker_poptabs.positive? ||
+              reward.player_poptabs.positive? ||
+              reward.respect.positive?
+
+            raise_error!(:no_reward_items, user: current_user.mention)
           end
         end
       end

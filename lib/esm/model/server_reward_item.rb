@@ -12,7 +12,7 @@ module ESM
 
     attribute :public_id, :uuid
     attribute :server_reward_id, :integer
-    attribute :reward_type, :string
+    enum :reward_type, TYPES.to_h { |t| [t, t] }
     attribute :classname, :string
     attribute :amount, :integer
     attribute :expiry_value, :integer, default: 0
