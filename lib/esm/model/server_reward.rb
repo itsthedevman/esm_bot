@@ -18,7 +18,7 @@ module ESM
 
     belongs_to :server
 
-    has_many :server_reward_items, dependent: :destroy
+    has_many :items, dependent: :destroy, class_name: "ServerRewardItem"
 
     scope :default, -> { find_by(reward_id: nil) }
   end
