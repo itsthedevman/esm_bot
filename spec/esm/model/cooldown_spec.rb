@@ -119,7 +119,7 @@ describe ESM::Cooldown do
     let(:community) { ESM::Test.community }
     let(:user) { ESM::Test.user }
     let!(:cooldown_defaults) { {user_id: user.id, community_id: community.id, type: :command, key: "player_command", expires_at: expires_at} }
-    let!(:configuration) { community.command_configurations.where(command_name: cooldown_defaults[:command_name]).first }
+    let!(:configuration) { community.command_configurations.where(command_name: cooldown_defaults[:key]).first }
     let!(:expires_at) { Time.now.utc + 1.day }
 
     before do
@@ -146,13 +146,19 @@ describe ESM::Cooldown do
     it "resets (seconds -> times)" do
       configuration.update!(cooldown_type: "times", cooldown_quantity: 1)
       cooldown = create(:cooldown, cooldown_defaults.merge(cooldown_type: "seconds", cooldown_quantity: 2)).reload
+
       expect(cooldown.expires_at.to_s).not_to eq(expires_at.to_s)
       expect(cooldown.cooldown_amount).to eq(0)
     end
 
     it "resets (times -> seconds)" do
       configuration.update!(cooldown_type: "seconds", cooldown_quantity: 2)
-      cooldown = create(:cooldown, cooldown_defaults.merge(cooldown_type: "times", cooldown_quantity: 1)).reload
+
+      cooldown = create(
+        :cooldown,
+        cooldown_defaults.merge(cooldown_type: "times", cooldown_quantity: 1)
+      ).reload
+
       expect(cooldown.expires_at.to_s).not_to eq(expires_at.to_s)
       expect(cooldown.cooldown_amount).to eq(0)
     end
@@ -181,7 +187,7 @@ describe ESM::Cooldown do
 
       it "1 hour to 15 seconds (compensated 59 minutes and 45 seconds)" do
         configuration.update!(cooldown_type: "seconds", cooldown_quantity: 15)
-        cooldown = create(:cooldown, cooldown_defaults.merge(cooldown_type: "hour", cooldown_quantity: 1, expires_at: expires_at)).reload
+        cooldown = create(:cooldown, cooldown_defaults.merge(cooldown_type: "hours", cooldown_quantity: 1, expires_at: expires_at)).reload
         expect(cooldown.expires_at.to_s).to eq("2039-12-31 23:00:15 UTC")
       end
 

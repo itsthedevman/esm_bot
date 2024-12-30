@@ -77,40 +77,68 @@ module ESM
 
     private
 
-    # If the community changes the configuration for a command, this will adjust the cooldown to match.
-    # Mainly used to adjust a cooldown if it was changed to a lesser time, such as 24 hours to 2 seconds.
-    # The user shouldn't have to wait 24 hours when the new cooldown is 2 seconds
+    # If the community changes the configuration for a command, this will adjust the cooldown
+    # to match. Mainly used to adjust a cooldown if it was changed to a lesser time,
+    # such as 24 hours to 2 seconds. The user shouldn't have to wait 24 hours when
+    # the new cooldown is 2 seconds
     def adjust_for_community_changes
-      # Commands that have no community_id and are used in DMs will not be able to use this code
       return if community.nil?
 
-      configuration = community.command_configurations.where(command_name: command_name).first
-      return if configuration.nil?
-      return if configuration.cooldown_type == cooldown_type && configuration.cooldown_quantity == cooldown_quantity
+      configuration = load_configuration
+      return if configuration_unchanged?(configuration)
 
-      # They have changed to times, just reset the cooldown_amount to 0
-      # Or they have changed from times to seconds (minutes, hours, etc.)
-      if configuration.cooldown_type == COOLDOWN_TYPE_TIMES || (configuration.cooldown_type != COOLDOWN_TYPE_TIMES && cooldown_type == COOLDOWN_TYPE_TIMES)
-        self.expires_at = 1.second.ago
-        self.cooldown_amount = 0
+      update_cooldown_settings!(configuration)
+    end
+
+    def load_configuration
+      case type
+      when COMMAND
+        community.command_configurations.find_by(command_name: key)
+      when REWARD
+        server.server_rewards.find_by(reward_id: key)
+      end
+    end
+
+    def configuration_unchanged?(configuration)
+      return true if configuration.nil?
+
+      configuration.cooldown_type == cooldown_type &&
+        configuration.cooldown_quantity == cooldown_quantity
+    end
+
+    def update_cooldown_settings!(configuration)
+      if times_based_cooldown_changed?(configuration)
+        reset_cooldown
       else
-        # Converts 1, "minutes" to 1.minutes to 60 (seconds)
-        new_cooldown_seconds = configuration.cooldown_quantity
-          .send(configuration.cooldown_type)
-          .to_i
-
-        current_cooldown_seconds = cooldown_quantity.send(cooldown_type).to_i
-
-        # Adjust the expiry time to compensate if the new time is less than the current
-        if new_cooldown_seconds < current_cooldown_seconds
-          self.expires_at = expires_at - (current_cooldown_seconds - new_cooldown_seconds)
-        end
+        adjust_expiry_time(configuration)
       end
 
       self.cooldown_type = configuration.cooldown_type
       self.cooldown_quantity = configuration.cooldown_quantity
 
       save!
+    end
+
+    def times_based_cooldown_changed?(configuration)
+      configuration.cooldown_type == COOLDOWN_TYPE_TIMES ||
+        (configuration.cooldown_type != COOLDOWN_TYPE_TIMES && cooldown_type == COOLDOWN_TYPE_TIMES)
+    end
+
+    def reset_cooldown
+      self.expires_at = 2.seconds.ago
+      self.cooldown_amount = 0
+    end
+
+    def convert_to_seconds(quantity, type)
+      quantity.send(type).to_i
+    end
+
+    def adjust_expiry_time(configuration)
+      new_seconds = convert_to_seconds(configuration.cooldown_quantity, configuration.cooldown_type)
+      current_seconds = convert_to_seconds(cooldown_quantity, cooldown_type)
+      return if new_seconds >= current_seconds
+
+      self.expires_at = expires_at - (current_seconds - new_seconds)
     end
   end
 end
