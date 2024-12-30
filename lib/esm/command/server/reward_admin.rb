@@ -87,11 +87,15 @@ module ESM
 
           # Update the server
           run_database_query!(
-            "add_reward",
+            "add_rewards",
             uid: target_user.steam_uid,
-            expires_at:,
-            source: "command_reward_admin",
-            **arguments.slice(:type, :classname, :amount)
+            items: [
+              {
+                expires_at:,
+                source: "command_reward_admin",
+                **arguments.slice(:type, :classname, :amount)
+              }
+            ]
           )
 
           # Log event to discord

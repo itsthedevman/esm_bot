@@ -209,7 +209,7 @@ describe ESM::Command::Server::RewardAdmin, category: "command", v2: true do
       end
     end
 
-    context "when the logging is disabled", :current do
+    context "when the logging is disabled" do
       before do
         server.server_setting.update!(logging_reward_admin: false)
       end
@@ -217,6 +217,14 @@ describe ESM::Command::Server::RewardAdmin, category: "command", v2: true do
       include_examples "arma_discord_logging_disabled" do
         let(:message) { "`/server admin reward` executed successfully" }
       end
+    end
+
+    context "when the target has not joined the server" do
+      before do
+        second_user.exile_account.destroy
+      end
+
+      include_examples "arma_error_target_needs_to_join"
     end
   end
 end
