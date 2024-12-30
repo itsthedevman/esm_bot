@@ -2,17 +2,6 @@
 
 FactoryBot.define do
   factory :server_reward, class: "ESM::ServerReward" do
-    reward_vehicles do
-      reward_vehicles = []
-
-      vehicles = ESM::Arma::ClassLookup.where(category: ESM::Arma::ClassLookup::CATEGORY_VEHICLES)
-      Faker::Number.between(from: 1, to: 5).times do
-        reward_vehicles << {class_name: vehicles.keys.sample, spawn_location: ["nearby", "virtual_garage", "player_decides"].sample}
-      end
-
-      reward_vehicles
-    end
-
     reward_items do
       reward_items = {}
 

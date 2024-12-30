@@ -5,7 +5,7 @@ describe ESM::Command::Server::RewardAdmin, category: "command", v2: true do
   include_examples "validate_command"
 
   let(:target) { second_user.mention }
-  let(:type) { described_class::POPTAB }
+  let(:type) { described_class::POPTABS }
   let(:classname) {}
   let(:amount) { Faker::Number.positive.to_i }
   let(:expires_in) { "never" }
@@ -47,7 +47,7 @@ describe ESM::Command::Server::RewardAdmin, category: "command", v2: true do
 
       matcher =
         case type
-        when described_class::POPTAB
+        when described_class::POPTABS
           "#{amount.to_delimitated_s} poptabs"
         when described_class::RESPECT
           "#{amount.to_delimitated_s} respect"
