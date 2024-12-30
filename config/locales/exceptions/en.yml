@@ -35,6 +35,7 @@ en:
       test: "%{user} | %{message_id} | %{type} | %{data_foo} | %{server_id} | %{user}"
       default: "Error type `%{type}` is not registered as a valid locale"
       account_does_not_exist: "Hey %{user}, you **need to join** `%{server_id}` first before you can run commands on it"
+      target_account_does_not_exist: "Hey %{user}, %{target} **needs to join** `%{server_id}` first before you can use them as a target in a command on this server"
       client_not_connected: |-
         Hey %{user}, it looks like `%{server_id}` isn't connected right now.
         Please try again in a few minutes as the server may be restarting.
