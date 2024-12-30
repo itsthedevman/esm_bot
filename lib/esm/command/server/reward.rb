@@ -32,12 +32,26 @@ module ESM
 
           # Confirm with the player
           confirmed = prompt_for_confirmation!(confirmation_embed)
-
-          nil unless confirmed
+          return unless confirmed
 
           # Add them items to the user's rewards
+          run_database_query!(
+            "add_rewards",
+            uid: current_user.steam_uid,
+            items: []
+          )
+
           # Update their cooldown
-          # Let them know!
+
+          # Log event to discord
+          # if target_server.server_setting.logging_reward_admin?
+          #   embed = admin_embed(display_name, duration)
+          #   current_community.send_to_logging_channel(embed)
+          # end
+
+          # Respond
+          # embed = ESM::Embed.build(:success, description: translate("success"))
+          # reply(embed)
         end
 
         private
@@ -49,8 +63,10 @@ module ESM
         def reward_cooldown
           # Luckily, the standard command cooldown query basically 90% of the way there
           @reward_cooldown ||=
-            current_cooldown_query.rewhere(type: :reward, key: selected_reward.reward_id)
-              .first_or_create!
+            current_cooldown_query.rewhere(
+              type: :reward,
+              key: selected_reward.reward_id || "default"
+            ).first_or_create!
         end
 
         def check_for_reward_items!
@@ -82,29 +98,53 @@ module ESM
           ESM::Embed.build do |e|
             e.title = translate("confirmation.title")
 
-            expiry =
-              if duration
-                translate(
-                  "expiry.timed",
-                  duration: ChronicDuration.output(duration)
-                )
-              else
-                translate("expiry.never")
-              end
-
             e.description = translate(
               "confirmation.description",
-              recipient: target_user.discord_mention,
-              type: arguments.type.titleize,
-              reward_details: translate(
-                "reward_details.#{arguments.type}",
-                amount: arguments.amount.to_delimitated_s,
-                name: display_name
-              ),
-              expiry:,
-              recipient_mention: target_user.discord_mention,
-              server_id: target_server.server_id
+              server_id: target_server.server_id,
+              reward_items: format_reward_items
             )
+          end
+        end
+
+        def format_reward_items
+          items = selected_reward.items.sort_by { |i| ServerRewardItem::TYPES.index(i.reward_type) }
+
+          items.join_map("\n") do |item|
+            expiry =
+              if item.expiry_unit == ServerRewardItem::NEVER
+                translate("expiry.never")
+              else
+                translate("expiry.timed", duration: "#{item.expiry_value} #{item.expiry_unit}")
+              end
+
+            case item.reward_type
+            when ServerRewardItem::POPTABS
+              translate(
+                "reward_items.poptabs",
+                amount: item.amount.to_delimitated_s,
+                expiry:
+              )
+            when ServerRewardItem::RESPECT
+              translate(
+                "reward_items.respect",
+                amount: item.amount.to_delimitated_s,
+                expiry:
+              )
+            when ServerRewardItem::CLASSNAME
+              locale_name =
+                if item.amount == 1
+                  "reward_items.classname"
+                else
+                  "reward_items.classname_with_amount"
+                end
+
+              translate(
+                locale_name,
+                name: item.display_name,
+                amount: item.amount.to_delimitated_s,
+                expiry:
+              )
+            end
           end
         end
 
