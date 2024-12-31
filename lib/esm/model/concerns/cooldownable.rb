@@ -21,6 +21,13 @@ module ESM
         attribute :cooldown_quantity, :integer, default: 2
         enum :cooldown_type, COOLDOWN_TYPES.to_h { |t| [t, t] }, default: COOLDOWN_TYPE_SECONDS
       end
+
+      def cooldown_duration
+        return if cooldown_type == COOLDOWN_TYPE_NEVER
+        return cooldown_quantity.times if cooldown_type == COOLDOWN_TYPE_TIMES
+
+        cooldown_quantity.public_send(cooldown_type)
+      end
     end
   end
 end
