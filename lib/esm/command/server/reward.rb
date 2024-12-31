@@ -38,10 +38,12 @@ module ESM
           run_database_query!(
             "add_rewards",
             uid: current_user.steam_uid,
-            items: []
+            source: "reward-#{arguments.reward_id || "default"}",
+            items: format_items_for_redemption
           )
 
           # Update their cooldown
+          reward_cooldown.update_expiry!(Time.current, selected_reward.cooldown_duration)
 
           # Log event to discord
           # if target_server.server_setting.logging_reward_admin?
@@ -78,9 +80,10 @@ module ESM
         def check_for_reward_cooldown!
           return unless reward_cooldown.active?
 
-          if current_cooldown.cooldown_type == Cooldown::COOLDOWN_TYPE_TIMES
+          if reward_cooldown.cooldown_type == Cooldown::COOLDOWN_TIMES
             raise_error!(
               :on_cooldown_useage,
+              path_prefix: "command_errors",
               user: current_user.mention,
               command_name: usage
             )
@@ -88,8 +91,9 @@ module ESM
 
           raise_error!(
             :on_cooldown_time_left,
+            path_prefix: "command_errors",
             user: current_user.mention,
-            time_left: current_cooldown.to_s,
+            time_left: reward_cooldown.to_s,
             command_name: usage
           )
         end
@@ -101,7 +105,8 @@ module ESM
             e.description = translate(
               "confirmation.description",
               server_id: target_server.server_id,
-              reward_items: format_reward_items
+              reward_items: format_reward_items,
+              cooldown: determine_cooldown_warning
             )
           end
         end
@@ -121,30 +126,57 @@ module ESM
             when ServerRewardItem::POPTABS
               translate(
                 "reward_items.poptabs",
-                amount: item.amount.to_delimitated_s,
+                quantity: item.quantity.to_delimitated_s,
                 expiry:
               )
             when ServerRewardItem::RESPECT
               translate(
                 "reward_items.respect",
-                amount: item.amount.to_delimitated_s,
+                quantity: item.quantity.to_delimitated_s,
                 expiry:
               )
             when ServerRewardItem::CLASSNAME
               locale_name =
-                if item.amount == 1
+                if item.quantity == 1
                   "reward_items.classname"
                 else
-                  "reward_items.classname_with_amount"
+                  "reward_items.classname_with_quantity"
                 end
 
               translate(
                 locale_name,
                 name: item.display_name,
-                amount: item.amount.to_delimitated_s,
+                quantity: item.quantity.to_delimitated_s,
                 expiry:
               )
             end
+          end
+        end
+
+        def determine_cooldown_warning
+          if selected_reward.cooldown_type != Cooldown::COOLDOWN_TIMES
+            return translate(
+              "cooldown.time",
+              time: ChronicDuration.output(selected_reward.cooldown_duration, format: :long)
+            )
+          end
+
+          uses_remaining = reward_cooldown.remaining_uses
+          if uses_remaining == 1
+            translate("cooldown.final")
+          else
+            translate("cooldown.uses", remaining: uses_remaining)
+          end
+        end
+
+        def format_items_for_redemption
+          selected_reward.items.map do |item|
+            {
+              type: item.reward_type,
+              classname: item.classname,
+              quantity: item.quantity,
+              expires_at: item.expires_at
+            }
           end
         end
 

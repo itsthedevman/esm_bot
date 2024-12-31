@@ -127,7 +127,7 @@ vehicle_reward = server.server_rewards.create!(
   server_id: server.id,
   reward_id: "vehicles",
   cooldown_type: "times",
-  cooldown_quantity: 1
+  cooldown_quantity: 2
 )
 
 [

@@ -39,7 +39,7 @@ module ESM
     end
 
     def active?
-      if cooldown_type == COOLDOWN_TYPE_TIMES
+      if cooldown_type == COOLDOWN_TIMES
         cooldown_amount >= cooldown_quantity
       else
         expires_at >= ::Time.current
@@ -47,7 +47,12 @@ module ESM
     end
 
     def to_s
-      ESM::Time.distance_of_time_in_words(expires_at)
+      if cooldown_type == COOLDOWN_TIMES
+        remaining = remaining_uses
+        "#{remaining} time".pluralize(remaining)
+      else
+        ESM::Time.distance_of_time_in_words(expires_at)
+      end
     end
 
     def reset!
@@ -60,7 +65,7 @@ module ESM
       when Enumerator, Integer
         update!(
           cooldown_quantity: cooldown_time.is_a?(Integer) ? cooldown_time : cooldown_time.size,
-          cooldown_type: COOLDOWN_TYPE_TIMES,
+          cooldown_type: COOLDOWN_TIMES,
           cooldown_amount: cooldown_amount + 1
         )
       # 1.second, 5.days
@@ -73,6 +78,10 @@ module ESM
           expires_at: (executed_at + cooldown_time).to_time
         )
       end
+    end
+
+    def remaining_uses
+      cooldown_quantity - cooldown_amount
     end
 
     private
@@ -120,8 +129,8 @@ module ESM
     end
 
     def times_based_cooldown_changed?(configuration)
-      configuration.cooldown_type == COOLDOWN_TYPE_TIMES ||
-        (configuration.cooldown_type != COOLDOWN_TYPE_TIMES && cooldown_type == COOLDOWN_TYPE_TIMES)
+      configuration.cooldown_type == COOLDOWN_TIMES ||
+        (configuration.cooldown_type != COOLDOWN_TIMES && cooldown_type == COOLDOWN_TIMES)
     end
 
     def reset_cooldown

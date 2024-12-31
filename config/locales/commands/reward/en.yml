@@ -37,6 +37,8 @@ en:
           - Poptabs and respect are added to your character upon redemption
 
           You can redeem rewards at any trader, or at your territory flag if enabled by the server.
+
+          %{cooldown}
       reward_items:
         poptabs: "- %{quantity} poptabs %{expiry}"
         respect: "- %{quantity} respect %{expiry}"
@@ -45,3 +47,7 @@ en:
       expiry:
         never: ""
         timed: "- _expires in %{duration}_"
+      cooldown:
+        time: "Note: This reward can be claimed once every %{time}."
+        uses: "Note: You have %{remaining} claims left on this reward."
+        final: "Note: This is the last time you can claim this reward."
