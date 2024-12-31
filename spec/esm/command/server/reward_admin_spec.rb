@@ -7,7 +7,7 @@ describe ESM::Command::Server::RewardAdmin, category: "command", v2: true do
   let(:target) { second_user.mention }
   let(:type) { described_class::POPTABS }
   let(:classname) {}
-  let(:amount) { Faker::Number.positive.to_i }
+  let(:quantity) { Faker::Number.positive.to_i }
   let(:expires_in) { "never" }
   let(:prompt_response) { true }
 
@@ -17,7 +17,7 @@ describe ESM::Command::Server::RewardAdmin, category: "command", v2: true do
       server_id: server.server_id,
       type:,
       classname:,
-      amount:,
+      quantity:,
       expires_in:
     }
   end
@@ -30,7 +30,8 @@ describe ESM::Command::Server::RewardAdmin, category: "command", v2: true do
     let(:reward_query) do
       {
         reward_type: type,
-        amount:,
+        total_quantity: quantity,
+        remaining_quantity: quantity,
         source: "command_reward_admin"
       }
     end
@@ -48,12 +49,12 @@ describe ESM::Command::Server::RewardAdmin, category: "command", v2: true do
       matcher =
         case type
         when described_class::POPTABS
-          "#{amount.to_delimitated_s} poptabs"
+          "#{quantity.to_delimitated_s} poptabs"
         when described_class::RESPECT
-          "#{amount.to_delimitated_s} respect"
+          "#{quantity.to_delimitated_s} respect"
         when described_class::CLASSNAME
           display_name = ESM::Arma::ClassLookup.find(classname).display_name
-          "#{display_name} (x#{amount.to_delimitated_s})"
+          "#{display_name} (x#{quantity.to_delimitated_s})"
         end
 
       expect(embed.description).to include(matcher)
@@ -99,15 +100,15 @@ describe ESM::Command::Server::RewardAdmin, category: "command", v2: true do
     end
 
     context "when the type is poptabs" do
-      context "and the amount is valid" do
+      context "and the quantity is valid" do
         include_examples "success"
       end
 
-      context "and the amount is invalid" do
-        let(:amount) { -1 }
+      context "and the quantity is invalid" do
+        let(:quantity) { -1 }
 
         include_examples "raises_check_failure" do
-          let(:matcher) { "A positive amount is required" }
+          let(:matcher) { "A positive quantity is required" }
         end
       end
     end
@@ -115,15 +116,15 @@ describe ESM::Command::Server::RewardAdmin, category: "command", v2: true do
     context "when the type is respect" do
       let(:type) { described_class::RESPECT }
 
-      context "and the amount is valid" do
+      context "and the quantity is valid" do
         include_examples "success"
       end
 
-      context "and the amount is invalid" do
-        let(:amount) { -1 }
+      context "and the quantity is invalid" do
+        let(:quantity) { -1 }
 
         include_examples "raises_check_failure" do
-          let(:matcher) { "A positive amount is required" }
+          let(:matcher) { "A positive quantity is required" }
         end
       end
     end
@@ -134,12 +135,13 @@ describe ESM::Command::Server::RewardAdmin, category: "command", v2: true do
       context "and the item/vehicle is valid" do
         let(:classname) { ESM::Arma::ClassLookup.where(mod: "exile").keys.sample }
 
-        context "and the amount if valid" do
+        context "and the quantity if valid" do
           include_examples "success" do
             let!(:reward_query) do
               {
                 reward_type: type,
-                amount:,
+                total_quantity: quantity,
+                remaining_quantity: quantity,
                 classname:,
                 source: "command_reward_admin"
               }
@@ -147,11 +149,11 @@ describe ESM::Command::Server::RewardAdmin, category: "command", v2: true do
           end
         end
 
-        context "and the amount is invalid" do
-          let(:amount) { -1 }
+        context "and the quantity is invalid" do
+          let(:quantity) { -1 }
 
           include_examples "raises_check_failure" do
-            let(:matcher) { "A positive amount is required" }
+            let(:matcher) { "A positive quantity is required" }
           end
         end
       end

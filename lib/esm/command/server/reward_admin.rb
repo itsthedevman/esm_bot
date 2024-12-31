@@ -33,7 +33,7 @@ module ESM
           checked_against_if: ->(_a, _c) { arguments.type == CLASSNAME }
 
         # Technically required except for a subset of CLASSNAME entries.
-        argument :amount, :integer,
+        argument :quantity, :integer,
           default: 1,
           checked_against: Regex::POSITIVE_NUMBER
 
@@ -57,9 +57,9 @@ module ESM
         def on_execute
           check_for_registered_target_user! if target_user.is_a?(ESM::User)
 
-          # I originally had checks to block amount from being set for vehicles.
+          # I originally had checks to block quantity from being set for vehicles.
           # With items/vehicles being one, it doesn't matter anymore
-          check_for_amount!
+          check_for_quantity!
 
           if arguments.type == CLASSNAME
             check_for_valid_classname!
@@ -93,7 +93,7 @@ module ESM
               {
                 expires_at:,
                 source: "command_reward_admin",
-                **arguments.slice(:type, :classname, :amount)
+                **arguments.slice(:type, :classname, :quantity)
               }
             ]
           )
@@ -111,8 +111,8 @@ module ESM
 
         private
 
-        def check_for_amount!
-          raise_error!(:missing_amount) unless arguments.amount.positive?
+        def check_for_quantity!
+          raise_error!(:missing_quantity) unless arguments.quantity.positive?
         end
 
         def check_for_valid_classname!
@@ -154,7 +154,7 @@ module ESM
               type: arguments.type.titleize,
               reward_details: translate(
                 "reward_details.#{arguments.type}",
-                amount: arguments.amount.to_delimitated_s,
+                quantity: arguments.quantity.to_delimitated_s,
                 name: display_name
               ),
               expiry:,
@@ -184,7 +184,7 @@ module ESM
               type: arguments.type.titleize,
               reward_details: translate(
                 "reward_details.#{arguments.type}",
-                amount: arguments.amount.to_delimitated_s,
+                quantity: arguments.quantity.to_delimitated_s,
                 name: display_name
               ),
               expiry:,

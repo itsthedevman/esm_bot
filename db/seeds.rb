@@ -113,13 +113,13 @@ server_reward.update!(
 )
 
 [
-  {reward_type: ESM::ServerRewardItem::POPTABS, amount: 12_345},
-  {reward_type: ESM::ServerRewardItem::RESPECT, amount: 1337},
-  {reward_type: ESM::ServerRewardItem::CLASSNAME, classname: "Exile_Item_WoodDoorKit", amount: 1},
-  {reward_type: ESM::ServerRewardItem::CLASSNAME, classname: "Exile_Item_WoodWallKit", amount: 3},
-  {reward_type: ESM::ServerRewardItem::CLASSNAME, classname: "Exile_Item_WoodFloorKit", amount: 2}
+  {reward_type: ESM::ServerRewardItem::POPTABS, quantity: 12_345},
+  {reward_type: ESM::ServerRewardItem::RESPECT, quantity: 1337},
+  {reward_type: ESM::ServerRewardItem::CLASSNAME, classname: "Exile_Item_WoodDoorKit", quantity: 1},
+  {reward_type: ESM::ServerRewardItem::CLASSNAME, classname: "Exile_Item_WoodWallKit", quantity: 3},
+  {reward_type: ESM::ServerRewardItem::CLASSNAME, classname: "Exile_Item_WoodFloorKit", quantity: 2}
 ].each do |item|
-  server_reward.server_reward_items.create!(item)
+  server_reward.items.create!(item)
 end
 
 vehicle_reward = server.server_rewards.create!(server_id: server.id, reward_id: "vehicles")
@@ -127,17 +127,17 @@ vehicle_reward = server.server_rewards.create!(server_id: server.id, reward_id: 
   {
     reward_type: ESM::ServerRewardItem::CLASSNAME,
     classname: "Exile_Plane_AN2_White",
-    amount: 1
+    quantity: 1
   },
   {
     reward_type: ESM::ServerRewardItem::CLASSNAME,
     classname: "Exile_Car_HEMMT",
-    amount: 2,
+    quantity: 2,
     expiry_value: 2,
     expiry_unit: "weeks"
   }
 ].each do |item|
-  vehicle_reward.server_reward_items.create!(item)
+  vehicle_reward.items.create!(item)
 end
 
 puts " done"

@@ -61,7 +61,7 @@ class ServerRewards < ActiveRecord::Migration[7.2]
       t.belongs_to :server_reward, foreign_key: {on_delete: :cascade}
       t.string :reward_type, null: false
       t.string :classname
-      t.integer :amount, null: false
+      t.integer :quantity, null: false
       t.integer :expiry_value, null: false, default: 0
       t.string :expiry_unit, null: false, default: "never"
       t.timestamps

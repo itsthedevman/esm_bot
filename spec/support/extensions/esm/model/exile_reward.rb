@@ -8,7 +8,8 @@ module ESM
     attribute :account_uid, :string
     attribute :reward_type, :string
     attribute :classname, :string, default: nil
-    attribute :amount, :integer, default: nil
+    attribute :total_quantity, :integer, default: nil
+    attribute :remaining_quantity, :integer, default: nil
     attribute :source, :string, default: nil
     attribute :expires_at, :datetime, default: nil
     attribute :redeemed_at, :datetime, default: nil

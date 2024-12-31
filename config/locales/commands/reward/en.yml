@@ -38,10 +38,10 @@ en:
 
           You can redeem rewards at any trader, or at your territory flag if enabled by the server.
       reward_items:
-        poptabs: "- %{amount} poptabs %{expiry}"
-        respect: "- %{amount} respect %{expiry}"
+        poptabs: "- %{quantity} poptabs %{expiry}"
+        respect: "- %{quantity} respect %{expiry}"
         classname: "- %{name} %{expiry}"
-        classname_with_amount: "- %{name} (x%{amount}) %{expiry}"
+        classname_with_quantity: "- %{name} (x%{quantity}) %{expiry}"
       expiry:
         never: ""
         timed: "- _expires in %{duration}_"
