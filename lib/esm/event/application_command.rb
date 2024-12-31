@@ -6,6 +6,31 @@ module ESM
     # Delegator over Discordrb::Events::ApplicationCommandEvent
     #
     class ApplicationCommand
+      # All of these track if a command is currently in progress for a user.
+      # This keeps a user from running a blocking command multiple times and potentially
+      # causing unexpected behaviors
+      class << self
+        # @!visibility private
+        def in_progress
+          @in_progress ||= Concurrent::Map.new { |h, k| h[k] = Concurrent::Set.new }
+        end
+
+        # @!visibility private
+        def in_progress?(class_name, user_discord_id)
+          in_progress[class_name].include?(user_discord_id)
+        end
+
+        # @!visibility private
+        def in_progress!(class_name, user_discord_id)
+          in_progress[class_name].add(user_discord_id)
+        end
+
+        # @!visibility private
+        def completed!(class_name, user_discord_id)
+          in_progress[class_name].delete(user_discord_id)
+        end
+      end
+
       delegate :user, :channel, :options, :respond, :edit_response, :delete_response, to: :@event
 
       def initialize(event)
@@ -25,7 +50,8 @@ module ESM
       end
 
       #
-      # Discordrb's ApplicationCommandEvent code does not appear to handle if there is no server_id and crashes
+      # Discordrb's ApplicationCommandEvent code does not appear to handle if there
+      # is no server_id, which causes a crash
       #
       def server
         return if @event.server_id.nil?
@@ -38,6 +64,9 @@ module ESM
 
         @command = command_class.new(user:, server:, channel:, arguments: options)
 
+        check_for_in_progress!
+        command_in_progress!
+
         ESM::Database.with_connection do
           @command.from_discord!
         end
@@ -45,6 +74,8 @@ module ESM
         on_completion
       rescue => error
         on_error(error)
+      ensure
+        command_completed!
       end
 
       def on_completion
@@ -79,17 +110,9 @@ module ESM
                 server_id: @command.target_server.server_id
               )
             )
-          when Discordrb::Errors::UnknownError
-            ESM::Embed.build(
-              :error,
-              description: I18n.t(
-                "command_errors.slow_down",
-                user: @command.current_user.mention
-              )
-            )
           when ESM::Exception::ApplicationError
             error.data
-          when StandardError
+          else # when StandardError
             uuid = SecureRandom.uuid.split("-")[0..1].join("")
 
             ESM.bot.log_error(
@@ -122,6 +145,24 @@ module ESM
         return content unless send_tip?
 
         content + "\n\n:information_source: **Did you know?**\n#{@tip}"
+      end
+
+      def check_for_in_progress!
+        user = @command.current_user
+        return unless self.class.in_progress?(@command.class, user.discord_id)
+
+        raise Exception::CommandInProgress, Embed.build(
+          :error,
+          description: I18n.t("command_errors.command_in_progress", user: user.mention)
+        )
+      end
+
+      def command_in_progress!
+        self.class.in_progress!(@command.class, @command.current_user.discord_id)
+      end
+
+      def command_completed!
+        self.class.completed!(@command.class, @command.current_user.discord_id)
       end
     end
   end

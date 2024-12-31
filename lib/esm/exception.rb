@@ -46,6 +46,9 @@ module ESM
     # When the bot does not have access to send a message to a particular channel
     class ChannelAccessDenied < Error; end
 
+    # When the command is already being executed but the user executed it again
+    class CommandInProgress < ApplicationError; end
+
     # Check failure, but no message is sent
     class CheckFailureNoMessage < Error
       def initialize(_message)
