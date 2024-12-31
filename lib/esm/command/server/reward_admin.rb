@@ -89,10 +89,10 @@ module ESM
           run_database_query!(
             "add_rewards",
             uid: target_user.steam_uid,
+            source: "admin_reward",
             items: [
               {
                 expires_at:,
-                source: "command_reward_admin",
                 **arguments.slice(:type, :classname, :quantity)
               }
             ]

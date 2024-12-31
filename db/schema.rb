@@ -212,7 +212,7 @@ ActiveRecord::Schema[7.2].define(version: 2024_12_30_000715) do
     t.bigint "server_reward_id"
     t.string "reward_type", null: false
     t.string "classname"
-    t.integer "amount", null: false
+    t.integer "quantity", null: false
     t.integer "expiry_value", default: 0, null: false
     t.string "expiry_unit", default: "never", null: false
     t.datetime "created_at", null: false

@@ -101,7 +101,8 @@ ESM::ServerMod.create!(
 server_reward = server.server_rewards.where(reward_id: nil).first
 server_reward.update!(
   server_id: server.id,
-  reward_id: nil,
+  cooldown_type: "seconds",
+  cooldown_quantity: 30,
   reward_items: {
     Exile_Item_WoodDoorKit: 1,
     Exile_Item_WoodWallKit: 3,
@@ -122,7 +123,13 @@ server_reward.update!(
   server_reward.items.create!(item)
 end
 
-vehicle_reward = server.server_rewards.create!(server_id: server.id, reward_id: "vehicles")
+vehicle_reward = server.server_rewards.create!(
+  server_id: server.id,
+  reward_id: "vehicles",
+  cooldown_type: "times",
+  cooldown_quantity: 1
+)
+
 [
   {
     reward_type: ESM::ServerRewardItem::CLASSNAME,

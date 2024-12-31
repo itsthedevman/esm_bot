@@ -32,7 +32,8 @@ describe ESM::Command::Server::RewardAdmin, category: "command", v2: true do
         reward_type: type,
         total_quantity: quantity,
         remaining_quantity: quantity,
-        source: "command_reward_admin"
+        classname:,
+        source: "admin_reward"
       }
     end
 
@@ -136,17 +137,7 @@ describe ESM::Command::Server::RewardAdmin, category: "command", v2: true do
         let(:classname) { ESM::Arma::ClassLookup.where(mod: "exile").keys.sample }
 
         context "and the quantity if valid" do
-          include_examples "success" do
-            let!(:reward_query) do
-              {
-                reward_type: type,
-                total_quantity: quantity,
-                remaining_quantity: quantity,
-                classname:,
-                source: "command_reward_admin"
-              }
-            end
-          end
+          include_examples "success"
         end
 
         context "and the quantity is invalid" do
@@ -226,7 +217,9 @@ describe ESM::Command::Server::RewardAdmin, category: "command", v2: true do
         second_user.exile_account.destroy
       end
 
-      include_examples "arma_error_target_needs_to_join"
+      include_examples "arma_error_target_needs_to_join" do
+        let(:matcher) { "#{second_user.mention} ..needs to join.." }
+      end
     end
   end
 end
