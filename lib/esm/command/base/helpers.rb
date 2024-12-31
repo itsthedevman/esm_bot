@@ -591,29 +591,32 @@ module ESM
         end
 
         def prompt_for_confirmation!(message_or_embed, timeout: 2.minutes)
+          button_uuid = SecureRandom.uuid
+
           button_message = reply(
             message_or_embed,
             view: create_view do |view|
               view.row do |r|
-                uuid = SecureRandom.uuid
                 r.button(
                   label: I18n.t("continue"),
                   style: :success,
                   emoji: "✅",
-                  custom_id: "#{uuid}-true"
+                  custom_id: "#{button_uuid}-true"
                 )
 
                 r.button(
                   label: I18n.t("cancel"),
                   style: :danger,
                   emoji: "🛑",
-                  custom_id: "#{uuid}-false"
+                  custom_id: "#{button_uuid}-false"
                 )
               end
             end
           )
 
-          event = bot.add_await!(Discordrb::Events::ButtonEvent, timeout:)
+          event = bot.add_await!(Discordrb::Events::ButtonEvent, timeout:) do |event|
+            event.custom_id.starts_with?(button_uuid)
+          end
 
           # This removes the buttons.
           # I feel this is better UX since the buttons are not useful anymore
