@@ -142,7 +142,7 @@ module ESM
               if duration
                 translate(
                   "expiry.timed",
-                  duration: ChronicDuration.output(duration)
+                  duration: ChronicDuration.output(duration, format: :long)
                 )
               else
                 translate("expiry.never")
@@ -172,7 +172,7 @@ module ESM
               if duration
                 translate(
                   "expiry.timed",
-                  duration: ChronicDuration.output(duration)
+                  duration: ChronicDuration.output(duration, format: :long)
                 )
               else
                 translate("expiry.never")
