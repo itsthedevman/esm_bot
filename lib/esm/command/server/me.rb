@@ -53,7 +53,7 @@ module ESM
           ESM::Embed.build(
             :error,
             description: I18n.t(
-              "exceptions.extension.account_does_not_exist",
+              "exceptions.extension.player_account_does_not_exist",
               user: current_user.mention,
               server_id: target_server.server_id
             )
