@@ -166,6 +166,8 @@ module ESM
 
         def admin_embed(display_name, duration)
           ESM::Embed.build do |e|
+            e.set_author(name: "Sent from #{target_server.server_id}")
+
             e.title = translate("admin_log.title")
 
             expiry =
