@@ -24,36 +24,37 @@ module ESM
         #################################
 
         def on_execute
-          # Check to see if the provided reward_id has anything to redeem
           check_for_reward_items!
-
-          # Check to see if the user is on cooldown for the reward
           check_for_reward_cooldown!
 
-          # Confirm with the player
           confirmed = prompt_for_confirmation!(confirmation_embed)
           return unless confirmed
 
-          # Add them items to the user's rewards
           run_database_query!(
             "add_rewards",
             uid: current_user.steam_uid,
             source: "reward-#{arguments.reward_id || "default"}",
-            items: format_items_for_redemption
+            items: selected_reward.items.map do |item|
+              {
+                type: item.reward_type,
+                classname: item.classname,
+                quantity: item.quantity,
+                expires_at: item.expires_at
+              }
+            end
           )
 
-          # Update their cooldown
+          # Update the cooldown
           reward_cooldown.update_expiry!(Time.current, selected_reward.cooldown_duration)
 
           # Log event to discord
-          # if target_server.server_setting.logging_reward_admin?
-          #   embed = admin_embed(display_name, duration)
-          #   current_community.send_to_logging_channel(embed)
-          # end
+          if target_server.server_setting.logging_reward_player
+            embed = admin_embed
+            current_community.send_to_logging_channel(embed)
+          end
 
-          # Respond
-          # embed = ESM::Embed.build(:success, description: translate("success"))
-          # reply(embed)
+          embed = ESM::Embed.build(:success, description: translate("success"))
+          reply(embed)
         end
 
         private
@@ -107,6 +108,25 @@ module ESM
               server_id: target_server.server_id,
               reward_items: format_reward_items,
               cooldown: determine_cooldown_warning
+            )
+          end
+        end
+
+        def admin_embed
+          ESM::Embed.build do |e|
+            e.set_author(name: "Sent from #{target_server.server_id}")
+
+            e.title = translate("admin_log.title")
+
+            e.description = translate(
+              "admin_log.description",
+              package: selected_reward.reward_id || "default",
+              reward_items: format_reward_items
+            )
+
+            e.add_field(
+              name: "Player",
+              value: ESM::Message::Player.from(current_user).to_h
             )
           end
         end
@@ -166,17 +186,6 @@ module ESM
             translate("cooldown.final")
           else
             translate("cooldown.uses", remaining: uses_remaining)
-          end
-        end
-
-        def format_items_for_redemption
-          selected_reward.items.map do |item|
-            {
-              type: item.reward_type,
-              classname: item.classname,
-              quantity: item.quantity,
-              expires_at: item.expires_at
-            }
           end
         end
 

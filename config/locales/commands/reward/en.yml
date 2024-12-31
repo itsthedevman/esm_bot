@@ -51,3 +51,10 @@ en:
         time: "Note: This reward can be claimed once every %{time}."
         uses: "Note: You have %{remaining} claims left on this reward."
         final: "Note: This is the last time you can claim this reward."
+      admin_log:
+        title: "Reward package claimed"
+        description: |-
+          **Package:** %{package}
+          **Items:**
+          %{reward_items}
+      success: "Your rewards have been claimed! Make sure to redeem them before they expire"
