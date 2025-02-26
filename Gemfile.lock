@@ -379,6 +379,7 @@ DEPENDENCIES
   hashids
   httparty
   i18n
+  kramdown
   memory_profiler
   mysql2
   neatjson

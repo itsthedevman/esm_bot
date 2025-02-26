@@ -52,7 +52,6 @@ group :development do
   gem "rubocop-rspec"
   gem "rubocop-performance"
   gem "rubocop-rails"
-  gem "yard"
 end
 
 group :test do
@@ -66,4 +65,9 @@ end
 group :development, :test do
   gem "rspec"
   gem "rspec-wait"
+end
+
+group :development, :documentation do
+  gem "yard"
+  gem "kramdown"
 end
