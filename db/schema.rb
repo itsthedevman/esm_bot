@@ -418,17 +418,6 @@ ActiveRecord::Schema[7.2].define(version: 2025_01_23_205434) do
     t.datetime "updated_at", precision: nil, null: false
   end
 
-  create_table "user_steam_uid_histories", force: :cascade do |t|
-    t.bigint "user_id"
-    t.string "previous_steam_uid"
-    t.string "new_steam_uid"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["created_at"], name: "index_user_steam_uid_histories_on_created_at"
-    t.index ["previous_steam_uid", "new_steam_uid"], name: "idx_steam_uids"
-    t.index ["user_id"], name: "index_user_steam_uid_histories_on_user_id"
-  end
-
   create_table "users", force: :cascade do |t|
     t.string "discord_id", null: false
     t.string "discord_username", null: false
@@ -471,5 +460,4 @@ ActiveRecord::Schema[7.2].define(version: 2025_01_23_205434) do
   add_foreign_key "user_notification_routes", "communities", column: "destination_community_id", on_delete: :cascade
   add_foreign_key "user_notification_routes", "users", on_delete: :cascade
   add_foreign_key "user_steam_data", "users", on_delete: :cascade
-  add_foreign_key "user_steam_uid_histories", "users", on_delete: :nullify
 end

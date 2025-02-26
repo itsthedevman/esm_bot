@@ -33,8 +33,7 @@ communities = [
     community_name: "ESM Test Server 1",
     guild_id: "452568470765305866",
     logging_channel_id: "901965726305382400",
-    player_mode_enabled: false,
-    allow_v2_servers: true
+    player_mode_enabled: false
   },
   {
     community_id: "esm2",
